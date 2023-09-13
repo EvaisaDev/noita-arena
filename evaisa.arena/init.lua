@@ -65,7 +65,9 @@ function OnModPostInit()
 end
 
 function OnMagicNumbersAndWorldSeedInitialized()
-
+    GameAddFlagRun("no_progress_flags_perk")
+    GameAddFlagRun("no_progress_flags_action")
+    GameAddFlagRun("no_progress_flags_animal")
     --print("Init content: \n"..ModTextFileGetContent("data/scripts/init.lua"))
     --print("Biome mod content: \n"..ModTextFileGetContent("data/scripts/biome_modifiers.lua"))
 end
