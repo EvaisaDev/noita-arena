@@ -447,13 +447,13 @@ player_helper.GivePerk = function(perk_id, amount, skip_count)
     -- load perk for entity_who_picked -----------------------------------
     local add_progress_flags = not GameHasFlagRun("no_progress_flags_perk")
 
-    if add_progress_flags then
+    --[[if add_progress_flags then
         local flag_name_persistent = string.lower(flag_name)
         if (not HasFlagPersistent(flag_name_persistent)) then
             GameAddFlagRun("new_" .. flag_name_persistent)
         end
         AddFlagPersistent(flag_name_persistent)
-    end
+    end]]
     GameAddFlagRun(flag_name)
 
     local no_remove = perk_data.do_not_remove or false
