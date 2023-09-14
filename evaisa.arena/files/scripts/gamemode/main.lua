@@ -182,11 +182,11 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 0.548,
+    version = 0.6,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
     end,
-    version_flavor_text = "$arena_dev",
+    version_flavor_text = "$arena_open_beta",
     spectator_unfinished_warning = true,
     disable_spectator_system = not ModSettingGet("evaisa.arena.spectator_unstable"),
     enable_presets = true,
