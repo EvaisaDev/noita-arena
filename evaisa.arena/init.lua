@@ -64,6 +64,13 @@ function OnModPostInit()
     end
 end
 
+function OnWorldPreUpdate()
+    if(not ModIsEnabled("evaisa.mp"))then
+        GamePrint(GameTextGetTranslatedOrNot("$arena_noita_online_missing"))
+    end
+end
+
+
 function OnMagicNumbersAndWorldSeedInitialized()
     GameAddFlagRun("no_progress_flags_perk")
     GameAddFlagRun("no_progress_flags_action")
