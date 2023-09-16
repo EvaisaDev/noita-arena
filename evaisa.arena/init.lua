@@ -47,15 +47,15 @@ local overrides = dofile_once("mods/evaisa.arena/data_override/override_list.lua
 parse_overrides(overrides)]]
 
 function OnModPreInit()
-    if(ModIsEnabled("evaisa.mp"))then
-        ------ TRANSLATIONS -------
-    
-        dofile("mods/evaisa.mp/lib/translations.lua")
-    
-        register_localizations("mods/evaisa.arena/translations.csv", 2)
-    
-        ---------------------------
-    end
+
+    ------ TRANSLATIONS -------
+
+    dofile("mods/evaisa.arena/lib/translations.lua")
+
+    register_localizations("mods/evaisa.arena/translations.csv", 2)
+
+    ---------------------------
+
 end
 
 function OnModPostInit()
