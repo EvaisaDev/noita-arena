@@ -25,6 +25,8 @@
     offset.y="-14"
   ></HotspotComponent>
 
+  <PhysicsAIComponent/>
+
   <PhysicsPickUpComponent 
     original_left_joint_pos.x="-8"
     original_left_joint_pos.y="-2"
