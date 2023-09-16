@@ -36,6 +36,8 @@ function damage_about_to_be_received( damage, x, y, entity_thats_responsible, cr
         end
     end
 
+    --critical_hit_chance = 50
+
     return damage, critical_hit_chance
 end
 

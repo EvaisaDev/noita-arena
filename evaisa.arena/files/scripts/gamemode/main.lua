@@ -182,7 +182,7 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 0.6,
+    version = 0.61,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
     end,
@@ -1205,15 +1205,19 @@ ArenaMode = {
         end
 
 
-        if(input:WasKeyPressed("f10"))then
+        --[[if(input:WasKeyPressed("f10"))then
             local world_state = GameGetWorldStateEntity()
 
             EntityKill(world_state)
         elseif(input:WasKeyPressed("f6"))then
             local player_entity = EntityGetWithTag("player_unit")[1]
             local x, y = EntityGetTransform(player_entity)
-            EntityInflictDamage(player_entity, 1000, "DAMAGE_SLICE", "player", "BLOOD_EXPLOSION", 0, 0, player_entity, x, y, 0)
-        end
+            EntityInflictDamage(player_entity, 0.2, "DAMAGE_SLICE", "player", "BLOOD_EXPLOSION", 0, 0, GameGetWorldStateEntity(), x, y, 0)
+        elseif(input:WasKeyPressed("f7"))then
+            local player_entity = EntityGetWithTag("player_unit")[1]
+            local x, y = EntityGetTransform(player_entity)
+            EntityLoad("data/entities/animals/slimeshooter.xml", x, y)
+        end]]
 
         --print("Did something go wrong?")
     end,
