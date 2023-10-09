@@ -1866,7 +1866,9 @@ ArenaGameplay = {
         end
         local current_player = player.Get()
 
-        if (data.client.projectiles_fired ~= nil and data.client.projectiles_fired > 0) then
+        local projectiles_fired = tonumber(GlobalsGetValue( "wand_fire_count", "0" ))
+
+        if (projectiles_fired > 0--[[data.client.projectiles_fired ~= nil and data.client.projectiles_fired > 0]]) then
             local special_seed = tonumber(GlobalsGetValue("player_rng", "0"))
             --local cast_state = GlobalsGetValue("player_cast_state") or nil
 
@@ -1879,7 +1881,7 @@ ArenaGameplay = {
             else
                 networking.send.fire_wand(lobby, data.client.projectile_rng_stack, special_seed, true)
             end
-            data.client.projectiles_fired = 0
+            GlobalsSetValue("wand_fire_count", "0")
             data.client.projectile_rng_stack = {}
         end
 
@@ -1957,73 +1959,77 @@ ArenaGameplay = {
         end
     end,
     OnProjectileFired = function(lobby, data, shooter_id, projectile_id, rng, position_x, position_y, target_x, target_y, send_message, unknown1, multicast_index, unknown3)
-        --if (data.state == "arena") then
-            local playerEntity = player.Get()
-            if (playerEntity ~= nil) then
-                if (playerEntity == shooter_id) then
-                    local projectileComponent = EntityGetFirstComponentIncludingDisabled(projectile_id,
-                        "ProjectileComponent")
+        --print(tostring(shooter_id))
+        
+        local playerEntity = player.Get()
+        if (playerEntity ~= nil and playerEntity == shooter_id) then
+    
+            local projectileComponent = EntityGetFirstComponentIncludingDisabled(projectile_id,
+                "ProjectileComponent")
 
-                    local who_shot            = ComponentGetValue2(projectileComponent, "mWhoShot")
-                    local entity_that_shot    = ComponentGetValue2(projectileComponent, "mEntityThatShot")
-                    if (entity_that_shot == 0 and multicast_index ~= -1 and unknown3 == 0) then
-                        data.client.projectiles_fired = data.client.projectiles_fired + 1
+            --print("yeah??")
 
-                        --rng = data.client.spread_index
-                        local rand = data.random.range(0, 100000)
-                        local rng = math.floor(rand)
+            data.client.projectiles_fired = data.client.projectiles_fired + 1
 
-                        table.insert(data.client.projectile_rng_stack, rng)
+            local who_shot            = ComponentGetValue2(projectileComponent, "mWhoShot")
+            local entity_that_shot    = ComponentGetValue2(projectileComponent, "mEntityThatShot")
+            if (entity_that_shot == 0 and multicast_index ~= -1 and unknown3 == 0) then
+                
+                --rng = data.client.spread_index
+                local rand = data.random.range(0, 100000)
+                local rng = math.floor(rand)
 
-                        --GamePrint("Setting spread rng: "..tostring(rng))
+                table.insert(data.client.projectile_rng_stack, rng)
 
-                        np.SetProjectileSpreadRNG(rng)
+                --GamePrint("Setting spread rng: "..tostring(rng))
 
-                        --data.client.spread_index = data.client.spread_index + 1
+                np.SetProjectileSpreadRNG(rng)
 
-                        --[[if(data.client.spread_index > 10)then
-                            data.client.spread_index = 1
-                        end]]
-                    else
-                        if (data.projectile_seeds[entity_that_shot]) then
-                            local new_seed = data.projectile_seeds[entity_that_shot] + 25
-                            np.SetProjectileSpreadRNG(new_seed)
-                            data.projectile_seeds[entity_that_shot] = data.projectile_seeds[entity_that_shot] + 10
-                            data.projectile_seeds[projectile_id] = new_seed
-                        end
+                --data.client.spread_index = data.client.spread_index + 1
+
+                --[[if(data.client.spread_index > 10)then
+                    data.client.spread_index = 1
+                end]]
+            else
+                if (data.projectile_seeds[entity_that_shot]) then
+                    local new_seed = data.projectile_seeds[entity_that_shot] + 25
+                    np.SetProjectileSpreadRNG(new_seed)
+                    data.projectile_seeds[entity_that_shot] = data.projectile_seeds[entity_that_shot] + 10
+                    data.projectile_seeds[projectile_id] = new_seed
+                end
+            end
+
+        end
+        if (EntityGetName(shooter_id) ~= nil and tonumber(EntityGetName(shooter_id))) then
+            if (data.players[EntityGetName(shooter_id)]) then
+                --print("whar")
+
+                --GamePrint("Setting RNG: "..tostring(arenaPlayerData[EntityGetName(shooter_id)].next_rng))
+                local projectileComponent = EntityGetFirstComponentIncludingDisabled(projectile_id,
+                    "ProjectileComponent")
+
+                local who_shot            = ComponentGetValue2(projectileComponent, "mWhoShot")
+                local entity_that_shot    = ComponentGetValue2(projectileComponent, "mEntityThatShot")
+                if (entity_that_shot == 0 and multicast_index ~= -1 and unknown3 == 0) then
+                    local rng = 0
+                    if (#(data.players[EntityGetName(shooter_id)].projectile_rng_stack) > 0) then
+                        -- set rng to first in stack, remove
+                        rng = table.remove(data.players[EntityGetName(shooter_id)].projectile_rng_stack, 1)
+                    end
+                    --GamePrint("Setting client spread rng: "..tostring(rng))
+
+                    np.SetProjectileSpreadRNG(rng)
+
+                    data.players[EntityGetName(shooter_id)].next_rng = rng + 1
+                else
+                    if (data.projectile_seeds[entity_that_shot]) then
+                        local new_seed = data.projectile_seeds[entity_that_shot] + 25
+                        np.SetProjectileSpreadRNG(new_seed)
+                        data.projectile_seeds[entity_that_shot] = data.projectile_seeds[entity_that_shot] + 10
                     end
                 end
             end
-            if (EntityGetName(shooter_id) ~= nil and tonumber(EntityGetName(shooter_id))) then
-                if (data.players[EntityGetName(shooter_id)]) then
-                    --print("whar")
-
-                    --GamePrint("Setting RNG: "..tostring(arenaPlayerData[EntityGetName(shooter_id)].next_rng))
-                    local projectileComponent = EntityGetFirstComponentIncludingDisabled(projectile_id,
-                        "ProjectileComponent")
-
-                    local who_shot            = ComponentGetValue2(projectileComponent, "mWhoShot")
-                    local entity_that_shot    = ComponentGetValue2(projectileComponent, "mEntityThatShot")
-                    if (entity_that_shot == 0 and multicast_index ~= -1 and unknown3 == 0) then
-                        local rng = 0
-                        if (#(data.players[EntityGetName(shooter_id)].projectile_rng_stack) > 0) then
-                            -- set rng to first in stack, remove
-                            rng = table.remove(data.players[EntityGetName(shooter_id)].projectile_rng_stack, 1)
-                        end
-                        --GamePrint("Setting client spread rng: "..tostring(rng))
-
-                        np.SetProjectileSpreadRNG(rng)
-
-                        data.players[EntityGetName(shooter_id)].next_rng = rng + 1
-                    else
-                        if (data.projectile_seeds[entity_that_shot]) then
-                            local new_seed = data.projectile_seeds[entity_that_shot] + 25
-                            np.SetProjectileSpreadRNG(new_seed)
-                            data.projectile_seeds[entity_that_shot] = data.projectile_seeds[entity_that_shot] + 10
-                        end
-                    end
-                end
-            end
+        end
         --end
         --[[
         if(data.state == "arena")then

@@ -598,14 +598,16 @@ networking = {
                         local children = EntityGetAllChildren(mActiveItem) or {}
                         for k, v in ipairs(children)do
                             if(EntityHasTag(v, "card_action"))then
+                                GamePrint("found card action")
                                 local item_comp = EntityGetFirstComponentIncludingDisabled(v, "ItemComponent")
                                 if(item_comp ~= nil)then
                                     local slot = ComponentGetValue2(item_comp, "inventory_slot")
                                     -- ComponentSetValue2(item_comp, "uses_remaining", 1)
-
+                                    GamePrint("card in slot: " .. tostring(slot))
+                                    print("card in slot: " .. tostring(slot))
                                     if(message[6][tostring(slot)] ~= nil)then
                                         ComponentSetValue2(item_comp, "uses_remaining", message[6][tostring(slot)])
-                                        GamePrint("wand uses updated!")
+                                        print("wand uses updated!")
                                     end
                                 end
                             end
