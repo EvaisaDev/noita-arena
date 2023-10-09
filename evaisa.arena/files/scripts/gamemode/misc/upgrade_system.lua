@@ -279,7 +279,7 @@ local upgrade_system = {
             end
 
             local keys_pressed = {
-                e = input:WasKeyPressed("e"),
+                e = bindings:IsJustDown("arena_cards_select_card"),
                 left_click = input:WasMousePressed("left"),
             }
 
@@ -287,7 +287,7 @@ local upgrade_system = {
             local r_stick_x, r_stick_y = input:GetGamepadAxis("right_stick")
             local left_bumper = input:WasGamepadButtonPressed("left_shoulder")
             local right_bumper = input:WasGamepadButtonPressed("right_shoulder")
-            local gamepad_a = input:WasGamepadButtonPressed("a")
+            local gamepad_a = bindings:IsJustDown("arena_cards_select_card_joy")
 
             local stick_x_left = stick_x < -0.5 and (not self.started_moving_left or GameGetFrameNum() % 30 == 0)
             local stick_x_right = stick_x > 0.5 and (not self.started_moving_right or GameGetFrameNum() % 30 == 0)

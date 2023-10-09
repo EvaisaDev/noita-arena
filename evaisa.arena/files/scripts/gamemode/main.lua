@@ -182,7 +182,8 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 0.61,
+    version = 0.62,
+    required_online_version = 1.6,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
     end,
@@ -190,6 +191,32 @@ ArenaMode = {
     spectator_unfinished_warning = true,
     disable_spectator_system = not ModSettingGet("evaisa.arena.spectator_unstable"),
     enable_presets = true,
+    binding_register = function(bindings)
+        print("Registering bindings for Noita Arena")
+        -- Arena Spectator keyboard bindings
+        bindings:RegisterBinding("arena_spectator_up", "Arena - Spectator [keyboard]", "Up", "Key_w", "key", false, true, false, false)
+        bindings:RegisterBinding("arena_spectator_down", "Arena - Spectator [keyboard]", "Down", "Key_s", "key", false, true, false, false)
+        bindings:RegisterBinding("arena_spectator_left", "Arena - Spectator [keyboard]", "Left", "Key_a", "key", false, true, false, false)
+        bindings:RegisterBinding("arena_spectator_right", "Arena - Spectator [keyboard]", "Right", "Key_d", "key", false, true, false, false)
+        bindings:RegisterBinding("arena_spectator_switch_left", "Arena - Spectator [keyboard]", "Switch Player Left", "Key_q", "key", false, true, false, false)
+        bindings:RegisterBinding("arena_spectator_switch_right", "Arena - Spectator [keyboard]", "Switch Player Right", "Key_e", "key", false, true, false, false)
+        
+        -- Arena Spectator gamepad bindings
+        bindings:RegisterBinding("arena_spectator_quick_switch", "Arena - Spectator [keyboard]", "Quick select", "Key_SPACE", "key", false, true, false, false)
+        bindings:RegisterBinding("arena_spectator_move_joy", "Arena - Spectator [gamepad]", "Movement stick", "gamepad_left_stick", "axis", false, false, false, true)
+        bindings:RegisterBinding("arena_spectator_switch_stick_joy", "Arena - Spectator [gamepad]", "Quick select stick", "gamepad_right_stick", "axis", false, false, false, true)
+        bindings:RegisterBinding("arena_spectator_quick_switch_joy", "Arena - Spectator [gamepad]", "Quick select", "gamepad_left_trigger", "axis_button", false, false, false, false, true)
+        bindings:RegisterBinding("arena_spectator_quick_switch_joy_confirm", "Arena - Spectator [gamepad]", "Quick switch confirm", "gamepad_right_trigger", "axis_button", false, false, false, false, true)
+        bindings:RegisterBinding("arena_spectator_switch_left_joy", "Arena - Spectator [gamepad]", "Switch Player Left", "JOY_BUTTON_LEFT_SHOULDER", "joy", false, false, true, false)
+        bindings:RegisterBinding("arena_spectator_switch_right_joy", "Arena - Spectator [gamepad]", "Switch Player Right", "JOY_BUTTON_RIGHT_SHOULDER", "joy", false, false, true, false)
+    
+        -- Card system keyboard bindings
+        bindings:RegisterBinding("arena_cards_select_card", "Arena - Cards [keyboard]", "Take selected card", "Key_e", "key", false, true, false, false)
+
+        -- Card system gamepad bindings
+        bindings:RegisterBinding("arena_cards_select_card_joy", "Arena - Cards [gamepad]", "Take selected card", "JOY_BUTTON_A", "joy", false, false, true, false)
+        
+    end,
     default_presets = {
         ["Wand Locked"] = {
             ["version"] = 2,
@@ -704,6 +731,9 @@ ArenaMode = {
                 steam.matchmaking.setLobbyData(lobby, "content_hash", content_hash)
             else
                 content_hash_popup_active = content_hash_popup_active or false
+                if(content_hash_popup_active)then
+                    return
+                end
                 popup.create("content_mismatch", GameTextGetTranslatedOrNot("$arena_content_mismatch_name"),{
 					{
 						text = GameTextGetTranslatedOrNot("$arena_content_mismatch_description"),
@@ -915,6 +945,33 @@ ArenaMode = {
         arena_log:print("Lobby data refreshed")
     end,
     enter = function(lobby)
+
+        if(MP_VERSION < ArenaMode.required_online_version)then
+            invalid_version_popup_active = invalid_version_popup_active or false
+            if(not invalid_version_popup_active)then
+                popup.create("bad_online", GameTextGetTranslatedOrNot("$arena_bad_online_version"), string.format(GameTextGetTranslatedOrNot("$arena_bad_online_version_desc"), ArenaMode.required_online_version), {
+                    {
+                        text = GameTextGetTranslatedOrNot("$arena_online_update"),
+                        callback = function()
+                            invalid_version_popup_active = false
+                            os.execute("start explorer \"" .. noita_online_download .. "\"")
+                        end
+                    },
+                    {
+                        text = GameTextGetTranslatedOrNot("$mp_close_popup"),
+                        callback = function()
+                            invalid_version_popup_active = false
+                        end
+                    }
+                }, -6000)
+
+                disconnect({
+                    lobbyID = lobby,
+                    message = GameTextGetTranslatedOrNot("$arena_bad_online_version")
+                })
+            end
+        end
+        
         GlobalsSetValue("holyMountainCount", "0")
         GameAddFlagRun("player_unloaded")
 

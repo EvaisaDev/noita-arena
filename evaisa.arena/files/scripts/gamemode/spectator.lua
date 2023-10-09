@@ -250,21 +250,22 @@ SpectatorMode = {
             end
 
             local keys_pressed = {
-                w = input:WasKeyPressed("w"),
-                a = input:WasKeyPressed("a"),
-                s = input:WasKeyPressed("s"),
-                d = input:WasKeyPressed("d"),
-                q = input:WasKeyPressed("q"),
-                e = input:WasKeyPressed("e"),
+                w = bindings:IsJustDown("arena_spectator_up"),
+                a = bindings:IsJustDown("arena_spectator_left"),
+                s = bindings:IsJustDown("arena_spectator_down"),
+                d = bindings:IsJustDown("arena_spectator_right"),
+                q = bindings:IsJustDown("arena_spectator_switch_left"),
+                e = bindings:IsJustDown("arena_spectator_switch_right"),
+                space_down = bindings:IsDown("arena_spectator_quick_switch"),
             }
 
-            local stick_x, stick_y = input:GetGamepadAxis("left_stick")
-            local r_stick_x, r_stick_y = input:GetGamepadAxis("right_stick")
-            local left_trigger = input:GetGamepadAxis("left_trigger")
-            local right_trigger = input:GetGamepadAxis("right_trigger")
+            local stick_x, stick_y = bindings:GetAxis("arena_spectator_move_joy")--input:GetGamepadAxis("left_stick")
+            local r_stick_x, r_stick_y = bindings:GetAxis("arena_spectator_switch_stick_joy")
+            local left_trigger = bindings:GetAxis("arena_spectator_quick_switch_joy")
+            local right_trigger = bindings:GetAxis("arena_spectator_quick_switch_joy")
 
-            local left_bumper = input:WasGamepadButtonPressed("left_shoulder")
-            local right_bumper = input:WasGamepadButtonPressed("right_shoulder")
+            local left_bumper = bindings:IsJustDown("arena_spectator_switch_left_joy")
+            local right_bumper = bindings:IsJustDown("arena_spectator_switch_right_joy")
 
             local right_trigger_pressed = right_trigger >= 0.5 and data.spectator_quick_switch_trigger < 0.5
             
@@ -349,7 +350,7 @@ SpectatorMode = {
                     end
                 end
 
-                if(input:IsKeyDown("space") or left_trigger > 0.5)then
+                if(keys_pressed.space_down or left_trigger > 0.5)then
                     local circle_image = "mods/evaisa.arena/files/sprites/ui/spectator/circle_selection-2.png"
                     --local inner_circle_image = "mods/evaisa.arena/files/sprites/ui/spectator/circle_selection_inner.png"
                     local circle_width, circle_height = GuiGetImageDimensions(data.spectator_gui, circle_image)
@@ -618,22 +619,23 @@ SpectatorMode = {
         end
 
         local keys_pressed = {
-            w = input:WasKeyPressed("w"),
-            a = input:WasKeyPressed("a"),
-            s = input:WasKeyPressed("s"),
-            d = input:WasKeyPressed("d"),
-            q = input:WasKeyPressed("q"),
-            e = input:WasKeyPressed("e"),
-            space = input:WasKeyPressed("space"),
+            w = bindings:IsJustDown("arena_spectator_up"),
+            a = bindings:IsJustDown("arena_spectator_left"),
+            s = bindings:IsJustDown("arena_spectator_down"),
+            d = bindings:IsJustDown("arena_spectator_right"),
+            q = bindings:IsJustDown("arena_spectator_switch_left"),
+            e = bindings:IsJustDown("arena_spectator_switch_right"),
+            space_down = bindings:IsDown("arena_spectator_quick_switch"),
+            space = bindings:IsJustDown("arena_spectator_quick_switch"),
         }
 
-        local stick_x, stick_y = input:GetGamepadAxis("left_stick")
-        local r_stick_x, r_stick_y = input:GetGamepadAxis("right_stick")
-        local left_trigger = input:GetGamepadAxis("left_trigger")
-        local right_trigger = input:GetGamepadAxis("right_trigger")
+        local stick_x, stick_y = bindings:GetAxis("arena_spectator_move_joy")--input:GetGamepadAxis("left_stick")
+        local r_stick_x, r_stick_y = bindings:GetAxis("arena_spectator_switch_stick_joy")
+        local left_trigger = bindings:GetAxis("arena_spectator_quick_switch_joy")
+        local right_trigger = bindings:GetAxis("arena_spectator_quick_switch_joy")
 
-        local left_bumper = input:WasGamepadButtonPressed("left_shoulder")
-        local right_bumper = input:WasGamepadButtonPressed("right_shoulder")
+        local left_bumper = bindings:IsJustDown("arena_spectator_switch_left_joy")
+        local right_bumper = bindings:IsJustDown("arena_spectator_switch_right_joy")
 
         local right_trigger_pressed = right_trigger >= 0.5 and data.spectator_quick_switch_trigger < 0.5
         
