@@ -187,7 +187,7 @@ ArenaMode = {
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
     end,
-    version_flavor_text = "$arena_open_beta",
+    version_flavor_text = "$arena_dev",
     spectator_unfinished_warning = true,
     disable_spectator_system = not ModSettingGet("evaisa.arena.spectator_unstable"),
     enable_presets = true,
