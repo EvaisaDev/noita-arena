@@ -594,6 +594,23 @@ networking = {
                                 mNextChargeFrame = next_charge_frame - GameGetFrameNum(),
                             }
                         ]]
+
+                        local children = EntityGetAllChildren(mActiveItem) or {}
+                        for k, v in ipairs(children)do
+                            if(EntityHasTag(v, "card_action"))then
+                                local item_comp = EntityGetFirstComponentIncludingDisabled(v, "ItemComponent")
+                                if(item_comp ~= nil)then
+                                    local slot = ComponentGetValue2(item_comp, "inventory_slot")
+                                    -- ComponentSetValue2(item_comp, "uses_remaining", 1)
+
+                                    if(message[6][tostring(slot)] ~= nil)then
+                                        ComponentSetValue2(item_comp, "uses_remaining", message[6][tostring(slot)])
+                                        GamePrint("wand uses updated!")
+                                    end
+                                end
+                            end
+                        end
+
                         local mana = message[1]
                         local mCastDelayStartFrame = GameGetFrameNum() - message[2]
                         local mReloadFramesLeft = message[3]
@@ -1088,6 +1105,35 @@ networking = {
                 -- if has ability component
                 local abilityComp = EntityGetFirstComponentIncludingDisabled(held_item, "AbilityComponent")
                 if (abilityComp) then
+
+                    local spell_uses_table = {}
+
+                    local spell_table_changed = false
+                    
+                    local children = EntityGetAllChildren(held_item) or {}
+                    for k, v in ipairs(children)do
+                        if(EntityHasTag(v, "card_action"))then
+                            local item_comp = EntityGetFirstComponentIncludingDisabled(v, "ItemComponent")
+                            if(item_comp ~= nil)then
+                                local inventory_slot = ComponentGetValue2(item_comp, "inventory_slot")
+                                local uses_remaining = ComponentGetValue2(item_comp, "uses_remaining")
+                                spell_uses_table[tostring(inventory_slot)] = {uses_remaining = uses_remaining}
+                                if(data.client.previous_wand_stats.spell_uses_table ~= nil)then
+                                    if(data.client.previous_wand_stats.spell_uses_table[tostring(inventory_slot)] ~= nil)then
+                                        if(data.client.previous_wand_stats.spell_uses_table[tostring(inventory_slot)].uses_remaining ~= uses_remaining)then
+                                            spell_table_changed = true
+                                        end
+                                    else
+                                        spell_table_changed = true
+                                    end
+                                else
+                                    spell_table_changed = true
+                                end
+                            end
+                        end
+                    end
+                    
+
                     -- get current mana
                     local mana = ComponentGetValue2(abilityComp, "mana")
                     -- mCastDelayStartFrame
@@ -1103,19 +1149,22 @@ networking = {
                             data.client.previous_wand_stats.mCastDelayStartFrame ~= cast_delay_start_frame or
                             data.client.previous_wand_stats.mReloadFramesLeft ~= reload_frames_left or
                             data.client.previous_wand_stats.mReloadNextFrameUsable ~= reload_next_frame_usable or
-                            data.client.previous_wand_stats.mNextChargeFrame ~= next_charge_frame) then
+                            data.client.previous_wand_stats.mNextChargeFrame ~= next_charge_frame or
+                            spell_table_changed) then
                         data.client.previous_wand_stats.mana = mana
                         data.client.previous_wand_stats.mCastDelayStartFrame = cast_delay_start_frame
                         data.client.previous_wand_stats.mReloadFramesLeft = reload_frames_left
                         data.client.previous_wand_stats.mReloadNextFrameUsable = reload_next_frame_usable
                         data.client.previous_wand_stats.mNextChargeFrame = next_charge_frame
-
+                        data.client.previous_wand_stats.spell_uses_table = spell_uses_table
+                        
                         local msg_data = {
                             mana,
                             GameGetFrameNum() - cast_delay_start_frame,
-                            mReloadFramesLeft = reload_frames_left,
-                            mReloadNextFrameUsable = reload_next_frame_usable - GameGetFrameNum(),
-                            mNextChargeFrame = next_charge_frame - GameGetFrameNum(),
+                            reload_frames_left,
+                            reload_next_frame_usable - GameGetFrameNum(),
+                            next_charge_frame - GameGetFrameNum(),
+                            spell_uses_table,
                         }
 
                         if(to_spectators)then
