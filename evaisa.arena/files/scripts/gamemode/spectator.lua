@@ -1,5 +1,3 @@
-
-
 SpectatorMode = {
     LoadLobby = function(lobby, data, show_message)
 
@@ -256,13 +254,23 @@ SpectatorMode = {
                 d = bindings:IsJustDown("arena_spectator_right"),
                 q = bindings:IsJustDown("arena_spectator_switch_left"),
                 e = bindings:IsJustDown("arena_spectator_switch_right"),
-                space_down = bindings:IsDown("arena_spectator_quick_switch"),
+                space = bindings:IsJustDown("arena_spectator_quick_switch"),
+            }
+    
+            local keys_down = {
+                w = bindings:IsDown("arena_spectator_up"),
+                a = bindings:IsDown("arena_spectator_left"),
+                s = bindings:IsDown("arena_spectator_down"),
+                d = bindings:IsDown("arena_spectator_right"),
+                switch = bindings:IsDown("arena_spectator_quick_switch"),
+                fast_move = bindings:IsDown("arena_spectator_fast_move"),
             }
 
             local stick_x, stick_y = bindings:GetAxis("arena_spectator_move_joy")--input:GetGamepadAxis("left_stick")
             local r_stick_x, r_stick_y = bindings:GetAxis("arena_spectator_switch_stick_joy")
             local left_trigger = bindings:GetAxis("arena_spectator_quick_switch_joy")
             local right_trigger = bindings:GetAxis("arena_spectator_quick_switch_joy")
+            local fast_move = bindings:GetAxis("arena_spectator_fast_move_joy")
 
             local left_bumper = bindings:IsJustDown("arena_spectator_switch_left_joy")
             local right_bumper = bindings:IsJustDown("arena_spectator_switch_right_joy")
@@ -273,16 +281,22 @@ SpectatorMode = {
 
             if (not GameHasFlagRun("chat_input_hovered")) then
 
-                local camera_speed = tonumber(MagicNumbersGetValue("DEBUG_FREE_CAMERA_SPEED")) or 2
-                local movement_x = (stick_x * (camera_speed * (1 + (right_trigger * 5))))
-                local movement_y = (stick_y * (camera_speed * (1 + (right_trigger * 5))))
-
+                local camera_speed = 2
+                local movement_x = (stick_x * (camera_speed * (1 + (fast_move * 5))))
+                local movement_y = (stick_y * (camera_speed * (1 + (fast_move * 5))))
+    
+                local movement_x2 = ((keys_down.a and -1 or 0) + (keys_down.d and 1 or 0)) * (camera_speed * (1 + (keys_down.fast_move and 5 or 0)))
+                local movement_y2 = ((keys_down.w and -1 or 0) + (keys_down.s and 1 or 0)) * (camera_speed * (1 + (keys_down.fast_move and 5 or 0)))
+    
                 local stick_average = ((stick_x + stick_y) / 2)
-
+    
                 if(stick_average >= 0.1 or stick_average <= -0.1)then
                     --arena_log:print("x_move: "..tostring(movement_x)..", y_move: "..tostring(movement_y))
-
                     GameSetCameraPos(camera_x + movement_x, camera_y + movement_y)
+                end
+    
+                if(movement_x2 ~= 0 or movement_y2 ~= 0)then
+                    GameSetCameraPos(camera_x + movement_x2, camera_y + movement_y2)
                 end
 
                 if (keys_pressed.w or keys_pressed.a or keys_pressed.s or keys_pressed.d or stick_average >= 0.1 or stick_average <= -0.1) then
@@ -350,7 +364,7 @@ SpectatorMode = {
                     end
                 end
 
-                if(keys_pressed.space_down or left_trigger > 0.5)then
+                if(keys_down.switch or left_trigger > 0.5)then
                     local circle_image = "mods/evaisa.arena/files/sprites/ui/spectator/circle_selection-2.png"
                     --local inner_circle_image = "mods/evaisa.arena/files/sprites/ui/spectator/circle_selection_inner.png"
                     local circle_width, circle_height = GuiGetImageDimensions(data.spectator_gui, circle_image)
@@ -625,14 +639,23 @@ SpectatorMode = {
             d = bindings:IsJustDown("arena_spectator_right"),
             q = bindings:IsJustDown("arena_spectator_switch_left"),
             e = bindings:IsJustDown("arena_spectator_switch_right"),
-            space_down = bindings:IsDown("arena_spectator_quick_switch"),
             space = bindings:IsJustDown("arena_spectator_quick_switch"),
+        }
+
+        local keys_down = {
+            w = bindings:IsDown("arena_spectator_up"),
+            a = bindings:IsDown("arena_spectator_left"),
+            s = bindings:IsDown("arena_spectator_down"),
+            d = bindings:IsDown("arena_spectator_right"),
+            switch = bindings:IsDown("arena_spectator_quick_switch"),
+            fast_move = bindings:IsDown("arena_spectator_fast_move"),
         }
 
         local stick_x, stick_y = bindings:GetAxis("arena_spectator_move_joy")--input:GetGamepadAxis("left_stick")
         local r_stick_x, r_stick_y = bindings:GetAxis("arena_spectator_switch_stick_joy")
         local left_trigger = bindings:GetAxis("arena_spectator_quick_switch_joy")
         local right_trigger = bindings:GetAxis("arena_spectator_quick_switch_joy")
+        local fast_move = bindings:GetAxis("arena_spectator_fast_move_joy")
 
         local left_bumper = bindings:IsJustDown("arena_spectator_switch_left_joy")
         local right_bumper = bindings:IsJustDown("arena_spectator_switch_right_joy")
@@ -643,16 +666,22 @@ SpectatorMode = {
 
         if (not GameHasFlagRun("chat_input_hovered")) then
 
-            local camera_speed = tonumber(MagicNumbersGetValue("DEBUG_FREE_CAMERA_SPEED")) or 2
-            local movement_x = (stick_x * (camera_speed * (1 + (right_trigger * 5))))
-            local movement_y = (stick_y * (camera_speed * (1 + (right_trigger * 5))))
+            local camera_speed = 2
+            local movement_x = (stick_x * (camera_speed * (1 + (fast_move * 5))))
+            local movement_y = (stick_y * (camera_speed * (1 + (fast_move * 5))))
+
+            local movement_x2 = ((keys_down.a and -1 or 0) + (keys_down.d and 1 or 0)) * (camera_speed * (1 + (keys_down.fast_move and 5 or 0)))
+            local movement_y2 = ((keys_down.w and -1 or 0) + (keys_down.s and 1 or 0)) * (camera_speed * (1 + (keys_down.fast_move and 5 or 0)))
 
             local stick_average = ((stick_x + stick_y) / 2)
 
             if(stick_average >= 0.1 or stick_average <= -0.1)then
                 --arena_log:print("x_move: "..tostring(movement_x)..", y_move: "..tostring(movement_y))
-
                 GameSetCameraPos(camera_x + movement_x, camera_y + movement_y)
+            end
+
+            if(movement_x2 ~= 0 or movement_y2 ~= 0)then
+                GameSetCameraPos(camera_x + movement_x2, camera_y + movement_y2)
             end
 
             if (keys_pressed.w or keys_pressed.a or keys_pressed.s or keys_pressed.d or stick_average >= 0.1 or stick_average <= -0.1) then

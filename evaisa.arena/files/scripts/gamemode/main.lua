@@ -200,7 +200,8 @@ ArenaMode = {
         bindings:RegisterBinding("arena_spectator_right", "Arena - Spectator [keyboard]", "Right", "Key_d", "key", false, true, false, false)
         bindings:RegisterBinding("arena_spectator_switch_left", "Arena - Spectator [keyboard]", "Switch Player Left", "Key_q", "key", false, true, false, false)
         bindings:RegisterBinding("arena_spectator_switch_right", "Arena - Spectator [keyboard]", "Switch Player Right", "Key_e", "key", false, true, false, false)
-        
+        bindings:RegisterBinding("arena_spectator_fast_move", "Arena - Spectator [keyboard]", "Move Fast", "Key_LSHIFT", "key", false, true, false, false)
+
         -- Arena Spectator gamepad bindings
         bindings:RegisterBinding("arena_spectator_quick_switch", "Arena - Spectator [keyboard]", "Quick select", "Key_SPACE", "key", false, true, false, false)
         bindings:RegisterBinding("arena_spectator_move_joy", "Arena - Spectator [gamepad]", "Movement stick", "gamepad_left_stick", "axis", false, false, false, true)
@@ -209,6 +210,7 @@ ArenaMode = {
         bindings:RegisterBinding("arena_spectator_quick_switch_joy_confirm", "Arena - Spectator [gamepad]", "Quick switch confirm", "gamepad_right_trigger", "axis_button", false, false, false, false, true)
         bindings:RegisterBinding("arena_spectator_switch_left_joy", "Arena - Spectator [gamepad]", "Switch Player Left", "JOY_BUTTON_LEFT_SHOULDER", "joy", false, false, true, false)
         bindings:RegisterBinding("arena_spectator_switch_right_joy", "Arena - Spectator [gamepad]", "Switch Player Right", "JOY_BUTTON_RIGHT_SHOULDER", "joy", false, false, true, false)
+        bindings:RegisterBinding("arena_spectator_fast_move_joy", "Arena - Spectator [gamepad]", "Move Fast", "gamepad_right_trigger", "axis_button", false, false, false, false, true)
     
         -- Card system keyboard bindings
         bindings:RegisterBinding("arena_cards_select_card", "Arena - Cards [keyboard]", "Take selected card", "Key_e", "key", false, true, false, false)
