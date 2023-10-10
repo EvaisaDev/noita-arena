@@ -118,7 +118,7 @@ _start_shot = function( current_mana )
     local shooter = EntityGetRootEntity(GetUpdatedEntityID())
     if(GameHasFlagRun("shooter_reorder_"..EntityGetName(shooter)))then
         GameRemoveFlagRun("shooter_reorder_"..EntityGetName(shooter))
-        first_shot = true
+        _handle_reload()
     end
 
     -- debug checks
