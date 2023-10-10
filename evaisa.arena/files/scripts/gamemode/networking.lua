@@ -208,7 +208,7 @@ networking = {
             end
         end,
         wand_update = function(lobby, message, user, data)
-            GamePrint("Wand update!")
+            --GamePrint("Wand update!")
 
             if (not gameplay_handler.CheckPlayer(lobby, user, data)) then
                 return
@@ -601,16 +601,16 @@ networking = {
                         local children = EntityGetAllChildren(mActiveItem) or {}
                         for k, v in ipairs(children)do
                             if(EntityHasTag(v, "card_action"))then
-                                GamePrint("found card action")
+                                --GamePrint("found card action")
                                 local item_comp = EntityGetFirstComponentIncludingDisabled(v, "ItemComponent")
                                 if(item_comp ~= nil)then
                                     local slot = ComponentGetValue2(item_comp, "inventory_slot")
                                     -- ComponentSetValue2(item_comp, "uses_remaining", 1)
-                                    GamePrint("card in slot: " .. tostring(slot))
-                                    print("card in slot: " .. tostring(slot))
+                                    --GamePrint("card in slot: " .. tostring(slot))
+                                    --print("card in slot: " .. tostring(slot))
                                     if(message[6][tostring(slot)] ~= nil)then
                                         ComponentSetValue2(item_comp, "uses_remaining", message[6][tostring(slot)])
-                                        print("wand uses updated!")
+                                        --print("wand uses updated!")
                                     end
                                 end
                             end
@@ -732,7 +732,7 @@ networking = {
                 GlobalsSetValue("shooter_rng_" .. tostring(user), tostring(message[5]))
 
                 if(message[6])then
-                    GamePrint("reshuffle time bitch!!!")
+                    --GamePrint("reshuffle time bitch!!!")
                     GameAddFlagRun("shooter_reorder_"..tostring(user))
                 end
 

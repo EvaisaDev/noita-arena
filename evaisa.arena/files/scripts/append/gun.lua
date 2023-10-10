@@ -52,7 +52,7 @@ order_deck = function()
             GlobalsSetValue("player_rng", tostring(seed))
         end
 
-        GamePrint("Seed forced to: "..tostring(seed))
+        --GamePrint("Seed forced to: "..tostring(seed))
 
         oldSetRandomSeed(seed, seed)
     end
