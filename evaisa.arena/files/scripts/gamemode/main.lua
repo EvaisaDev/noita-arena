@@ -156,7 +156,6 @@ local function SendLobbyData(lobby)
         end
         --print(perk_blacklist_string_temp)
         steam.matchmaking.setLobbyData(lobby, "perk_blacklist_data", perk_blacklist_string_temp)
-        steam.matchmaking.sendLobbyChatMsg(lobby, "refresh")
     end
 
     if(sorted_spell_list_ids)then
@@ -170,10 +169,9 @@ local function SendLobbyData(lobby)
         end
         --print(spell_blacklist_string_temp)
         steam.matchmaking.setLobbyData(lobby, "spell_blacklist_data", spell_blacklist_string_temp)
-        steam.matchmaking.sendLobbyChatMsg(lobby, "refresh")
     end
         
-
+    steam.matchmaking.sendLobbyChatMsg(lobby, "refresh")
 end
 
 
@@ -182,7 +180,7 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 0.633,
+    version = 0.634,
     required_online_version = 1.61,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
