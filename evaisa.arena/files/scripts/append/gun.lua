@@ -64,10 +64,14 @@ end]]
 --    SetRandomSeed = oldSetRandomSeed
 --end
 
+
+
 order_deck = function()
+    local shooter = EntityGetRootEntity(GetUpdatedEntityID())
+    GameAddFlagRun("we_reloaded")
 	if gun.shuffle_deck_when_empty then
         local seed = 0
-        local shooter = EntityGetRootEntity(GetUpdatedEntityID())
+
         if(EntityHasTag(shooter, "client"))then
             --GamePrint("2: shooter_rng_"..EntityGetName(shooter))
             seed = tonumber(GlobalsGetValue("shooter_rng_"..EntityGetName(shooter), "0")) or 0
@@ -108,6 +112,44 @@ order_deck = function()
 			table.sort( deck, function(a,b) local a_ = a.deck_index or 0 local b_ = b.deck_index or 0 return a_<b_ end )
 		end
     end
+end
+
+_start_shot = function( current_mana )
+    local shooter = EntityGetRootEntity(GetUpdatedEntityID())
+    if(GameHasFlagRun("shooter_reorder_"..EntityGetName(shooter)))then
+        GameRemoveFlagRun("shooter_reorder_"..EntityGetName(shooter))
+        first_shot = true
+    end
+
+    -- debug checks
+	if state_from_game == nil then
+		print("'gun.lua' - state_from_game is nil - did we ever initialize this gun?")
+		return
+	end
+	
+	dont_draw_actions = false
+	force_stop_draws = false
+
+	-- create the initial shot
+	root_shot = create_shot( 1 )
+	c = root_shot.state
+
+	-- set up the initial state for the selected gun
+	ConfigGunActionInfo_Copy( state_from_game, c )
+	ConfigGunShotEffects_Init( shot_effects )
+
+	root_shot.num_of_cards_to_draw = gun.actions_per_round
+
+	mana = current_mana
+
+	-- set the deck order if required
+	if first_shot then
+		order_deck()
+		current_reload_time = gun.reload_time
+		first_shot = false
+	end
+
+	got_projectiles = false
 end
 
 --local json = dofile("mods/evaisa.arena/lib/json.lua")

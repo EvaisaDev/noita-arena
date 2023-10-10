@@ -728,6 +728,11 @@ networking = {
 
                 GlobalsSetValue("shooter_rng_" .. tostring(user), tostring(message[5]))
 
+                if(message[6])then
+                    GamePrint("reshuffle time bitch!!!")
+                    GameAddFlagRun("shooter_reorder_"..tostring(user))
+                end
+
                 data.players[tostring(user)].projectile_rng_stack = message[4]
 
                 local controlsComp = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity,
@@ -1234,7 +1239,8 @@ networking = {
                         y,
                         r,
                         rng,
-                        special_seed
+                        special_seed,
+                        GameHasFlagRun("we_reloaded")
                     }
 
                     if(to_spectators)then
