@@ -208,12 +208,15 @@ networking = {
             end
         end,
         wand_update = function(lobby, message, user, data)
+            GamePrint("Wand update!")
+
             if (not gameplay_handler.CheckPlayer(lobby, user, data)) then
                 return
             end
 
             if (data.players[tostring(user)].entity and EntityGetIsAlive(data.players[tostring(user)].entity)) then
                 local wand_string = message[2]
+                local force = message[3]
 
                 local last_inventory_string = data.players[tostring(user)].last_inventory_string
 
@@ -221,7 +224,7 @@ networking = {
                     last_inventory_string = ""
                 end
 
-                if (last_inventory_string ~= wand_string) then
+                if (last_inventory_string ~= wand_string or force) then
                     if (data.players[tostring(user)].entity and EntityGetIsAlive(data.players[tostring(user)].entity)) then
                         local items = GameGetAllInventoryItems(data.players[tostring(user)].entity) or {}
                         for i, item_id in ipairs(items) do
