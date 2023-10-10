@@ -23,7 +23,7 @@ local generate_spell_list = function()
             goto continue
         end
     
-    
+
         local spawn_levels = {}
         for spawn_level in string.gmatch(v.spawn_level or "", "([^,]+)") do
             table.insert(spawn_levels, tonumber(spawn_level))
@@ -34,17 +34,31 @@ local generate_spell_list = function()
             table.insert(spawn_probabilities, tonumber(spawn_probability))
         end
     
-        for k, level in ipairs(spawn_levels) do
-            local key = "level_" .. tostring(level)
-            spell_list[key] = spell_list[key] or {}
-    
-            table.insert(spell_list[key], {
-                id = v.id,
-                probability = spawn_probabilities[k],
-                type = v.type
-            })
+        if(GameHasFlagRun("shop_no_tiers"))then
+            for i = 0, 50 do
+                local key = "level_" .. tostring(i)
+                spell_list[key] = spell_list[key] or {}
+        
+                table.insert(spell_list[key], {
+                    id = v.id,
+                    probability = 1,
+                    type = v.type
+                })
+            end
+
+        else
+            for k, level in ipairs(spawn_levels) do
+                local key = "level_" .. tostring(level)
+                spell_list[key] = spell_list[key] or {}
+        
+                table.insert(spell_list[key], {
+                    id = v.id,
+                    probability = spawn_probabilities[k],
+                    type = v.type
+                })
+            end
         end
-    
+        
         ::continue::
     end
 

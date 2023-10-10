@@ -290,6 +290,13 @@ ArenaMode = {
             type = "bool",
             default = false
         },  
+        {
+            id = "shop_no_tiers",
+			name = "$arena_settings_shop_disable_tiers_name",
+			description = "$arena_settings_shop_disable_tiers_description",
+            type = "bool",
+            default = false
+        },
 		{
 			id = "shop_type",
 			name = "$arena_settings_shop_type_name",
@@ -829,6 +836,16 @@ ArenaMode = {
             GameAddFlagRun("shop_sync")
         else
             GameRemoveFlagRun("shop_sync")
+        end
+
+        local shop_no_tiers = steam.matchmaking.getLobbyData(lobby, "setting_shop_no_tiers")
+        if (shop_no_tiers == nil) then
+            shop_no_tiers = "false"
+        end
+        if(shop_no_tiers == "true")then
+            GameAddFlagRun("shop_no_tiers")
+        else
+            GameRemoveFlagRun("shop_no_tiers")
         end
 
 		local shop_wand_chance = steam.matchmaking.getLobbyData(lobby, "setting_shop_wand_chance")

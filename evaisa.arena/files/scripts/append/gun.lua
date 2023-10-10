@@ -1,4 +1,5 @@
-local old_order_deck = order_deck --[[function ()
+--local old_order_deck = order_deck 
+--[[function ()
     if gun.shuffle_deck_when_empty then
         SetRandomSeed( 0, 0 )
         -- shuffle the deck
@@ -32,37 +33,82 @@ local old_order_deck = order_deck --[[function ()
     end
 end]]
 
+--order_deck = function()
+--    local oldSetRandomSeed = SetRandomSeed
+--    SetRandomSeed = function() 
+--
+--        local shooter = EntityGetRootEntity(GetUpdatedEntityID())
+--
+--        --GamePrint(EntityGetName(shooter))
+--
+--        --oldSetRandomSeed(GameGetFrameNum(), GameGetFrameNum())
+--
+--        --[[local seed = 0
+--        if(EntityHasTag(shooter, "client"))then
+--            --GamePrint("2: shooter_rng_"..EntityGetName(shooter))
+--            seed = tonumber(GlobalsGetValue("shooter_rng_"..EntityGetName(shooter), "0")) or 0
+--        elseif(EntityHasTag(shooter, "player_unit"))then
+--            seed = Random(10, 10000000)
+--            GlobalsSetValue("player_rng", tostring(seed))
+--        end]]
+--
+--        local seed = 0
+--
+--        GamePrint("Seed forced to: "..tostring(seed))
+--
+--        oldSetRandomSeed(seed, seed)
+--    end
+--
+--    old_order_deck()
+--
+--    SetRandomSeed = oldSetRandomSeed
+--end
+
 order_deck = function()
-    local oldSetRandomSeed = SetRandomSeed
-    SetRandomSeed = function() 
-
+	if gun.shuffle_deck_when_empty then
+        local seed = 0
         local shooter = EntityGetRootEntity(GetUpdatedEntityID())
-
-        --GamePrint(EntityGetName(shooter))
-
-        --oldSetRandomSeed(GameGetFrameNum(), GameGetFrameNum())
-
-        --[[local seed = 0
         if(EntityHasTag(shooter, "client"))then
             --GamePrint("2: shooter_rng_"..EntityGetName(shooter))
             seed = tonumber(GlobalsGetValue("shooter_rng_"..EntityGetName(shooter), "0")) or 0
         elseif(EntityHasTag(shooter, "player_unit"))then
             seed = Random(10, 10000000)
             GlobalsSetValue("player_rng", tostring(seed))
-        end]]
+        end
 
-        
+        GamePrint("Seed forced to: "..tostring(seed))
 
-       -- GamePrint("Seed forced to: "..tostring(seed))
+		SetRandomSeed( seed, seed )
+		-- shuffle the deck
+		state_shuffled = true
 
-        oldSetRandomSeed(0, 0)
+		local rand = Random 
+	    local iterations = #deck
+	    local new_deck = { }
+
+        GamePrint(Random(0, 100))
+
+	    for i = iterations, 1, -1 do  -- looping from iterations to 1 (inclusive)
+			local index = rand( 1, i )
+			local action = deck[ index ]
+			table.remove( deck, index )
+			table.insert( new_deck, action )
+	    end
+
+		deck = new_deck
+    else
+		-- sort the deck
+		if ( force_stop_draws == false ) then
+			table.sort( deck, function(a,b) 
+					local a_index = a.deck_index or 0 
+					local b_index = b.deck_index or 0
+					return a_index<b_index
+				end )
+		else
+			table.sort( deck, function(a,b) local a_ = a.deck_index or 0 local b_ = b.deck_index or 0 return a_<b_ end )
+		end
     end
-
-    old_order_deck()
-
-    SetRandomSeed = oldSetRandomSeed
 end
-
 
 --local json = dofile("mods/evaisa.arena/lib/json.lua")
 
