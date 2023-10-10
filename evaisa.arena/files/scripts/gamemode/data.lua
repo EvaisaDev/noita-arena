@@ -28,6 +28,7 @@ function data:New()
         client = {
             ready = false,
             alive = true,
+            inventory_was_open = false,
             previous_wand = nil,
             previous_anim = nil,
             previous_perk_string = nil,

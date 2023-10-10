@@ -1858,6 +1858,24 @@ ArenaGameplay = {
         if (data.state == "arena") then
             ArenaGameplay.KillCheck(lobby, data)
 
+            local player = player.Get()
+
+            local inventory_gui_comp = EntityGetFirstComponentIncludingDisabled(player, "InventoryGuiComponent")
+
+            local inventory_open = ComponentGetValue2(inventory_gui_comp, "mActive")
+            if(inventory_open)then
+                if(not data.client.inventory_was_open)then
+                    GamePrint("inventory_was_opened")
+                end
+                data.client.inventory_was_open = true
+            else
+                if(data.client.inventory_was_open)then
+                    GamePrint("inventory_was_closed")
+                    networking.send.wand_update(lobby, data, nil, true, true)
+                end
+                data.client.inventory_was_open = false
+            end
+
 
             --
         --[[else
