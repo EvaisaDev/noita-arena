@@ -1871,7 +1871,7 @@ ArenaGameplay = {
             else
                 if(data.client.inventory_was_open)then
                     GamePrint("inventory_was_closed")
-                    networking.send.wand_update(lobby, data, nil, true, true)
+                    networking.send.wand_update(lobby, data, nil, true, false)
                 end
                 data.client.inventory_was_open = false
             end
