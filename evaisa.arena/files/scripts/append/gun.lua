@@ -52,8 +52,6 @@ order_deck = function()
             GlobalsSetValue("player_rng", tostring(seed))
         end
 
-        local seed = 0
-
         GamePrint("Seed forced to: "..tostring(seed))
 
         oldSetRandomSeed(seed, seed)
