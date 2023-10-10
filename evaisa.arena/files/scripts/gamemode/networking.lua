@@ -1234,6 +1234,8 @@ networking = {
                 if (wand ~= nil) then
                     local x, y, r = EntityGetTransform(wand)
 
+                   
+
                     local data = {
                         x,
                         y,
@@ -1242,7 +1244,8 @@ networking = {
                         special_seed,
                         GameHasFlagRun("we_reloaded")
                     }
-
+                    GameRemoveFlagRun("we_reloaded")
+                    
                     if(to_spectators)then
                         steamutils.send("fire_wand", data, steamutils.messageTypes.Spectators, lobby, false, true)
                     else
