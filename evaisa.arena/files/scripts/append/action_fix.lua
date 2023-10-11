@@ -93,13 +93,14 @@ for i=#actions,1,-1 do
 
             SetRandomSeed = function() 
                 oldSetRandomSeed(seed, seed)
+                print("Seed forced to: "..tostring(seed))
             end
-
-            GamePrint("Seed forced to: "..tostring(seed))
 
             func(...)
 
-            --SetRandomSeed = oldSetRandomSeed
+
+
+            SetRandomSeed = oldSetRandomSeed
         end
 
         --[[if hook_list[action.id] then
