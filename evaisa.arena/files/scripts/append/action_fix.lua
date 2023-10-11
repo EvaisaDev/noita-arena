@@ -71,7 +71,7 @@ for i=#actions,1,-1 do
             local shooter = EntityGetRootEntity(GetUpdatedEntityID())
             local x, y = EntityGetTransform(shooter)
 
-            print("Got: "..tostring(x)..", "..tostring(y))
+            GamePrint("Got: "..tostring(x)..", "..tostring(y))
 
             func(...)
 
