@@ -75,7 +75,7 @@ for i=#actions,1,-1 do
             local shooter = EntityGetRootEntity(GetUpdatedEntityID())
             local x, y = EntityGetTransform(GetUpdatedEntityID())
 
-            local seed = x * y
+            local seed = x * y + GameGetFrameNum()
 
             if(EntityHasTag(shooter, "client"))then
                 --GamePrint("2: shooter_rng_"..EntityGetName(shooter))
