@@ -8,7 +8,6 @@ local reapply_fix_list = {
 local remove_list = {
     PEACE_WITH_GODS = true,
     ATTRACT_ITEMS = true,
-    --UNLIMITED_SPELLS = true,
     ABILITY_ACTIONS_MATERIALIZED = true,
     NO_WAND_EDITING = true,
     MEGA_BEAM_STONE = true,
@@ -69,6 +68,20 @@ local skip_function_list = {
 }
 
 local rewrites = {
+	UNLIMITED_SPELLS = {
+		id = "UNLIMITED_SPELLS",
+		ui_name = "$perk_unlimited_spells",
+		ui_description = "$perkdesc_unlimited_spells",
+		ui_icon = "data/ui_gfx/perk_icons/unlimited_spells.png",
+		perk_icon = "data/items_gfx/perks/unlimited_spells.png",
+		stackable = false,
+        func = function( entity_perk_item, entity_who_picked, item_name )
+            GameAddFlagRun( "arena_unlimited_spells" )
+        end,
+		func_remove = function( entity_who_picked )
+			GameRemoveFlagRun( "arena_unlimited_spells" )
+		end
+	},
     SHIELD = {
 		id = "SHIELD",
 		ui_name = "$perk_shield",

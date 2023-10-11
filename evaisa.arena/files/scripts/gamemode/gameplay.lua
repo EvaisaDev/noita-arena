@@ -274,6 +274,7 @@ ArenaGameplay = {
             EntityKill(player)
         end
 
+        GameRemoveFlagRun( "arena_unlimited_spells" )
         GlobalsSetValue("TEMPLE_SHOP_ITEM_COUNT", "5")
         GlobalsSetValue("TEMPLE_PERK_REROLL_COUNT", "0")
         GlobalsSetValue("EXTRA_MONEY_COUNT", "0")
@@ -1814,6 +1815,27 @@ ArenaGameplay = {
 
         if(data.upgrade_system ~= nil and not IsPaused())then
             data.upgrade_system:draw()
+        end
+        
+        local player = player.Get()
+
+        if(player)then
+            if(GameHasFlagRun( "arena_unlimited_spells" ))then
+                local spells = EntityGetWithTag("card_action")
+                for k, card in ipairs(spells)do
+                    local root = EntityGetRootEntity(card)
+                    if(not EntityHasTag(root, "client") or EntityHasTag(root, "unlimited_spells"))then
+                        local ability_comp = EntityGetFirstComponentIncludingDisabled(card, "AbilityComponent")
+                        if(ability_comp ~= nil)then
+                            ComponentObjectSetValue2(ability_comp, "gunaction_config", "action_max_uses", -1)
+                        end
+                        local item_comp = EntityGetFirstComponentIncludingDisabled(card, "ItemComponent")
+                        if(item_comp ~= nil)then
+                            ComponentSetValue2(item_comp, "uses_remaining", -2)
+                        end
+                    end
+                end
+            end
         end
         --if(GameGetFrameNum() % 60 == 0)then
         --message_handler.send.Handshake(lobby)

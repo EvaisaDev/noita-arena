@@ -217,6 +217,7 @@ networking = {
             if (data.players[tostring(user)].entity and EntityGetIsAlive(data.players[tostring(user)].entity)) then
                 local wand_string = message[2]
                 local force = message[3]
+                local unlimited_spells = message[4]
 
                 local last_inventory_string = data.players[tostring(user)].last_inventory_string
 
@@ -226,6 +227,9 @@ networking = {
 
                 if (last_inventory_string ~= wand_string or force) then
                     if (data.players[tostring(user)].entity and EntityGetIsAlive(data.players[tostring(user)].entity)) then
+                        if(unlimited_spells)then
+                            EntityAddTag(data.players[tostring(user)].entity, "unlimited_spells")
+                        end
                         local items = GameGetAllInventoryItems(data.players[tostring(user)].entity) or {}
                         for i, item_id in ipairs(items) do
                             GameKillInventoryItem(data.players[tostring(user)].entity, item_id)
@@ -950,10 +954,8 @@ networking = {
                     local wandData = player.GetWandData()
                     if (wandData ~= nil) then
                         --GamePrint("Sending wand data to player")
-                        local data = { wandData, wandString }
-                        if force then
-                            table.insert(data, true)
-                        end
+                        local data = { wandData, wandString, force, GameHasFlagRun( "arena_unlimited_spells" ) }
+
                         if (user ~= nil) then
                             --steamutils.sendDataToPlayer({type = "wand_update", wandData = wandData}, user)
                             steamutils.sendToPlayer("wand_update", data, user, true)
