@@ -46,7 +46,7 @@ for i=#actions,1,-1 do
     else
         local func = action.action
         action.action = function(...)
-            local oldSetRandomSeed = SetRandomSeed
+            --[[local oldSetRandomSeed = SetRandomSeed
             SetRandomSeed = function() 
         
                 local shooter = EntityGetRootEntity(GetUpdatedEntityID())
@@ -66,11 +66,16 @@ for i=#actions,1,-1 do
                 GamePrint("Seed forced to: "..tostring(seed))
         
                 oldSetRandomSeed(seed, seed)
-            end
+            end]]
+
+            local shooter = EntityGetRootEntity(GetUpdatedEntityID())
+            local x, y = EntityGetTransform(shooter)
+
+            print("Got: "..tostring(x)..", "..tostring(y))
 
             func(...)
 
-            SetRandomSeed = oldSetRandomSeed
+            --SetRandomSeed = oldSetRandomSeed
         end
 
         --[[if hook_list[action.id] then
