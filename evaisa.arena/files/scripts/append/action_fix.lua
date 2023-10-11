@@ -72,6 +72,9 @@ for i=#actions,1,-1 do
                 func(...)
                 return
             end
+
+            local oldSetRandomSeed = SetRandomSeed
+
             local shooter = EntityGetRootEntity(GetUpdatedEntityID())
             local x, y = EntityGetTransform(GetUpdatedEntityID())
 
@@ -86,6 +89,10 @@ for i=#actions,1,-1 do
                 else
                     GlobalsSetValue("player_action_rng", tostring(seed))
                 end
+            end
+
+            SetRandomSeed = function() 
+                oldSetRandomSeed(seed, seed)
             end
 
             GamePrint("Seed forced to: "..tostring(seed))
