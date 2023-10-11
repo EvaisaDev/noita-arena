@@ -274,6 +274,7 @@ ArenaGameplay = {
             EntityKill(player)
         end
 
+        GameRemoveFlagRun( "arena_unlimited_spells" )
         GlobalsSetValue("TEMPLE_SHOP_ITEM_COUNT", "5")
         GlobalsSetValue("TEMPLE_PERK_REROLL_COUNT", "0")
         GlobalsSetValue("EXTRA_MONEY_COUNT", "0")
@@ -1815,6 +1816,30 @@ ArenaGameplay = {
         if(data.upgrade_system ~= nil and not IsPaused())then
             data.upgrade_system:draw()
         end
+        
+
+        local spells = EntityGetWithTag("card_action")
+        for k, card in ipairs(spells)do
+            if(not EntityHasTag(card, "patched_unlimited"))then
+                local root = EntityGetRootEntity(card)
+                if((GameHasFlagRun( "arena_unlimited_spells" ) and not EntityHasTag(root, "client")) or EntityHasTag(root, "unlimited_spells"))then
+                    local ability_comp = EntityGetFirstComponentIncludingDisabled(card, "AbilityComponent")
+                    if(ability_comp ~= nil)then
+                        ComponentObjectSetValue2(ability_comp, "gunaction_config", "action_max_uses", -1)
+                    end
+                    local item_comp = EntityGetFirstComponentIncludingDisabled(card, "ItemComponent")
+                    if(item_comp ~= nil)then
+                        ComponentSetValue2(item_comp, "uses_remaining", -2)
+                    end
+                end
+                local inventory2_comp = EntityGetFirstComponentIncludingDisabled( root, "Inventory2Component" )
+                if( inventory2_comp ) then
+                    ComponentSetValue( inventory2_comp, "mActualActiveItem", "0" )
+                end
+                EntityAddTag(card, "patched_unlimited")
+            end
+        end
+ 
         --if(GameGetFrameNum() % 60 == 0)then
         --message_handler.send.Handshake(lobby)
         --end

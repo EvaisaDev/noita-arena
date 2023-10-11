@@ -41,7 +41,7 @@ order_deck = function()
 
         --GamePrint(EntityGetName(shooter))
 
-        --oldSetRandomSeed(GameGetFrameNum(), GameGetFrameNum())
+        oldSetRandomSeed(GameGetFrameNum(), GameGetFrameNum())
 
         local seed = 0
         if(EntityHasTag(shooter, "client"))then
@@ -52,10 +52,10 @@ order_deck = function()
             GlobalsSetValue("player_rng", tostring(seed))
         end
 
-        --GamePrint("Seed forced to: "..tostring(seed))
-
         oldSetRandomSeed(seed, seed)
     end
+
+    SetRandomSeed( 0, 0 )
 
     old_order_deck()
 

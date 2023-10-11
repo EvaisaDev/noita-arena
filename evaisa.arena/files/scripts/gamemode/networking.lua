@@ -217,6 +217,7 @@ networking = {
             if (data.players[tostring(user)].entity and EntityGetIsAlive(data.players[tostring(user)].entity)) then
                 local wand_string = message[2]
                 local force = message[3]
+                local unlimited_spells = message[4]
 
                 local last_inventory_string = data.players[tostring(user)].last_inventory_string
 
@@ -226,6 +227,9 @@ networking = {
 
                 if (last_inventory_string ~= wand_string or force) then
                     if (data.players[tostring(user)].entity and EntityGetIsAlive(data.players[tostring(user)].entity)) then
+                        if(unlimited_spells)then
+                            EntityAddTag(data.players[tostring(user)].entity, "unlimited_spells")
+                        end
                         local items = GameGetAllInventoryItems(data.players[tostring(user)].entity) or {}
                         for i, item_id in ipairs(items) do
                             GameKillInventoryItem(data.players[tostring(user)].entity, item_id)
@@ -730,11 +734,9 @@ networking = {
                 data.players[tostring(user)].can_fire = true
 
                 GlobalsSetValue("shooter_rng_" .. tostring(user), tostring(message[5]))
+                
+                GlobalsSetValue("action_rng_"..tostring(user), tostring(message[6] or 0))
 
-                if(message[6])then
-                    --GamePrint("reshuffle time bitch!!!")
-                    GameAddFlagRun("shooter_reorder_"..tostring(user))
-                end
 
                 data.players[tostring(user)].projectile_rng_stack = message[4]
 
@@ -950,10 +952,8 @@ networking = {
                     local wandData = player.GetWandData()
                     if (wandData ~= nil) then
                         --GamePrint("Sending wand data to player")
-                        local data = { wandData, wandString }
-                        if force then
-                            table.insert(data, true)
-                        end
+                        local data = { wandData, wandString, force, GameHasFlagRun( "arena_unlimited_spells" ) }
+
                         if (user ~= nil) then
                             --steamutils.sendDataToPlayer({type = "wand_update", wandData = wandData}, user)
                             steamutils.sendToPlayer("wand_update", data, user, true)
@@ -1245,9 +1245,9 @@ networking = {
                         r,
                         rng,
                         special_seed,
-                        GameHasFlagRun("we_reloaded")
+                        GlobalsGetValue("player_action_rng", "0")
                     }
-                    GameRemoveFlagRun("we_reloaded")
+                    GlobalsSetValue("player_action_rng", "0")
                     
                     if(to_spectators)then
                         steamutils.send("fire_wand", data, steamutils.messageTypes.Spectators, lobby, false, true)
