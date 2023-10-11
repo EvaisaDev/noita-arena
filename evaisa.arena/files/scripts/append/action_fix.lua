@@ -93,7 +93,6 @@ for i=#actions,1,-1 do
 
             SetRandomSeed = function() 
                 oldSetRandomSeed(seed, seed)
-                print("Seed forced to: "..tostring(seed))
             end
 
             func(...)
