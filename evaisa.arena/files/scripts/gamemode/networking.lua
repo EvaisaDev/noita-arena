@@ -734,11 +734,9 @@ networking = {
                 data.players[tostring(user)].can_fire = true
 
                 GlobalsSetValue("shooter_rng_" .. tostring(user), tostring(message[5]))
+                
+                GlobalsSetValue("action_rng_"..tostring(user), tostring(message[6] or 0))
 
-                if(message[6])then
-                    --GamePrint("reshuffle time bitch!!!")
-                    GameAddFlagRun("shooter_reorder_"..tostring(user))
-                end
 
                 data.players[tostring(user)].projectile_rng_stack = message[4]
 
@@ -1247,9 +1245,9 @@ networking = {
                         r,
                         rng,
                         special_seed,
-                        GameHasFlagRun("we_reloaded")
+                        GlobalsGetValue("player_action_rng", "0")
                     }
-                    GameRemoveFlagRun("we_reloaded")
+                    GlobalsSetValue("player_action_rng", "0")
                     
                     if(to_spectators)then
                         steamutils.send("fire_wand", data, steamutils.messageTypes.Spectators, lobby, false, true)

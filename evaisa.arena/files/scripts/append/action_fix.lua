@@ -68,10 +68,27 @@ for i=#actions,1,-1 do
                 oldSetRandomSeed(seed, seed)
             end]]
 
+            if(reflecting)then
+                func(...)
+                return
+            end
             local shooter = EntityGetRootEntity(GetUpdatedEntityID())
-            local x, y = EntityGetTransform(shooter)
+            local x, y = EntityGetTransform(GetUpdatedEntityID())
 
-            GamePrint("Got: "..tostring(x)..", "..tostring(y))
+            local seed = x * y
+
+            if(EntityHasTag(shooter, "client"))then
+                --GamePrint("2: shooter_rng_"..EntityGetName(shooter))
+                seed = tonumber(GlobalsGetValue("action_rng_"..EntityGetName(shooter), "0")) or 0
+            else
+                if(GlobalsGetValue("player_action_rng", "0") ~= "0")then
+                    seed = tonumber(GlobalsGetValue("player_action_rng", "0"))
+                else
+                    GlobalsSetValue("player_action_rng", tostring(seed))
+                end
+            end
+
+            GamePrint("Seed forced to: "..tostring(seed))
 
             func(...)
 
