@@ -1671,14 +1671,7 @@ ArenaGameplay = {
 
                 arena_log:print("Arena loaded? " .. tostring(spawn_loaded))
 
-                local in_bounds = ArenaGameplay.IsInBounds(0, 0, 400)
-
-                if (not in_bounds) then
-                    arena_log:print("Game tried to spawn player out of bounds, retrying...")
-                    GamePrint("Game attempted to spawn you out of bounds, retrying...")
-                end
-
-                if (spawn_loaded and in_bounds) then
+                if (spawn_loaded) then
                     data.preparing = false
 
 
