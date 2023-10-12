@@ -871,8 +871,14 @@ networking = {
                 local character_data_comp = EntityGetFirstComponentIncludingDisabled(player, "CharacterDataComponent")
                 if (character_data_comp ~= nil) then
                     local player_data = {
-                        mFlyingTimeLeft = message[1]
+                        mFlyingTimeLeft = message[1],
+                        status_list = message[2],
                     }
+
+                    -- handle status effects wahwah i don't know how yet
+                    -- whatever ill do this in the moirdning
+
+
                     ComponentSetValue2(character_data_comp, "mFlyingTimeLeft", player_data.mFlyingTimeLeft)
                 end
             end
@@ -1062,8 +1068,11 @@ networking = {
             if(player ~= nil and EntityGetIsAlive(player))then
                 local character_data_comp = EntityGetFirstComponentIncludingDisabled(player, "CharacterDataComponent")
                 if(character_data_comp ~= nil)then
+                    dofile("mods/evaisa.arena/lib/status_helper.lua")
+                    local status_list = GetActiveStatusEffects(player)
                     local message = {
                         ComponentGetValue2(character_data_comp, "mFlyingTimeLeft"),
+                        status_list
                     }
 
                     --print("mFlyingTimeLeft: " .. tostring(message.mFlyingTimeLeft))

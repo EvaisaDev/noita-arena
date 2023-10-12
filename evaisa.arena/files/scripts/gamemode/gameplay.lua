@@ -1514,7 +1514,9 @@ ArenaGameplay = {
         networking.send.input_update(lobby, true)
         networking.send.switch_item(lobby, data, nil, nil, true)
         networking.send.animation_update(lobby, data, true)
-        networking.send.player_data_update(lobby, data, true)
+        if(GameGetFrameNum() % 15 == 0)then
+            networking.send.player_data_update(lobby, data, true)
+        end
         networking.send.spectate_data(lobby, data, nil, false)
 
         GameAddFlagRun("Immortal")
@@ -1757,7 +1759,9 @@ ArenaGameplay = {
             --message_handler.send.Kick(lobby, data)
             --message_handler.send.AnimationUpdate(lobby, data)
             networking.send.animation_update(lobby, data)
-            networking.send.player_data_update(lobby, data)
+            if(GameGetFrameNum() % 15 == 0)then
+                networking.send.player_data_update(lobby, data)
+            end
             --message_handler.send.AimUpdate(lobby)
             --message_handler.send.SyncControls(lobby, data)
             networking.send.input_update(lobby)
