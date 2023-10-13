@@ -1084,8 +1084,10 @@ ArenaGameplay = {
                 local user = member.id
                 local wins = tonumber(steam.matchmaking.getLobbyData(lobby, tostring(user) .. "_wins")) or 0
                 local winstreak = tonumber(steam.matchmaking.getLobbyData(lobby, tostring(user) .. "_winstreak")) or 0
-                data.players[tostring(user)].wins = wins
-                data.players[tostring(user)].winstreak = winstreak
+                if(data.players[tostring(user)])then
+                    data.players[tostring(user)].wins = wins
+                    data.players[tostring(user)].winstreak = winstreak
+                end
             end
         end
 
