@@ -222,7 +222,7 @@ player_helper.GetItemData = function(fresh)
         local item_comp = EntityGetFirstComponentIncludingDisabled(item, "ItemComponent")
         local slot_x, slot_y = ComponentGetValue2(item_comp, "inventory_slot")
 
-        --GlobalsSetValue(tostring(wand_entity) .. "_wand", tostring(k))
+        GlobalsSetValue(tostring(item) .. "_item", tostring(k))
         if(entity_is_wand(item))then
             local wand = EZWand(item)
             table.insert(wandData,
@@ -360,7 +360,6 @@ player_helper.SetItemData = function(item_data)
                 if (itemInfo.active) then
                     active_item_entity = item.entity_id
                 end
-                GlobalsSetValue(tostring(item.entity_id).."_wand", tostring(itemInfo.id))
             else
                 pickup_item(player, item)
                 local itemComp = EntityGetFirstComponentIncludingDisabled(item, "ItemComponent")
@@ -380,7 +379,7 @@ player_helper.SetItemData = function(item_data)
 
 
 
-            --GlobalsSetValue(tostring(wand.entity_id).."_wand", tostring(wandInfo.id))
+            GlobalsSetValue(tostring(active_item_entity).."_item", tostring(itemInfo.id))
         end
 
         if (active_item_entity ~= nil) then

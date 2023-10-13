@@ -1516,7 +1516,7 @@ ArenaGameplay = {
         --if (GameGetFrameNum() % 2 == 0) then
             networking.send.character_position(lobby, data, true)
         --end
-        networking.send.wand_update(lobby, data, nil, nil, true)
+       -- networking.send.wand_update(lobby, data, nil, nil, true)
         networking.send.input_update(lobby, true)
         networking.send.switch_item(lobby, data, nil, nil, true)
         networking.send.animation_update(lobby, data, true)
@@ -1596,7 +1596,7 @@ ArenaGameplay = {
             arena_log:print("Completed countdown.")
 
             --message_handler.send.RequestWandUpdate(lobby, data)
-            networking.send.request_wand_update(lobby)
+            networking.send.request_item_update(lobby)
         end)
     end,
     SpawnClientPlayer = function(lobby, user, data, x, y)
@@ -1749,7 +1749,7 @@ ArenaGameplay = {
         end
         if (data.players_loaded) then
             --message_handler.send.WandUpdate(lobby, data)
-            networking.send.wand_update(lobby, data)
+            networking.send.item_update(lobby, data)
 
             --[[if(GameGetFrameNum() % 60 == 0)then
                 networking.send.wand_update(lobby, data, nil, true)
@@ -1906,7 +1906,7 @@ ArenaGameplay = {
             else
                 if(data.client.inventory_was_open)then
                     --GamePrint("inventory_was_closed")
-                    networking.send.wand_update(lobby, data, nil, true, false)
+                    networking.send.item_update(lobby, data, nil, true, false)
                 end
                 data.client.inventory_was_open = false
             end
@@ -1926,7 +1926,7 @@ ArenaGameplay = {
                 data.client.inventory_was_open = true
             else
                 if(data.client.inventory_was_open)then
-                    networking.send.wand_update(lobby, data, nil, true, true)
+                    networking.send.item_update(lobby, data, nil, true, true)
                 end
                 data.client.inventory_was_open = false
             end

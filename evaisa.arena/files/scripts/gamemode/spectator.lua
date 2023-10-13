@@ -588,7 +588,7 @@ SpectatorMode = {
                 end
                 --GamePrint("Loading player " .. tostring(member.id))
                 data.selected_player = ArenaGameplay.SpawnClientPlayer(lobby, data.lobby_spectated_player, data, 0, 0)
-                networking.send.request_wand_update(lobby, data.lobby_spectated_player)
+                networking.send.request_item_update(lobby, data.lobby_spectated_player)
                 networking.send.request_spectate_data(lobby, data.lobby_spectated_player)
             end
         end

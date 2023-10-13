@@ -34,6 +34,31 @@ entity.ClearGameEffects = function( ent )
     end
 end
 
+entity.PickItem = function(ent, item)
+    local item_component = EntityGetFirstComponentIncludingDisabled(item, "ItemComponent")
+    if item_component then
+      ComponentSetValue2(item_component, "has_been_picked_by_player", true)
+    end
+    --GamePickUpInventoryItem(entity, self.entity_id, false)
+    local entity_children = EntityGetAllChildren(ent) or {}
+    -- 
+    for key, child in pairs( entity_children ) do
+      if EntityGetName( child ) == "inventory_quick" then
+        EntityAddChild( child, item)
+      end
+    end
+  
+    EntitySetComponentsWithTagEnabled( item, "enabled_in_world", false )
+    EntitySetComponentsWithTagEnabled( item, "enabled_in_hand", false )
+    EntitySetComponentsWithTagEnabled( item, "enabled_in_inventory", true )
+  
+    local wand_children = EntityGetAllChildren(item) or {}
+  
+    for k, v in ipairs(wand_children)do
+      EntitySetComponentsWithTagEnabled( item, "enabled_in_world", false )
+    end  
+end
+
 entity.GivePerk = function( entity_who_picked, perk_id, amount, for_client )
     -- fetch perk info ---------------------------------------------------
 

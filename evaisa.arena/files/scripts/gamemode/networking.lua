@@ -15,6 +15,7 @@ local player_helper = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/p
 -- whatever ill just leave it
 dofile("mods/evaisa.arena/lib/status_helper.lua")
 
+
 networking = {
     receive = {
         ready = function(lobby, message, user, data)
@@ -108,7 +109,7 @@ networking = {
 
                 gameplay_handler.AllowFiring(data)
                 --message_handler.send.RequestWandUpdate(lobby, data)
-                networking.send.request_wand_update(lobby)
+                networking.send.request_item_update(lobby)
                 if (data.countdown ~= nil) then
                     data.countdown:cleanup()
                     data.countdown = nil
@@ -211,6 +212,9 @@ networking = {
         wand_update = function(lobby, message, user, data)
             --GamePrint("Wand update!")
 
+            -- LEGACY USE item_update INSTEAD
+
+            --[[
             if (not gameplay_handler.CheckPlayer(lobby, user, data)) then
                 return
             end
@@ -252,11 +256,6 @@ networking = {
                                 return
                             end
 
-                            --[[local item_pick_upper_component = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity, "ItemPickUpperComponent")
-
-                            if(item_pick_upper_component ~= nil)then
-                                ComponentSetValue2(item_pick_upper_component, "only_pick_this_entity", wand.entity_id)
-                            end]]
                             wand:PickUp(data.players[tostring(user)].entity)
 
 
@@ -283,13 +282,86 @@ networking = {
                     data.players[tostring(user)].last_inventory_string = wand_string
                 end
             end
+            ]]
+        end,
+        item_update = function(lobby, message, user, data)
+            if (not gameplay_handler.CheckPlayer(lobby, user, data)) then
+                return
+            end
+
+            if (data.players[tostring(user)].entity and EntityGetIsAlive(data.players[tostring(user)].entity)) then
+                local items_data = message[1]
+                local force = message[2]
+                local unlimited_spells = message[3]
+
+                if (data.players[tostring(user)].entity and EntityGetIsAlive(data.players[tostring(user)].entity)) then
+                    if(unlimited_spells)then
+                        EntityAddTag(data.players[tostring(user)].entity, "unlimited_spells")
+                    end
+                    local items = GameGetAllInventoryItems(data.players[tostring(user)].entity) or {}
+                    for i, item_id in ipairs(items) do
+                        GameKillInventoryItem(data.players[tostring(user)].entity, item_id)
+                        EntityKill(item_id)
+                    end
+                end
+
+                if (items_data ~= nil) then
+                    for k, itemInfo in ipairs(items_data) do
+                        local x, y = EntityGetTransform(data.players[tostring(user)].entity)
+                        local item = nil
+                        if(itemInfo.is_wand)then
+                            item = EZWand(itemInfo.data, x, y)
+                            
+                        else
+                            item = EntityCreateNew()
+                            np.DeserializeEntity(item, itemInfo.data, x, y)
+            
+                        end
+            
+                        if (item == nil) then
+                            return
+                        end
+            
+                        local item_entity = nil
+                        if(itemInfo.is_wand)then
+                            item:PickUp(data.players[tostring(user)].entity)
+                            item_entity = item.entity_id
+                        else
+                            EntityHelper.PickItem(data.players[tostring(user)].entity, item)
+                            item_entity = item
+                        end
+                        
+                        local itemComp = EntityGetFirstComponentIncludingDisabled(item_entity, "ItemComponent")
+                        if (itemComp ~= nil) then
+                            ComponentSetValue2(itemComp, "inventory_slot", itemInfo.slot_x, itemInfo.slot_y)
+                        end
+
+                        if (itemInfo.active) then
+                            game_funcs.SetActiveHeldEntity(data.players[tostring(user)].entity, item_entity, false,
+                                false)
+                        end
+
+                        GlobalsSetValue(tostring(item_entity) .. "_item", tostring(itemInfo.id))
+                    end
+
+                end
+            end
         end,
         request_wand_update = function(lobby, message, user, data)
-            if(data.spectator_mode)then
+           --[[ if(data.spectator_mode)then
                 return
             end
             data.client.previous_wand = nil
             networking.send.wand_update(lobby, data, user, true)
+            networking.send.switch_item(lobby, data, user, true)
+            ]]
+        end,
+        request_item_update = function(lobby, message, user, data)
+            if(data.spectator_mode)then
+                return
+            end
+            data.client.previous_wand = nil
+            networking.send.item_update(lobby, data, user, true)
             networking.send.switch_item(lobby, data, user, true)
         end,
         input_update = function(lobby, message, user, data)
@@ -569,7 +641,7 @@ networking = {
                 local items = GameGetAllInventoryItems(data.players[tostring(user)].entity) or {}
                 for i, item in ipairs(items) do
                     -- check id
-                    local item_id = tonumber(GlobalsGetValue(tostring(item) .. "_wand")) or -1
+                    local item_id = tonumber(GlobalsGetValue(tostring(item) .. "_item")) or -1
                     if (item_id == id) then
                         local inventory2Comp = EntityGetFirstComponentIncludingDisabled(
                             data.players[tostring(user)].entity, "Inventory2Component")
@@ -1019,7 +1091,10 @@ networking = {
             end
         end,
         wand_update = function(lobby, data, user, force, to_spectators)
-            local wandString = player.GetWandString()
+
+            -- LEGACY, USE item_update INSTEAD
+
+            --[[local wandString = player.GetWandString()
             if (wandString ~= nil) then
                 if (force or (wandString ~= data.client.previous_wand)) then
                     local wandData = player.GetWandData()
@@ -1057,13 +1132,48 @@ networking = {
                     end
                     data.client.previous_wand = nil
                 end
+            end]]
+        end,
+        item_update = function(lobby, data, user, force, to_spectators)
+            local item_data = player.GetItemData()
+            if(item_data ~= nil)then
+                local data = { item_data, force, GameHasFlagRun( "arena_unlimited_spells" ) }
+
+                if (user ~= nil) then
+                    steamutils.sendToPlayer("item_update", data, user, true)
+                else
+                    if(to_spectators)then
+                        steamutils.send("item_update", data, steamutils.messageTypes.Spectators, lobby, true, true)
+                    else
+                        steamutils.send("item_update", data, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+                    end
+                end
+            else
+                if (user ~= nil) then
+                    steamutils.sendToPlayer("item_update", {}, user, true)
+                else
+                    if(to_spectators)then
+                        steamutils.send("item_update", {}, steamutils.messageTypes.Spectators, lobby, true, true)
+                    else
+                        steamutils.send("item_update", {}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+                    end
+                end
             end
         end,
         request_wand_update = function(lobby, user)
-            if(user == nil)then
+            -- LEGACY USE request_item_update INSTEAD
+
+            --[[if(user == nil)then
                 steamutils.send("request_wand_update", {}, steamutils.messageTypes.OtherPlayers, lobby, true)
             else
                 steamutils.sendToPlayer("request_wand_update", {}, user, true)
+            end]]
+        end,
+        request_item_update = function(lobby, user)
+            if(user == nil)then
+                steamutils.send("request_item_update", {}, steamutils.messageTypes.OtherPlayers, lobby, true)
+            else
+                steamutils.sendToPlayer("request_item_update", {}, user, true)
             end
         end,
         input_update = function(lobby, to_spectators)
@@ -1170,7 +1280,7 @@ networking = {
             local held_item = player.GetActiveHeldItem()
             if (held_item ~= nil) then
                 if (force or user ~= nil or held_item ~= data.client.previous_selected_item) then
-                    local wand_id = tonumber(GlobalsGetValue(tostring(held_item) .. "_wand")) or -1
+                    local wand_id = tonumber(GlobalsGetValue(tostring(held_item) .. "_item")) or -1
                     if (wand_id ~= -1) then
                         if (user == nil) then
                             if(to_spectators)then
