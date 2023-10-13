@@ -72,7 +72,7 @@ GetActiveStatusEffects = function( entity_id, combined )
     local index = k - 1
     if(index > 0)then
       local effect = unique_status_effects[index]
-      if(v > 0)then
+      if(v > 0.15)then
         --table.insert(active_effects.ingestion, effect)
         if combined then
           active_effects[effect] = v
@@ -87,7 +87,7 @@ GetActiveStatusEffects = function( entity_id, combined )
     local index = k - 1
     if(index > 0)then
       local effect = unique_status_effects[index]
-      if(v > 0)then
+      if(v > 0.15)then
         --table.insert(active_effects.stain, effect)
         if(combined and (active_effects[effect] == nil or v > active_effects[effect]))then
           active_effects[effect] = v

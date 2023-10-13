@@ -890,35 +890,16 @@ networking = {
                     --GamePrint(initial_offset)
 
                     for id, value in pairs(player_data.status_list) do
-                        local offset = initial_offset + 6 + (index * 6)
                         index = index + 1
+                        local offset = initial_offset + (index * 6)
+
                         --GamePrint(offset)
+                        GamePrint(id)
+                        GamePrint(value)
+
                         local effect = GetStatusElement(id, value)
 
                         if(effect ~= nil and data.players[tostring(user)].status_effect_comps[id] == nil)then
-                            --[[data.players[tostring(user)].status_effect_entities[id] = EntityCreateNew("status_effect")
-                            EntityAddComponent2( data.players[tostring(user)].status_effect_entities[id], "UIIconComponent",
-                            {
-                                name = effect.ui_name,
-                                description = effect.ui_description,
-                                icon_sprite_file = effect.ui_icon,
-                                display_above_head = true,
-                                display_in_hud = false,
-                                is_perk = false,
-                            })
-                            EntityAddComponent2( data.players[tostring(user)].status_effect_entities[id], "InheritTransformComponent")
-                            EntityAddChild(player, data.players[tostring(user)].status_effect_entities[id])]]
-
-                            --[[data.players[tostring(user)].status_effect_comps[id] = EntityAddComponent2( player, "UIIconComponent",
-                            {
-                                name = effect.ui_name,
-                                description = effect.ui_description,
-                                icon_sprite_file = effect.ui_icon,
-                                display_above_head = true,
-                                display_in_hud = false,
-                                is_perk = false,
-                            })]]
-
                             data.players[tostring(user)].status_effect_comps[id] = EntityAddComponent2( player, "SpriteComponent",
                             {
                                 image_file = effect.ui_icon,
@@ -945,6 +926,7 @@ networking = {
 
                     for k, v in pairs(data.players[tostring(user)].status_effect_comps)do
                         if(not valid_ids[k])then
+                            GamePrint("Removing status effect: "..tostring(k))
                             EntityRemoveComponent(player, v)
                             data.players[tostring(user)].status_effect_comps[k] = nil
                         end
