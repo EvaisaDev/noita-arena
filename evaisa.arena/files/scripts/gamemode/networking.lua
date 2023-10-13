@@ -1098,7 +1098,8 @@ networking = {
                 local character_data_comp = EntityGetFirstComponentIncludingDisabled(player, "CharacterDataComponent")
                 if(character_data_comp ~= nil)then
                     
-                    local status_list = GetActiveStatusEffects(player)
+                    local status_list = GetActiveStatusEffects(player, true)
+
                     local message = {
                         ComponentGetValue2(character_data_comp, "mFlyingTimeLeft"),
                         status_list

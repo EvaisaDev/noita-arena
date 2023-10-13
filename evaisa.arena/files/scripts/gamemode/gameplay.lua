@@ -532,6 +532,10 @@ ArenaGameplay = {
 
             local step_time = zone_step_interval / 2
 
+            if(data.zone_size == nil)then
+                data.zone_size = default_size or 600
+            end
+
             if (zone_type ~= "disabled") then
                 if (data.ready_for_zone and not data.zone_spawned) then
                     EntityLoad("mods/evaisa.arena/files/entities/area_indicator.xml", 0, 0)
@@ -1674,7 +1678,7 @@ ArenaGameplay = {
 
                 arena_log:print("Arena loaded? " .. tostring(spawn_loaded))
 
-                local in_bounds = ArenaGameplay.IsInBounds(0, 0, 400)
+                local in_bounds = ArenaGameplay.IsInBounds(0, 0, data.zone_size)
 
                 if (not in_bounds) then
                     arena_log:print("Game tried to spawn player out of bounds, retrying...")
@@ -2210,7 +2214,7 @@ ArenaGameplay = {
                         local closest_player = nil
                         local distance = 9999999
                         local clients = EntityGetWithTag("client") or {}
-                        
+
                         for k, v in pairs(clients) do
                             if (v ~= shooter_id) then
                                 if (closest_player == nil) then

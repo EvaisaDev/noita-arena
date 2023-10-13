@@ -51,11 +51,16 @@ GetIngestionPercentage = function( entity_id, effect_id )
   return 0
 end
 
-GetActiveStatusEffects = function( entity_id )
+GetActiveStatusEffects = function( entity_id, combined )
   local active_effects = {
     stain = {},
     ingestion = {}
   }
+
+  if(combined)then
+    active_effects = {}
+  end
+
   local status_effect_data_component = EntityGetFirstComponentIncludingDisabled( entity_id, "StatusEffectDataComponent" )
   if(status_effect_data_component == nil)then
     return active_effects
@@ -69,7 +74,11 @@ GetActiveStatusEffects = function( entity_id )
       local effect = unique_status_effects[index]
       if(v > 0)then
         --table.insert(active_effects.ingestion, effect)
-        active_effects.ingestion[effect] = v
+        if combined then
+          active_effects[effect] = v
+        else
+          active_effects.ingestion[effect] = v
+        end
       end
     end
   end
@@ -80,7 +89,11 @@ GetActiveStatusEffects = function( entity_id )
       local effect = unique_status_effects[index]
       if(v > 0)then
         --table.insert(active_effects.stain, effect)
-        active_effects.stain[effect] = v
+        if(combined and (active_effects[effect] == nil or v > active_effects[effect]))then
+          active_effects[effect] = v
+        else
+          active_effects.stain[effect] = v
+        end
       end
     end
   end
@@ -89,8 +102,11 @@ GetActiveStatusEffects = function( entity_id )
 end
 
 GetStatusElement = function( id, value )
-  local last_index_threshold = 0
+  local last_index_threshold = -100
   local elem = nil
+  
+  print(id)
+
   for k,v in pairs(status_effects)do
     local threshold = v.min_threshold_normalized or 0
     if(v.id == id)then
