@@ -636,13 +636,15 @@ networking = {
             end
 
             --GlobalsSetValue(tostring(wand.entity_id).."_wand", wandInfo.id)
-            local id = message[1]
+            local slot_x, slot_y = message[1], message[2]
             if (data.players[tostring(user)].entity and EntityGetIsAlive(data.players[tostring(user)].entity)) then
                 local items = GameGetAllInventoryItems(data.players[tostring(user)].entity) or {}
                 for i, item in ipairs(items) do
                     -- check id
-                    local item_id = tonumber(GlobalsGetValue(tostring(item) .. "_item")) or -1
-                    if (item_id == id) then
+                    --local item_id = tonumber(GlobalsGetValue(tostring(item) .. "_item")) or -1
+                    local itemComp = EntityGetFirstComponentIncludingDisabled(item, "ItemComponent")
+                    local item_slot_x, item_slot_y = ComponentGetValue2(itemComp, "inventory_slot")
+                    if (item_slot_x == slot_x and item_slot_y == slot_y) then
                         local inventory2Comp = EntityGetFirstComponentIncludingDisabled(
                             data.players[tostring(user)].entity, "Inventory2Component")
                         local mActiveItem = ComponentGetValue2(inventory2Comp, "mActiveItem")
@@ -1280,19 +1282,22 @@ networking = {
             local held_item = player.GetActiveHeldItem()
             if (held_item ~= nil) then
                 if (force or user ~= nil or held_item ~= data.client.previous_selected_item) then
-                    local wand_id = tonumber(GlobalsGetValue(tostring(held_item) .. "_item")) or -1
-                    if (wand_id ~= -1) then
-                        if (user == nil) then
-                            if(to_spectators)then
-                                steamutils.send("switch_item", { wand_id }, steamutils.messageTypes.Spectators, lobby, true, true)
-                            else
-                                steamutils.send("switch_item", { wand_id }, steamutils.messageTypes.OtherPlayers, lobby, true, true)
-                            end
-                            data.client.previous_selected_item = held_item
+                    --local wand_id = tonumber(GlobalsGetValue(tostring(held_item) .. "_item")) or -1
+                    --if (wand_id ~= -1) then
+                    local item_comp = EntityGetFirstComponentIncludingDisabled(held_item, "ItemComponent")
+                    local slot_x, slot_y = ComponentGetValue2(item_comp, "inventory_slot")
+
+                    if (user == nil) then
+                        if(to_spectators)then
+                            steamutils.send("switch_item", { slot_x, slot_y }, steamutils.messageTypes.Spectators, lobby, true, true)
                         else
-                            steamutils.sendToPlayer("switch_item", { wand_id }, user, true)
+                            steamutils.send("switch_item", { slot_x, slot_y }, steamutils.messageTypes.OtherPlayers, lobby, true, true)
                         end
+                        data.client.previous_selected_item = held_item
+                    else
+                        steamutils.sendToPlayer("switch_item", { slot_x, slot_y }, user, true)
                     end
+                    --end
                 end
             end
         end,
