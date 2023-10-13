@@ -917,7 +917,7 @@ networking = {
                         if(effect ~= nil and data.players[tostring(user)].status_effect_entities[id] == nil)then
                             if(effect.effect_entity)then
                                 data.players[tostring(user)].status_effect_entities[id] = LoadGameEffectEntityTo( player, effect.effect_entity )
-                                GamePrint("Loaded effect of id: "..tostring(effect.id))
+                                --GamePrint("Loaded effect of id: "..tostring(effect.id))
                             else
                                 data.players[tostring(user)].status_effect_entities[id] = EntityCreateNew("effect")
                                 EntityAddComponent2(data.players[tostring(user)].status_effect_entities[id], "InheritTransformComponent")
