@@ -13,6 +13,7 @@ dofile_once("data/scripts/perks/perk_list.lua")
 dofile_once("mods/evaisa.arena/content/data.lua")
 local player_helper = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/player.lua")
 -- whatever ill just leave it
+dofile("mods/evaisa.arena/lib/status_helper.lua")
 
 networking = {
     receive = {
@@ -877,7 +878,35 @@ networking = {
 
                     -- handle status effects wahwah i don't know how yet
                     -- whatever ill do this in the moirdning
+                    local valid_ids = {}
 
+                    for id, value in pairs(player_data.status_list) do
+                        local effect = GetStatusElement(id, value)
+
+                        if(effect ~= nil)then
+                            data.players[tostring(user)].status_effect_entities[id] = EntityCreateNew("status_effect")
+                            EntityAddComponent2( data.players[tostring(user)].status_effect_entities[id], "UIIconComponent",
+                            {
+                                name = effect.ui_name,
+                                description = effect.ui_description,
+                                icon_sprite_file = effect.ui_icon,
+                                display_above_head = true,
+                                display_in_hud = false,
+                                is_perk = false,
+                            })
+                            EntityAddChild(player, data.players[tostring(user)].status_effect_entities[id])
+                            GamePrint("Loaded icon of id: "..tostring(effect.id))
+                        end
+
+                        table.insert(valid_ids, id)
+                    end
+
+                    for i, v in ipairs(valid_ids)do
+                        local entity = data.players[tostring(user)].status_effect_entities[v]
+                        if(entity)then
+                            EntityKill(entity)
+                        end
+                    end
 
                     ComponentSetValue2(character_data_comp, "mFlyingTimeLeft", player_data.mFlyingTimeLeft)
                 end
@@ -1068,7 +1097,7 @@ networking = {
             if(player ~= nil and EntityGetIsAlive(player))then
                 local character_data_comp = EntityGetFirstComponentIncludingDisabled(player, "CharacterDataComponent")
                 if(character_data_comp ~= nil)then
-                    dofile("mods/evaisa.arena/lib/status_helper.lua")
+                    
                     local status_list = GetActiveStatusEffects(player)
                     local message = {
                         ComponentGetValue2(character_data_comp, "mFlyingTimeLeft"),

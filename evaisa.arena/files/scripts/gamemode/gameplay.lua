@@ -2168,6 +2168,10 @@ ArenaGameplay = {
 
         local shooter_x, shooter_y = EntityGetTransform(shooter_id)
 
+        if(shooter_id == nil or shooter_x == nil)then
+            return
+        end
+
         if (homingComponents ~= nil) then
             for k, v in pairs(homingComponents) do
                 local target_who_shot = ComponentGetValue2(v, "target_who_shot")
@@ -2176,11 +2180,12 @@ ArenaGameplay = {
                         -- find closest player which isn't us
                         local closest_player = nil
                         local distance = 9999999
-                        local clients = EntityGetWithTag("client")
+                        local clients = EntityGetWithTag("client") or {}
                         -- add local player to list
                         if (player.Get()) then
                             table.insert(clients, player.Get())
                         end
+
 
                         for k, v in pairs(clients) do
                             if (v ~= shooter_id) then
@@ -2204,8 +2209,8 @@ ArenaGameplay = {
                     else
                         local closest_player = nil
                         local distance = 9999999
-                        local clients = EntityGetWithTag("client")
-
+                        local clients = EntityGetWithTag("client") or {}
+                        
                         for k, v in pairs(clients) do
                             if (v ~= shooter_id) then
                                 if (closest_player == nil) then

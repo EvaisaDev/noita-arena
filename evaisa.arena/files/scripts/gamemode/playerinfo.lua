@@ -17,6 +17,7 @@ function playerinfo:New(user)
         can_fire = false,
         --[[last_position_x = nil,
         last_position_y = nil,]]
+        status_effect_entities = {},
         previous_positions = {},
         last_inventory_string = nil,
         ping = 0,

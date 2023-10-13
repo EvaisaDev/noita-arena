@@ -68,7 +68,8 @@ GetActiveStatusEffects = function( entity_id )
     if(index > 0)then
       local effect = unique_status_effects[index]
       if(v > 0)then
-        table.insert(active_effects.ingestion, effect)
+        --table.insert(active_effects.ingestion, effect)
+        active_effects.ingestion[effect] = v
       end
     end
   end
@@ -78,10 +79,26 @@ GetActiveStatusEffects = function( entity_id )
     if(index > 0)then
       local effect = unique_status_effects[index]
       if(v > 0)then
-        table.insert(active_effects.stain, effect)
+        --table.insert(active_effects.stain, effect)
+        active_effects.stain[effect] = v
       end
     end
   end
 
   return active_effects
+end
+
+GetStatusElement = function( id, value )
+  local last_index_threshold = 0
+  local elem = nil
+  for k,v in pairs(status_effects)do
+    local threshold = v.min_threshold_normalized or 0
+    if(v.id == id)then
+      if(threshold > last_index_threshold and value >= threshold)then
+        last_index_threshold = threshold
+        elem = v
+      end
+    end
+  end
+  return elem
 end
