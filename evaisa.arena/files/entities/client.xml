@@ -269,7 +269,7 @@
         emissive = "1"
         is_text_sprite = "1"
         offset_x = "0"
-        offset_y = "32"
+        offset_y = "34"
         alpha = "1"
         update_transform = "1"
         update_transform_rotation = "0"

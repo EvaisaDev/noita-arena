@@ -532,6 +532,10 @@ ArenaGameplay = {
 
             local step_time = zone_step_interval / 2
 
+            if(data.zone_size == nil)then
+                data.zone_size = default_size or 600
+            end
+
             if (zone_type ~= "disabled") then
                 if (data.ready_for_zone and not data.zone_spawned) then
                     EntityLoad("mods/evaisa.arena/files/entities/area_indicator.xml", 0, 0)
@@ -1080,8 +1084,10 @@ ArenaGameplay = {
                 local user = member.id
                 local wins = tonumber(steam.matchmaking.getLobbyData(lobby, tostring(user) .. "_wins")) or 0
                 local winstreak = tonumber(steam.matchmaking.getLobbyData(lobby, tostring(user) .. "_winstreak")) or 0
-                data.players[tostring(user)].wins = wins
-                data.players[tostring(user)].winstreak = winstreak
+                if(data.players[tostring(user)])then
+                    data.players[tostring(user)].wins = wins
+                    data.players[tostring(user)].winstreak = winstreak
+                end
             end
         end
 
@@ -1514,7 +1520,9 @@ ArenaGameplay = {
         networking.send.input_update(lobby, true)
         networking.send.switch_item(lobby, data, nil, nil, true)
         networking.send.animation_update(lobby, data, true)
-        networking.send.player_data_update(lobby, data, true)
+        if(GameGetFrameNum() % 15 == 0)then
+            networking.send.player_data_update(lobby, data, true)
+        end
         networking.send.spectate_data(lobby, data, nil, false)
 
         GameAddFlagRun("Immortal")
@@ -1672,7 +1680,7 @@ ArenaGameplay = {
 
                 arena_log:print("Arena loaded? " .. tostring(spawn_loaded))
 
-                local in_bounds = ArenaGameplay.IsInBounds(0, 0, 400)
+                local in_bounds = ArenaGameplay.IsInBounds(0, 0, data.zone_size)
 
                 if (not in_bounds) then
                     arena_log:print("Game tried to spawn player out of bounds, retrying...")
@@ -1757,7 +1765,9 @@ ArenaGameplay = {
             --message_handler.send.Kick(lobby, data)
             --message_handler.send.AnimationUpdate(lobby, data)
             networking.send.animation_update(lobby, data)
-            networking.send.player_data_update(lobby, data)
+            if(GameGetFrameNum() % 15 == 0)then
+                networking.send.player_data_update(lobby, data)
+            end
             --message_handler.send.AimUpdate(lobby)
             --message_handler.send.SyncControls(lobby, data)
             networking.send.input_update(lobby)
@@ -2164,6 +2174,10 @@ ArenaGameplay = {
 
         local shooter_x, shooter_y = EntityGetTransform(shooter_id)
 
+        if(shooter_id == nil or shooter_x == nil)then
+            return
+        end
+
         if (homingComponents ~= nil) then
             for k, v in pairs(homingComponents) do
                 local target_who_shot = ComponentGetValue2(v, "target_who_shot")
@@ -2172,11 +2186,12 @@ ArenaGameplay = {
                         -- find closest player which isn't us
                         local closest_player = nil
                         local distance = 9999999
-                        local clients = EntityGetWithTag("client")
+                        local clients = EntityGetWithTag("client") or {}
                         -- add local player to list
                         if (player.Get()) then
                             table.insert(clients, player.Get())
                         end
+
 
                         for k, v in pairs(clients) do
                             if (v ~= shooter_id) then
@@ -2200,7 +2215,7 @@ ArenaGameplay = {
                     else
                         local closest_player = nil
                         local distance = 9999999
-                        local clients = EntityGetWithTag("client")
+                        local clients = EntityGetWithTag("client") or {}
 
                         for k, v in pairs(clients) do
                             if (v ~= shooter_id) then

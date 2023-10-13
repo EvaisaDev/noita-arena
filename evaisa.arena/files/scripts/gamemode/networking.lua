@@ -13,6 +13,7 @@ dofile_once("data/scripts/perks/perk_list.lua")
 dofile_once("mods/evaisa.arena/content/data.lua")
 local player_helper = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/player.lua")
 -- whatever ill just leave it
+dofile("mods/evaisa.arena/lib/status_helper.lua")
 
 networking = {
     receive = {
@@ -668,6 +669,10 @@ networking = {
                             local damage_types = mp_helpers.GetDamageTypes(damage_details.damage_types)
                             local ragdoll_fx = mp_helpers.GetRagdollFX(damage_details.ragdoll_fx)
 
+                            --print("ragdoll_fx: " .. tostring(ragdoll_fx))
+
+                            ragdoll_fx = ragdoll_fx or "NORMAL"
+
                             if(damage_details.smash_explosion)then  
                                 EntityLoad("mods/evaisa.arena/files/entities/misc/smash_explosion.xml", damage_details.explosion_x, damage_details.explosion_y)
                             end
@@ -871,8 +876,73 @@ networking = {
                 local character_data_comp = EntityGetFirstComponentIncludingDisabled(player, "CharacterDataComponent")
                 if (character_data_comp ~= nil) then
                     local player_data = {
-                        mFlyingTimeLeft = message[1]
+                        mFlyingTimeLeft = message[1],
+                        status_list = message[2],
                     }
+
+                    -- handle status effects wahwah i don't know how yet
+                    -- whatever ill do this in the moirdning
+                    local valid_ids = {}
+
+                    local index = 0
+                    local total = 0
+
+                    for _, _ in pairs(player_data.status_list) do
+                        total = total + 1
+                    end
+
+                    local initial_offset = -((total * 8) / 2) + (total * 0.75)
+
+                    --GamePrint(initial_offset)
+
+                    for id, value in pairs(player_data.status_list) do
+                        index = index + 1
+                        local offset = initial_offset + (index * 8)
+
+                        local effect = GetStatusElement(id, value)
+
+                        if(effect ~= nil and data.players[tostring(user)].status_effect_comps[id] == nil)then
+                            data.players[tostring(user)].status_effect_comps[id] = EntityAddComponent2( player, "SpriteComponent",
+                            {
+                                image_file = effect.ui_icon,
+                                offset_x = offset,
+                                offset_y = 35,
+                                additive = false,
+                            })
+                            
+                            --GamePrint("Loaded icon of id: "..tostring(effect.id))
+                        elseif(data.players[tostring(user)].status_effect_comps[id] ~= nil)then
+                            local comp = data.players[tostring(user)].status_effect_comps[id]
+                            ComponentSetValue2(comp, "offset_x", offset)
+                        end
+
+                        if(effect ~= nil and data.players[tostring(user)].status_effect_entities[id] == nil and effect.effect_entity)then
+                            data.players[tostring(user)].status_effect_entities[id] = LoadGameEffectEntityTo( player, effect.effect_entity )
+
+                        end
+
+                        valid_ids[id] = true
+                    end
+
+                    --[[for i, v in ipairs(valid_ids)do
+                        local entity = data.players[tostring(user)].status_effect_entities[v]
+                        if(entity)then
+                            EntityKill(entity)
+                        end
+                    end]]
+
+                    for k, v in pairs(data.players[tostring(user)].status_effect_comps)do
+                        if(not valid_ids[k])then
+                            --GamePrint("Removing status effect: "..tostring(k))
+                            EntityRemoveComponent(player, v)
+                            data.players[tostring(user)].status_effect_comps[k] = nil
+                            if(data.players[tostring(user)].status_effect_entities[k])then
+                                EntityKill(data.players[tostring(user)].status_effect_entities[k])
+                                data.players[tostring(user)].status_effect_entities[k] = nil
+                            end
+                        end
+                    end
+
                     ComponentSetValue2(character_data_comp, "mFlyingTimeLeft", player_data.mFlyingTimeLeft)
                 end
             end
@@ -1062,8 +1132,12 @@ networking = {
             if(player ~= nil and EntityGetIsAlive(player))then
                 local character_data_comp = EntityGetFirstComponentIncludingDisabled(player, "CharacterDataComponent")
                 if(character_data_comp ~= nil)then
+                    
+                    local status_list = GetActiveStatusEffects(player, true)
+
                     local message = {
                         ComponentGetValue2(character_data_comp, "mFlyingTimeLeft"),
+                        status_list
                     }
 
                     --print("mFlyingTimeLeft: " .. tostring(message.mFlyingTimeLeft))
