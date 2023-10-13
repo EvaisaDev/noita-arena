@@ -637,6 +637,7 @@ networking = {
 
             --GlobalsSetValue(tostring(wand.entity_id).."_wand", wandInfo.id)
             local slot_x, slot_y = message[1], message[2]
+            GamePrint("Switching item to slot: " .. tostring(slot_x) .. ", " .. tostring(slot_y))
             if (data.players[tostring(user)].entity and EntityGetIsAlive(data.players[tostring(user)].entity)) then
                 local items = GameGetAllInventoryItems(data.players[tostring(user)].entity) or {}
                 for i, item in ipairs(items) do
