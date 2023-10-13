@@ -669,6 +669,10 @@ networking = {
                             local damage_types = mp_helpers.GetDamageTypes(damage_details.damage_types)
                             local ragdoll_fx = mp_helpers.GetRagdollFX(damage_details.ragdoll_fx)
 
+                            --print("ragdoll_fx: " .. tostring(ragdoll_fx))
+
+                            ragdoll_fx = ragdoll_fx or "NORMAL"
+
                             if(damage_details.smash_explosion)then  
                                 EntityLoad("mods/evaisa.arena/files/entities/misc/smash_explosion.xml", damage_details.explosion_x, damage_details.explosion_y)
                             end
@@ -906,7 +910,7 @@ networking = {
                                 additive = false,
                             })
                             
-                            GamePrint("Loaded icon of id: "..tostring(effect.id))
+                            --GamePrint("Loaded icon of id: "..tostring(effect.id))
                         elseif(data.players[tostring(user)].status_effect_comps[id] ~= nil)then
                             local comp = data.players[tostring(user)].status_effect_comps[id]
                             ComponentSetValue2(comp, "offset_x", offset)
@@ -929,7 +933,7 @@ networking = {
 
                     for k, v in pairs(data.players[tostring(user)].status_effect_comps)do
                         if(not valid_ids[k])then
-                            GamePrint("Removing status effect: "..tostring(k))
+                            --GamePrint("Removing status effect: "..tostring(k))
                             EntityRemoveComponent(player, v)
                             data.players[tostring(user)].status_effect_comps[k] = nil
                             if(data.players[tostring(user)].status_effect_entities[k])then
