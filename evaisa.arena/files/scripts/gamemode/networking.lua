@@ -880,8 +880,6 @@ networking = {
                         status_list = message[2],
                     }
 
-                    -- handle status effects wahwah i don't know how yet
-                    -- whatever ill do this in the moirdning
                     local valid_ids = {}
 
                     local index = 0
@@ -923,13 +921,6 @@ networking = {
 
                         valid_ids[id] = true
                     end
-
-                    --[[for i, v in ipairs(valid_ids)do
-                        local entity = data.players[tostring(user)].status_effect_entities[v]
-                        if(entity)then
-                            EntityKill(entity)
-                        end
-                    end]]
 
                     for k, v in pairs(data.players[tostring(user)].status_effect_comps)do
                         if(not valid_ids[k])then
