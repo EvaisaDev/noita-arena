@@ -1749,7 +1749,7 @@ ArenaGameplay = {
         end
         if (data.players_loaded) then
             --message_handler.send.WandUpdate(lobby, data)
-            networking.send.item_update(lobby, data)
+            --networking.send.item_update(lobby, data)
 
             --[[if(GameGetFrameNum() % 60 == 0)then
                 networking.send.wand_update(lobby, data, nil, true)
