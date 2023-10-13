@@ -37,6 +37,7 @@
       </Base>  
   </Entity>
 
+  <StatusEffectDataComponent/>
 
   <Entity name="cursor">
     <SpriteComponent 
