@@ -445,7 +445,7 @@ networking = {
                         if (message_data.kick) then
                             ComponentSetValue2(controlsComp, "mButtonDownKick", true)
                             if (not controls_data.kick) then
-                                ComponentSetValue2(controlsComp, "mButtonFrameKick", GameGetFrameNum())
+                                ComponentSetValue2(controlsComp, "mButtonFrameKick", GameGetFrameNum() + 1)
                             end
                             controls_data.kick = true
                         else
@@ -456,9 +456,9 @@ networking = {
                             ComponentSetValue2(controlsComp, "mButtonDownFire", true)
                             --local lastFireFrame = ComponentGetValue2(controlsComp, "mButtonFrameFire")
                             if (not controls_data.fire) then
-                                ComponentSetValue2(controlsComp, "mButtonFrameFire", GameGetFrameNum())
+                                ComponentSetValue2(controlsComp, "mButtonFrameFire", GameGetFrameNum() + 1)
                             end
-                            ComponentSetValue2(controlsComp, "mButtonLastFrameFire", GameGetFrameNum())
+                            ComponentSetValue2(controlsComp, "mButtonLastFrameFire", GameGetFrameNum() + 1)
                             controls_data.fire = true
                         else
                             ComponentSetValue2(controlsComp, "mButtonDownFire", false)
@@ -467,7 +467,7 @@ networking = {
                         if (message_data.fire2) then
                             ComponentSetValue2(controlsComp, "mButtonDownFire2", true)
                             if (not controls_data.fire2) then
-                                ComponentSetValue2(controlsComp, "mButtonFrameFire2", GameGetFrameNum())
+                                ComponentSetValue2(controlsComp, "mButtonFrameFire2", GameGetFrameNum() + 1)
                             end
                             controls_data.fire2 = true
                         else
@@ -477,7 +477,7 @@ networking = {
                         if (message_data.action) then
                             ComponentSetValue2(controlsComp, "mButtonDownAction", true)
                             if (not controls_data.action) then
-                                ComponentSetValue2(controlsComp, "mButtonFrameAction", GameGetFrameNum())
+                                ComponentSetValue2(controlsComp, "mButtonFrameAction", GameGetFrameNum() + 1)
                             end
                             controls_data.action = true
                         else
@@ -487,7 +487,7 @@ networking = {
                         if (message_data.throw) then
                             ComponentSetValue2(controlsComp, "mButtonDownThrow", true)
                             if (not controls_data.throw) then
-                                ComponentSetValue2(controlsComp, "mButtonFrameThrow", GameGetFrameNum())
+                                ComponentSetValue2(controlsComp, "mButtonFrameThrow", GameGetFrameNum() + 1)
                             end
                             controls_data.throw = true
                         else
@@ -497,7 +497,7 @@ networking = {
                         if (message_data.interact) then
                             ComponentSetValue2(controlsComp, "mButtonDownInteract", true)
                             if (not controls_data.interact) then
-                                ComponentSetValue2(controlsComp, "mButtonFrameInteract", GameGetFrameNum())
+                                ComponentSetValue2(controlsComp, "mButtonFrameInteract", GameGetFrameNum() + 1)
                             end
                             controls_data.interact = true
                         else
@@ -507,7 +507,7 @@ networking = {
                         if (message_data.left) then
                             ComponentSetValue2(controlsComp, "mButtonDownLeft", true)
                             if (not controls_data.left) then
-                                ComponentSetValue2(controlsComp, "mButtonFrameLeft", GameGetFrameNum())
+                                ComponentSetValue2(controlsComp, "mButtonFrameLeft", GameGetFrameNum() + 1)
                             end
                             controls_data.left = true
                         else
@@ -517,7 +517,7 @@ networking = {
                         if (message_data.right) then
                             ComponentSetValue2(controlsComp, "mButtonDownRight", true)
                             if (not controls_data.right) then
-                                ComponentSetValue2(controlsComp, "mButtonFrameRight", GameGetFrameNum())
+                                ComponentSetValue2(controlsComp, "mButtonFrameRight", GameGetFrameNum() + 1)
                             end
                             controls_data.right = true
                         else
@@ -527,7 +527,7 @@ networking = {
                         if (message_data.up) then
                             ComponentSetValue2(controlsComp, "mButtonDownUp", true)
                             if (not controls_data.up) then
-                                ComponentSetValue2(controlsComp, "mButtonFrameUp", GameGetFrameNum())
+                                ComponentSetValue2(controlsComp, "mButtonFrameUp", GameGetFrameNum() + 1)
                             end
                             controls_data.up = true
                         else
@@ -537,7 +537,7 @@ networking = {
                         if (message_data.down) then
                             ComponentSetValue2(controlsComp, "mButtonDownDown", true)
                             if (not controls_data.down) then
-                                ComponentSetValue2(controlsComp, "mButtonFrameDown", GameGetFrameNum())
+                                ComponentSetValue2(controlsComp, "mButtonFrameDown", GameGetFrameNum() + 1)
                             end
                             controls_data.down = true
                         else
@@ -547,7 +547,7 @@ networking = {
                         if (message_data.jump) then
                             ComponentSetValue2(controlsComp, "mButtonDownJump", true)
                             if (not controls_data.jump) then
-                                ComponentSetValue2(controlsComp, "mButtonFrameJump", GameGetFrameNum())
+                                ComponentSetValue2(controlsComp, "mButtonFrameJump", GameGetFrameNum() + 1)
                             end
                             controls_data.jump = true
                         else
@@ -557,7 +557,7 @@ networking = {
                         if (message_data.fly) then
                             ComponentSetValue2(controlsComp, "mButtonDownFly", true)
                             if (not controls_data.fly) then
-                                ComponentSetValue2(controlsComp, "mButtonFrameFly", GameGetFrameNum())
+                                ComponentSetValue2(controlsComp, "mButtonFrameFly", GameGetFrameNum() + 1)
                             end
                             controls_data.fly = true
                         else
@@ -567,7 +567,7 @@ networking = {
                         if (message_data.leftClick) then
                             ComponentSetValue2(controlsComp, "mButtonDownLeftClick", true)
                             if (not controls_data.leftClick) then
-                                ComponentSetValue2(controlsComp, "mButtonFrameLeftClick", GameGetFrameNum())
+                                ComponentSetValue2(controlsComp, "mButtonFrameLeftClick", GameGetFrameNum() + 1)
                             end
                             controls_data.leftClick = true
                         else
@@ -577,7 +577,7 @@ networking = {
                         if (message_data.rightClick) then
                             ComponentSetValue2(controlsComp, "mButtonDownRightClick", true)
                             if (not controls_data.rightClick) then
-                                ComponentSetValue2(controlsComp, "mButtonFrameRightClick", GameGetFrameNum())
+                                ComponentSetValue2(controlsComp, "mButtonFrameRightClick", GameGetFrameNum() + 1)
                             end
                             controls_data.rightClick = true
                         else
