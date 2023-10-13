@@ -636,7 +636,7 @@ networking = {
             end
 
             --GlobalsSetValue(tostring(wand.entity_id).."_wand", wandInfo.id)
-            local slot_x, slot_y = message[1], message[2]
+            local is_wand, slot_x, slot_y = message[1], message[2], message[3]
             GamePrint("Switching item to slot: " .. tostring(slot_x) .. ", " .. tostring(slot_y))
             if (data.players[tostring(user)].entity and EntityGetIsAlive(data.players[tostring(user)].entity)) then
                 local items = GameGetAllInventoryItems(data.players[tostring(user)].entity) or {}
@@ -645,7 +645,15 @@ networking = {
                     --local item_id = tonumber(GlobalsGetValue(tostring(item) .. "_item")) or -1
                     local itemComp = EntityGetFirstComponentIncludingDisabled(item, "ItemComponent")
                     local item_slot_x, item_slot_y = ComponentGetValue2(itemComp, "inventory_slot")
-                    if (item_slot_x == slot_x and item_slot_y == slot_y) then
+
+                    local ability_comp = EntityGetFirstComponentIncludingDisabled(item, "AbilityComponent")
+                    
+                    local item_is_wand = false
+                    if(ability_comp and ComponentGetValue2(ability_comp, "use_gun_script"))then
+                        item_is_wand = true
+                    end
+
+                    if (item_slot_x == slot_x and item_slot_y == slot_y and item_is_wand == is_wand) then
                         local inventory2Comp = EntityGetFirstComponentIncludingDisabled(
                             data.players[tostring(user)].entity, "Inventory2Component")
                         local mActiveItem = ComponentGetValue2(inventory2Comp, "mActiveItem")
@@ -1287,16 +1295,24 @@ networking = {
                     --if (wand_id ~= -1) then
                     local item_comp = EntityGetFirstComponentIncludingDisabled(held_item, "ItemComponent")
                     local slot_x, slot_y = ComponentGetValue2(item_comp, "inventory_slot")
+                    local ability_comp = EntityGetFirstComponentIncludingDisabled(held_item, "AbilityComponent")
+                    
+                    local is_wand = false
+                    if(ability_comp and ComponentGetValue2(ability_comp, "use_gun_script"))then
+                        is_wand = true
+                    end
+
+                    GamePrint("Switching to item in slot " .. tostring(slot_x) .. ", " .. tostring(slot_y))
 
                     if (user == nil) then
                         if(to_spectators)then
-                            steamutils.send("switch_item", { slot_x, slot_y }, steamutils.messageTypes.Spectators, lobby, true, true)
+                            steamutils.send("switch_item", { is_wand, slot_x, slot_y }, steamutils.messageTypes.Spectators, lobby, true, true)
                         else
-                            steamutils.send("switch_item", { slot_x, slot_y }, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+                            steamutils.send("switch_item", { is_wand, slot_x, slot_y }, steamutils.messageTypes.OtherPlayers, lobby, true, true)
                         end
                         data.client.previous_selected_item = held_item
                     else
-                        steamutils.sendToPlayer("switch_item", { slot_x, slot_y }, user, true)
+                        steamutils.sendToPlayer("switch_item", { is_wand, slot_x, slot_y }, user, true)
                     end
                     --end
                 end
