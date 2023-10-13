@@ -445,7 +445,7 @@ networking = {
                         if (message_data.kick) then
                             ComponentSetValue2(controlsComp, "mButtonDownKick", true)
                             if (not controls_data.kick) then
-                                ComponentSetValue2(controlsComp, "mButtonFrameKick", GameGetFrameNum() + 1)
+                                ComponentSetValue2(controlsComp, "mButtonFrameKick", GameGetFrameNum())
                             end
                             controls_data.kick = true
                         else
@@ -456,9 +456,9 @@ networking = {
                             ComponentSetValue2(controlsComp, "mButtonDownFire", true)
                             --local lastFireFrame = ComponentGetValue2(controlsComp, "mButtonFrameFire")
                             if (not controls_data.fire) then
-                                ComponentSetValue2(controlsComp, "mButtonFrameFire", GameGetFrameNum() + 1)
+                                ComponentSetValue2(controlsComp, "mButtonFrameFire", GameGetFrameNum())
                             end
-                            ComponentSetValue2(controlsComp, "mButtonLastFrameFire", GameGetFrameNum() + 1)
+                            ComponentSetValue2(controlsComp, "mButtonLastFrameFire", GameGetFrameNum())
                             controls_data.fire = true
                         else
                             ComponentSetValue2(controlsComp, "mButtonDownFire", false)
@@ -467,7 +467,7 @@ networking = {
                         if (message_data.fire2) then
                             ComponentSetValue2(controlsComp, "mButtonDownFire2", true)
                             if (not controls_data.fire2) then
-                                ComponentSetValue2(controlsComp, "mButtonFrameFire2", GameGetFrameNum() + 1)
+                                ComponentSetValue2(controlsComp, "mButtonFrameFire2", GameGetFrameNum())
                             end
                             controls_data.fire2 = true
                         else
