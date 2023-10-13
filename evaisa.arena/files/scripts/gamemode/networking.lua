@@ -881,21 +881,19 @@ networking = {
                     local valid_ids = {}
 
                     local index = 0
-                    local initial_offset = 6
+                    local total = 0
 
                     for _, _ in pairs(player_data.status_list) do
-                        initial_offset = initial_offset - 6
+                        total = total + 1
                     end
+
+                    local initial_offset = -((total * 8) / 2) + (total * 0.75)
 
                     --GamePrint(initial_offset)
 
                     for id, value in pairs(player_data.status_list) do
                         index = index + 1
-                        local offset = initial_offset + (index * 6)
-
-                        --GamePrint(offset)
-                        GamePrint(id)
-                        GamePrint(value)
+                        local offset = initial_offset + (index * 8)
 
                         local effect = GetStatusElement(id, value)
 
@@ -914,6 +912,11 @@ networking = {
                             ComponentSetValue2(comp, "offset_x", offset)
                         end
 
+                        if(effect ~= nil and data.players[tostring(user)].status_effect_entities[id] == nil and effect.effect_entity)then
+                            data.players[tostring(user)].status_effect_entities[id] = LoadGameEffectEntityTo( player, effect.effect_entity )
+
+                        end
+
                         valid_ids[id] = true
                     end
 
@@ -929,6 +932,10 @@ networking = {
                             GamePrint("Removing status effect: "..tostring(k))
                             EntityRemoveComponent(player, v)
                             data.players[tostring(user)].status_effect_comps[k] = nil
+                            if(data.players[tostring(user)].status_effect_entities[k])then
+                                EntityKill(data.players[tostring(user)].status_effect_entities[k])
+                                data.players[tostring(user)].status_effect_entities[k] = nil
+                            end
                         end
                     end
 
