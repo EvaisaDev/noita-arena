@@ -881,17 +881,18 @@ networking = {
                     local valid_ids = {}
 
                     local index = 0
-                    local initial_offset = 0
+                    local initial_offset = 6
 
                     for _, _ in pairs(player_data.status_list) do
-                        initial_offset = initial_offset - 12
+                        initial_offset = initial_offset - 6
                     end
 
-                    initial_offset = initial_offset / 2
+                    --GamePrint(initial_offset)
 
                     for id, value in pairs(player_data.status_list) do
-                        local offset = initial_offset + (index * 13)
+                        local offset = initial_offset + 6 + (index * 6)
                         index = index + 1
+                        --GamePrint(offset)
                         local effect = GetStatusElement(id, value)
 
                         if(effect ~= nil and data.players[tostring(user)].status_effect_comps[id] == nil)then
@@ -923,7 +924,7 @@ networking = {
                                 image_file = effect.ui_icon,
                                 offset_x = offset,
                                 offset_y = 35,
-                                additive = true,
+                                additive = false,
                             })
                             
                             GamePrint("Loaded icon of id: "..tostring(effect.id))
@@ -945,6 +946,7 @@ networking = {
                     for k, v in pairs(data.players[tostring(user)].status_effect_comps)do
                         if(not valid_ids[k])then
                             EntityRemoveComponent(player, v)
+                            data.players[tostring(user)].status_effect_comps[k] = nil
                         end
                     end
 
