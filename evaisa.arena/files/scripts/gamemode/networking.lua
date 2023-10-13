@@ -899,7 +899,7 @@ networking = {
 
                         local effect = GetStatusElement(id, value)
 
-                        if(effect ~= nil and data.players[tostring(user)].status_effect_comps[id] == nil)then
+                        --[[if(effect ~= nil and data.players[tostring(user)].status_effect_comps[id] == nil)then
                             data.players[tostring(user)].status_effect_comps[id] = EntityAddComponent2( player, "SpriteComponent",
                             {
                                 image_file = effect.ui_icon,
@@ -912,25 +912,36 @@ networking = {
                         elseif(data.players[tostring(user)].status_effect_comps[id] ~= nil)then
                             local comp = data.players[tostring(user)].status_effect_comps[id]
                             ComponentSetValue2(comp, "offset_x", offset)
-                        end
+                        end]]
 
-                        if(effect ~= nil and data.players[tostring(user)].status_effect_entities[id] == nil and effect.effect_entity)then
-                            data.players[tostring(user)].status_effect_entities[id] = LoadGameEffectEntityTo( player, effect.effect_entity )
-
+                        if(effect ~= nil and data.players[tostring(user)].status_effect_entities[id] == nil)then
+                            if(effect.effect_entity)then
+                                data.players[tostring(user)].status_effect_entities[id] = LoadGameEffectEntityTo( player, effect.effect_entity )
+                            else
+                                data.players[tostring(user)].status_effect_entities[id] = EntityCreateNew("effect")
+                                EntityAddComponent2(data.players[tostring(user)].status_effect_entities[id], "InheritTransformComponent")
+                                EntityAddComponent2(data.players[tostring(user)].status_effect_entities[id], "GameEffectComponent", {
+                                    effect = id,
+                                    frames = -1,
+                                })
+                                EntityAddChild(player, data.players[tostring(user)].status_effect_entities[id])
+                            end
+                            EntityAddComponent2(data.players[tostring(user)].status_effect_entities[id], "UIIconComponent", {
+                                name = effect.ui_name,
+                                icon_sprite_file = effect.ui_icon,
+                                display_above_head = true,
+                                display_in_hud = false,
+                                is_perk = false,
+                            })
                         end
 
                         valid_ids[id] = true
                     end
 
-                    for k, v in pairs(data.players[tostring(user)].status_effect_comps)do
+                    for k, v in pairs(data.players[tostring(user)].status_effect_entities)do
                         if(not valid_ids[k])then
-                            --GamePrint("Removing status effect: "..tostring(k))
-                            EntityRemoveComponent(player, v)
-                            data.players[tostring(user)].status_effect_comps[k] = nil
-                            if(data.players[tostring(user)].status_effect_entities[k])then
-                                EntityKill(data.players[tostring(user)].status_effect_entities[k])
-                                data.players[tostring(user)].status_effect_entities[k] = nil
-                            end
+                            EntityKill(data.players[tostring(user)].status_effect_entities[k])
+                            data.players[tostring(user)].status_effect_entities[k] = nil
                         end
                     end
 
