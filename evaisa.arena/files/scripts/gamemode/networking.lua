@@ -445,7 +445,7 @@ networking = {
                         if (message_data.kick) then
                             ComponentSetValue2(controlsComp, "mButtonDownKick", true)
                             if (not controls_data.kick) then
-                                ComponentSetValue2(controlsComp, "mButtonFrameKick", GameGetFrameNum())
+                                ComponentSetValue2(controlsComp, "mButtonFrameKick", GameGetFrameNum() + 1)
                             end
                             controls_data.kick = true
                         else
