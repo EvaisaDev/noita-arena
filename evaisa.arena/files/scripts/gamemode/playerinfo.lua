@@ -18,6 +18,7 @@ function playerinfo:New(user)
         --[[last_position_x = nil,
         last_position_y = nil,]]
         status_effect_entities = {},
+        status_effect_comps = {},
         previous_positions = {},
         last_inventory_string = nil,
         ping = 0,

@@ -104,8 +104,6 @@ end
 GetStatusElement = function( id, value )
   local last_index_threshold = -100
   local elem = nil
-  
-  print(id)
 
   for k,v in pairs(status_effects)do
     local threshold = v.min_threshold_normalized or 0
