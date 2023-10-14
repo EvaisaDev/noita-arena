@@ -471,6 +471,7 @@ networking = {
                             ComponentSetValue2(controlsComp, "mButtonDownFire", true)
                             --local lastFireFrame = ComponentGetValue2(controlsComp, "mButtonFrameFire")
                             if (not controls_data.fire) then
+                                -- perhaps this should be next frame??
                                 ComponentSetValue2(controlsComp, "mButtonFrameFire", GameGetFrameNum())
                             end
                             ComponentSetValue2(controlsComp, "mButtonLastFrameFire", GameGetFrameNum())

@@ -2055,6 +2055,42 @@ ArenaGameplay = {
                     if (ComponentGetValue2(controls, "mButtonDownRightClick") == false) then
                         data.players[k].controls.rightClick = false
                     end
+                    -- mButtonDownAction
+                    if (ComponentGetValue2(controls, "mButtonDownAction") == false) then
+                        data.players[k].controls.action = false
+                    end
+                    -- mButtonDownThrow
+                    if (ComponentGetValue2(controls, "mButtonDownThrow") == false) then
+                        data.players[k].controls.throw = false
+                    end
+                    -- mButtonDownInteract
+                    if (ComponentGetValue2(controls, "mButtonDownInteract") == false) then
+                        data.players[k].controls.interact = false
+                    end
+                    -- mButtonDownLeft
+                    if (ComponentGetValue2(controls, "mButtonDownLeft") == false) then
+                        data.players[k].controls.left = false
+                    end
+                    -- mButtonDownRight
+                    if (ComponentGetValue2(controls, "mButtonDownRight") == false) then
+                        data.players[k].controls.right = false
+                    end
+                    -- mButtonDownUp
+                    if (ComponentGetValue2(controls, "mButtonDownUp") == false) then
+                        data.players[k].controls.up = false
+                    end
+                    -- mButtonDownDown
+                    if (ComponentGetValue2(controls, "mButtonDownDown") == false) then
+                        data.players[k].controls.down = false
+                    end
+                    -- mButtonDownJump
+                    if (ComponentGetValue2(controls, "mButtonDownJump") == false) then
+                        data.players[k].controls.jump = false
+                    end
+                    -- mButtonDownFly
+                    if (ComponentGetValue2(controls, "mButtonDownFly") == false) then
+                        data.players[k].controls.fly = false
+                    end
                 end
             end
         end
