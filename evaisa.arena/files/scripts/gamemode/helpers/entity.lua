@@ -34,6 +34,70 @@ entity.ClearGameEffects = function( ent )
     end
 end
 
+entity.SetVariable = function(ent, name, value)
+    --print("entity: "..tostring(ent))
+    if(ent == nil or ent == 0 or not EntityGetIsAlive(ent))then
+        return
+    end
+    local variable_storage_comps = EntityGetComponentIncludingDisabled(ent, "VariableStorageComponent")
+    local found_and_set = false
+    if variable_storage_comps ~= nil then
+        for i,variable_storage_comp in ipairs(variable_storage_comps) do
+            if ComponentGetValue2(variable_storage_comp, "name") == name then
+                found_and_set = true
+                if(type(value) == "number")then
+                    ComponentSetValue2(variable_storage_comp, "value_int", 0)
+                    ComponentSetValue2(variable_storage_comp, "value_float", value)
+                elseif(type(value) == "string")then
+                    ComponentSetValue2(variable_storage_comp, "value_int", 1)
+                    ComponentSetValue2(variable_storage_comp, "value_string", value)
+                elseif(type(value) == "boolean")then
+                    ComponentSetValue2(variable_storage_comp, "value_int", 2)
+                    ComponentSetValue2(variable_storage_comp, "value_bool", value)
+                end
+                return
+            end
+        end
+    end
+
+    if(not found_and_set)then
+        print("entity: "..tostring(ent).." did not have variable "..name..", creating it")
+        local variable_storage_comp = EntityAddComponent(ent, "VariableStorageComponent", {
+            name = name,
+        })
+
+        if(type(value) == "number")then
+            ComponentSetValue2(variable_storage_comp, "value_int", 0)
+            ComponentSetValue2(variable_storage_comp, "value_float", value)
+        elseif(type(value) == "string")then
+            ComponentSetValue2(variable_storage_comp, "value_int", 1)
+            ComponentSetValue2(variable_storage_comp, "value_string", value)
+        elseif(type(value) == "boolean")then
+            ComponentSetValue2(variable_storage_comp, "value_int", 2)
+            ComponentSetValue2(variable_storage_comp, "value_bool", value)
+        end
+    end
+end
+
+entity.GetVariable = function(ent, name)
+    local variable_storage_comps = EntityGetComponentIncludingDisabled(ent, "VariableStorageComponent")
+    if variable_storage_comps ~= nil then
+        for i,variable_storage_comp in ipairs(variable_storage_comps) do
+            if ComponentGetValue2(variable_storage_comp, "name") == name then
+                local value_type = ComponentGetValue2(variable_storage_comp, "value_int")
+                if(value_type == 0)then
+                    return ComponentGetValue2(variable_storage_comp, "value_float")
+                elseif(value_type == 1)then
+                    return ComponentGetValue2(variable_storage_comp, "value_string")
+                elseif(value_type == 2)then
+                    return ComponentGetValue2(variable_storage_comp, "value_bool")
+                end
+            end
+        end
+    end
+    return nil
+end
+
 entity.PickItem = function(ent, item)
     local item_component = EntityGetFirstComponentIncludingDisabled(item, "ItemComponent")
     if item_component then

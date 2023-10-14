@@ -114,8 +114,8 @@
 
   <HitboxComponent 
     aabb_max_x="0" 
-    aabb_max_y="0" 
-    aabb_min_x="-20" 
+    aabb_max_y="-20" 
+    aabb_min_x="0" 
     aabb_min_y="-20" 
     is_enemy="1" 
     is_item="0" 

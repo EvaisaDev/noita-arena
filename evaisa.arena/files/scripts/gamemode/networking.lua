@@ -341,7 +341,22 @@ networking = {
                                 false)
                         end
 
-                        GlobalsSetValue(tostring(item_entity) .. "_item", tostring(itemInfo.id))
+                        EntityHelper.SetVariable(item_entity, "arena_entity_id", itemInfo.id)
+
+                        local lua_comps = EntityGetComponentIncludingDisabled(item_entity, "LuaComponent") or {}
+                        local has_pickup_script = false
+                        for i, lua_comp in ipairs(lua_comps) do
+                            if (ComponentGetValue2(lua_comp, "script_item_picked_up") == "mods/evaisa.arena/files/scripts/gamemode/misc/item_pickup.lua") then
+                                has_pickup_script = true
+                            end
+                        end
+
+                        if (not has_pickup_script) then
+                            EntityAddComponent(item_entity, "LuaComponent", {
+                                _tags = "enabled_in_world,enabled_in_hand,enabled_in_inventory",
+                                script_item_picked_up = "mods/evaisa.arena/files/scripts/gamemode/misc/item_pickup.lua",
+                            })
+                        end
                     end
 
                 end
@@ -468,6 +483,7 @@ networking = {
                             ComponentSetValue2(controlsComp, "mButtonDownFire2", true)
                             if (not controls_data.fire2) then
                                 ComponentSetValue2(controlsComp, "mButtonFrameFire2", GameGetFrameNum())
+                                --EntityAddTag(data.players[tostring(user)].entity, "player_unit")
                             end
                             controls_data.fire2 = true
                         else
@@ -1059,7 +1075,21 @@ networking = {
                 local heart = EntityLoad("data/entities/animals/heart.xml", message.heart[1], message.heart[2])
                 EntityAddTag(heart, "spectator_simulated")
             end
-        end
+        end,
+        item_picked_up = function(lobby, message, user, data)
+            GamePrint("pickup received.")
+            local entities = EntityGetInRadius(0, 0, 1000000000)
+            local item_id = message[1]
+            for k, v in ipairs(entities)do
+                if(EntityGetFirstComponentIncludingDisabled(v, "ItemComponent") ~= nil)then
+                    local entity_id = EntityHelper.GetVariable(v, "arena_entity_id")
+                    if(entity_id ~= nil and entity_id == item_id)then
+                        EntityKill(v)
+                        return
+                    end
+                end
+            end
+        end,
     },
     send = {
         handshake = function(lobby)
@@ -1505,6 +1535,13 @@ networking = {
         end,
         allow_round_end = function(lobby)
             steamutils.send("allow_round_end", {}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+        end,
+        item_picked_up = function(lobby, item_id, to_spectators)
+            if(to_spectators)then
+                steamutils.send("item_picked_up", { item_id }, steamutils.messageTypes.Spectators, lobby, true, true)
+            else
+                steamutils.send("item_picked_up", { item_id }, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+            end
         end,
     },
 }

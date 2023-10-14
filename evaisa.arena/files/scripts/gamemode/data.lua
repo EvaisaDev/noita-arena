@@ -54,6 +54,7 @@ function data:New()
             hp = 100,
             max_hp = 100,
             perks = {},
+            last_inventory = {},
         },
         state = "lobby",
         preparing = false,
