@@ -1948,17 +1948,19 @@ ArenaGameplay = {
         no_switching = no_switching or 0
 
         if(data.client.last_inventory == nil or player.DidInventoryChange(data.client.last_inventory, current_inventory_info))then
-            GamePrint("Inventory has changed!")
+           -- GamePrint("Inventory has changed!")
             GameAddFlagRun("ForceUpdateInventory")
             no_switching = 10
             data.client.last_inventory = current_inventory_info
         end
 
         if(no_switching > 0)then
-            GamePrint("No switching: "..tostring(no_switching))
+            --GamePrint("No switching: "..tostring(no_switching))
             no_switching = no_switching - 1
         else
+            
             if(GameHasFlagRun("ForceUpdateInventory"))then
+                GamePrint("Updating inventory!")
                 GameRemoveFlagRun("ForceUpdateInventory")
                 if (data.state == "arena") then
                     networking.send.item_update(lobby, data, nil, true, false)
