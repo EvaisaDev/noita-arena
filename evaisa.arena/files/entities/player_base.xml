@@ -153,7 +153,7 @@
     ragdoll_offset_y="-5"
     ragdollify_child_entity_sprites="1"
     blood_spray_material="blood"
-    physics_objects_damage="0"
+    physics_objects_damage="1"
     critical_damage_resistance="0.2"
     ><damage_multipliers
       explosion="0.35" >
