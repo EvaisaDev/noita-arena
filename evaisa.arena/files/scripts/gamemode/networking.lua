@@ -472,7 +472,7 @@ networking = {
                             --local lastFireFrame = ComponentGetValue2(controlsComp, "mButtonFrameFire")
                             if (not controls_data.fire) then
                                 -- perhaps this should be next frame??
-                                ComponentSetValue2(controlsComp, "mButtonFrameFire", GameGetFrameNum())
+                                ComponentSetValue2(controlsComp, "mButtonFrameFire", GameGetFrameNum()+1)
                             end
                             ComponentSetValue2(controlsComp, "mButtonLastFrameFire", GameGetFrameNum())
                             controls_data.fire = true
@@ -483,7 +483,7 @@ networking = {
                         if (message_data.fire2) then
                             ComponentSetValue2(controlsComp, "mButtonDownFire2", true)
                             if (not controls_data.fire2) then
-                                ComponentSetValue2(controlsComp, "mButtonFrameFire2", GameGetFrameNum())
+                                ComponentSetValue2(controlsComp, "mButtonFrameFire2", GameGetFrameNum()+1)
                                 --EntityAddTag(data.players[tostring(user)].entity, "player_unit")
                             end
                             controls_data.fire2 = true
