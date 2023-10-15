@@ -355,6 +355,8 @@ networking = {
                             EntityAddComponent(item_entity, "LuaComponent", {
                                 _tags = "enabled_in_world,enabled_in_hand,enabled_in_inventory",
                                 script_item_picked_up = "mods/evaisa.arena/files/scripts/gamemode/misc/item_pickup.lua",
+                                script_kick = "mods/evaisa.arena/files/scripts/gamemode/misc/item_kick.lua",
+                                script_throw_item = "mods/evaisa.arena/files/scripts/gamemode/misc/item_throw.lua",
                             })
                         end
                     end
@@ -654,7 +656,7 @@ networking = {
 
             --GlobalsSetValue(tostring(wand.entity_id).."_wand", wandInfo.id)
             local is_wand, slot_x, slot_y = message[1], message[2], message[3]
-            GamePrint("Switching item to slot: " .. tostring(slot_x) .. ", " .. tostring(slot_y))
+           -- GamePrint("Switching item to slot: " .. tostring(slot_x) .. ", " .. tostring(slot_y))
             if (data.players[tostring(user)].entity and EntityGetIsAlive(data.players[tostring(user)].entity)) then
                 local items = GameGetAllInventoryItems(data.players[tostring(user)].entity) or {}
                 for i, item in ipairs(items) do
@@ -1078,7 +1080,7 @@ networking = {
             end
         end,
         item_picked_up = function(lobby, message, user, data)
-            GamePrint("pickup received.")
+            --GamePrint("pickup received.")
             local entities = EntityGetInRadius(0, 0, 1000000000)
             local item_id = message[1]
             for k, v in ipairs(entities)do
@@ -1088,6 +1090,143 @@ networking = {
                         EntityKill(v)
                         return
                     end
+                end
+            end
+        end,
+        physics_update = function(lobby, message, user, data)
+            local entities = EntityGetInRadius(0, 0, 1000000000)
+            local item_id = message[1]
+            local x, y, r, vx, vy, vr = message[2], message[3], message[4], message[5], message[6], message[7]
+            local takes_control = message[8]
+            for k, v in ipairs(entities)do
+                if(EntityGetFirstComponentIncludingDisabled(v, "ItemComponent") ~= nil)then
+                    local entity_id = EntityHelper.GetVariable(v, "arena_entity_id")
+                    if(entity_id ~= nil and entity_id == item_id)then
+                        
+                        if(takes_control)then
+                            for i = #data.controlled_physics_entities, 1, -1 do
+                                if(data.controlled_physics_entities[i] == v)then
+                                    table.remove(data.controlled_physics_entities, i)
+
+                                    --GamePrint("No longer in control")
+
+                                end
+                            end
+                        end
+
+                        local body_ids = PhysicsBodyIDGetFromEntity( v )
+                        if(body_ids ~= nil and #body_ids > 0)then
+                            local body_id = body_ids[1]
+
+                            PhysicsBodyIDSetTransform(body_id, x, y, r, vx, vy, vr)
+                            
+                        end
+                        return
+                    end
+                end
+            end
+        end,
+        fungal_shift = function(lobby, message, user, data)
+            dofile_once("data/scripts/lib/utilities.lua")
+
+            
+
+            local from_materials = message[1]
+            local to_mat = message[2]
+
+            local iter = tonumber( GlobalsGetValue( "fungal_shift_iteration", "0" ) )
+            GlobalsSetValue( "fungal_shift_iteration", tostring(iter+1) )
+            if iter > 20 then
+                return
+            end
+            local frame = GameGetFrameNum()
+
+            SetRandomSeed( 89346, 42345+iter )
+
+            local converted_any = false
+        
+            local rnd = random_create(9123,58925+iter ) -- TODO: store for next change
+            local from_material_name = nil
+            
+            for i,it in ipairs(from_materials) do
+                local from_material = CellFactory_GetType( it )
+                local to_material = CellFactory_GetType( to_mat )
+                
+                from_material_name = string.upper( GameTextGetTranslatedOrNot( CellFactory_GetUIName( from_material ) ) )
+               
+                -- convert
+                if from_material ~= to_material then
+                    print(CellFactory_GetUIName(from_material) .. " -> " .. CellFactory_GetUIName(to_material))
+                    ConvertMaterialEverywhere( from_material, to_material )
+                    converted_any = true
+        
+                    local player_entity = player.Get()
+                    if (player_entity) then
+                        local x, y = EntityGetTransform(player_entity)
+                        -- shoot particles of new material
+                        GameCreateParticle( CellFactory_GetName(from_material), x-10, y-10, 20, Random(-100,100), Random(-100,-30), true, true )
+                        GameCreateParticle( CellFactory_GetName(from_material), x+10, y-10, 20, Random(-100,100), Random(-100,-30), true, true )
+                    end
+                end
+            end
+
+            local log_messages = 
+            {
+                "$log_reality_mutation_00",
+                "$log_reality_mutation_01",
+                "$log_reality_mutation_02",
+                "$log_reality_mutation_03",
+                "$log_reality_mutation_04",
+                "$log_reality_mutation_05",
+            }
+            
+
+            if converted_any then
+                -- remove tripping effect
+                EntityRemoveIngestionStatusEffect( entity, "TRIP" );
+        
+                local x, y = GameGetCameraPos()
+
+                -- audio
+                GameTriggerMusicFadeOutAndDequeueAll( 5.0 )
+                GameTriggerMusicEvent( "music/oneshot/tripping_balls_01", false, x, y )
+        
+                -- particle fx
+                local eye = EntityLoad( "data/entities/particles/treble_eye.xml", x,y-10 )
+                if eye ~= 0 then
+                    EntityAddChild( entity, eye )
+                end
+        
+                -- log
+                local log_msg = ""
+                if from_material_name ~= "" then
+                    log_msg = GameTextGet( "$logdesc_reality_mutation", from_material_name )
+                    GamePrint( log_msg )
+                end
+                GamePrintImportant( random_from_array( log_messages ), log_msg, "data/ui_gfx/decorations/3piece_fungal_shift.png" )
+                GlobalsSetValue( "fungal_shift_last_frame", tostring(frame) )
+        
+                -- add ui icon
+                local add_icon = true
+                local children = EntityGetAllChildren(entity)
+                if children ~= nil then
+                    for i,it in ipairs(children) do
+                        if ( EntityGetName(it) == "fungal_shift_ui_icon" ) then
+                            add_icon = false
+                            break
+                        end
+                    end
+                end
+        
+                if add_icon then
+                    local icon_entity = EntityCreateNew( "fungal_shift_ui_icon" )
+                    EntityAddComponent( icon_entity, "UIIconComponent", 
+                    { 
+                        name = "$status_reality_mutation",
+                        description = "$statusdesc_reality_mutation",
+                        icon_sprite_file = "data/ui_gfx/status_indicators/fungal_shift.png"
+                    })
+                    EntityAddChild( entity, icon_entity )
                 end
             end
         end,
@@ -1333,7 +1472,7 @@ networking = {
                         is_wand = true
                     end
 
-                    GamePrint("Switching to item in slot " .. tostring(slot_x) .. ", " .. tostring(slot_y))
+                    --GamePrint("Switching to item in slot " .. tostring(slot_x) .. ", " .. tostring(slot_y))
 
                     if (user == nil) then
                         if(to_spectators)then
@@ -1543,6 +1682,12 @@ networking = {
             else
                 steamutils.send("item_picked_up", { item_id }, steamutils.messageTypes.OtherPlayers, lobby, true, true)
             end
+        end,
+        physics_update = function(lobby, id, x, y, r, vel_x, vel_y, vel_a, takes_control)
+            steamutils.send("physics_update", { id, x, y, r, vel_x, vel_y, vel_a, takes_control }, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+        end,
+        fungal_shift = function(lobby, from, to)
+            steamutils.send("fungal_shift", { from, to }, steamutils.messageTypes.OtherPlayers, lobby, true, true)
         end,
     },
 }

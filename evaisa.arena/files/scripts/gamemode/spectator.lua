@@ -88,8 +88,14 @@ SpectatorMode = {
         data.spectator_entity = EntityLoad("mods/evaisa.arena/files/entities/spectator_entity.xml", 0, 0)
         np.RegisterPlayerEntityId(data.spectator_entity)
 
-        BiomeMapLoad_KeepPlayer("mods/evaisa.arena/files/scripts/world/map_lobby_spectator.lua",
+        if(GameHasFlagRun("item_shop"))then
+            BiomeMapLoad_KeepPlayer("mods/evaisa.arena/files/scripts/world/map_lobby_spectator.lua",
+            "mods/evaisa.arena/files/biome/holymountain_itemshop_scenes.xml")
+        else
+            BiomeMapLoad_KeepPlayer("mods/evaisa.arena/files/scripts/world/map_lobby_spectator.lua",
             "mods/evaisa.arena/files/biome/holymountain_scenes.xml")
+            
+        end
 
         -- clean other player's data again because it might have failed for some cursed reason
         ArenaGameplay.CleanMembers(lobby, data)

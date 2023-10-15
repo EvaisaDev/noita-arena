@@ -20,7 +20,7 @@ ModLuaFileAppend("data/scripts/gun/gun.lua", "mods/evaisa.arena/files/scripts/ap
 ModLuaFileAppend("data/scripts/perks/perk_list.lua", "mods/evaisa.arena/files/scripts/append/perk_fix.lua")
 ModLuaFileAppend("data/scripts/perks/perk.lua", "mods/evaisa.arena/files/scripts/append/perk.lua")
 ModLuaFileAppend("data/scripts/gun/gun_actions.lua", "mods/evaisa.arena/files/scripts/append/action_fix.lua")
-
+ModLuaFileAppend("data/scripts/magic/fungal_shift.lua", "mods/evaisa.arena/files/scripts/append/fungal_shift.lua")
 --[[
 parse_overrides = function(overrides, path)
     path = path or ""

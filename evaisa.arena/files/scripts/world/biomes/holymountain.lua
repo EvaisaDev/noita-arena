@@ -16,6 +16,7 @@ RegisterSpawnFunction( 0xff5a822d, "spawn_workshop_extra" )
 RegisterSpawnFunction( 0xffb66ccd, "spawn_ready_point" )
 RegisterSpawnFunction( 0xff7345DF, "spawn_perk_reroll" )
 RegisterSpawnFunction( 0xffd14158, "spawn_target_dummy")
+RegisterSpawnFunction( 0xffc5529d, "spawn_item_shop_item")
 
 function spawn_workshop( x, y )
 	--EntityLoad( "data/entities/buildings/workshop.xml", x, y )
@@ -234,6 +235,57 @@ end
 
 function spawn_target_dummy( x, y )
 	EntityLoad( "mods/evaisa.arena/files/entities/dummy_target/dummy_target.xml", x, y )
+end
+
+function spawn_item_shop_item( x, y )
+	local rng = dofile_once("mods/evaisa.arena/lib/rng.lua")
+
+	a, b, c, d, e, f = GameGetDateAndTimeLocal()
+	
+	local random_seed = GlobalsGetValue("unique_seed", "0")
+	
+	print("random_seed = "..tostring(random_seed))
+	
+	local rounds = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0
+	if(GameHasFlagRun("shop_sync"))then
+		random_seed = ((tonumber(GlobalsGetValue("world_seed", "0")) or 1) * 214) * rounds
+	end
+
+	local random = rng.new(random_seed)
+
+	--[[local spawn_shop, spawn_perks = temple_random( x, y )
+	if( spawn_shop == "0" ) then
+		return
+	end]]
+
+	-- how many rounds it takes for the shop level to increment
+	local shop_scaling = tonumber(GlobalsGetValue("shop_scaling", "2"))
+	-- how much the shop level increments by
+	local shop_increment = tonumber(GlobalsGetValue("shop_jump", "1"))
+	-- the maximum shop level
+	local shop_max = tonumber(GlobalsGetValue("max_shop_level", "5"))
+	-- shop start level
+	local shop_start_level = tonumber(GlobalsGetValue("shop_start_level", "0"))
+
+	-- calculating how many times the shop level has been incremented
+	local num_increments = math.floor((rounds - 1) / shop_scaling)
+	-- calculating the current shop level including the start level and clamping it to the max level
+	local round_scaled = math.min(shop_start_level + num_increments * shop_increment, shop_max)
+
+	round_scaled = math.floor(round_scaled + 0.5)
+	if(round_scaled < 0)then
+		round_scaled = 0
+	end
+	
+	a, b, c, d, e, f = GameGetDateAndTimeLocal()
+	if(GameHasFlagRun("shop_sync"))then
+		local local_seed = tonumber(GlobalsGetValue("world_seed", "0")) or 0
+		SetRandomSeed( ((x * 325) * rounds) + local_seed, ((y * 453) * rounds) + local_seed)
+	else
+		SetRandomSeed( x + GameGetFrameNum() + GameGetRealWorldTimeSinceStarted() + a + b + c + d + e + f, y  + GameGetFrameNum() + GameGetRealWorldTimeSinceStarted() + a + b + c + d + e + f)
+	end
+
+	generate_shop_potion(x, y, round_scaled)
 end
 
 -- GameHasFlagRun("first_death")

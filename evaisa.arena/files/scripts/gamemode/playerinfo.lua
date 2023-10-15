@@ -37,7 +37,7 @@ function playerinfo:New(user)
     obj.Death = function(self, damage_details)
             if(self.entity ~= nil and EntityGetIsAlive(self.entity))then
 
-                local items = GameGetAllInventoryItems( self.entity )
+                local items = GameGetAllInventoryItems( self.entity ) or {}
 
                 for i,item in ipairs(items) do
                     EntityRemoveFromParent(item)

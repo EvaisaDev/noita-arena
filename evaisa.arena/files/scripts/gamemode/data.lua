@@ -23,6 +23,7 @@ function data:New()
         spectator_lobby_loaded = false,
 
         lobby_spectated_player = nil,
+        controlled_physics_entities = {},
 
         big_font = font_helper.NewFont("mods/evaisa.arena/files/font/Daydream_128.xml"),
         client = {

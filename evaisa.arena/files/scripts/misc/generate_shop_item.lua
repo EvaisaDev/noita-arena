@@ -343,3 +343,75 @@ function generate_shop_wand( x, y, cheap_item, biomeid_ )
 
 	return eid
 end
+
+
+
+function generate_shop_potion( x, y, biome_id )
+	dofile("data/scripts/item_spawnlists.lua")
+
+	local offsetx = 6
+
+	local eid = spawn_from_list("potion_spawnlist", x, y)
+
+	print(tostring(eid))
+
+	--if(eid == nil)then return end
+	
+	if(biome_id >= 10)then
+		biome_id = 10
+	else
+		if( biome_id < 1 ) then biome_id = 1 end
+		if( biome_id > 6 ) then biome_id = 6 end
+	end
+
+	local itemcost = math.max(math.floor( ( (Random(150, 400) * 0.30) + (70 * biome_id) ) / 10 ) * 10, 10)
+
+	--itemcost = math.floor( itemcost * 0.7 )
+
+	local shop_price_multiplier = tonumber(GlobalsGetValue("shop_price_multiplier", "1"))
+
+	itemcost = math.floor( itemcost * shop_price_multiplier )
+
+	
+
+	local text = tostring(itemcost)
+	local textwidth = 0
+	
+	for i=1,#text do
+		local l = string.sub( text, i, i )
+		
+		if ( l ~= "1" ) then
+			textwidth = textwidth + 6
+		else
+			textwidth = textwidth + 3
+		end
+	end
+
+	offsetx = textwidth * 0.5 - 0.5
+
+	if( GlobalsGetValue("no_shop_cost") == "false")then
+		EntityAddComponent( eid, "SpriteComponent", { 
+			_tags="shop_cost,enabled_in_world",
+			image_file="data/fonts/font_pixel_white.xml", 
+			is_text_sprite="1", 
+			offset_x=tostring(offsetx), 
+			offset_y="25", 
+			update_transform="1" ,
+			update_transform_rotation="0",
+			text=tostring(itemcost),
+			z_index="-1"
+		} )
+
+
+		EntityAddComponent( eid, "ItemCostComponent", { 
+			_tags="shop_cost,enabled_in_world", 
+			cost=itemcost,
+			stealable="0"
+		} )
+	end
+		
+	EntityAddComponent( eid, "LuaComponent", { 
+		script_item_picked_up="data/scripts/items/shop_effect.lua"
+		} )
+
+end

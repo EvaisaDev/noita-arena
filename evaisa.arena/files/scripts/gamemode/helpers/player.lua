@@ -434,6 +434,8 @@ player_helper.SetItemData = function(item_data)
                 EntityAddComponent(item_entity, "LuaComponent", {
                     _tags = "enabled_in_world,enabled_in_hand,enabled_in_inventory",
                     script_item_picked_up = "mods/evaisa.arena/files/scripts/gamemode/misc/item_pickup.lua",
+                    script_kick = "mods/evaisa.arena/files/scripts/gamemode/misc/item_kick.lua",
+                    script_throw_item = "mods/evaisa.arena/files/scripts/gamemode/misc/item_throw.lua",
                 })
             end
 

@@ -61,7 +61,7 @@ entity.SetVariable = function(ent, name, value)
     end
 
     if(not found_and_set)then
-        print("entity: "..tostring(ent).." did not have variable "..name..", creating it")
+        --print("entity: "..tostring(ent).." did not have variable "..name..", creating it")
         local variable_storage_comp = EntityAddComponent(ent, "VariableStorageComponent", {
             name = name,
         })
