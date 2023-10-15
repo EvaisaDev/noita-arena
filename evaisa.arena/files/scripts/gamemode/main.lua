@@ -24,6 +24,7 @@ networking = dofile("mods/evaisa.arena/files/scripts/gamemode/networking.lua")
 upgrade_system = dofile("mods/evaisa.arena/files/scripts/gamemode/misc/upgrade_system.lua")
 gameplay_handler = dofile("mods/evaisa.arena/files/scripts/gamemode/gameplay.lua")
 spectator_handler = dofile("mods/evaisa.arena/files/scripts/gamemode/spectator.lua")
+local randomized_seed = true
 
 local playerinfo_menu = dofile("mods/evaisa.arena/files/scripts/utilities/playerinfo_menu.lua")
 
@@ -180,7 +181,7 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 0.641,
+    version = 0.65,
     required_online_version = 1.61,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
@@ -241,6 +242,13 @@ ArenaMode = {
     }, 
     settings = {
         {
+            id = "random_seed",
+            name = "Random Seed",
+            description = "Randomized seed every restart.",
+            type = "bool",
+            default = true
+        },  
+        {
             id = "win_condition",
             name = "$arena_settings_win_condition_name",
             description = "$arena_settings_win_condition_description",
@@ -287,6 +295,13 @@ ArenaMode = {
             description = "$arena_settings_perk_sync_description",
             type = "bool",
             default = false
+        },  
+        {
+            id = "item_shop",
+            name = "$arena_settings_item_shop_name",
+            description = "$arena_settings_item_shop_description",
+            type = "bool",
+            default = true
         },  
         {
             id = "shop_no_tiers",
@@ -780,6 +795,12 @@ ArenaMode = {
             end
         end
 
+        local random_seeds = steam.matchmaking.getLobbyData(lobby, "setting_random_seed")
+        if (random_seeds == nil) then
+            random_seeds = "true"
+        end
+        randomized_seed = random_seeds == "true"
+
         local win_condition = steam.matchmaking.getLobbyData(lobby, "setting_win_condition")
         if (win_condition == nil)then
             win_condition = "unlimited"
@@ -834,6 +855,16 @@ ArenaMode = {
             GameAddFlagRun("shop_sync")
         else
             GameRemoveFlagRun("shop_sync")
+        end
+
+        local item_shop = steam.matchmaking.getLobbyData(lobby, "setting_item_shop")
+        if (item_shop == nil) then
+            item_shop = "true"
+        end
+        if(item_shop == "true")then
+            GameAddFlagRun("item_shop")
+        else
+            GameRemoveFlagRun("item_shop")
         end
 
         local shop_no_tiers = steam.matchmaking.getLobbyData(lobby, "setting_shop_no_tiers")
@@ -1100,8 +1131,19 @@ ArenaMode = {
 
 
         GameAddFlagRun("player_unloaded")
+        local seed = 0
 
-        local seed = tonumber(steam.matchmaking.getLobbyData(lobby, "seed") or 1)
+        if(randomized_seed and steamutils.IsOwner(lobby))then
+            local a, b, c, d, e, f = GameGetDateAndTimeLocal()
+            SetRandomSeed(GameGetFrameNum() + a + b + c + d + e + f+ 235123, GameGetFrameNum() + a + b + c + d + e + f + 325325)
+            --steam.matchmaking.setLobbyData(lobby, "seed", tostring(Random(1, 1000000000)))
+            seed = Random(1, 1000000000)
+            steam.matchmaking.setLobbyData(lobby, "seed", tostring(seed))
+        else
+            seed = tonumber(steam.matchmaking.getLobbyData(lobby, "seed") or 1)
+        end
+        
+        
 
         SetWorldSeed(seed)
 

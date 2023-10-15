@@ -1,6 +1,6 @@
 local steamutils = dofile_once("mods/evaisa.mp/lib/steamutils.lua")
 local player = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/player.lua")
-local entity = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/entity.lua")
+local EntityHelper = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/entity.lua")
 local counter = dofile_once("mods/evaisa.arena/files/scripts/utilities/ready_counter.lua")
 local countdown = dofile_once("mods/evaisa.arena/files/scripts/utilities/countdown.lua")
 local json = dofile("mods/evaisa.arena/lib/json.lua")
@@ -365,7 +365,7 @@ ArenaGameplay = {
                         else
                             entity.BlockFiring(player_entity, false)
                         end]]
-                        entity.BlockFiring(player_entity, true)
+                        EntityHelper.BlockFiring(player_entity, true)
                     end
                 end
             end
@@ -938,7 +938,12 @@ ArenaGameplay = {
     end,
     KillCheck = function(lobby, data)
         if (GameHasFlagRun("player_died")) then
-            local killer = ModSettingGet("killer");
+            local killer = GlobalsGetValue("killer", "");
+
+            if(killer == "")then
+                killer = nil
+            end
+
             local username = steamutils.getTranslatedPersonaName(steam.user.getSteamID())
 
             if (killer == nil) then
@@ -1064,6 +1069,7 @@ ArenaGameplay = {
         data.selected_player_name = nil
         data.client.previous_spectate_data = nil
         data.allow_round_end = false
+        data.controlled_physics_entities = {}
         GameRemoveFlagRun("lock_ready_state")
         GameRemoveFlagRun("can_save_player")
         GameRemoveFlagRun("countdown_completed")
@@ -1301,8 +1307,15 @@ ArenaGameplay = {
         --message_handler.send.Unready(lobby, true)
         if(not steamutils.IsSpectator(lobby))then
             -- load map
-            BiomeMapLoad_KeepPlayer("mods/evaisa.arena/files/scripts/world/map_lobby.lua",
+            if(GameHasFlagRun("item_shop"))then
+                BiomeMapLoad_KeepPlayer("mods/evaisa.arena/files/scripts/world/map_lobby.lua",
+                "mods/evaisa.arena/files/biome/holymountain_itemshop_scenes.xml")
+            else
+                BiomeMapLoad_KeepPlayer("mods/evaisa.arena/files/scripts/world/map_lobby.lua",
                 "mods/evaisa.arena/files/biome/holymountain_scenes.xml")
+                
+            end
+
 
             -- show message
             
@@ -1311,8 +1324,15 @@ ArenaGameplay = {
             end
         else
             -- load map
-            BiomeMapLoad_KeepPlayer("mods/evaisa.arena/files/scripts/world/map_lobby_spectator.lua",
-            "mods/evaisa.arena/files/biome/holymountain_scenes.xml")
+            if(GameHasFlagRun("item_shop"))then
+                BiomeMapLoad_KeepPlayer("mods/evaisa.arena/files/scripts/world/map_lobby_spectator.lua",
+                "mods/evaisa.arena/files/biome/holymountain_itemshop_scenes.xml")
+            else
+                BiomeMapLoad_KeepPlayer("mods/evaisa.arena/files/scripts/world/map_lobby_spectator.lua",
+                "mods/evaisa.arena/files/biome/holymountain_scenes.xml")
+                
+            end
+
             GameSetCameraFree(true)
         end
 
@@ -1366,6 +1386,7 @@ ArenaGameplay = {
         data.players_loaded = false
         data.deaths = 0
         data.lobby_loaded = false
+        data.controlled_physics_entities = {}
         data.client.player_loaded_from_data = false
 
         local members = steamutils.getLobbyMembers(lobby)
@@ -1516,9 +1537,8 @@ ArenaGameplay = {
         --if (GameGetFrameNum() % 2 == 0) then
             networking.send.character_position(lobby, data, true)
         --end
-        networking.send.wand_update(lobby, data, nil, nil, true)
+       -- networking.send.wand_update(lobby, data, nil, nil, true)
         networking.send.input_update(lobby, true)
-        networking.send.switch_item(lobby, data, nil, nil, true)
         networking.send.animation_update(lobby, data, true)
         if(GameGetFrameNum() % 15 == 0)then
             networking.send.player_data_update(lobby, data, true)
@@ -1596,7 +1616,7 @@ ArenaGameplay = {
             arena_log:print("Completed countdown.")
 
             --message_handler.send.RequestWandUpdate(lobby, data)
-            networking.send.request_wand_update(lobby)
+            networking.send.request_item_update(lobby)
         end)
     end,
     SpawnClientPlayer = function(lobby, user, data, x, y)
@@ -1617,7 +1637,7 @@ ArenaGameplay = {
                 local count = v[2]
 
                 for i = 1, count do
-                    entity.GivePerk(client, perk, i, true)
+                    EntityHelper.GivePerk(client, perk, i, true)
                 end
             end
         end
@@ -1749,7 +1769,7 @@ ArenaGameplay = {
         end
         if (data.players_loaded) then
             --message_handler.send.WandUpdate(lobby, data)
-            networking.send.wand_update(lobby, data)
+            --networking.send.item_update(lobby, data)
 
             --[[if(GameGetFrameNum() % 60 == 0)then
                 networking.send.wand_update(lobby, data, nil, true)
@@ -1761,7 +1781,6 @@ ArenaGameplay = {
 
 
             --message_handler.send.SwitchItem(lobby, data)
-            networking.send.switch_item(lobby, data)
             --message_handler.send.Kick(lobby, data)
             --message_handler.send.AnimationUpdate(lobby, data)
             networking.send.animation_update(lobby, data)
@@ -1890,6 +1909,68 @@ ArenaGameplay = {
         end
     end,
     LateUpdate = function(lobby, data)
+
+        --data.controlled_physics_entities
+
+        local first_update = {}
+        local kicked_item_string = GlobalsGetValue("arena_items_controlled", "") or ""
+        for item in string.gmatch(kicked_item_string, "([^;]+)") do
+            local item_entity = tonumber(item) or 0
+            local has_control = false
+            for k, v in ipairs(data.controlled_physics_entities)do
+                if(v == item_entity)then
+                    has_control = true
+                    break
+                end
+            end
+            if(EntityGetIsAlive(item_entity) and not first_update[item_entity] and not has_control)then
+                table.insert(data.controlled_physics_entities, item_entity)
+                first_update[item_entity] = true
+                local arena_entity_id = EntityHelper.GetVariable(item_entity, "arena_entity_id")
+
+                if(arena_entity_id ~= nil)then
+                    --GamePrint("We took controls of item: "..tostring(item_entity))
+                end
+            end
+        end
+        if(kicked_item_string ~= "")then
+            GlobalsSetValue("arena_items_controlled", "")
+        end
+
+        for i = #data.controlled_physics_entities, 1, -1 do
+            local entity = data.controlled_physics_entities[i]
+            if(not EntityGetIsAlive(entity))then
+                table.remove(data.controlled_physics_entities, i)
+            else
+                local arena_entity_id = EntityHelper.GetVariable(entity, "arena_entity_id")
+
+                if(arena_entity_id ~= nil)then
+                    local body_ids = PhysicsBodyIDGetFromEntity( entity )
+                    if(body_ids ~= nil and #body_ids > 0)then
+                        local body_id = body_ids[1]
+                        local x, y, r, vel_x, vel_y, vel_a =  PhysicsBodyIDGetTransform( body_id )
+
+                        networking.send.physics_update(lobby, arena_entity_id, x, y, r, vel_x, vel_y, vel_a, first_update[entity])
+                    end
+                end
+            end
+        end
+
+        local fungal_shift_from = GlobalsGetValue("arena_fungal_shift_from", "")
+        local fungal_shift_to = GlobalsGetValue("arena_fungal_shift_to", "")
+        if(fungal_shift_from ~= "" and fungal_shift_to ~= "")then
+            local from_table = {}
+            local to = fungal_shift_to
+
+            for material in string.gmatch(fungal_shift_from, "([^;]+)") do
+                table.insert(from_table, material)
+            end
+
+            networking.send.fungal_shift(lobby, from_table, to)
+        end
+        GlobalsSetValue("arena_fungal_shift_from", "")
+        GlobalsSetValue("arena_fungal_shift_to", "")
+
         if (data.state == "arena") then
             ArenaGameplay.KillCheck(lobby, data)
 
@@ -1906,12 +1987,16 @@ ArenaGameplay = {
             else
                 if(data.client.inventory_was_open)then
                     --GamePrint("inventory_was_closed")
-                    networking.send.wand_update(lobby, data, nil, true, false)
+                    networking.send.item_update(lobby, data, nil, true, false)
                 end
                 data.client.inventory_was_open = false
             end
 
-
+            if(GlobalsGetValue("arena_item_pickup", "0") ~= "0")then
+                networking.send.item_picked_up(lobby, tonumber(GlobalsGetValue("arena_item_pickup", "0")))
+                GlobalsSetValue("arena_item_pickup", "0")
+            end
+            
             --
         --[[else
             data.client.projectile_rng_stack = {}
@@ -1926,11 +2011,55 @@ ArenaGameplay = {
                 data.client.inventory_was_open = true
             else
                 if(data.client.inventory_was_open)then
-                    networking.send.wand_update(lobby, data, nil, true, true)
+                    networking.send.item_update(lobby, data, nil, true, true)
                 end
                 data.client.inventory_was_open = false
             end
+
+            if(GlobalsGetValue("arena_item_pickup", "0") ~= "0")then
+                networking.send.item_picked_up(lobby, tonumber(GlobalsGetValue("arena_item_pickup", "0")), true)
+                GlobalsSetValue("arena_item_pickup", "0")
+            end
+
         end
+
+
+
+        local current_inventory_info = player.GetInventoryInfo()
+
+        no_switching = no_switching or 0
+
+        if(data.client.last_inventory == nil or player.DidInventoryChange(data.client.last_inventory, current_inventory_info))then
+           -- GamePrint("Inventory has changed!")
+            GameAddFlagRun("ForceUpdateInventory")
+            no_switching = 10
+            data.client.last_inventory = current_inventory_info
+        end
+
+        if(no_switching > 0)then
+            --GamePrint("No switching: "..tostring(no_switching))
+            no_switching = no_switching - 1
+        else
+            
+            if(GameHasFlagRun("ForceUpdateInventory"))then
+                --GamePrint("Updating inventory!")
+                GameRemoveFlagRun("ForceUpdateInventory")
+                if (data.state == "arena") then
+                    networking.send.item_update(lobby, data, nil, true, false)
+                else
+                    networking.send.item_update(lobby, data, nil, true, true)
+                end
+            end
+
+            if (data.state == "arena") then
+                networking.send.switch_item(lobby, data)
+            else
+                networking.send.switch_item(lobby, data, nil, nil, true)
+            end
+        end
+
+
+        
         local current_player = player.Get()
 
         local projectiles_fired = tonumber(GlobalsGetValue( "wand_fire_count", "0" ))
@@ -2007,6 +2136,42 @@ ArenaGameplay = {
                     -- mButtonDownRight
                     if (ComponentGetValue2(controls, "mButtonDownRightClick") == false) then
                         data.players[k].controls.rightClick = false
+                    end
+                    -- mButtonDownAction
+                    if (ComponentGetValue2(controls, "mButtonDownAction") == false) then
+                        data.players[k].controls.action = false
+                    end
+                    -- mButtonDownThrow
+                    if (ComponentGetValue2(controls, "mButtonDownThrow") == false) then
+                        data.players[k].controls.throw = false
+                    end
+                    -- mButtonDownInteract
+                    if (ComponentGetValue2(controls, "mButtonDownInteract") == false) then
+                        data.players[k].controls.interact = false
+                    end
+                    -- mButtonDownLeft
+                    if (ComponentGetValue2(controls, "mButtonDownLeft") == false) then
+                        data.players[k].controls.left = false
+                    end
+                    -- mButtonDownRight
+                    if (ComponentGetValue2(controls, "mButtonDownRight") == false) then
+                        data.players[k].controls.right = false
+                    end
+                    -- mButtonDownUp
+                    if (ComponentGetValue2(controls, "mButtonDownUp") == false) then
+                        data.players[k].controls.up = false
+                    end
+                    -- mButtonDownDown
+                    if (ComponentGetValue2(controls, "mButtonDownDown") == false) then
+                        data.players[k].controls.down = false
+                    end
+                    -- mButtonDownJump
+                    if (ComponentGetValue2(controls, "mButtonDownJump") == false) then
+                        data.players[k].controls.jump = false
+                    end
+                    -- mButtonDownFly
+                    if (ComponentGetValue2(controls, "mButtonDownFly") == false) then
+                        data.players[k].controls.fly = false
                     end
                 end
             end

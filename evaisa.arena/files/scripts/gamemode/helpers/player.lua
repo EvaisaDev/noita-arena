@@ -197,6 +197,95 @@ player_helper.GetWandData = function(fresh)
     return wandData
 end
 
+local function entity_is_wand(entity_id)
+	local ability_component = EntityGetFirstComponentIncludingDisabled(entity_id, "AbilityComponent")
+	return ComponentGetValue2(ability_component, "use_gun_script") == true
+end
+
+player_helper.GetItemData = function(fresh)
+    fresh = fresh or false
+
+    --[[
+    local wand = EZWand.GetHeldWand()
+    if(wand == nil)then
+        return nil
+    end
+    local wandData = wand:Serialize()
+    return wandData
+    ]]
+
+    local player = player_helper.Get()
+    local inventory2Comp = EntityGetFirstComponentIncludingDisabled(player, "Inventory2Component")
+    local mActiveItem = ComponentGetValue2(inventory2Comp, "mActiveItem")
+    local wandData = {}
+    for k, item in ipairs(player_helper.GetInventoryItems("inventory_quick") or {}) do
+        local item_comp = EntityGetFirstComponentIncludingDisabled(item, "ItemComponent")
+        local slot_x, slot_y = ComponentGetValue2(item_comp, "inventory_slot")
+        local item_x, item_y = EntityGetTransform(item)
+
+        SetRandomSeed(item + slot_x + item_x, slot_y + item_y)
+
+        local item_id = entity.GetVariable(item, "arena_entity_id")
+
+        GlobalsSetValue(tostring(item) .. "_item", tostring(k))
+        if(entity_is_wand(item))then
+            local wand = EZWand(item)
+            table.insert(wandData,
+                {
+                    data = wand:Serialize(not fresh, not fresh),
+                    id = item_id or (item + Random(1, 10000000)),
+                    slot_x = slot_x,
+                    slot_y = slot_y,
+                    active = (mActiveItem == item),
+                    is_wand = true
+                })
+        else
+            table.insert(wandData,
+                {
+                    data = np.SerializeEntity(item),
+                    id = item_id or (item + Random(1, 10000000)),
+                    slot_x = slot_x,
+                    slot_y = slot_y,
+                    active = (mActiveItem == item)
+                })
+        end
+    end
+    return wandData
+end
+
+player_helper.GetInventoryItems = function(inventory_name)
+    local player = player_helper.Get()
+    if(not player)then
+        return {}
+    end
+    local inventory = nil 
+
+    local player_child_entities = EntityGetAllChildren( player )
+    if ( player_child_entities ~= nil ) then
+        for i,child_entity in ipairs( player_child_entities ) do
+            local child_entity_name = EntityGetName( child_entity )
+            
+            if ( child_entity_name == inventory_name ) then
+                inventory = child_entity
+            end
+    
+        end
+    end
+
+    if(inventory == nil)then
+        return {}
+    end
+
+    local items = {}
+    for i, v in ipairs(EntityGetAllChildren(inventory) or {}) do
+        local item_component = EntityGetFirstComponentIncludingDisabled(v, "ItemComponent")
+        if(item_component)then
+            table.insert(items, v)
+        end
+    end
+    return items
+end
+
 set_next_frame = set_next_frame or nil
 
 player_helper.SetWandData = function(wand_data)
@@ -230,6 +319,127 @@ player_helper.SetWandData = function(wand_data)
             end
 
             GlobalsSetValue(tostring(wand.entity_id) .. "_wand", tostring(wandInfo.id))
+        end
+
+        if (active_item_entity ~= nil) then
+            arena_log:print("Selected item was: " .. tostring(active_item_entity))
+
+            game_funcs.SetActiveHeldEntity(player, active_item_entity, false, false)
+
+            --[[
+            local inventory2Comp = EntityGetFirstComponentIncludingDisabled(player, "Inventory2Component")
+
+            ComponentSetValue2(inventory2Comp, "mActiveItem", active_item_entity)
+            ComponentSetValue2(inventory2Comp, "mActualActiveItem", active_item_entity)
+            ComponentSetValue2(inventory2Comp, "mInitialized", false)
+            ComponentSetValue2(inventory2Comp, "mForceRefresh", true)
+            ]]
+        end
+    end
+end
+
+local pickup_item = function(entity, item)
+    local item_component = EntityGetFirstComponentIncludingDisabled(item, "ItemComponent")
+    if item_component then
+      ComponentSetValue2(item_component, "has_been_picked_by_player", true)
+    end
+    --GamePickUpInventoryItem(entity, self.entity_id, false)
+    local entity_children = EntityGetAllChildren(entity) or {}
+    -- 
+    for key, child in pairs( entity_children ) do
+      if EntityGetName( child ) == "inventory_quick" then
+        EntityAddChild( child, item)
+      end
+    end
+  
+    EntitySetComponentsWithTagEnabled( item, "enabled_in_world", false )
+    EntitySetComponentsWithTagEnabled( item, "enabled_in_hand", false )
+    EntitySetComponentsWithTagEnabled( item, "enabled_in_inventory", true )
+  
+    local wand_children = EntityGetAllChildren(item) or {}
+  
+    for k, v in ipairs(wand_children)do
+      EntitySetComponentsWithTagEnabled( item, "enabled_in_world", false )
+    end  
+end
+
+
+
+player_helper.SetItemData = function(item_data)
+    local player = player_helper.Get()
+    if (player == nil) then
+        return
+    end
+
+    if (item_data ~= nil) then
+        local active_item_entity = nil
+
+        for k, itemInfo in ipairs(item_data) do
+            local x, y = EntityGetTransform(player)
+            local item_entity = nil
+
+            local item = nil
+            if(itemInfo.is_wand)then
+                item = EZWand(itemInfo.data, x, y)
+                
+            else
+                item = EntityCreateNew()
+                np.DeserializeEntity(item, itemInfo.data, x, y)
+
+            end
+
+            if (item == nil) then
+                return
+            end
+
+            if(itemInfo.is_wand)then
+                item:PickUp(player)
+                local itemComp = EntityGetFirstComponentIncludingDisabled(item.entity_id, "ItemComponent")
+                if (itemComp ~= nil) then
+                    ComponentSetValue2(itemComp, "inventory_slot", itemInfo.slot_x, itemInfo.slot_y)
+                end
+                item_entity = item.entity_id
+                if (itemInfo.active) then
+                    active_item_entity = item.entity_id
+                end
+            else
+                pickup_item(player, item)
+                local itemComp = EntityGetFirstComponentIncludingDisabled(item, "ItemComponent")
+                if (itemComp ~= nil) then
+                    ComponentSetValue2(itemComp, "inventory_slot", itemInfo.slot_x, itemInfo.slot_y)
+                end
+                item_entity = item
+                if (itemInfo.active) then
+                    active_item_entity = item
+                end
+            end
+
+            --wand:PickUp(player)
+
+
+
+            --print("Deserialized wand #"..tostring(k).." - Active? "..tostring(wandInfo.active))
+
+            entity.SetVariable(item_entity, "arena_entity_id", itemInfo.id)
+
+            local lua_comps = EntityGetComponentIncludingDisabled(item_entity, "LuaComponent") or {}
+            local has_pickup_script = false
+            for i, lua_comp in ipairs(lua_comps) do
+                if (ComponentGetValue2(lua_comp, "script_item_picked_up") == "mods/evaisa.arena/files/scripts/gamemode/misc/item_pickup.lua") then
+                    has_pickup_script = true
+                end
+            end
+
+            if (not has_pickup_script) then
+                EntityAddComponent(item_entity, "LuaComponent", {
+                    _tags = "enabled_in_world,enabled_in_hand,enabled_in_inventory",
+                    script_item_picked_up = "mods/evaisa.arena/files/scripts/gamemode/misc/item_pickup.lua",
+                    script_kick = "mods/evaisa.arena/files/scripts/gamemode/misc/item_kick.lua",
+                    script_throw_item = "mods/evaisa.arena/files/scripts/gamemode/misc/item_throw.lua",
+                })
+            end
+
+            --GlobalsSetValue(tostring(active_item_entity).."_item", tostring(itemInfo.id))
         end
 
         if (active_item_entity ~= nil) then
@@ -601,6 +811,93 @@ player_helper.GiveMaxHealth = function(amount)
     end
 end
 
+player_helper.GetInventoryInfo = function()
+    local inventory = {}
+    local player = player_helper.Get()
+    if (player == nil) then
+        return inventory
+    end
+
+    local inventory_items = GameGetAllInventoryItems(player) or {}
+
+    for k, v in ipairs(inventory_items) do
+        local item = {
+            slot_x = 0,
+            slot_y = 0,
+            inventory_name = "",
+            is_wand = false,
+            id = v
+        }
+        local itemComp = EntityGetFirstComponentIncludingDisabled(v, "ItemComponent")
+        if (itemComp ~= nil) then
+            local slot_x, slot_y = ComponentGetValue2(itemComp, "inventory_slot")
+            item.slot_x = slot_x
+            item.slot_y = slot_y
+        else
+            goto continue
+        end
+
+        local inv = EntityGetParent(v)
+        local root = EntityGetRootEntity(v)
+
+        if(root ~= v)then
+            local inventory_name = EntityGetName(inv)
+            item.inventory_name = inventory_name
+            item.is_wand = entity_is_wand(v)
+
+            table.insert(inventory, item)
+        end
+
+        ::continue::
+    end
+
+    return inventory
+end
+
+player_helper.DidInventoryChange = function(old_inventory_info, new_inventory_info)
+    if (old_inventory_info == nil or new_inventory_info == nil) then
+        return true
+    end
+
+    if (#old_inventory_info ~= #new_inventory_info) then
+        return true
+    end
+
+    -- loop through both inventories, and compare the items with the same ids
+    -- if an item with the same id is not in both tables, return true
+    -- then check if the items are the same or not
+
+    for k, v in ipairs(old_inventory_info) do
+        local found = false
+        for k2, v2 in ipairs(new_inventory_info) do
+            if (v.id == v2.id) then
+                found = true
+                if (v.slot_x ~= v2.slot_x or v.slot_y ~= v2.slot_y or v.inventory_name ~= v2.inventory_name) then
+                    return true
+                end
+            end
+        end
+        if (not found) then
+            return true
+        end
+    end
+
+    -- we also need to check the other way around, if there is an item in the new inventory that is not in the old one
+    for k, v in ipairs(new_inventory_info) do
+        local found = false
+        for k2, v2 in ipairs(old_inventory_info) do
+            if (v.id == v2.id) then
+                found = true
+            end
+        end
+        if (not found) then
+            return true
+        end
+    end
+
+    return false
+end
+
 player_helper.Serialize = function(dont_stringify)
     local player = player_helper.Get()
     if (player == nil) then
@@ -613,7 +910,7 @@ player_helper.Serialize = function(dont_stringify)
     local data = {
         health = 100,
         max_health = 100,
-        wand_data = player_helper.GetWandData(),
+        item_data = player_helper.GetItemData(),
         spells = player_helper.GetSpells(),
         perks = player_helper.GetPerks(),
         gold = player_helper.GetGold(),
@@ -627,7 +924,7 @@ player_helper.Serialize = function(dont_stringify)
     local compare_data = {
         health = data.health,
         max_health = data.max_health,
-        wand_data = player_helper.GetWandData(true),
+        item_data = player_helper.GetItemData(true),
         spells = data.spells,
         perks = data.perks,
         gold = data.gold,
@@ -658,8 +955,8 @@ player_helper.Deserialize = function(data, skip_perk_count)
         EntityKill(v)
     end
 
-    if (data.wand_data ~= nil) then
-        player_helper.SetWandData(data.wand_data)
+    if (data.item_data ~= nil) then
+        player_helper.SetItemData(data.item_data)
     end
     if (data.spells ~= nil) then
         player_helper.SetSpells(data.spells)

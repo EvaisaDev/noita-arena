@@ -20,7 +20,6 @@ function playerinfo:New(user)
         status_effect_entities = {},
         status_effect_comps = {},
         previous_positions = {},
-        last_inventory_string = nil,
         ping = 0,
         delay_frames = 0,
         wins = nil,
@@ -38,7 +37,7 @@ function playerinfo:New(user)
     obj.Death = function(self, damage_details)
             if(self.entity ~= nil and EntityGetIsAlive(self.entity))then
 
-                local items = GameGetAllInventoryItems( self.entity )
+                local items = GameGetAllInventoryItems( self.entity ) or {}
 
                 for i,item in ipairs(items) do
                     EntityRemoveFromParent(item)
@@ -79,7 +78,6 @@ function playerinfo:New(user)
         --[[self.last_position_x = nil
         self.last_position_y = nil]]
         self.previous_positions = {}
-        self.last_inventory_string = nil
     end
     obj.Clean = function(self, lobby)
         if(self.entity ~= nil and EntityGetIsAlive(self.entity))then

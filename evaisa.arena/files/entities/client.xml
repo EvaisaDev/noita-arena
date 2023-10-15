@@ -37,6 +37,7 @@
       </Base>  
   </Entity>
 
+  <StatusEffectDataComponent/>
 
   <Entity name="cursor">
     <SpriteComponent 
@@ -110,6 +111,16 @@
     velocity_min_y="-200"
     velocity_max_y="350"
   ></CharacterPlatformingComponent>
+
+  <HitboxComponent 
+    aabb_max_x="0" 
+    aabb_max_y="-20" 
+    aabb_min_x="0" 
+    aabb_min_y="-20" 
+    is_enemy="1" 
+    is_item="0" 
+    is_player="0"
+  ></HitboxComponent>
 
   <HitboxComponent 
     aabb_max_x="3" 

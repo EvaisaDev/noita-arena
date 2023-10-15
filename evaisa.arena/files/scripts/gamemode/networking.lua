@@ -15,6 +15,7 @@ local player_helper = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/p
 -- whatever ill just leave it
 dofile("mods/evaisa.arena/lib/status_helper.lua")
 
+
 networking = {
     receive = {
         ready = function(lobby, message, user, data)
@@ -108,7 +109,7 @@ networking = {
 
                 gameplay_handler.AllowFiring(data)
                 --message_handler.send.RequestWandUpdate(lobby, data)
-                networking.send.request_wand_update(lobby)
+                networking.send.request_item_update(lobby)
                 if (data.countdown ~= nil) then
                     data.countdown:cleanup()
                     data.countdown = nil
@@ -211,6 +212,9 @@ networking = {
         wand_update = function(lobby, message, user, data)
             --GamePrint("Wand update!")
 
+            -- LEGACY USE item_update INSTEAD
+
+            --[[
             if (not gameplay_handler.CheckPlayer(lobby, user, data)) then
                 return
             end
@@ -252,11 +256,6 @@ networking = {
                                 return
                             end
 
-                            --[[local item_pick_upper_component = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity, "ItemPickUpperComponent")
-
-                            if(item_pick_upper_component ~= nil)then
-                                ComponentSetValue2(item_pick_upper_component, "only_pick_this_entity", wand.entity_id)
-                            end]]
                             wand:PickUp(data.players[tostring(user)].entity)
 
 
@@ -283,13 +282,103 @@ networking = {
                     data.players[tostring(user)].last_inventory_string = wand_string
                 end
             end
+            ]]
+        end,
+        item_update = function(lobby, message, user, data)
+            if (not gameplay_handler.CheckPlayer(lobby, user, data)) then
+                return
+            end
+
+            if (data.players[tostring(user)].entity and EntityGetIsAlive(data.players[tostring(user)].entity)) then
+                local items_data = message[1]
+                local force = message[2]
+                local unlimited_spells = message[3]
+
+                if (data.players[tostring(user)].entity and EntityGetIsAlive(data.players[tostring(user)].entity)) then
+                    if(unlimited_spells)then
+                        EntityAddTag(data.players[tostring(user)].entity, "unlimited_spells")
+                    end
+                    local items = GameGetAllInventoryItems(data.players[tostring(user)].entity) or {}
+                    for i, item_id in ipairs(items) do
+                        GameKillInventoryItem(data.players[tostring(user)].entity, item_id)
+                        EntityKill(item_id)
+                    end
+                end
+
+                if (items_data ~= nil) then
+                    for k, itemInfo in ipairs(items_data) do
+                        local x, y = EntityGetTransform(data.players[tostring(user)].entity)
+                        local item = nil
+                        if(itemInfo.is_wand)then
+                            item = EZWand(itemInfo.data, x, y)
+                            
+                        else
+                            item = EntityCreateNew()
+                            np.DeserializeEntity(item, itemInfo.data, x, y)
+            
+                        end
+            
+                        if (item == nil) then
+                            return
+                        end
+            
+                        local item_entity = nil
+                        if(itemInfo.is_wand)then
+                            item:PickUp(data.players[tostring(user)].entity)
+                            item_entity = item.entity_id
+                        else
+                            EntityHelper.PickItem(data.players[tostring(user)].entity, item)
+                            item_entity = item
+                        end
+                        
+                        local itemComp = EntityGetFirstComponentIncludingDisabled(item_entity, "ItemComponent")
+                        if (itemComp ~= nil) then
+                            ComponentSetValue2(itemComp, "inventory_slot", itemInfo.slot_x, itemInfo.slot_y)
+                        end
+
+                        if (itemInfo.active) then
+                            game_funcs.SetActiveHeldEntity(data.players[tostring(user)].entity, item_entity, false,
+                                false)
+                        end
+
+                        EntityHelper.SetVariable(item_entity, "arena_entity_id", itemInfo.id)
+
+                        local lua_comps = EntityGetComponentIncludingDisabled(item_entity, "LuaComponent") or {}
+                        local has_pickup_script = false
+                        for i, lua_comp in ipairs(lua_comps) do
+                            if (ComponentGetValue2(lua_comp, "script_item_picked_up") == "mods/evaisa.arena/files/scripts/gamemode/misc/item_pickup.lua") then
+                                has_pickup_script = true
+                            end
+                        end
+
+                        if (not has_pickup_script) then
+                            EntityAddComponent(item_entity, "LuaComponent", {
+                                _tags = "enabled_in_world,enabled_in_hand,enabled_in_inventory",
+                                script_item_picked_up = "mods/evaisa.arena/files/scripts/gamemode/misc/item_pickup.lua",
+                                script_kick = "mods/evaisa.arena/files/scripts/gamemode/misc/item_kick.lua",
+                                script_throw_item = "mods/evaisa.arena/files/scripts/gamemode/misc/item_throw.lua",
+                            })
+                        end
+                    end
+
+                end
+            end
         end,
         request_wand_update = function(lobby, message, user, data)
-            if(data.spectator_mode)then
+           --[[ if(data.spectator_mode)then
                 return
             end
             data.client.previous_wand = nil
             networking.send.wand_update(lobby, data, user, true)
+            networking.send.switch_item(lobby, data, user, true)
+            ]]
+        end,
+        request_item_update = function(lobby, message, user, data)
+            if(data.spectator_mode)then
+                return
+            end
+            data.client.previous_wand = nil
+            networking.send.item_update(lobby, data, user, true)
             networking.send.switch_item(lobby, data, user, true)
         end,
         input_update = function(lobby, message, user, data)
@@ -373,7 +462,7 @@ networking = {
                         if (message_data.kick) then
                             ComponentSetValue2(controlsComp, "mButtonDownKick", true)
                             if (not controls_data.kick) then
-                                ComponentSetValue2(controlsComp, "mButtonFrameKick", GameGetFrameNum())
+                                ComponentSetValue2(controlsComp, "mButtonFrameKick", GameGetFrameNum() + 1)
                             end
                             controls_data.kick = true
                         else
@@ -384,7 +473,8 @@ networking = {
                             ComponentSetValue2(controlsComp, "mButtonDownFire", true)
                             --local lastFireFrame = ComponentGetValue2(controlsComp, "mButtonFrameFire")
                             if (not controls_data.fire) then
-                                ComponentSetValue2(controlsComp, "mButtonFrameFire", GameGetFrameNum())
+                                -- perhaps this should be next frame??
+                                ComponentSetValue2(controlsComp, "mButtonFrameFire", GameGetFrameNum()+1)
                             end
                             ComponentSetValue2(controlsComp, "mButtonLastFrameFire", GameGetFrameNum())
                             controls_data.fire = true
@@ -395,7 +485,8 @@ networking = {
                         if (message_data.fire2) then
                             ComponentSetValue2(controlsComp, "mButtonDownFire2", true)
                             if (not controls_data.fire2) then
-                                ComponentSetValue2(controlsComp, "mButtonFrameFire2", GameGetFrameNum())
+                                ComponentSetValue2(controlsComp, "mButtonFrameFire2", GameGetFrameNum()+1)
+                                --EntityAddTag(data.players[tostring(user)].entity, "player_unit")
                             end
                             controls_data.fire2 = true
                         else
@@ -405,7 +496,7 @@ networking = {
                         if (message_data.action) then
                             ComponentSetValue2(controlsComp, "mButtonDownAction", true)
                             if (not controls_data.action) then
-                                ComponentSetValue2(controlsComp, "mButtonFrameAction", GameGetFrameNum())
+                                ComponentSetValue2(controlsComp, "mButtonFrameAction", GameGetFrameNum() + 1)
                             end
                             controls_data.action = true
                         else
@@ -415,7 +506,7 @@ networking = {
                         if (message_data.throw) then
                             ComponentSetValue2(controlsComp, "mButtonDownThrow", true)
                             if (not controls_data.throw) then
-                                ComponentSetValue2(controlsComp, "mButtonFrameThrow", GameGetFrameNum())
+                                ComponentSetValue2(controlsComp, "mButtonFrameThrow", GameGetFrameNum() + 1)
                             end
                             controls_data.throw = true
                         else
@@ -425,7 +516,7 @@ networking = {
                         if (message_data.interact) then
                             ComponentSetValue2(controlsComp, "mButtonDownInteract", true)
                             if (not controls_data.interact) then
-                                ComponentSetValue2(controlsComp, "mButtonFrameInteract", GameGetFrameNum())
+                                ComponentSetValue2(controlsComp, "mButtonFrameInteract", GameGetFrameNum() + 1)
                             end
                             controls_data.interact = true
                         else
@@ -435,7 +526,7 @@ networking = {
                         if (message_data.left) then
                             ComponentSetValue2(controlsComp, "mButtonDownLeft", true)
                             if (not controls_data.left) then
-                                ComponentSetValue2(controlsComp, "mButtonFrameLeft", GameGetFrameNum())
+                                ComponentSetValue2(controlsComp, "mButtonFrameLeft", GameGetFrameNum() + 1)
                             end
                             controls_data.left = true
                         else
@@ -445,7 +536,7 @@ networking = {
                         if (message_data.right) then
                             ComponentSetValue2(controlsComp, "mButtonDownRight", true)
                             if (not controls_data.right) then
-                                ComponentSetValue2(controlsComp, "mButtonFrameRight", GameGetFrameNum())
+                                ComponentSetValue2(controlsComp, "mButtonFrameRight", GameGetFrameNum() + 1)
                             end
                             controls_data.right = true
                         else
@@ -455,7 +546,7 @@ networking = {
                         if (message_data.up) then
                             ComponentSetValue2(controlsComp, "mButtonDownUp", true)
                             if (not controls_data.up) then
-                                ComponentSetValue2(controlsComp, "mButtonFrameUp", GameGetFrameNum())
+                                ComponentSetValue2(controlsComp, "mButtonFrameUp", GameGetFrameNum() + 1)
                             end
                             controls_data.up = true
                         else
@@ -465,7 +556,7 @@ networking = {
                         if (message_data.down) then
                             ComponentSetValue2(controlsComp, "mButtonDownDown", true)
                             if (not controls_data.down) then
-                                ComponentSetValue2(controlsComp, "mButtonFrameDown", GameGetFrameNum())
+                                ComponentSetValue2(controlsComp, "mButtonFrameDown", GameGetFrameNum() + 1)
                             end
                             controls_data.down = true
                         else
@@ -475,7 +566,7 @@ networking = {
                         if (message_data.jump) then
                             ComponentSetValue2(controlsComp, "mButtonDownJump", true)
                             if (not controls_data.jump) then
-                                ComponentSetValue2(controlsComp, "mButtonFrameJump", GameGetFrameNum())
+                                ComponentSetValue2(controlsComp, "mButtonFrameJump", GameGetFrameNum() + 1)
                             end
                             controls_data.jump = true
                         else
@@ -485,7 +576,7 @@ networking = {
                         if (message_data.fly) then
                             ComponentSetValue2(controlsComp, "mButtonDownFly", true)
                             if (not controls_data.fly) then
-                                ComponentSetValue2(controlsComp, "mButtonFrameFly", GameGetFrameNum())
+                                ComponentSetValue2(controlsComp, "mButtonFrameFly", GameGetFrameNum() + 1)
                             end
                             controls_data.fly = true
                         else
@@ -495,7 +586,7 @@ networking = {
                         if (message_data.leftClick) then
                             ComponentSetValue2(controlsComp, "mButtonDownLeftClick", true)
                             if (not controls_data.leftClick) then
-                                ComponentSetValue2(controlsComp, "mButtonFrameLeftClick", GameGetFrameNum())
+                                ComponentSetValue2(controlsComp, "mButtonFrameLeftClick", GameGetFrameNum() + 1)
                             end
                             controls_data.leftClick = true
                         else
@@ -505,7 +596,7 @@ networking = {
                         if (message_data.rightClick) then
                             ComponentSetValue2(controlsComp, "mButtonDownRightClick", true)
                             if (not controls_data.rightClick) then
-                                ComponentSetValue2(controlsComp, "mButtonFrameRightClick", GameGetFrameNum())
+                                ComponentSetValue2(controlsComp, "mButtonFrameRightClick", GameGetFrameNum() + 1)
                             end
                             controls_data.rightClick = true
                         else
@@ -564,13 +655,24 @@ networking = {
             end
 
             --GlobalsSetValue(tostring(wand.entity_id).."_wand", wandInfo.id)
-            local id = message[1]
+            local is_wand, slot_x, slot_y = message[1], message[2], message[3]
+           -- GamePrint("Switching item to slot: " .. tostring(slot_x) .. ", " .. tostring(slot_y))
             if (data.players[tostring(user)].entity and EntityGetIsAlive(data.players[tostring(user)].entity)) then
                 local items = GameGetAllInventoryItems(data.players[tostring(user)].entity) or {}
                 for i, item in ipairs(items) do
                     -- check id
-                    local item_id = tonumber(GlobalsGetValue(tostring(item) .. "_wand")) or -1
-                    if (item_id == id) then
+                    --local item_id = tonumber(GlobalsGetValue(tostring(item) .. "_item")) or -1
+                    local itemComp = EntityGetFirstComponentIncludingDisabled(item, "ItemComponent")
+                    local item_slot_x, item_slot_y = ComponentGetValue2(itemComp, "inventory_slot")
+
+                    local ability_comp = EntityGetFirstComponentIncludingDisabled(item, "AbilityComponent")
+                    
+                    local item_is_wand = false
+                    if(ability_comp and ComponentGetValue2(ability_comp, "use_gun_script"))then
+                        item_is_wand = true
+                    end
+
+                    if (item_slot_x == slot_x and item_slot_y == slot_y and item_is_wand == is_wand) then
                         local inventory2Comp = EntityGetFirstComponentIncludingDisabled(
                             data.players[tostring(user)].entity, "Inventory2Component")
                         local mActiveItem = ComponentGetValue2(inventory2Comp, "mActiveItem")
@@ -880,8 +982,6 @@ networking = {
                         status_list = message[2],
                     }
 
-                    -- handle status effects wahwah i don't know how yet
-                    -- whatever ill do this in the moirdning
                     local valid_ids = {}
 
                     local index = 0
@@ -901,7 +1001,7 @@ networking = {
 
                         local effect = GetStatusElement(id, value)
 
-                        if(effect ~= nil and data.players[tostring(user)].status_effect_comps[id] == nil)then
+                        --[[if(effect ~= nil and data.players[tostring(user)].status_effect_comps[id] == nil)then
                             data.players[tostring(user)].status_effect_comps[id] = EntityAddComponent2( player, "SpriteComponent",
                             {
                                 image_file = effect.ui_icon,
@@ -914,32 +1014,37 @@ networking = {
                         elseif(data.players[tostring(user)].status_effect_comps[id] ~= nil)then
                             local comp = data.players[tostring(user)].status_effect_comps[id]
                             ComponentSetValue2(comp, "offset_x", offset)
-                        end
+                        end]]
 
-                        if(effect ~= nil and data.players[tostring(user)].status_effect_entities[id] == nil and effect.effect_entity)then
-                            data.players[tostring(user)].status_effect_entities[id] = LoadGameEffectEntityTo( player, effect.effect_entity )
-
+                        if(effect ~= nil and data.players[tostring(user)].status_effect_entities[id] == nil)then
+                            if(effect.effect_entity)then
+                                data.players[tostring(user)].status_effect_entities[id] = LoadGameEffectEntityTo( player, effect.effect_entity )
+                                --GamePrint("Loaded effect of id: "..tostring(effect.id))
+                            else
+                                data.players[tostring(user)].status_effect_entities[id] = EntityCreateNew("effect")
+                                EntityAddComponent2(data.players[tostring(user)].status_effect_entities[id], "InheritTransformComponent")
+                                EntityAddComponent2(data.players[tostring(user)].status_effect_entities[id], "GameEffectComponent", {
+                                    effect = id,
+                                    frames = -1,
+                                })
+                                EntityAddChild(player, data.players[tostring(user)].status_effect_entities[id])
+                            end
+                            EntityAddComponent2(data.players[tostring(user)].status_effect_entities[id], "UIIconComponent", {
+                                name = effect.ui_name,
+                                icon_sprite_file = effect.ui_icon,
+                                display_above_head = true,
+                                display_in_hud = false,
+                                is_perk = false,
+                            })
                         end
 
                         valid_ids[id] = true
                     end
 
-                    --[[for i, v in ipairs(valid_ids)do
-                        local entity = data.players[tostring(user)].status_effect_entities[v]
-                        if(entity)then
-                            EntityKill(entity)
-                        end
-                    end]]
-
-                    for k, v in pairs(data.players[tostring(user)].status_effect_comps)do
-                        if(not valid_ids[k])then
-                            --GamePrint("Removing status effect: "..tostring(k))
-                            EntityRemoveComponent(player, v)
-                            data.players[tostring(user)].status_effect_comps[k] = nil
-                            if(data.players[tostring(user)].status_effect_entities[k])then
-                                EntityKill(data.players[tostring(user)].status_effect_entities[k])
-                                data.players[tostring(user)].status_effect_entities[k] = nil
-                            end
+                    for k, v in pairs(data.players[tostring(user)].status_effect_entities)do
+                        if(not valid_ids[k] or not EntityGetIsAlive(data.players[tostring(user)].status_effect_entities[k]))then
+                            EntityKill(data.players[tostring(user)].status_effect_entities[k])
+                            data.players[tostring(user)].status_effect_entities[k] = nil
                         end
                     end
 
@@ -973,7 +1078,158 @@ networking = {
                 local heart = EntityLoad("data/entities/animals/heart.xml", message.heart[1], message.heart[2])
                 EntityAddTag(heart, "spectator_simulated")
             end
-        end
+        end,
+        item_picked_up = function(lobby, message, user, data)
+            --GamePrint("pickup received.")
+            local entities = EntityGetInRadius(0, 0, 1000000000)
+            local item_id = message[1]
+            for k, v in ipairs(entities)do
+                if(EntityGetFirstComponentIncludingDisabled(v, "ItemComponent") ~= nil)then
+                    local entity_id = EntityHelper.GetVariable(v, "arena_entity_id")
+                    if(entity_id ~= nil and entity_id == item_id)then
+                        EntityKill(v)
+                        return
+                    end
+                end
+            end
+        end,
+        physics_update = function(lobby, message, user, data)
+            local entities = EntityGetInRadius(0, 0, 1000000000)
+            local item_id = message[1]
+            local x, y, r, vx, vy, vr = message[2], message[3], message[4], message[5], message[6], message[7]
+            local takes_control = message[8]
+            for k, v in ipairs(entities)do
+                if(EntityGetFirstComponentIncludingDisabled(v, "ItemComponent") ~= nil)then
+                    local entity_id = EntityHelper.GetVariable(v, "arena_entity_id")
+                    if(entity_id ~= nil and entity_id == item_id)then
+                        
+                        if(takes_control)then
+                            for i = #data.controlled_physics_entities, 1, -1 do
+                                if(data.controlled_physics_entities[i] == v)then
+                                    table.remove(data.controlled_physics_entities, i)
+
+                                    --GamePrint("No longer in control")
+
+                                end
+                            end
+                        end
+
+                        local body_ids = PhysicsBodyIDGetFromEntity( v )
+                        if(body_ids ~= nil and #body_ids > 0)then
+                            local body_id = body_ids[1]
+
+                            PhysicsBodyIDSetTransform(body_id, x, y, r, vx, vy, vr)
+                            
+                        end
+                        return
+                    end
+                end
+            end
+        end,
+        fungal_shift = function(lobby, message, user, data)
+            dofile_once("data/scripts/lib/utilities.lua")
+
+            
+
+            local from_materials = message[1]
+            local to_mat = message[2]
+
+            local iter = tonumber( GlobalsGetValue( "fungal_shift_iteration", "0" ) )
+            GlobalsSetValue( "fungal_shift_iteration", tostring(iter+1) )
+            if iter > 20 then
+                return
+            end
+            local frame = GameGetFrameNum()
+
+            SetRandomSeed( 89346, 42345+iter )
+
+            local converted_any = false
+        
+            local rnd = random_create(9123,58925+iter ) -- TODO: store for next change
+            local from_material_name = nil
+            
+            for i,it in ipairs(from_materials) do
+                local from_material = CellFactory_GetType( it )
+                local to_material = CellFactory_GetType( to_mat )
+                
+                from_material_name = string.upper( GameTextGetTranslatedOrNot( CellFactory_GetUIName( from_material ) ) )
+               
+                -- convert
+                if from_material ~= to_material then
+                    print(CellFactory_GetUIName(from_material) .. " -> " .. CellFactory_GetUIName(to_material))
+                    ConvertMaterialEverywhere( from_material, to_material )
+                    converted_any = true
+        
+                    local player_entity = player.Get()
+                    if (player_entity) then
+                        local x, y = EntityGetTransform(player_entity)
+                        -- shoot particles of new material
+                        GameCreateParticle( CellFactory_GetName(from_material), x-10, y-10, 20, Random(-100,100), Random(-100,-30), true, true )
+                        GameCreateParticle( CellFactory_GetName(from_material), x+10, y-10, 20, Random(-100,100), Random(-100,-30), true, true )
+                    end
+                end
+            end
+
+            local log_messages = 
+            {
+                "$log_reality_mutation_00",
+                "$log_reality_mutation_01",
+                "$log_reality_mutation_02",
+                "$log_reality_mutation_03",
+                "$log_reality_mutation_04",
+                "$log_reality_mutation_05",
+            }
+            
+
+            if converted_any then
+                -- remove tripping effect
+                EntityRemoveIngestionStatusEffect( entity, "TRIP" );
+        
+                local x, y = GameGetCameraPos()
+
+                -- audio
+                GameTriggerMusicFadeOutAndDequeueAll( 5.0 )
+                GameTriggerMusicEvent( "music/oneshot/tripping_balls_01", false, x, y )
+        
+                -- particle fx
+                local eye = EntityLoad( "data/entities/particles/treble_eye.xml", x,y-10 )
+                if eye ~= 0 then
+                    EntityAddChild( entity, eye )
+                end
+        
+                -- log
+                local log_msg = ""
+                if from_material_name ~= "" then
+                    log_msg = GameTextGet( "$logdesc_reality_mutation", from_material_name )
+                    GamePrint( log_msg )
+                end
+                GamePrintImportant( random_from_array( log_messages ), log_msg, "data/ui_gfx/decorations/3piece_fungal_shift.png" )
+                GlobalsSetValue( "fungal_shift_last_frame", tostring(frame) )
+        
+                -- add ui icon
+                local add_icon = true
+                local children = EntityGetAllChildren(entity)
+                if children ~= nil then
+                    for i,it in ipairs(children) do
+                        if ( EntityGetName(it) == "fungal_shift_ui_icon" ) then
+                            add_icon = false
+                            break
+                        end
+                    end
+                end
+        
+                if add_icon then
+                    local icon_entity = EntityCreateNew( "fungal_shift_ui_icon" )
+                    EntityAddComponent( icon_entity, "UIIconComponent", 
+                    { 
+                        name = "$status_reality_mutation",
+                        description = "$statusdesc_reality_mutation",
+                        icon_sprite_file = "data/ui_gfx/status_indicators/fungal_shift.png"
+                    })
+                    EntityAddChild( entity, icon_entity )
+                end
+            end
+        end,
     },
     send = {
         handshake = function(lobby)
@@ -1016,7 +1272,10 @@ networking = {
             end
         end,
         wand_update = function(lobby, data, user, force, to_spectators)
-            local wandString = player.GetWandString()
+
+            -- LEGACY, USE item_update INSTEAD
+
+            --[[local wandString = player.GetWandString()
             if (wandString ~= nil) then
                 if (force or (wandString ~= data.client.previous_wand)) then
                     local wandData = player.GetWandData()
@@ -1054,13 +1313,48 @@ networking = {
                     end
                     data.client.previous_wand = nil
                 end
+            end]]
+        end,
+        item_update = function(lobby, data, user, force, to_spectators)
+            local item_data = player.GetItemData()
+            if(item_data ~= nil)then
+                local data = { item_data, force, GameHasFlagRun( "arena_unlimited_spells" ) }
+
+                if (user ~= nil) then
+                    steamutils.sendToPlayer("item_update", data, user, true)
+                else
+                    if(to_spectators)then
+                        steamutils.send("item_update", data, steamutils.messageTypes.Spectators, lobby, true, true)
+                    else
+                        steamutils.send("item_update", data, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+                    end
+                end
+            else
+                if (user ~= nil) then
+                    steamutils.sendToPlayer("item_update", {}, user, true)
+                else
+                    if(to_spectators)then
+                        steamutils.send("item_update", {}, steamutils.messageTypes.Spectators, lobby, true, true)
+                    else
+                        steamutils.send("item_update", {}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+                    end
+                end
             end
         end,
         request_wand_update = function(lobby, user)
-            if(user == nil)then
+            -- LEGACY USE request_item_update INSTEAD
+
+            --[[if(user == nil)then
                 steamutils.send("request_wand_update", {}, steamutils.messageTypes.OtherPlayers, lobby, true)
             else
                 steamutils.sendToPlayer("request_wand_update", {}, user, true)
+            end]]
+        end,
+        request_item_update = function(lobby, user)
+            if(user == nil)then
+                steamutils.send("request_item_update", {}, steamutils.messageTypes.OtherPlayers, lobby, true)
+            else
+                steamutils.sendToPlayer("request_item_update", {}, user, true)
             end
         end,
         input_update = function(lobby, to_spectators)
@@ -1167,19 +1461,30 @@ networking = {
             local held_item = player.GetActiveHeldItem()
             if (held_item ~= nil) then
                 if (force or user ~= nil or held_item ~= data.client.previous_selected_item) then
-                    local wand_id = tonumber(GlobalsGetValue(tostring(held_item) .. "_wand")) or -1
-                    if (wand_id ~= -1) then
-                        if (user == nil) then
-                            if(to_spectators)then
-                                steamutils.send("switch_item", { wand_id }, steamutils.messageTypes.Spectators, lobby, true, true)
-                            else
-                                steamutils.send("switch_item", { wand_id }, steamutils.messageTypes.OtherPlayers, lobby, true, true)
-                            end
-                            data.client.previous_selected_item = held_item
-                        else
-                            steamutils.sendToPlayer("switch_item", { wand_id }, user, true)
-                        end
+                    --local wand_id = tonumber(GlobalsGetValue(tostring(held_item) .. "_item")) or -1
+                    --if (wand_id ~= -1) then
+                    local item_comp = EntityGetFirstComponentIncludingDisabled(held_item, "ItemComponent")
+                    local slot_x, slot_y = ComponentGetValue2(item_comp, "inventory_slot")
+                    local ability_comp = EntityGetFirstComponentIncludingDisabled(held_item, "AbilityComponent")
+                    
+                    local is_wand = false
+                    if(ability_comp and ComponentGetValue2(ability_comp, "use_gun_script"))then
+                        is_wand = true
                     end
+
+                    --GamePrint("Switching to item in slot " .. tostring(slot_x) .. ", " .. tostring(slot_y))
+
+                    if (user == nil) then
+                        if(to_spectators)then
+                            steamutils.send("switch_item", { is_wand, slot_x, slot_y }, steamutils.messageTypes.Spectators, lobby, true, true)
+                        else
+                            steamutils.send("switch_item", { is_wand, slot_x, slot_y }, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+                        end
+                        data.client.previous_selected_item = held_item
+                    else
+                        steamutils.sendToPlayer("switch_item", { is_wand, slot_x, slot_y }, user, true)
+                    end
+                    --end
                 end
             end
         end,
@@ -1370,6 +1675,19 @@ networking = {
         end,
         allow_round_end = function(lobby)
             steamutils.send("allow_round_end", {}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+        end,
+        item_picked_up = function(lobby, item_id, to_spectators)
+            if(to_spectators)then
+                steamutils.send("item_picked_up", { item_id }, steamutils.messageTypes.Spectators, lobby, true, true)
+            else
+                steamutils.send("item_picked_up", { item_id }, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+            end
+        end,
+        physics_update = function(lobby, id, x, y, r, vel_x, vel_y, vel_a, takes_control)
+            steamutils.send("physics_update", { id, x, y, r, vel_x, vel_y, vel_a, takes_control }, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+        end,
+        fungal_shift = function(lobby, from, to)
+            steamutils.send("fungal_shift", { from, to }, steamutils.messageTypes.OtherPlayers, lobby, true, true)
         end,
     },
 }

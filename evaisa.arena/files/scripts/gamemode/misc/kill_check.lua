@@ -159,7 +159,7 @@ function damage_received( damage, message, entity_thats_responsible, is_fatal, p
                 if(died)then
                     GameAddFlagRun("player_died")
                     if(entity_thats_responsible ~= nil)then
-                        ModSettingSet("killer", EntityGetName(entity_thats_responsible))
+                        GlobalsSetValue("killer", EntityGetName(entity_thats_responsible) or "")
                     end
                     GameAddFlagRun("player_unloaded")
                 end
