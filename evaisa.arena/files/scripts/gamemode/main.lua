@@ -243,8 +243,8 @@ ArenaMode = {
     settings = {
         {
             id = "random_seed",
-            name = "Random Seed",
-            description = "Randomized seed every restart.",
+            name = "$arena_settings_random_seed_name",
+            description = "$arena_settings_random_seed_description",
             type = "bool",
             default = true
         },  
