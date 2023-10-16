@@ -10,7 +10,6 @@ local json = dofile("mods/evaisa.arena/lib/json.lua")
 local EntityHelper = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/entity.lua")
 local smallfolk = dofile("mods/evaisa.arena/lib/smallfolk.lua")
 dofile_once("data/scripts/perks/perk_list.lua")
-dofile_once("mods/evaisa.arena/content/data.lua")
 local player_helper = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/player.lua")
 -- whatever ill just leave it
 dofile("mods/evaisa.arena/lib/status_helper.lua")

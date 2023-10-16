@@ -29,6 +29,7 @@ local randomized_seed = true
 local playerinfo_menu = dofile("mods/evaisa.arena/files/scripts/utilities/playerinfo_menu.lua")
 
 dofile_once("data/scripts/perks/perk_list.lua")
+dofile_once("mods/evaisa.arena/content/data.lua")
 
 perk_sprites = {}
 for k, perk in pairs(perk_list) do
@@ -51,10 +52,14 @@ content_hash = content_hash or 0
 content_string = content_string or ""
 spell_blacklist_data = spell_blacklist_data or {}
 spell_blacklist_string = spell_blacklist_string or ""
+map_blacklist_data = map_blacklist_data or {}
+map_blacklist_string = map_blacklist_string or ""
 sorted_spell_list = sorted_spell_list or nil
 sorted_spell_list_ids = sorted_spell_list_ids or nil
 sorted_perk_list = sorted_perk_list or nil
 sorted_perk_list_ids = sorted_perk_list_ids or nil
+sorted_map_list = sorted_map_list or nil
+sorted_map_list_ids = sorted_map_list_ids or nil
 
 local function ifind(s, pattern, init, plain)
     return string.find(s:lower(), pattern:lower(), init, plain)
@@ -104,6 +109,26 @@ local function TryUpdateData(lobby)
         end)
     end
 
+    if(sorted_map_list == nil)then
+        -- sort map list blah
+        sorted_map_list = {}
+        sorted_map_list_ids = {}
+        for _, map in pairs(arena_list)do
+            table.insert(sorted_map_list, map)
+            table.insert(sorted_map_list_ids, map)
+            content_hash = content_hash + string.bytes(map.id)
+            content_string = content_string .. map.id .. "\n"
+        end
+
+        table.sort(sorted_map_list, function(a, b)
+            return GameTextGetTranslatedOrNot(a.name) < GameTextGetTranslatedOrNot(b.name)
+        end)
+
+        table.sort(sorted_map_list_ids, function(a, b)
+            return GameTextGetTranslatedOrNot(a.id) < GameTextGetTranslatedOrNot(b.id)
+        end)
+    end
+
 
     GlobalsSetValue("content_string", tostring(content_string))
 
@@ -141,6 +166,21 @@ local function TryUpdateData(lobby)
             end
         end
     end
+
+    if(lobby_data_last_frame["map_blacklist_data"] ~= nil and map_blacklist_string ~= lobby_data_last_frame["map_blacklist_data"])then
+        print("Updating map blacklist data")
+        -- split byte string into table
+        map_blacklist_data = {}
+        map_blacklist_string = lobby_data_last_frame["map_blacklist_data"]
+        for i = 1, #map_blacklist_string do
+            local enabled = map_blacklist_string:sub(i, i) == "1"
+            if(enabled)then
+                map_blacklist_data[sorted_map_list_ids[i].id] = enabled
+            else
+                map_blacklist_data[sorted_map_list_ids[i].id] = nil
+            end
+        end
+    end
     
 end
 
@@ -171,6 +211,19 @@ local function SendLobbyData(lobby)
         --print(spell_blacklist_string_temp)
         steam.matchmaking.setLobbyData(lobby, "spell_blacklist_data", spell_blacklist_string_temp)
     end
+
+    if(sorted_map_list_ids)then
+        local map_blacklist_string_temp = ""
+        for _, map in pairs(sorted_map_list_ids)do
+            if(map_blacklist_data[map.id] == nil)then
+                map_blacklist_string_temp = map_blacklist_string_temp .. "0"
+            else
+                map_blacklist_string_temp = map_blacklist_string_temp .. (map_blacklist_data[map.id] and "1" or "0")
+            end
+        end
+        --print(map_blacklist_string_temp)
+        steam.matchmaking.setLobbyData(lobby, "map_blacklist_data", map_blacklist_string_temp)
+    end
         
     steam.matchmaking.sendLobbyChatMsg(lobby, "refresh")
 end
@@ -181,7 +234,7 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 0.65,
+    version = 0.7,
     required_online_version = 1.61,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
@@ -528,7 +581,7 @@ ArenaMode = {
                 TryUpdateData(lobby)
 
                 local id = new_id("perk_search_input")
-
+                GuiZSetForNextWidget(gui, -5600)
                 perk_search_content = GuiTextInput(gui, id, 0, 0, perk_search_content or "", 140, 20)
 
                 local _, _, hover = GuiGetPreviousWidgetInfo(gui)
@@ -538,6 +591,7 @@ ArenaMode = {
                 end
 
                 if(steamutils.IsOwner(lobby))then
+                    GuiZSetForNextWidget(gui, -5600)
                     if GuiButton(gui, new_id(), 0, 0, "$arena_disable_all") then
                         for i, perk in ipairs(sorted_perk_list)do
   
@@ -545,7 +599,7 @@ ArenaMode = {
                         end
                         SendLobbyData(lobby)
                     end
-
+                    GuiZSetForNextWidget(gui, -5600)
                     if GuiButton(gui, new_id(), 0, 0, "$arena_enable_all") then
                         for i, perk in ipairs(sorted_perk_list)do
  
@@ -560,6 +614,7 @@ ArenaMode = {
                         iteration = iteration + 1
                         GuiLayoutBeginHorizontal(gui, 0, -((iteration - 1) * 2), true)
                         local is_blacklisted = perk_blacklist_data[perk.id]--steamutils.GetLobbyData("perk_blacklist_"..perk.id) == "true"
+                        GuiZSetForNextWidget(gui, -5600)
                         GuiImage(gui, new_id(), 0, 0, perk.ui_icon, is_blacklisted and 0.4 or 1, 1, 1)
                         local visible, clicked, _, hovered = get_widget_info(gui)
 
@@ -578,11 +633,13 @@ ArenaMode = {
                         local strike_out = "mods/evaisa.arena/files/sprites/ui/strikeout/small_"..tostring(Random(1, 4))..".png"
                         local offset = 0
                         if(is_blacklisted)then
+                            GuiZSetForNextWidget(gui, -5610)
                             GuiOptionsAddForNextWidget(gui, GUI_OPTION.NonInteractive)
                             GuiImage(gui, new_id(), -(icon_width - 1), 2, strike_out, 1, 1, 1)
                             offset = 2
                         end
                         local text_width, text_height = GuiGetTextDimensions(gui, perk.ui_name)
+                        GuiZSetForNextWidget(gui, -5600)
                         if(GuiButton(gui, new_id(), offset, ((icon_height / 2) - (text_height / 2)), perk.ui_name))then
                             if(steamutils.IsOwner(lobby))then
                                 perk_blacklist_data[perk.id] = not is_blacklisted
@@ -612,7 +669,7 @@ ArenaMode = {
                 TryUpdateData(lobby)
 
                 local id = new_id("spell_search_input")
-
+                GuiZSetForNextWidget(gui, -5600)
                 spell_search_content = GuiTextInput(gui, id, 0, 0, spell_search_content or "", 140, 20)
 
                 local _, _, hover = GuiGetPreviousWidgetInfo(gui)
@@ -622,13 +679,14 @@ ArenaMode = {
                 end
 
                 if(steamutils.IsOwner(lobby))then
+                    GuiZSetForNextWidget(gui, -5600)
                     if GuiButton(gui, new_id(), 0, 0, "$arena_disable_all") then
                         for i, spell in ipairs(sorted_spell_list)do
                             spell_blacklist_data[spell.id] = true
                         end
                         SendLobbyData(lobby)
                     end
-
+                    GuiZSetForNextWidget(gui, -5600)
                     if GuiButton(gui, new_id(), 0, 0, "$arena_enable_all") then
                         for i, spell in ipairs(sorted_spell_list)do
                             spell_blacklist_data[spell.id] = false
@@ -653,6 +711,7 @@ ArenaMode = {
                         iteration = iteration + 1
                         GuiLayoutBeginHorizontal(gui, 0, -((iteration - 1) * 2), true)
                         local is_blacklisted = spell_blacklist_data[spell.id] --steamutils.GetLobbyData("spell_blacklist_"..spell.id) == "true"
+                        GuiZSetForNextWidget(gui, -5600)
                         GuiImage(gui, new_id(), 0, 0, spell.sprite, is_blacklisted and 0.4 or 1, 1, 1)
                         local visible, clicked, _, hovered = get_widget_info(gui)
 
@@ -670,12 +729,14 @@ ArenaMode = {
                         local strike_out = "mods/evaisa.arena/files/sprites/ui/strikeout/small_"..tostring(Random(1, 4))..".png"
                         local offset = 0
                         if(is_blacklisted)then
+                            GuiZSetForNextWidget(gui, -5610)
                             GuiOptionsAddForNextWidget(gui, GUI_OPTION.NonInteractive)
                             GuiImage(gui, new_id(), -(icon_width - 1), 2, strike_out, 1, 1, 1)
                             offset = 2
                         end
                         local text_width, text_height = GuiGetTextDimensions(gui, spell.name)
                         --GuiText(gui, offset, ((icon_height / 2) - (text_height / 2)), spell.name)
+                        GuiZSetForNextWidget(gui, -5600)
                         if(GuiButton(gui, new_id(), offset, ((icon_height / 2) - (text_height / 2)), spell.name))then
                             if(steamutils.IsOwner(lobby))then
                                 spell_blacklist_data[spell.id] = not is_blacklisted
@@ -698,7 +759,105 @@ ArenaMode = {
 
             end
         },
-        
+        {
+            id = "map_pool",
+            name = "$arena_settings_map_pool_name",
+            button_text = "$arena_settings_map_pool_name",
+            draw = function(lobby, gui, new_id)
+                GuiLayoutBeginVertical(gui, 0, 0, true, 0, 0)
+
+                TryUpdateData(lobby)
+
+                local id = new_id("map_search_input")
+                GuiZSetForNextWidget(gui, -5600)
+                map_search_content = GuiTextInput(gui, id, 0, 0, map_search_content or "", 140, 20)
+
+                local _, _, hover = GuiGetPreviousWidgetInfo(gui)
+
+                
+                if(hover)then
+                    GameAddFlagRun("chat_bind_disabled")
+                end
+
+                if(steamutils.IsOwner(lobby))then
+                    GuiZSetForNextWidget(gui, -5600)
+                    if GuiButton(gui, new_id(), 0, 0, "$arena_disable_all") then
+                        for i, map in ipairs(sorted_map_list)do
+                            map_blacklist_data[map.id] = true
+                        end
+                        SendLobbyData(lobby)
+                    end
+
+                    if GuiButton(gui, new_id(), 0, 0, "$arena_enable_all") then
+                        GuiZSetForNextWidget(gui, -5600)
+                        for i, map in ipairs(sorted_map_list)do
+                            map_blacklist_data[map.id] = false
+                        end
+                        SendLobbyData(lobby)
+                    end
+                end
+                
+                --GuiIdPushString(gui, "spell_blacklist")
+
+                --[[local id = 21
+                local new_id = function()
+                    id = id + 1
+                    return id
+                end]]
+
+                local iteration = 0
+
+                for i, map in ipairs(sorted_map_list)do
+                    if(map_search_content == "" or ifind(string.lower(GameTextGetTranslatedOrNot(map.name)), string.lower(map_search_content), 1, true)) then
+                        iteration = iteration + 1
+                        GuiLayoutBeginHorizontal(gui, 0, ((iteration - 1)), true)
+                        local is_blacklisted = map_blacklist_data[map.id]
+
+                        GuiZSetForNextWidget(gui, -5600)
+                        GuiImage(gui, new_id("map_list_stuff"), 0, 0, map.thumbnail, is_blacklisted and 0.4 or 1, 0.5, 0.5)
+                        local visible, clicked, _, hovered = get_widget_info(gui)
+
+
+                        if(visible and clicked)then
+                            if(steamutils.IsOwner(lobby))then
+                                map_blacklist_data[map.id] = not is_blacklisted
+                                GamePlaySound( "data/audio/Desktop/ui.bank", "ui/button_click", 0, 0 )
+                                SendLobbyData(lobby)
+                            end
+                        end
+                        if(visible and hovered)then
+                            GuiTooltip(gui, GameTextGetTranslatedOrNot("$arena_settings_hover_tooltip_blacklist"), map.description)
+                        end
+                        local icon_width, icon_height = GuiGetImageDimensions(gui, map.thumbnail)
+
+                        SetRandomSeed(iteration * 21, iteration * 245)
+       
+                        GuiZSetForNextWidget(gui, -5630)
+                        local text_width, text_height = GuiGetTextDimensions(gui, map.name)
+
+                        GuiColorSetForNextWidget(gui, 0, 0, 0, 1)
+                        GuiText(gui, -(icon_width / 2) + 1, 1, map.name)
+                        GuiZSetForNextWidget(gui, -5631)
+                        if(GuiButton(gui, new_id("map_list_stuff"), -text_width - 3, 0, map.name))then
+                            if(steamutils.IsOwner(lobby))then
+                                map_blacklist_data[map.id] = not is_blacklisted
+                                SendLobbyData(lobby)
+                            end
+                        end
+                        local clicked, _, hovered = GuiGetPreviousWidgetInfo(gui)
+                        if(visible and hovered)then
+                            GuiTooltip(gui, GameTextGetTranslatedOrNot("$arena_settings_hover_tooltip_blacklist"), map.description)
+                        end
+                        GuiLayoutEnd(gui)
+                    end
+                end
+
+                GuiLayoutEnd(gui)
+            end,
+            close = function()
+
+            end
+        },
     },
     commands = {
         ready = function(command_name, arguments)

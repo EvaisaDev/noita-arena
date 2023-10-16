@@ -5,7 +5,6 @@ local counter = dofile_once("mods/evaisa.arena/files/scripts/utilities/ready_cou
 local countdown = dofile_once("mods/evaisa.arena/files/scripts/utilities/countdown.lua")
 local json = dofile("mods/evaisa.arena/lib/json.lua")
 local EZWand = dofile("mods/evaisa.arena/files/scripts/utilities/EZWand.lua")
-dofile_once("mods/evaisa.arena/content/data.lua")
 
 ArenaLoadCountdown = ArenaLoadCountdown or nil
 
