@@ -620,7 +620,7 @@ ArenaMode = {
 
                         if(visible and clicked)then
                             if(steamutils.IsOwner(lobby))then
-
+                                GamePlaySound( "data/audio/Desktop/ui.bank", "ui/button_click", GameGetCameraPos() )
                                 perk_blacklist_data[perk.id] = not is_blacklisted
                                 SendLobbyData(lobby)
                             end
@@ -717,6 +717,7 @@ ArenaMode = {
 
                         if(visible and clicked)then
                             if(steamutils.IsOwner(lobby))then
+                                GamePlaySound( "data/audio/Desktop/ui.bank", "ui/button_click", GameGetCameraPos() )
                                 spell_blacklist_data[spell.id] = not is_blacklisted
                                 SendLobbyData(lobby)
                             end
@@ -813,22 +814,27 @@ ArenaMode = {
                         GuiLayoutBeginHorizontal(gui, 0, ((iteration - 1)), true)
                         local is_blacklisted = map_blacklist_data[map.id]
 
+                        GuiZSetForNextWidget(gui, -5605)
+                        local icon_width, icon_height = GuiGetImageDimensions(gui, map.thumbnail)
+                        GuiImage(gui, new_id("map_list_stuff"), 0, 0, map.frame, 1, 0.5, 0.5)
                         GuiZSetForNextWidget(gui, -5600)
-                        GuiImage(gui, new_id("map_list_stuff"), 0, 0, map.thumbnail, is_blacklisted and 0.4 or 1, 0.5, 0.5)
+                        GuiImage(gui, new_id("map_list_stuff"), -(icon_width / 2) - 2.5, 0.5, map.thumbnail, 1, 0.5, 0.5)
+                        
                         local visible, clicked, _, hovered = get_widget_info(gui)
 
 
                         if(visible and clicked)then
                             if(steamutils.IsOwner(lobby))then
                                 map_blacklist_data[map.id] = not is_blacklisted
-                                GamePlaySound( "data/audio/Desktop/ui.bank", "ui/button_click", 0, 0 )
+
+                                GamePlaySound( "data/audio/Desktop/ui.bank", "ui/button_click", GameGetCameraPos() )
                                 SendLobbyData(lobby)
                             end
                         end
                         if(visible and hovered)then
                             GuiTooltip(gui, GameTextGetTranslatedOrNot("$arena_settings_hover_tooltip_blacklist"), map.description)
                         end
-                        local icon_width, icon_height = GuiGetImageDimensions(gui, map.thumbnail)
+                        
 
                         SetRandomSeed(iteration * 21, iteration * 245)
        
