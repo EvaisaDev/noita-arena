@@ -1,0 +1,5 @@
+<PixelScenes>
+    <mBufferedPixelScenes>
+        <PixelScene background_filename="mods/evaisa.arena/content/arenas/alias_map/lethal_lava_land_bg.png" clean_area_before="1" colors_filename="mods/evaisa.arena/content/arenas/alias_map/lethal_lava_land_overlay.png" material_filename="mods/evaisa.arena/content/arenas/alias_map/lethal_lava_land_materials.png" pos_x="-512" pos_y="-512" skip_biome_checks="1" ></PixelScene>
+    </mBufferedPixelScenes>
+</PixelScenes>

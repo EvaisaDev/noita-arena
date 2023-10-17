@@ -7,6 +7,11 @@
 		color="ffebaaaa" >
 	</Biome>
 	<Biome 
+		biome_filename="mods/evaisa.arena/files/biome/lava.xml" 
+		height_index="1"
+		color="ffab3e3a" >
+	</Biome>
+	<Biome 
 		biome_filename="mods/evaisa.arena/files/biome/holymountain.xml" 
 		height_index="1"
 		color="ffebebae" >

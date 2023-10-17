@@ -1138,7 +1138,6 @@ ArenaGameplay = {
         data.client.previous_anim = nil
         data.projectile_seeds = {}
 
-        data.current_arena = nil
         ArenaGameplay.ResetDamageZone(lobby, data)
         --data.client.projectile_homing = {}
 
@@ -1346,7 +1345,7 @@ ArenaGameplay = {
         -- print member data
         --print(json.stringify(data))
     end,
-    LoadArena = function(lobby, data, show_message)
+    LoadArena = function(lobby, data, show_message, map)
         if(not steamutils.IsSpectator(lobby))then
             ArenaGameplay.SavePlayerData(lobby, data, true)
 
@@ -1402,11 +1401,66 @@ ArenaGameplay = {
         end
 
         ArenaGameplay.PreventFiring()
-
+        local arena = nil
         -- load map
-        local arena = arena_list[data.random.range(1, #arena_list)]
-
+        if(map)then
+            for k, v in ipairs(arena_list)do
+                if(v.id == map)then
+                    arena = v
+                    break
+                end
+            end
+        else
+            local map_picker = GlobalsGetValue("map_picker", "random")
+            for i = 1, 30 do
+                local seed = data.random.range(1, 2)
+                --print("test: "..seed)
+            end
+            if(map_picker == "random")then
+                SetRandomSeed(seed, seed)
+                arena = arena_list[Random(1, #arena_list)]
+            elseif(map_picker == "ordered")then
+                local last_arena = data.current_arena and data.current_arena.id or nil
+                if(arena == nil)then
+                    arena = arena_list[1]
+                else
+                    -- get the next arena, loop around if past last
+                    -- if current arena is nil, set to first arena
+                    local next_arena = nil
+                    for k, v in ipairs(arena_list)do
+                        if(v.id == last_arena)then
+                            next_arena = arena_list[k + 1]
+                            break
+                        end
+                    end
+                    if(next_arena == nil)then
+                        next_arena = arena_list[1]
+                    end
+                    arena = next_arena
+                end
+            end
+        end
         data.current_arena = arena
+
+        if(arena == nil)then
+            print("[CRITICAL ERROR] Game failed to load arena, maplist missmatch?")
+            GamePrint("[CRITICAL ERROR] Game failed to load arena, maplist missmatch?")
+            popup.create("bad_map_load", GameTextGetTranslatedOrNot("$arena_map_critical_error"), GameTextGetTranslatedOrNot("$arena_map_map_load_failed"), {
+                {
+                    text = GameTextGetTranslatedOrNot("$mp_close_popup"),
+                    callback = function()
+                    end
+                }
+            }, -6000)
+
+            disconnect({
+                lobbyID = lobby,
+                message = GameTextGetTranslatedOrNot("$arena_map_map_load_failed")
+            })
+            return
+        end
+
+        GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_map_loaded"), tostring(arena.name)))
 
         BiomeMapLoad_KeepPlayer(arena.biome_map, arena.pixel_scenes)
 
@@ -1508,17 +1562,235 @@ ArenaGameplay = {
 
                 -- still ready? start game.
                 if (ArenaGameplay.ReadyCheck(lobby, data)) then
-                    --[[if(steamutils.IsSpectator(lobby))then
-                        spectator_handler.LoadArena(lobby, data, true)
-                    else]]
-                        ArenaGameplay.LoadArena(lobby, data, true)
-                    --end
 
-                    --message_handler.send.EnterArena(lobby)
-                    networking.send.enter_arena(lobby)
+                    local map_picker = GlobalsGetValue("map_picker", "random")
+
+                    if(map_picker == "vote")then
+                        -- pick 3 random map ids from arena_list
+                        -- no duplicate maps
+                        -- it should be {id, id2, id3}
+
+                        local map_ids = {}
+                        local picked_maps = {}
+                        -- if we have less than 3 maps, just pick all of them
+                        if(#arena_list <= 3)then
+                            for k, v in ipairs(arena_list)do
+                                table.insert(map_ids, v.id)
+                            end
+                        else
+                            for i = 1, 3 do
+                                local map_id = nil
+                                while(map_id == nil or picked_maps[map_id] ~= nil)do
+                                    map_id = arena_list[data.random.range(1, #arena_list)].id
+                                end
+                                table.insert(map_ids, map_id)
+                                picked_maps[map_id] = true
+                            end
+                        end
+
+                        networking.send.start_map_vote(lobby, map_ids)
+                        gameplay_handler.StartMapVote(lobby, data, map_ids)
+                    else
+                        ArenaGameplay.LoadArena(lobby, data, true)
+                        networking.send.enter_arena(lobby, data.current_arena.id)
+                    end
                 end
             end
         end
+    end,
+    StartMapVote = function(lobby, data, maps)
+        data.state = "map_vote"
+        data.map_vote = {}
+        data.voters = {}
+        for k, v in ipairs(maps)do
+            data.map_vote[v] = 0
+        end
+
+        local vote_length = tonumber(GlobalsGetValue("map_vote_timer", tostring(90))) * 60
+        local vote_gui = GuiCreate()
+        local last_hovered = nil
+
+        data.vote_loop = delay.new(vote_length, function()
+            -- finish
+            if(steamutils.IsOwner(lobby))then
+                -- find highest vote, if there is a tie, pick random
+                local highest_vote = 0
+                local highest_vote_id = nil
+                for k, v in pairs(data.map_vote)do
+                    if(v > highest_vote)then
+                        highest_vote = v
+                        highest_vote_id = k
+                    elseif(v == highest_vote)then
+                        if(data.random.range(1, 2) == 1)then
+                            highest_vote = v
+                            highest_vote_id = k
+                        end
+                    end
+                end
+
+                if(highest_vote_id == nil)then
+                    highest_vote_id = maps[data.random.range(1, #maps)]
+                end
+
+                ArenaGameplay.LoadArena(lobby, data, true, highest_vote_id)
+                networking.send.enter_arena(lobby, highest_vote_id)
+
+                -- cleanup
+                GuiDestroy(vote_gui)
+            end
+        end, function(frames)
+            --print("Current game frame: "..tostring(GameGetFrameNum()))
+
+            networking.send.map_vote_timer_update(lobby, frames)
+
+            -- tick
+            local frames_left = frames
+            --GamePrint("Voting ends in "..tostring(math.floor(frames_left / 60)).." seconds")
+
+            local curr_id = 2152135
+            local function new_id()
+                curr_id = curr_id + 1
+                return curr_id
+            end
+
+            local function get_map(id)
+                for k, v in ipairs(arena_list)do
+                    if(v.id == id)then
+                        return v
+                    end
+                end
+                return nil
+            end
+
+            local add_vote = function(map)
+            
+                networking.send.add_vote(lobby, map.id)
+                if data.map_vote == nil then
+                    data.map_vote = {}
+                end
+    
+                if data.map_vote[map.id] == nil then
+                    data.map_vote[map.id] = 0
+                end
+                
+                data.map_vote[map.id] = data.map_vote[map.id] + 1
+    
+                if(data.voters ~= nil)then
+                    if(data.voters["self"])then
+                        local vote = data.voters["self"]
+                        if(vote ~= nil)then
+                            if(data.map_vote[vote] ~= nil)then
+                                data.map_vote[vote] = data.map_vote[vote] - 1
+                                --GamePrint("Removed vote from "..tostring(vote))
+                            end
+                        end
+                    end
+                    
+                    data.voters["self"] = map.id
+                end
+   
+            end
+
+            -- draw vote ui
+            if (not IsPaused()) then
+                GuiStartFrame(vote_gui)
+                GuiOptionsAdd(vote_gui, 6)
+                local screen_w, screen_h = GuiGetScreenDimensions(vote_gui)
+
+                local total_card_width = 0
+                local distance_between_cards = 10
+                
+                local all_vote_maps = {}
+
+                local max_height = 0
+
+                for i = 1, #maps do
+                    local v = maps[i]
+                    local map = get_map(v)
+                    
+                    table.insert(all_vote_maps, map)
+
+                    local frame_width, frame_height = GuiGetImageDimensions(vote_gui, map.frame, 1)
+
+                    total_card_width = total_card_width + frame_width
+                    if i < #maps then
+                        total_card_width = total_card_width + distance_between_cards
+                    end
+                    if(frame_height > max_height)then
+                        max_height = frame_height
+                    end
+                end
+
+                local map_header = GameTextGetTranslatedOrNot("$arena_map_vote_header")
+                local map_header_width, map_header_height = GuiGetTextDimensions(vote_gui, map_header, 1)
+                GuiZSetForNextWidget(vote_gui, -11)
+                GuiText(vote_gui, (screen_w / 2) - (map_header_width / 2), (screen_h / 2) - (max_height / 2) - 30, map_header)
+
+                local timer_text = string.format(GameTextGetTranslatedOrNot("$arena_map_vote_timer"), tostring(math.floor(frames_left / 60)))
+                local timer_text_width, timer_text_height = GuiGetTextDimensions(vote_gui, timer_text, 1)
+                GuiZSetForNextWidget(vote_gui, -11)
+                GuiColorSetForNextWidget(vote_gui, 0.6, 0.6, 0.6, 1)
+                
+                GuiText(vote_gui, (screen_w / 2) - (timer_text_width / 2), (screen_h / 2) + (max_height / 2) + 7 + (last_hovered ~= nil and (timer_text_height + 1) or 0), timer_text)
+
+                local x = (screen_w / 2) - (total_card_width / 2)
+                
+                for i = 1, #all_vote_maps do
+                    local was_hovered = last_hovered ~= nil and last_hovered == i
+
+                    local v = all_vote_maps[i]
+                    local size = 1
+                    if(was_hovered)then
+                        size = 1.1
+                    end
+                    
+                    local frame_width, frame_height = GuiGetImageDimensions(vote_gui, v.frame, 1)
+                    local thumbnail_width, thumbnail_height = GuiGetImageDimensions(vote_gui, v.thumbnail, 1)
+
+                    local card_y = (screen_h / 2) - (frame_height / 2)
+                    local card_x = x + ((i - 1) * (frame_width + distance_between_cards))
+
+                    local old_card_y = card_y
+                    local old_card_x = card_x
+
+                    if(was_hovered)then
+                        card_x = card_x - ((frame_width * 0.1) / 2)
+                        card_y = card_y - ((frame_height * 0.1) / 2)
+                    end
+
+                    
+
+                    local voters = data.map_vote[v.id] or 0
+                    local vote_text = string.format(GameTextGetTranslatedOrNot("$arena_map_vote_votes"), tostring(voters))
+
+                    local vote_text_width, vote_text_height = GuiGetTextDimensions(vote_gui, vote_text)
+                    
+                    GuiZSetForNextWidget(vote_gui, -11)
+                    GuiText(vote_gui, ((card_x + (frame_width * size)) - 6) - vote_text_width, ((card_y + (frame_height * size)) - 4) - vote_text_height, vote_text)
+                    GuiZSetForNextWidget(vote_gui, -11)
+                    GuiText(vote_gui, card_x + 8, card_y + 6, v.name)
+                    GuiZSetForNextWidget(vote_gui, -10)
+                    GuiImage(vote_gui, new_id(), card_x, card_y, v.frame, 1, size, size)
+                    GuiZSetForNextWidget(vote_gui, -9)
+                    if(GuiImage(vote_gui, new_id(), (card_x + (frame_width / 2)) - (thumbnail_width / 2), (card_y + (frame_height / 2)) - (thumbnail_height / 2), v.thumbnail, 1, size, size))then
+                        add_vote(v)
+                    end
+                    local clicked, _, hovered = GuiGetPreviousWidgetInfo(vote_gui)
+                    if(hovered)then
+                        last_hovered = i
+                        local text_width = GuiGetTextDimensions(vote_gui, v.description)
+                        GuiText(vote_gui, (screen_w / 2) - (text_width / 2), old_card_y + max_height + 7, v.description)
+                    else
+                        if(last_hovered == i)then
+                            last_hovered = nil
+                        end
+                    end
+                    if(clicked)then
+                        add_vote(v)
+                    end
+                end
+            end
+        end)
     end,
     LobbyUpdate = function(lobby, data)
         -- update ready counter
@@ -1687,7 +1959,7 @@ ArenaGameplay = {
                 spawn_points[i], spawn_points[j] = spawn_points[j], spawn_points[i]
             end
 
-            if (spawn_points ~= nil and #spawn_points > 0) then
+            if (spawn_points ~= nil and #spawn_points > 0 and data.current_arena ~= nil) then
                 data.ready_for_zone = true
 
                 local spawn_point = spawn_points[ArenaGameplay.GetPlayerIndex(lobby)--[[Random(1, #spawn_points)]]]
@@ -1699,7 +1971,7 @@ ArenaGameplay = {
 
                 arena_log:print("Arena loaded? " .. tostring(spawn_loaded))
 
-                local in_bounds = ArenaGameplay.IsInBounds(0, 0, data.zone_size)
+                local in_bounds = ArenaGameplay.IsInBounds(0, 0, data.current_arena.zone_size)
 
                 if (not in_bounds) then
                     arena_log:print("Game tried to spawn player out of bounds, retrying...")

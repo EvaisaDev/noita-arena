@@ -74,7 +74,8 @@ networking = {
                 data.ready_counter:cleanup()
                 data.ready_counter = nil
             end
-            gameplay_handler.LoadArena(lobby, data, true)
+            local arena = message[1]
+            gameplay_handler.LoadArena(lobby, data, true, arena)
         end,
         start_countdown = function(lobby, message, user, data)
             if(data.state == "arena")then
@@ -1229,6 +1230,42 @@ networking = {
                 end
             end
         end,
+        start_map_vote = function(lobby, message, user, data)
+            GamePrint("starting map vote")
+            gameplay_handler.StartMapVote(lobby, data, message[1])
+        end,
+        add_vote = function(lobby, message, user, data)
+            local map = message[1]
+            if data.map_vote == nil then
+                data.map_vote = {}
+            end
+
+            if data.map_vote[map] == nil then
+                data.map_vote[map] = 0
+            end
+            
+            data.map_vote[map] = data.map_vote[map] + 1
+
+            if(data.voters ~= nil)then
+                if(data.voters[tostring(user)])then
+                    local vote = data.voters[tostring(user)]
+                    if(vote ~= nil)then
+                        if(data.map_vote[vote] ~= nil)then
+                            data.map_vote[vote] = data.map_vote[vote] - 1
+                        end
+                    end
+                end
+                
+                data.voters[tostring(user)] = map
+            end
+
+        end,
+        map_vote_timer_update = function(lobby, message, user, data)
+            local frames = message[1]
+            if(data.vote_loop ~= nil)then
+                data.vote_loop.frames = frames
+            end
+        end
     },
     send = {
         handshake = function(lobby)
@@ -1246,8 +1283,8 @@ networking = {
         arena_loaded = function(lobby)
             steamutils.send("arena_loaded", {}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
         end,
-        enter_arena = function(lobby)
-            steamutils.send("enter_arena", {}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+        enter_arena = function(lobby, arena)
+            steamutils.send("enter_arena", {arena}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
         end,
         start_countdown = function(lobby)
             steamutils.send("start_countdown", {}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
@@ -1687,6 +1724,15 @@ networking = {
         end,
         fungal_shift = function(lobby, from, to)
             steamutils.send("fungal_shift", { from, to }, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+        end,
+        start_map_vote = function(lobby, maps)
+            steamutils.send("start_map_vote", { maps }, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+        end,
+        add_vote = function(lobby, map)
+            steamutils.send("add_vote", { map }, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+        end,
+        map_vote_timer_update = function(lobby, frames)
+            steamutils.send("map_vote_timer_update", { frames }, steamutils.messageTypes.OtherPlayers, lobby, true, true)
         end,
     },
 }

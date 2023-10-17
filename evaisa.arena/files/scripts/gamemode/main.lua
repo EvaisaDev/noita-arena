@@ -5,7 +5,6 @@ local steamutils = dofile_once("mods/evaisa.mp/lib/steamutils.lua")
 game_funcs = dofile("mods/evaisa.mp/files/scripts/game_functions.lua")
 EZWand = dofile("mods/evaisa.arena/files/scripts/utilities/EZWand.lua")
 
-delay = dofile("mods/evaisa.arena/files/scripts/utilities/delay.lua")
 wait = dofile("mods/evaisa.arena/files/scripts/utilities/wait.lua")
 
 local data_holder = dofile("mods/evaisa.arena/files/scripts/gamemode/data.lua")
@@ -17,7 +16,7 @@ local player = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/player.l
 local entity = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/entity.lua")
 
 font_helper = dofile("mods/evaisa.arena/lib/font_helper.lua")
-message_handler = dofile("mods/evaisa.arena/files/scripts/gamemode/message_handler_stub.lua")
+--message_handler = dofile("mods/evaisa.arena/files/scripts/gamemode/message_handler_stub.lua")
 networking = dofile("mods/evaisa.arena/files/scripts/gamemode/networking.lua")
 --spectator_networking = dofile("mods/evaisa.arena/files/scripts/gamemode/spectator_networking.lua")
 
@@ -301,6 +300,36 @@ ArenaMode = {
             type = "bool",
             default = true
         },  
+        {
+            id = "map_picker",
+            name = "$arena_settings_map_picker_name",
+            description = "$arena_settings_map_picker_description",
+            type = "enum",
+            options = { { "ordered", "$arena_settings_map_picker_enum_order" }, { "random", "$arena_settings_map_picker_enum_random" }, { "vote", "$arena_settings_map_picker_enum_vote" } },
+            default = "random"
+        },
+        {
+			id = "map_vote_timer",
+            require = function(setting_self)
+                return GlobalsGetValue("map_picker", "random") == "vote"
+            end,
+			name = "$arena_settings_map_vote_timer_name",
+			description = "$arena_settings_map_vote_timer_description",
+			type = "slider",
+			min = 30,
+			max = 300,
+			default = 90;
+			display_multiplier = 1,
+			formatting_func = function(value)
+                -- if under 60, show seconds
+                if(tonumber(value) < 60)then
+                    return tostring(value) .. "s"
+                else
+                    return tostring(math.floor(value / 60)) .. "m"
+                end
+            end,
+			width = 100
+		},
         {
             id = "win_condition",
             name = "$arena_settings_win_condition_name",
@@ -813,12 +842,17 @@ ArenaMode = {
                         iteration = iteration + 1
                         GuiLayoutBeginHorizontal(gui, 0, ((iteration - 1)), true)
                         local is_blacklisted = map_blacklist_data[map.id]
+                        local scale = 1
 
                         GuiZSetForNextWidget(gui, -5605)
                         local icon_width, icon_height = GuiGetImageDimensions(gui, map.thumbnail)
-                        GuiImage(gui, new_id("map_list_stuff"), 0, 0, map.frame, 1, 0.5, 0.5)
+                        GuiImage(gui, new_id("map_list_stuff"), 0, 0, map.frame, 1, scale, scale)
                         GuiZSetForNextWidget(gui, -5600)
-                        GuiImage(gui, new_id("map_list_stuff"), -(icon_width / 2) - 2.5, 0.5, map.thumbnail, 1, 0.5, 0.5)
+                        local alpha = 1
+                        if(is_blacklisted)then
+                            alpha = 0.4
+                        end
+                        GuiImage(gui, new_id("map_list_stuff"), -(icon_width * scale) - 2.5, 1, map.thumbnail, alpha, scale * 0.99, scale * 0.99)
                         
                         local visible, clicked, _, hovered = get_widget_info(gui)
 
@@ -841,10 +875,12 @@ ArenaMode = {
                         GuiZSetForNextWidget(gui, -5630)
                         local text_width, text_height = GuiGetTextDimensions(gui, map.name)
 
+                        local offset = 6
+
                         GuiColorSetForNextWidget(gui, 0, 0, 0, 1)
-                        GuiText(gui, -(icon_width / 2) + 1, 1, map.name)
+                        GuiText(gui, -(icon_width * scale) + offset, offset, map.name)
                         GuiZSetForNextWidget(gui, -5631)
-                        if(GuiButton(gui, new_id("map_list_stuff"), -text_width - 3, 0, map.name))then
+                        if(GuiButton(gui, new_id("map_list_stuff"), -(text_width + 2) - 1, offset-1, map.name))then
                             if(steamutils.IsOwner(lobby))then
                                 map_blacklist_data[map.id] = not is_blacklisted
                                 SendLobbyData(lobby)
@@ -965,6 +1001,18 @@ ArenaMode = {
             random_seeds = "true"
         end
         randomized_seed = random_seeds == "true"
+
+        local map_picker = steam.matchmaking.getLobbyData(lobby, "setting_map_picker")
+        if (map_picker == nil) then
+            map_picker = "random"
+        end
+        GlobalsSetValue("map_picker", tostring(map_picker))
+
+        local map_vote_timer = tonumber(steam.matchmaking.getLobbyData(lobby, "setting_map_vote_timer"))
+        if (map_vote_timer == nil) then
+            map_vote_timer = 90
+        end
+        GlobalsSetValue("map_vote_timer", tostring(map_vote_timer))
 
         local win_condition = steam.matchmaking.getLobbyData(lobby, "setting_win_condition")
         if (win_condition == nil)then
@@ -1413,7 +1461,7 @@ ArenaMode = {
             return
         end
 
-        delay.update()
+        --delay.update()
         wait.update()
 
         if (data == nil) then
