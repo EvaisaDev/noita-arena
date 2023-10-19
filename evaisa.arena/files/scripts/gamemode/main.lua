@@ -234,7 +234,7 @@ ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
     version = 0.7,
-    required_online_version = 1.61,
+    required_online_version = 1.651,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
     end,
@@ -316,16 +316,18 @@ ArenaMode = {
 			name = "$arena_settings_map_vote_timer_name",
 			description = "$arena_settings_map_vote_timer_description",
 			type = "slider",
-			min = 30,
+			min = 15,
 			max = 300,
 			default = 90;
 			display_multiplier = 1,
 			formatting_func = function(value)
+                -- trim spaces around value
+                value = value:match("^%s*(.-)%s*$")
                 -- if under 60, show seconds
                 if(tonumber(value) < 60)then
-                    return tostring(value) .. "s"
+                    return " "..tostring(value) .. "s"
                 else
-                    return tostring(math.floor(value / 60)) .. "m"
+                    return " "..tostring(math.floor(value / 60)) .. "m"
                 end
             end,
 			width = 100
@@ -930,11 +932,13 @@ ArenaMode = {
     save_preset = function(lobby, preset_data)
         preset_data.perk_blacklist_data = perk_blacklist_data
         preset_data.spell_blacklist_data = spell_blacklist_data
+        preset_data.map_blacklist_data = map_blacklist_data
         return preset_data
     end,
     load_preset = function(lobby, preset_data)
         perk_blacklist_data = preset_data.perk_blacklist_data or {}
         spell_blacklist_data = preset_data.spell_blacklist_data or {}
+        map_blacklist_data = preset_data.map_blacklist_data or {}
 
         --print(json.stringify(perk_blacklist_data))
 
@@ -996,6 +1000,15 @@ ArenaMode = {
             end
         end
 
+        for _, map in pairs(arena_list)do
+            local is_blacklisted = map_blacklist_data[map.id]--steam.matchmaking.getLobbyData(lobby, "map_blacklist_"..map.id) == "true"
+            if(is_blacklisted)then
+                GameAddFlagRun("map_blacklist_"..map.id)
+            else
+                GameRemoveFlagRun("map_blacklist_"..map.id)
+            end
+        end
+
         local random_seeds = steam.matchmaking.getLobbyData(lobby, "setting_random_seed")
         if (random_seeds == nil) then
             random_seeds = "true"
@@ -1008,7 +1021,7 @@ ArenaMode = {
         end
         GlobalsSetValue("map_picker", tostring(map_picker))
 
-        local map_vote_timer = tonumber(steam.matchmaking.getLobbyData(lobby, "setting_map_vote_timer"))
+        local map_vote_timer = tonumber(tonumber(steam.matchmaking.getLobbyData(lobby, "setting_map_vote_timer")))
         if (map_vote_timer == nil) then
             map_vote_timer = 90
         end
@@ -1020,7 +1033,7 @@ ArenaMode = {
         end
         GlobalsSetValue("win_condition", tostring(win_condition))
 
-        local win_condition_value = steam.matchmaking.getLobbyData(lobby, "setting_win_condition_value")
+        local win_condition_value = tonumber(steam.matchmaking.getLobbyData(lobby, "setting_win_condition_value"))
         if (win_condition_value == nil)then
             win_condition_value = 5
         end
@@ -1499,11 +1512,17 @@ ArenaMode = {
 
             networking.send.handshake(lobby)
 
-
+            
             -- fix daynight cycle
             local world_state = GameGetWorldStateEntity()
             local world_state_component = EntityGetFirstComponentIncludingDisabled(world_state, "WorldStateComponent")
-            ComponentSetValue2(world_state_component, "time", 0.2)
+            
+            local time = 0.2
+            if(data.current_arena and data.current_arena.time)then
+                time = data.current_arena.time
+            end
+            
+            ComponentSetValue2(world_state_component, "time", time)
             ComponentSetValue2(world_state_component, "time_dt", 0)
             ComponentSetValue2(world_state_component, "fog", 0)
             ComponentSetValue2(world_state_component, "intro_weather", true)

@@ -1,0 +1,20 @@
+<Entity>
+	<LightComponent 
+		_enabled="1" 
+		radius="150" 
+		blinking_freq="10000"
+		offset_x="0"
+		r="255"
+		g="250"
+		b="212">
+	</LightComponent>
+
+    <SpriteComponent 
+        alpha="0.55"
+        image_file="mods/evaisa.arena/content/arenas/stadium/entities/fog_of_war_hole_100px.xml"
+        smooth_filtering="1"
+        additive="1"
+        emissive="1"
+        > <!--fog_of_war_hole="1"-->
+    </SpriteComponent>
+</Entity>

@@ -1402,9 +1402,21 @@ ArenaGameplay = {
 
         ArenaGameplay.PreventFiring()
         local arena = nil
+        -- available arenas
+        local available_map_list = {}
+        for k, v in ipairs(arena_list)do
+            if(not GameHasFlagRun("map_blacklist_"..v.id))then
+                table.insert(available_map_list, v)
+            end
+        end
+
+        if(#available_map_list == 0)then
+            table.insert(available_map_list, arena_list[1])
+        end
+
         -- load map
         if(map)then
-            for k, v in ipairs(arena_list)do
+            for k, v in ipairs(available_map_list)do
                 if(v.id == map)then
                     arena = v
                     break
@@ -1418,23 +1430,23 @@ ArenaGameplay = {
             end
             if(map_picker == "random")then
                 SetRandomSeed(seed, seed)
-                arena = arena_list[Random(1, #arena_list)]
+                arena = available_map_list[Random(1, #available_map_list)]
             elseif(map_picker == "ordered")then
                 local last_arena = data.current_arena and data.current_arena.id or nil
                 if(arena == nil)then
-                    arena = arena_list[1]
+                    arena = available_map_list[1]
                 else
                     -- get the next arena, loop around if past last
                     -- if current arena is nil, set to first arena
                     local next_arena = nil
-                    for k, v in ipairs(arena_list)do
+                    for k, v in ipairs(available_map_list)do
                         if(v.id == last_arena)then
-                            next_arena = arena_list[k + 1]
+                            next_arena = available_map_list[k + 1]
                             break
                         end
                     end
                     if(next_arena == nil)then
-                        next_arena = arena_list[1]
+                        next_arena = available_map_list[1]
                     end
                     arena = next_arena
                 end
@@ -1570,18 +1582,30 @@ ArenaGameplay = {
                         -- no duplicate maps
                         -- it should be {id, id2, id3}
 
+                        -- available arenas
+                        local available_map_list = {}
+                        for k, v in ipairs(arena_list)do
+                            if(not GameHasFlagRun("map_blacklist_"..v.id))then
+                                table.insert(available_map_list, v)
+                            end
+                        end
+
+                        if(#available_map_list == 0)then
+                            table.insert(available_map_list, arena_list[1])
+                        end
+
                         local map_ids = {}
                         local picked_maps = {}
                         -- if we have less than 3 maps, just pick all of them
-                        if(#arena_list <= 3)then
-                            for k, v in ipairs(arena_list)do
+                        if(#available_map_list <= 3)then
+                            for k, v in ipairs(available_map_list)do
                                 table.insert(map_ids, v.id)
                             end
                         else
                             for i = 1, 3 do
                                 local map_id = nil
                                 while(map_id == nil or picked_maps[map_id] ~= nil)do
-                                    map_id = arena_list[data.random.range(1, #arena_list)].id
+                                    map_id = available_map_list[data.random.range(1, #available_map_list)].id
                                 end
                                 table.insert(map_ids, map_id)
                                 picked_maps[map_id] = true
@@ -1609,43 +1633,67 @@ ArenaGameplay = {
         local vote_length = tonumber(GlobalsGetValue("map_vote_timer", tostring(90))) * 60
         local vote_gui = GuiCreate()
         local last_hovered = nil
+        local finish_time = (3 * 60)
+        local finish_frame_count = 0
 
-        data.vote_loop = delay.new(vote_length, function()
+        data.vote_loop = delay.new(vote_length + finish_time, function()
             -- finish
             if(steamutils.IsOwner(lobby))then
                 -- find highest vote, if there is a tie, pick random
-                local highest_vote = 0
-                local highest_vote_id = nil
-                for k, v in pairs(data.map_vote)do
-                    if(v > highest_vote)then
-                        highest_vote = v
-                        highest_vote_id = k
-                    elseif(v == highest_vote)then
-                        if(data.random.range(1, 2) == 1)then
-                            highest_vote = v
-                            highest_vote_id = k
-                        end
-                    end
-                end
-
-                if(highest_vote_id == nil)then
-                    highest_vote_id = maps[data.random.range(1, #maps)]
-                end
-
-                ArenaGameplay.LoadArena(lobby, data, true, highest_vote_id)
-                networking.send.enter_arena(lobby, highest_vote_id)
-
-                -- cleanup
-                GuiDestroy(vote_gui)
+                
+                ArenaGameplay.LoadArena(lobby, data, true, data.vote_loop.winner)
+                networking.send.enter_arena(lobby, data.vote_loop.winner)
             end
+            GuiDestroy(vote_gui)
         end, function(frames)
             --print("Current game frame: "..tostring(GameGetFrameNum()))
-
-            networking.send.map_vote_timer_update(lobby, frames)
+            if(steamutils.IsOwner(lobby))then
+                --print("Sending map vote timer update")
+                networking.send.map_vote_timer_update(lobby, frames)
+            end
 
             -- tick
-            local frames_left = frames
-            --GamePrint("Voting ends in "..tostring(math.floor(frames_left / 60)).." seconds")
+            local frames_left = frames - finish_time
+
+            if(frames_left < 0)then
+                frames_left = 0
+            end
+            --GamePrint("Voting ends in "..tostring(math.floor(frames / 60)).." seconds")
+
+            if(steamutils.IsOwner(lobby))then
+                if(frames_left <= 0 )then
+                    if(not data.vote_loop.vote_finished)then
+                        local highest_vote = 0
+                        local highest_vote_id = nil
+                        local was_tie = false
+                        for k, v in pairs(data.map_vote)do
+                            if(v > highest_vote)then
+                                highest_vote = v
+                                highest_vote_id = k
+                                was_tie = false
+                            elseif(v == highest_vote)then
+                                if(data.random.range(1, 2) == 1)then
+                                    highest_vote = v
+                                    highest_vote_id = k
+                                end
+                                was_tie = true
+                            end
+                        end
+        
+                        if(highest_vote_id == nil)then
+                            highest_vote_id = maps[data.random.range(1, #maps)]
+                        end
+                        
+                        data.vote_loop.winner = highest_vote_id
+                        data.vote_loop.was_tie = was_tie
+                        networking.send.map_vote_finish(lobby, highest_vote_id, was_tie)
+                    end
+                    data.vote_loop.vote_finished = true
+                end
+            end
+
+
+
 
             local curr_id = 2152135
             local function new_id()
@@ -1721,6 +1769,54 @@ ArenaGameplay = {
                     end
                 end
 
+                local highest_vote = 0
+                for k, v in pairs(data.map_vote)do
+                    if(v > highest_vote)then
+                        highest_vote = v
+                    end
+                end
+
+                local function get_next_highest_vote_index(current_index)
+                    local found = false
+                    while not found do
+                        current_index = current_index + 1
+                        if(current_index > #all_vote_maps)then
+                            current_index = 1
+                        end
+                        if(data.map_vote[all_vote_maps[current_index].id] == highest_vote)then
+                            found = true
+                            return current_index
+                        end
+                    end
+                end
+
+                local time_between_cycle = 8
+                --GamePrint(tostring(time_between_cycle))
+                if(frames_left <= 0)then
+                    finish_frame_count = finish_frame_count + 1
+                    local total_map_cycle_time = time_between_cycle * #all_vote_maps
+                    if(data.vote_loop.vote_finished and data.vote_loop.winner)then
+                        if(data.vote_loop.was_tie)then
+                            if(last_hovered == nil)then
+                                last_hovered = get_next_highest_vote_index(0)
+                            else
+                                if(frames >= total_map_cycle_time * 3)then
+                                    if(GameGetFrameNum() % time_between_cycle == 0)then
+                                        last_hovered = get_next_highest_vote_index(last_hovered)
+                                        GamePlaySound( "data/audio/Desktop/ui.bank", "ui/streaming_integration/new_vote", GameGetCameraPos() )
+                                    end
+                                else
+                                    if(GameGetFrameNum() % time_between_cycle == 0 and all_vote_maps[last_hovered].id ~= data.vote_loop.winner)then
+                                        last_hovered = get_next_highest_vote_index(last_hovered)
+                                        GamePlaySound( "data/audio/Desktop/ui.bank", "ui/streaming_integration/new_vote", GameGetCameraPos() )
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+    
+
                 local map_header = GameTextGetTranslatedOrNot("$arena_map_vote_header")
                 local map_header_width, map_header_height = GuiGetTextDimensions(vote_gui, map_header, 1)
                 GuiZSetForNextWidget(vote_gui, -11)
@@ -1772,21 +1868,30 @@ ArenaGameplay = {
                     GuiZSetForNextWidget(vote_gui, -10)
                     GuiImage(vote_gui, new_id(), card_x, card_y, v.frame, 1, size, size)
                     GuiZSetForNextWidget(vote_gui, -9)
-                    if(GuiImage(vote_gui, new_id(), (card_x + (frame_width / 2)) - (thumbnail_width / 2), (card_y + (frame_height / 2)) - (thumbnail_height / 2), v.thumbnail, 1, size, size))then
-                        add_vote(v)
-                    end
+                    GuiImage(vote_gui, new_id(), (card_x + (frame_width / 2)) - (thumbnail_width / 2), (card_y + (frame_height / 2)) - (thumbnail_height / 2), v.thumbnail, 1, size, size)
                     local clicked, _, hovered = GuiGetPreviousWidgetInfo(vote_gui)
-                    if(hovered)then
-                        last_hovered = i
-                        local text_width = GuiGetTextDimensions(vote_gui, v.description)
-                        GuiText(vote_gui, (screen_w / 2) - (text_width / 2), old_card_y + max_height + 7, v.description)
-                    else
-                        if(last_hovered == i)then
-                            last_hovered = nil
+                    if(frames_left > 0)then
+                        if(hovered)then
+                            last_hovered = i
+                            local text_width = GuiGetTextDimensions(vote_gui, v.description)
+                            GuiText(vote_gui, (screen_w / 2) - (text_width / 2), old_card_y + max_height + 7, v.description)
+                        else
+                            if(last_hovered == i)then
+                                last_hovered = nil
+                            end
                         end
-                    end
-                    if(clicked)then
-                        add_vote(v)
+                        if(clicked)then
+                            add_vote(v)
+                            GamePlaySound( "data/audio/Desktop/ui.bank", "ui/button_click", GameGetCameraPos() )
+                        end
+                    else
+                        if(data.vote_loop.vote_finished and data.vote_loop.winner)then
+                            if(not data.vote_loop.was_tie)then
+                                if(v.id == data.vote_loop.winner)then
+                                    last_hovered = i
+                                end
+                            end
+                        end
                     end
                 end
             end
@@ -1951,7 +2056,8 @@ ArenaGameplay = {
         if (data.preparing) then
             local rng = dofile_once("mods/evaisa.arena/lib/rng.lua")
             local world_seed = tonumber(steam.matchmaking.getLobbyData(lobby, "seed") or 1)
-            local spawn_rng = rng.new(world_seed + ArenaGameplay.GetNumRounds())
+            local spawn_seed = world_seed + (ArenaGameplay.GetNumRounds() * 62362)
+            local spawn_rng = rng.new(spawn_seed)
             local spawn_points = ArenaGameplay.GetSpawnPoints()
             -- shuffle spawn points using spawn_rng.range(a, b)
             for i = #spawn_points, 2, -1 do
@@ -1959,10 +2065,20 @@ ArenaGameplay = {
                 spawn_points[i], spawn_points[j] = spawn_points[j], spawn_points[i]
             end
 
+
+            print("Spawn RNG: "..tostring(spawn_seed))
+
+
             if (spawn_points ~= nil and #spawn_points > 0 and data.current_arena ~= nil) then
                 data.ready_for_zone = true
 
-                local spawn_point = spawn_points[ArenaGameplay.GetPlayerIndex(lobby)--[[Random(1, #spawn_points)]]]
+                local spawn_index = math.floor(ArenaGameplay.GetPlayerIndex(lobby) % #spawn_points)
+
+                if(spawn_index < 1)then
+                    spawn_index = 1
+                end
+
+                local spawn_point = spawn_points[spawn_index]
                 local x, y = EntityGetTransform(spawn_point)
 
                 local spawn_loaded = DoesWorldExistAt(x - 100, y - 100, x + 100, y + 100)
