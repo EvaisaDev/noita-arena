@@ -148,6 +148,10 @@ player_helper.GiveStartingGear = function()
     local wand = EntityLoad("data/entities/items/starting_wand_rng.xml", x, y)
     arena_log:print("Starting gear granted to player entity: " .. tostring(player))
     GamePickUpInventoryItem(player, wand, false)
+    local wand2 = EntityLoad("data/entities/items/starting_bomb_wand_rng.xml", x, y)
+    GamePickUpInventoryItem(player, wand2, false)
+    local potion = EntityLoad("data/entities/items/pickup/potion_starting.xml", x, y)
+    GamePickUpInventoryItem(player, potion, false)
 end
 
 player_helper.Immortal = function(immortal)
@@ -431,6 +435,7 @@ player_helper.SetItemData = function(item_data)
             end
 
             if (not has_pickup_script) then
+                EntityAddTag(item_entity, "does_physics_update")
                 EntityAddComponent(item_entity, "LuaComponent", {
                     _tags = "enabled_in_world,enabled_in_hand,enabled_in_inventory",
                     script_item_picked_up = "mods/evaisa.arena/files/scripts/gamemode/misc/item_pickup.lua",

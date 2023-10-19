@@ -8,6 +8,7 @@ function kick( entity_who_kicked )
     if(id ~= nil)then
         local body_ids = PhysicsBodyIDGetFromEntity( item_ent )
         if(body_ids ~= nil and #body_ids > 0)then
+           
             
             local kicked_item_string = GlobalsGetValue("arena_items_controlled", "")
 

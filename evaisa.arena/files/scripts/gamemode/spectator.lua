@@ -43,7 +43,6 @@ SpectatorMode = {
         data.client.previous_anim = nil
         data.projectile_seeds = {}
 
-        data.current_arena = nil
         ArenaGameplay.ResetDamageZone(lobby, data)
         --data.client.projectile_homing = {}
 

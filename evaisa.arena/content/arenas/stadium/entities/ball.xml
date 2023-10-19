@@ -1,0 +1,31 @@
+<Entity name="soccerball" tags="does_physics_update" >
+	<Base file="data/entities/base_item_physics2.xml" >
+        <PhysicsBody2Component
+            allow_sleep="1"
+            angular_damping="0"
+            linear_damping="0"
+            kill_entity_after_initialized="0"
+            >
+        </PhysicsBody2Component>
+		<PhysicsImageShapeComponent 
+			image_file="mods/evaisa.arena/content/arenas/stadium/entities/ball.png"
+			material="bone_box2d"
+
+			>
+		</PhysicsImageShapeComponent>
+	</Base>
+
+    <!--Used for physics synchronization!!-->
+    <LuaComponent
+        _tags = "enabled_in_world,enabled_in_hand,enabled_in_inventory"
+        script_item_picked_up = "mods/evaisa.arena/files/scripts/gamemode/misc/item_pickup.lua"
+        script_kick = "mods/evaisa.arena/files/scripts/gamemode/misc/item_kick.lua"
+        script_throw_item = "mods/evaisa.arena/files/scripts/gamemode/misc/item_throw.lua"
+    >
+    </LuaComponent>
+    <VariableStorageComponent
+        name = "arena_entity_id"
+        value_float = "69"
+        value_int = "0"
+    />
+</Entity>

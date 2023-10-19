@@ -10,7 +10,6 @@ local json = dofile("mods/evaisa.arena/lib/json.lua")
 local EntityHelper = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/entity.lua")
 local smallfolk = dofile("mods/evaisa.arena/lib/smallfolk.lua")
 dofile_once("data/scripts/perks/perk_list.lua")
-dofile_once("mods/evaisa.arena/content/data.lua")
 local player_helper = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/player.lua")
 -- whatever ill just leave it
 dofile("mods/evaisa.arena/lib/status_helper.lua")
@@ -71,13 +70,20 @@ networking = {
             end
         end,
         enter_arena = function(lobby, message, user, data)
+            if (not steamutils.IsOwner(lobby, user))then
+                return
+            end
             if(data.ready_counter)then
                 data.ready_counter:cleanup()
                 data.ready_counter = nil
             end
-            gameplay_handler.LoadArena(lobby, data, true)
+            local arena = message[1]
+            gameplay_handler.LoadArena(lobby, data, true, arena)
         end,
         start_countdown = function(lobby, message, user, data)
+            if (not steamutils.IsOwner(lobby, user))then
+                return
+            end
             if(data.state == "arena")then
                 if(data.spectator_mode)then
                     GamePrint("Starting countdown...")
@@ -99,6 +105,9 @@ networking = {
             end
         end,
         unlock = function(lobby, message, user, data)
+            if (not steamutils.IsOwner(lobby, user))then
+                return
+            end
             if (GameHasFlagRun("Immortal") and not GameHasFlagRun("player_died") and data.state == "arena") then
                 --print("Received unlock message, attempting to unlock player.")
 
@@ -352,6 +361,7 @@ networking = {
                         end
 
                         if (not has_pickup_script) then
+                            EntityAddTag(item_entity, "does_physics_update")
                             EntityAddComponent(item_entity, "LuaComponent", {
                                 _tags = "enabled_in_world,enabled_in_hand,enabled_in_inventory",
                                 script_item_picked_up = "mods/evaisa.arena/files/scripts/gamemode/misc/item_pickup.lua",
@@ -931,6 +941,9 @@ networking = {
             end
         end,
         zone_update = function(lobby, message, user, data)
+            if (not steamutils.IsOwner(lobby, user))then
+                return
+            end
             GlobalsSetValue("arena_area_size", tostring(message[1]))
             GlobalsSetValue("arena_area_size_cap", tostring(message[1] + 200))
             data.zone_size = message[1]
@@ -1094,37 +1107,37 @@ networking = {
             end
         end,
         physics_update = function(lobby, message, user, data)
-            local entities = EntityGetInRadius(0, 0, 1000000000)
+            local entities = EntityGetInRadiusWithTag(0, 0, 1000000000, "does_physics_update")
             local item_id = message[1]
             local x, y, r, vx, vy, vr = message[2], message[3], message[4], message[5], message[6], message[7]
             local takes_control = message[8]
             for k, v in ipairs(entities)do
-                if(EntityGetFirstComponentIncludingDisabled(v, "ItemComponent") ~= nil)then
-                    local entity_id = EntityHelper.GetVariable(v, "arena_entity_id")
-                    if(entity_id ~= nil and entity_id == item_id)then
-                        
-                        if(takes_control)then
-                            for i = #data.controlled_physics_entities, 1, -1 do
-                                if(data.controlled_physics_entities[i] == v)then
-                                    table.remove(data.controlled_physics_entities, i)
+                --if(EntityGetFirstComponentIncludingDisabled(v, "ItemComponent") ~= nil)then
+                local entity_id = EntityHelper.GetVariable(v, "arena_entity_id")
+                if(entity_id ~= nil and entity_id == item_id)then
+                    
+                    if(takes_control)then
+                        for i = #data.controlled_physics_entities, 1, -1 do
+                            if(data.controlled_physics_entities[i] == v)then
+                                table.remove(data.controlled_physics_entities, i)
 
-                                    --GamePrint("No longer in control")
+                                --GamePrint("No longer in control")
 
-                                end
                             end
                         end
-
-                        local body_ids = PhysicsBodyIDGetFromEntity( v )
-                        if(body_ids ~= nil and #body_ids > 0)then
-                            local body_id = body_ids[1]
-
-                            PhysicsBodyIDSetTransform(body_id, x, y, r, vx, vy, vr)
-                            
-                        end
-                        return
                     end
+
+                    local body_ids = PhysicsBodyIDGetFromEntity( v )
+                    if(body_ids ~= nil and #body_ids > 0)then
+                        local body_id = body_ids[1]
+
+                        PhysicsBodyIDSetTransform(body_id, x, y, r, vx, vy, vr)
+                        
+                    end
+                    return
                 end
             end
+           -- end
         end,
         fungal_shift = function(lobby, message, user, data)
             dofile_once("data/scripts/lib/utilities.lua")
@@ -1230,6 +1243,59 @@ networking = {
                 end
             end
         end,
+        start_map_vote = function(lobby, message, user, data)
+            if (not steamutils.IsOwner(lobby, user))then
+                return
+            end
+            GamePrint("starting map vote")
+            gameplay_handler.StartMapVote(lobby, data, message[1])
+        end,
+        add_vote = function(lobby, message, user, data)
+            GamePlaySound( "data/audio/Desktop/ui.bank", "ui/streaming_integration/new_vote", GameGetCameraPos() )
+            local map = message[1]
+            if data.map_vote == nil then
+                data.map_vote = {}
+            end
+
+            if data.map_vote[map] == nil then
+                data.map_vote[map] = 0
+            end
+            
+            data.map_vote[map] = data.map_vote[map] + 1
+
+            if(data.voters ~= nil)then
+                if(data.voters[tostring(user)])then
+                    local vote = data.voters[tostring(user)]
+                    if(vote ~= nil)then
+                        if(data.map_vote[vote] ~= nil)then
+                            data.map_vote[vote] = data.map_vote[vote] - 1
+                        end
+                    end
+                end
+                
+                data.voters[tostring(user)] = map
+            end
+
+        end,
+        map_vote_timer_update = function(lobby, message, user, data)
+            if (not steamutils.IsOwner(lobby, user))then
+                return
+            end
+            local frames = message[1]
+            if(data.vote_loop ~= nil)then
+                data.vote_loop.frames = frames
+            end
+        end,
+        map_vote_finish = function(lobby, message, user, data)
+            if (not steamutils.IsOwner(lobby, user))then
+                return
+            end
+            if(data.vote_loop ~= nil)then
+                data.vote_loop.vote_finished = true
+                data.vote_loop.winner = message[1]
+                data.vote_loop.was_tie = message[2]
+            end
+        end,
     },
     send = {
         handshake = function(lobby)
@@ -1247,8 +1313,8 @@ networking = {
         arena_loaded = function(lobby)
             steamutils.send("arena_loaded", {}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
         end,
-        enter_arena = function(lobby)
-            steamutils.send("enter_arena", {}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+        enter_arena = function(lobby, arena)
+            steamutils.send("enter_arena", {arena}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
         end,
         start_countdown = function(lobby)
             steamutils.send("start_countdown", {}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
@@ -1688,6 +1754,18 @@ networking = {
         end,
         fungal_shift = function(lobby, from, to)
             steamutils.send("fungal_shift", { from, to }, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+        end,
+        start_map_vote = function(lobby, maps)
+            steamutils.send("start_map_vote", { maps }, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+        end,
+        add_vote = function(lobby, map)
+            steamutils.send("add_vote", { map }, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+        end,
+        map_vote_timer_update = function(lobby, frames)
+            steamutils.send("map_vote_timer_update", { frames }, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+        end,
+        map_vote_finish = function(lobby, winner, was_tie)
+            steamutils.send("map_vote_finish", {winner, was_tie}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
         end,
     },
 }
