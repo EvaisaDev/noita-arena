@@ -1916,7 +1916,7 @@ ArenaGameplay = {
             networking.send.character_position(lobby, data, true)
         --end
        -- networking.send.wand_update(lobby, data, nil, nil, true)
-        networking.send.input_update(lobby, true)
+        networking.send.input(lobby, true)
         networking.send.animation_update(lobby, data, true)
         if(GameGetFrameNum() % 15 == 0)then
             networking.send.player_data_update(lobby, data, true)
@@ -2178,7 +2178,7 @@ ArenaGameplay = {
             end
             --message_handler.send.AimUpdate(lobby)
             --message_handler.send.SyncControls(lobby, data)
-            networking.send.input_update(lobby)
+            networking.send.input(lobby)
 
             ArenaGameplay.CheckFiringBlock(lobby, data)
         end

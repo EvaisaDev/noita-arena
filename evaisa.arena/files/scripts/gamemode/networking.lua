@@ -14,6 +14,38 @@ local player_helper = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/p
 -- whatever ill just leave it
 dofile("mods/evaisa.arena/lib/status_helper.lua")
 
+local pack_damage_details = function(details)
+    --[[
+        {
+            ragdoll_fx = 1 
+            damage_types = 16 -- bitflag
+            knockback_force = 0    
+            impulse = {0, 0},
+            world_pos = {216.21, 12.583},
+        }
+    ]]
+    -- store in indexed array to save on data
+    local data = {
+        details.ragdoll_fx,
+        details.damage_types,
+        details.knockback_force,
+        details.impulse[1],
+        details.impulse[2],
+        details.world_pos[1],
+        details.world_pos[2],
+    }
+    return data
+end
+
+local unpack_damage_details = function(data)
+    return {
+        ragdoll_fx = data[1],
+        damage_types = data[2],
+        knockback_force = data[3],
+        impulse = {data[4], data[5]},
+        world_pos = {data[6], data[7]},
+    }
+end
 
 networking = {
     receive = {
@@ -391,7 +423,7 @@ networking = {
             networking.send.item_update(lobby, data, user, true)
             networking.send.switch_item(lobby, data, user, true)
         end,
-        input_update = function(lobby, message, user, data)
+        --[[input_update = function(lobby, message, user, data)
             if (not gameplay_handler.CheckPlayer(lobby, user, data)) then
                 return
             end
@@ -402,39 +434,6 @@ networking = {
                         "ControlsComponent")
 
                     if (controlsComp ~= nil) then
-                        --[[
-                            Message reference:
-                            local data = {
-                                kick,
-                                fire,
-                                fire2,
-                                action,
-                                throw,
-                                interact,
-                                left,
-                                right,
-                                up,
-                                down,
-                                jump,
-                                fly,
-                                leftClick,
-                                rightClick,
-                                aim_x,
-                                aim_y,
-                                aimNormal_x,
-                                aimNormal_y,
-                                aimNonZero_x,
-                                aimNonZero_y,
-                                mouse_x,
-                                mouse_y,
-                                mouseRaw_x,
-                                mouseRaw_y,
-                                mouseRawPrev_x,
-                                mouseRawPrev_y,
-                                mouseDelta_x,
-                                mouseDelta_y,
-                            }
-                        ]]
                         local message_data = {
                             kick = message[1],
                             fire = message[2],
@@ -637,6 +636,290 @@ networking = {
                     end
                 end
             end
+        end,]]
+        input = function(lobby, message, user, data)
+            local input_map = {
+                kick = 1,
+                fire = 2,
+                fire2 = 3,
+                action = 4,
+                throw = 5,
+                interact = 6,
+                left = 7,
+                right = 8,
+                up = 9,
+                down = 10,
+                jump = 11,
+                fly = 12,
+                leftClick = 13,
+                rightClick = 14,
+                aim_x = 15,
+                aim_y = 16,
+                aimNormal_x = 17,
+                aimNormal_y = 18,
+                aimNonZero_x = 19,
+                aimNonZero_y = 20,
+                mouse_x = 21,
+                mouse_y = 22,
+                mouseRaw_x = 23,
+                mouseRaw_y = 24,
+                mouseRawPrev_x = 25,
+                mouseRawPrev_y = 26,
+                mouseDelta_x = 27,
+                mouseDelta_y = 28,
+            }
+
+            if (not gameplay_handler.CheckPlayer(lobby, user, data)) then
+                return
+            end
+
+            -- check which inputs have changed
+            if (data.spectator_mode or (GameHasFlagRun("player_is_unlocked") and (not GameHasFlagRun("no_shooting")))) then
+                if (data.players[tostring(user)] ~= nil and data.players[tostring(user)].entity ~= nil and EntityGetIsAlive(data.players[tostring(user)].entity)) then
+                    local controls_data = data.players[tostring(user)].controls
+                    local controlsComp = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity,
+                        "ControlsComponent")
+                    local update_handlers = {
+                        function (value)
+                            -- kick
+                            if (value) then
+                                ComponentSetValue2(controlsComp, "mButtonDownKick", true)
+                                if (not controls_data.kick) then
+                                    ComponentSetValue2(controlsComp, "mButtonFrameKick", GameGetFrameNum() + 1)
+                                end
+                                controls_data.kick = true
+                            else
+                                ComponentSetValue2(controlsComp, "mButtonDownKick", false)
+                            end
+                        end,
+                        function (value)
+                            -- fire
+                            if (value) then
+                                ComponentSetValue2(controlsComp, "mButtonDownFire", true)
+                                --local lastFireFrame = ComponentGetValue2(controlsComp, "mButtonFrameFire")
+                                if (not controls_data.fire) then
+                                    -- perhaps this should be next frame??
+                                    ComponentSetValue2(controlsComp, "mButtonFrameFire", GameGetFrameNum()+1)
+                                end
+                                ComponentSetValue2(controlsComp, "mButtonLastFrameFire", GameGetFrameNum())
+                                controls_data.fire = true
+                            else
+                                ComponentSetValue2(controlsComp, "mButtonDownFire", false)
+                            end
+                        end,
+                        function (value)
+                            -- fire2
+                            if (value) then
+                                ComponentSetValue2(controlsComp, "mButtonDownFire2", true)
+                                if (not controls_data.fire2) then
+                                    ComponentSetValue2(controlsComp, "mButtonFrameFire2", GameGetFrameNum()+1)
+                                    --EntityAddTag(data.players[tostring(user)].entity, "player_unit")
+                                end
+                                controls_data.fire2 = true
+                            else
+                                ComponentSetValue2(controlsComp, "mButtonDownFire2", false)
+                            end
+                        end,
+                        function (value)
+                            -- action
+                            if (value) then
+                                ComponentSetValue2(controlsComp, "mButtonDownAction", true)
+                                if (not controls_data.action) then
+                                    ComponentSetValue2(controlsComp, "mButtonFrameAction", GameGetFrameNum() + 1)
+                                end
+                                controls_data.action = true
+                            else
+                                ComponentSetValue2(controlsComp, "mButtonDownAction", false)
+                            end
+                        end,
+                        function (value)
+                            -- throw
+                            if (value) then
+                                ComponentSetValue2(controlsComp, "mButtonDownThrow", true)
+                                if (not controls_data.throw) then
+                                    ComponentSetValue2(controlsComp, "mButtonFrameThrow", GameGetFrameNum() + 1)
+                                end
+                                controls_data.throw = true
+                            else
+                                ComponentSetValue2(controlsComp, "mButtonDownThrow", false)
+                            end
+                        end,
+                        function (value)
+                            -- interact
+                            if (value) then
+                                ComponentSetValue2(controlsComp, "mButtonDownInteract", true)
+                                if (not controls_data.interact) then
+                                    ComponentSetValue2(controlsComp, "mButtonFrameInteract", GameGetFrameNum() + 1)
+                                end
+                                controls_data.interact = true
+                            else
+                                ComponentSetValue2(controlsComp, "mButtonDownInteract", false)
+                            end
+                        end,
+                        function (value)
+                            -- left
+                            if (value) then
+                                ComponentSetValue2(controlsComp, "mButtonDownLeft", true)
+                                if (not controls_data.left) then
+                                    ComponentSetValue2(controlsComp, "mButtonFrameLeft", GameGetFrameNum() + 1)
+                                end
+                                controls_data.left = true
+                            else
+                                ComponentSetValue2(controlsComp, "mButtonDownLeft", false)
+                            end
+                        end,
+                        function (value)
+                            -- right
+                            if (value) then
+                                ComponentSetValue2(controlsComp, "mButtonDownRight", true)
+                                if (not controls_data.right) then
+                                    ComponentSetValue2(controlsComp, "mButtonFrameRight", GameGetFrameNum() + 1)
+                                end
+                                controls_data.right = true
+                            else
+                                ComponentSetValue2(controlsComp, "mButtonDownRight", false)
+                            end
+                        end,
+                        function (value)
+                            -- up
+                            if (value) then
+                                ComponentSetValue2(controlsComp, "mButtonDownUp", true)
+                                if (not controls_data.up) then
+                                    ComponentSetValue2(controlsComp, "mButtonFrameUp", GameGetFrameNum() + 1)
+                                end
+                                controls_data.up = true
+                            else
+                                ComponentSetValue2(controlsComp, "mButtonDownUp", false)
+                            end
+                        end,
+                        function (value)
+                            -- down
+                            if (value) then
+                                ComponentSetValue2(controlsComp, "mButtonDownDown", true)
+                                if (not controls_data.down) then
+                                    ComponentSetValue2(controlsComp, "mButtonFrameDown", GameGetFrameNum() + 1)
+                                end
+                                controls_data.down = true
+                            else
+                                ComponentSetValue2(controlsComp, "mButtonDownDown", false)
+                            end
+                        end,
+                        function (value)
+                            -- jump
+                            if (value) then
+                                ComponentSetValue2(controlsComp, "mButtonDownJump", true)
+                                if (not controls_data.jump) then
+                                    ComponentSetValue2(controlsComp, "mButtonFrameJump", GameGetFrameNum() + 1)
+                                end
+                                controls_data.jump = true
+                            else
+                                ComponentSetValue2(controlsComp, "mButtonDownJump", false)
+                            end
+                        end,
+                        function (value)
+                            -- fly
+                            if (value) then
+                                ComponentSetValue2(controlsComp, "mButtonDownFly", true)
+                                if (not controls_data.fly) then
+                                    ComponentSetValue2(controlsComp, "mButtonFrameFly", GameGetFrameNum() + 1)
+                                end
+                                controls_data.fly = true
+                            else
+                                ComponentSetValue2(controlsComp, "mButtonDownFly", false)
+                            end
+                        end,
+                        function (value)
+                            -- leftClick
+                            if (value) then
+                                ComponentSetValue2(controlsComp, "mButtonDownLeftClick", true)
+                                if (not controls_data.leftClick) then
+                                    ComponentSetValue2(controlsComp, "mButtonFrameLeftClick", GameGetFrameNum() + 1)
+                                end
+                                controls_data.leftClick = true
+                            else
+                                ComponentSetValue2(controlsComp, "mButtonDownLeftClick", false)
+                            end
+                        end,
+                        function (value)
+                            -- rightClick
+                            if (value) then
+                                ComponentSetValue2(controlsComp, "mButtonDownRightClick", true)
+                                if (not controls_data.rightClick) then
+                                    ComponentSetValue2(controlsComp, "mButtonFrameRightClick", GameGetFrameNum() + 1)
+                                end
+                                controls_data.rightClick = true
+                            else
+                                ComponentSetValue2(controlsComp, "mButtonDownRightClick", false)
+                            end
+                        end,
+                        function (value)
+                            -- aim_x
+                            ComponentSetValue2(controlsComp, "mAimingVector", value, ComponentGetValue2(controlsComp, "mAimingVector")[2])
+                        end,
+                        function (value)
+                            -- aim_y
+                            ComponentSetValue2(controlsComp, "mAimingVector", ComponentGetValue2(controlsComp, "mAimingVector")[1], value)
+                        end,
+                        function (value)
+                            -- aimNormal_x
+                            ComponentSetValue2(controlsComp, "mAimingVectorNormalized", value, ComponentGetValue2(controlsComp, "mAimingVectorNormalized")[2])
+                        end,
+                        function (value)
+                            -- aimNormal_y
+                            ComponentSetValue2(controlsComp, "mAimingVectorNormalized", ComponentGetValue2(controlsComp, "mAimingVectorNormalized")[1], value)
+                        end,
+                        function (value)
+                            -- aimNonZero_x
+                            ComponentSetValue2(controlsComp, "mAimingVectorNonZeroLatest", value, ComponentGetValue2(controlsComp, "mAimingVectorNonZeroLatest")[2])
+                        end,
+                        function (value)
+                            -- aimNonZero_y
+                            ComponentSetValue2(controlsComp, "mAimingVectorNonZeroLatest", ComponentGetValue2(controlsComp, "mAimingVectorNonZeroLatest")[1], value)
+                        end,
+                        function (value)
+                            -- mouse_x
+                            ComponentSetValue2(controlsComp, "mMousePosition", value, ComponentGetValue2(controlsComp, "mMousePosition")[2])
+                        end,
+                        function (value)
+                            -- mouse_y
+                            ComponentSetValue2(controlsComp, "mMousePosition", ComponentGetValue2(controlsComp, "mMousePosition")[1], value)
+                        end,
+                        function (value)
+                            -- mouseRaw_x
+                            ComponentSetValue2(controlsComp, "mMousePositionRaw", value, ComponentGetValue2(controlsComp, "mMousePositionRaw")[2])
+                        end,
+                        function (value)
+                            -- mouseRaw_y
+                            ComponentSetValue2(controlsComp, "mMousePositionRaw", ComponentGetValue2(controlsComp, "mMousePositionRaw")[1], value)
+                        end,
+                        function (value)
+                            -- mouseRawPrev_x
+                            ComponentSetValue2(controlsComp, "mMousePositionRawPrev", value, ComponentGetValue2(controlsComp, "mMousePositionRawPrev")[2])
+                        end,
+                        function (value)
+                            -- mouseRawPrev_y
+                            ComponentSetValue2(controlsComp, "mMousePositionRawPrev", ComponentGetValue2(controlsComp, "mMousePositionRawPrev")[1], value)
+                        end,
+                        function (value)
+                            -- mouseDelta_x
+                            ComponentSetValue2(controlsComp, "mMouseDelta", value, ComponentGetValue2(controlsComp, "mMouseDelta")[2])
+                        end,
+                        function (value)
+                            -- mouseDelta_y
+                            ComponentSetValue2(controlsComp, "mMouseDelta", ComponentGetValue2(controlsComp, "mMouseDelta")[1], value)
+                        end,
+                    }
+                    
+                    for i, v in ipairs(message)do
+                        local type = v[1]
+                        local value = v[2]
+                        if(input_map[type] ~= nil)then
+                            update_handlers[input_map[type]](value)
+                        end
+                    end
+
+                end
+            end
         end,
         animation_update = function(lobby, message, user, data)
             if (not gameplay_handler.CheckPlayer(lobby, user, data)) then
@@ -754,7 +1037,7 @@ networking = {
         health_update = function(lobby, message, user, data)
             local health = message[1]
             local maxHealth = message[2]
-            local damage_details = message[3]
+            local damage_details = unpack_damage_details(message[3])
 
             if (health ~= nil and maxHealth ~= nil) then
                 if (data.players[tostring(user)].entity ~= nil) then
@@ -1448,36 +1731,8 @@ networking = {
                 local mouseRawPrev_x, mouseRawPrev_y = ComponentGetValue2(controls, "mMousePositionRawPrev")
                 local mouseDelta_x, mouseDelta_y = ComponentGetValue2(controls, "mMouseDelta")
 
-                local data = {
-                    kick,
-                    fire,
-                    fire2,
-                    action,
-                    throw,
-                    interact,
-                    left,
-                    right,
-                    up,
-                    down,
-                    jump,
-                    fly,
-                    leftClick,
-                    rightClick,
-                    aim_x,
-                    aim_y,
-                    aimNormal_x,
-                    aimNormal_y,
-                    aimNonZero_x,
-                    aimNonZero_y,
-                    mouse_x,
-                    mouse_y,
-                    mouseRaw_x,
-                    mouseRaw_y,
-                    mouseRawPrev_x,
-                    mouseRawPrev_y,
-                    mouseDelta_x,
-                    mouseDelta_y,
-                }
+
+                
 
                 if(to_spectators)then
                     steamutils.send("input_update", data, steamutils.messageTypes.Spectators, lobby, false, true)
@@ -1485,6 +1740,118 @@ networking = {
                     steamutils.send("input_update", data, steamutils.messageTypes.OtherPlayers, lobby, false, true)
                 end
 
+            end
+        end,
+        input = function(lobby, data, to_spectators)
+            local controls = player.GetControlsComponent()
+            if (controls ~= nil) then
+                local kick = ComponentGetValue2(controls, "mButtonDownKick")
+                local fire = ComponentGetValue2(controls, "mButtonDownFire")
+                local fire2 = ComponentGetValue2(controls, "mButtonDownFire2")
+                local action = ComponentGetValue2(controls, "mButtonDownAction")
+                local throw = ComponentGetValue2(controls, "mButtonDownThrow")
+                local interact = ComponentGetValue2(controls, "mButtonDownInteract")
+                local left = ComponentGetValue2(controls, "mButtonDownLeft")
+                local right = ComponentGetValue2(controls, "mButtonDownRight")
+                local up = ComponentGetValue2(controls, "mButtonDownUp")
+                local down = ComponentGetValue2(controls, "mButtonDownDown")
+                local jump = ComponentGetValue2(controls, "mButtonDownJump")
+                local fly = ComponentGetValue2(controls, "mButtonDownFly")
+                local leftClick = ComponentGetValue2(controls, "mButtonDownLeftClick")
+                local rightClick = ComponentGetValue2(controls, "mButtonDownRightClick")
+                local aim_x, aim_y = ComponentGetValue2(controls, "mAimingVector")
+                local aimNormal_x, aimNormal_y = ComponentGetValue2(controls, "mAimingVectorNormalized")
+                local aimNonZero_x, aimNonZero_y = ComponentGetValue2(controls, "mAimingVectorNonZeroLatest")
+                local mouse_x, mouse_y = ComponentGetValue2(controls, "mMousePosition")
+                local mouseRaw_x, mouseRaw_y = ComponentGetValue2(controls, "mMousePositionRaw")
+                local mouseRawPrev_x, mouseRawPrev_y = ComponentGetValue2(controls, "mMousePositionRawPrev")
+                local mouseDelta_x, mouseDelta_y = ComponentGetValue2(controls, "mMouseDelta")
+
+                local inputs = {
+                    kick = kick,
+                    fire = fire,
+                    fire2 = fire2,
+                    action = action,
+                    throw = throw,
+                    interact = interact,
+                    left = left,
+                    right = right,
+                    up = up,
+                    down = down,
+                    jump = jump,
+                    fly = fly,
+                    leftClick = leftClick,
+                    rightClick = rightClick,
+                    aim_x = aim_x,
+                    aim_y = aim_y,
+                    aimNormal_x = aimNormal_x,
+                    aimNormal_y = aimNormal_y,
+                    aimNonZero_x = aimNonZero_x,
+                    aimNonZero_y = aimNonZero_y,
+                    mouse_x = mouse_x,
+                    mouse_y = mouse_y,
+                    mouseRaw_x = mouseRaw_x,
+                    mouseRaw_y = mouseRaw_y,
+                    mouseRawPrev_x = mouseRawPrev_x,
+                    mouseRawPrev_y = mouseRawPrev_y,
+                    mouseDelta_x = mouseDelta_x,
+                    mouseDelta_y = mouseDelta_y,
+                }
+
+                local input_map = {
+                    kick = 1,
+                    fire = 2,
+                    fire2 = 3,
+                    action = 4,
+                    throw = 5,
+                    interact = 6,
+                    left = 7,
+                    right = 8,
+                    up = 9,
+                    down = 10,
+                    jump = 11,
+                    fly = 12,
+                    leftClick = 13,
+                    rightClick = 14,
+                    aim_x = 15,
+                    aim_y = 16,
+                    aimNormal_x = 17,
+                    aimNormal_y = 18,
+                    aimNonZero_x = 19,
+                    aimNonZero_y = 20,
+                    mouse_x = 21,
+                    mouse_y = 22,
+                    mouseRaw_x = 23,
+                    mouseRaw_y = 24,
+                    mouseRawPrev_x = 25,
+                    mouseRawPrev_y = 26,
+                    mouseDelta_x = 27,
+                    mouseDelta_y = 28,
+                }
+
+                -- figure out which inputs changed since last frame
+                local changed_inputs = {}
+                for k, v in pairs(input_map)do
+                    if(data.client.previous_input[k] ~= nil)then
+                        if(data.client.previous_input[k] ~= inputs[k])then
+                            table.insert(changed_inputs, {
+                                v,
+                                inputs[k]
+                            })
+                        end
+                    end
+                end
+
+                -- send changed inputs to spectators and store current inputs
+                if(#changed_inputs > 0)then
+                    if(to_spectators)then
+                        steamutils.send("input", changed_inputs, steamutils.messageTypes.Spectators, lobby, false, true)
+                    else
+                        steamutils.send("input", changed_inputs, steamutils.messageTypes.OtherPlayers, lobby, false, true)
+                    end
+                end
+
+                data.client.previous_input = inputs
             end
         end,
         player_data_update = function(lobby, data, to_spectators)
@@ -1642,7 +2009,7 @@ networking = {
                         GlobalsSetValue("last_damage_details", "{}")
                     end
 
-                    steamutils.send("health_update", { health, max_health, damage_details }, steamutils.messageTypes.OtherPlayers, lobby,
+                    steamutils.send("health_update", { health, max_health, pack_damage_details(damage_details) }, steamutils.messageTypes.OtherPlayers, lobby,
                         true, true)
                     data.client.max_hp = max_health
                     data.client.hp = health
