@@ -15,17 +15,6 @@ local player_helper = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/p
 dofile("mods/evaisa.arena/lib/status_helper.lua")
 
 local pack_damage_details = function(details)
-    --[[
-        {
-            ragdoll_fx = 1 
-            damage_types = 16 -- bitflag
-            knockback_force = 0    
-            impulse = {0, 0},
-            world_pos = {216.21, 12.583},
-        }
-    ]]
-    -- store in indexed array to save on data
-
     if(details.impulse == nil)then
         return {}
     end
@@ -1126,7 +1115,7 @@ networking = {
                         ]]
 
                         if(damage_details ~= nil and damage_details.ragdoll_fx ~= nil)then
-                           -- print(pretty.table(damage_details))
+                            print(json.stringify(damage_details))
 
                             local damage_types = mp_helpers.GetDamageTypes(damage_details.damage_types)
                             local ragdoll_fx = mp_helpers.GetRagdollFX(damage_details.ragdoll_fx)
@@ -2092,6 +2081,8 @@ networking = {
                     if(not GameHasFlagRun("player_died"))then
                         GlobalsSetValue("last_damage_details", "{}")
                     end
+
+                    print(json.stringify(damage_details))
 
                     steamutils.send("health_update", { health, max_health, pack_damage_details(damage_details) }, steamutils.messageTypes.OtherPlayers, lobby,
                         true, true)
