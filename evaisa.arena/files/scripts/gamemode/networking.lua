@@ -2082,7 +2082,7 @@ networking = {
                         GlobalsSetValue("last_damage_details", "{}")
                     end
 
-                    print(json.stringify(damage_details))
+                    --print(json.stringify(damage_details))
 
                     steamutils.send("health_update", { health, max_health, pack_damage_details(damage_details) }, steamutils.messageTypes.OtherPlayers, lobby,
                         true, true)
