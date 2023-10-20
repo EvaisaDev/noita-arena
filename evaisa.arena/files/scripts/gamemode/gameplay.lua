@@ -14,9 +14,17 @@ ArenaGameplay = {
         return holyMountainCount
     end,
     GetPlayerIndex = function(lobby)
+        local player_ids = {}
         local members = steamutils.getLobbyMembers(lobby)
         for i, member in ipairs(members) do
-            if(member.id == steam.user.getSteamID())then
+            table.insert(player_ids, tostring(member.id))
+        end
+        table.sort(player_ids, function(a, b) return a < b end)
+        local local_player = tostring(steam.user.getSteamID())
+        for i, player_id in ipairs(player_ids) do
+            --print(player_id)
+            if(player_id == local_player)then
+                --GamePrint("player index: "..tostring(i))
                 return i
             end
         end
