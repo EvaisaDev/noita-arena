@@ -36,6 +36,7 @@ ArenaGameplay = {
             rounds = tonumber(rounds) or 0
             rounds = rounds + 1
             networking.send.update_round(lobby, rounds)
+            GlobalsSetValue("holyMountainCount", tostring(rounds))
             steam.matchmaking.setLobbyData(lobby, "holyMountainCount", tostring(rounds))
         end
     end,

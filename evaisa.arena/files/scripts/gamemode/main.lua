@@ -1553,12 +1553,13 @@ ArenaMode = {
         end
 
         if(input:WasKeyPressed("f10"))then
-            ArenaGameplay.AddRound(lobby)
-            delay.new(5, function()
-                ArenaGameplay.LoadLobby(lobby, data, false)
-                networking.send.load_lobby(lobby)
-            end)
-
+            if(steamutils.IsOwner(lobby))then
+                ArenaGameplay.AddRound(lobby)
+                delay.new(5, function()
+                    ArenaGameplay.LoadLobby(lobby, data, false)
+                    networking.send.load_lobby(lobby)
+                end)
+            end
         end
         --[[if(input:WasKeyPressed("f10"))then
             local world_state = GameGetWorldStateEntity()
