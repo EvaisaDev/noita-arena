@@ -2267,7 +2267,7 @@ ArenaGameplay = {
             local chunk_loader_x, chunk_loader_y = EntityGetTransform(v)
             game_funcs.LoadRegion(chunk_loader_x, chunk_loader_y, 1000, 1000)
         end]]
-        for k, v in pairs(data.players) do
+        --[[for k, v in pairs(data.players) do
             if (v.entity ~= nil and EntityGetIsAlive(v.entity)) then
                 local controls = EntityGetFirstComponentIncludingDisabled(v.entity, "ControlsComponent")
                 if (controls) then
@@ -2278,7 +2278,7 @@ ArenaGameplay = {
                     ComponentSetValue2(controls, "mButtonDownRightClick", false)
                 end
             end
-        end
+        end]]
 
         if (data.state == "lobby") then
             networking.send.sync_wand_stats(lobby, data, true)
