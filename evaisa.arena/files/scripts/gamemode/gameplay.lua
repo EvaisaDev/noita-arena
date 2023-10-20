@@ -9,8 +9,9 @@ local EZWand = dofile("mods/evaisa.arena/files/scripts/utilities/EZWand.lua")
 ArenaLoadCountdown = ArenaLoadCountdown or nil
 
 ArenaGameplay = {
-    GetNumRounds = function()
-        local holyMountainCount = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0
+    GetNumRounds = function(lobby)
+        local holyMountainCount = steam.matchmaking.getLobbyData(lobby, "holyMountainCount")
+        GlobalsSetValue("holyMountainCount", tostring(holyMountainCount))
         return holyMountainCount
     end,
     GetPlayerIndex = function(lobby)
@@ -30,15 +31,16 @@ ArenaGameplay = {
         end
         return 1
     end,
-    AddRound = function()
-        local holyMountainCount = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0
-        holyMountainCount = holyMountainCount + 1
-        GlobalsSetValue("holyMountainCount", tostring(holyMountainCount))
+    AddRound = function(lobby)
+        if(steamutils.IsOwner(lobby))then
+            local rounds = ArenaGameplay.GetNumRounds(lobby)
+            rounds = tonumber(rounds) or 0
+            rounds = rounds + 1
+            steam.matchmaking.setLobbyData(lobby, "holyMountainCount", tostring(rounds))
+        end
     end,
     RemoveRound = function()
-        local holyMountainCount = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0
-        holyMountainCount = holyMountainCount - 1
-        GlobalsSetValue("holyMountainCount", tostring(holyMountainCount))
+
     end,
     GetSpawnPoints = function()
         local spawns = {}
@@ -91,7 +93,7 @@ ArenaGameplay = {
                 end
             end,
             ["best_of"] = function(value)
-                local current_round = ArenaGameplay.GetNumRounds() + 1
+                local current_round = ArenaGameplay.GetNumRounds()
                 if(current_round >= value)then
                     local members = steamutils.getLobbyMembers(lobby)
                     local best_player = nil
@@ -127,7 +129,6 @@ ArenaGameplay = {
         end
     end,
     SendGameData = function(lobby, data)
-        steam.matchmaking.setLobbyData(lobby, "holyMountainCount", tostring(ArenaGameplay.GetNumRounds()))
         local ready_players = {}
         local members = steamutils.getLobbyMembers(lobby)
         for k, member in pairs(members) do
@@ -801,6 +802,8 @@ ArenaGameplay = {
         if (alive == 1) then
             -- if we are owner, add win to tally
             if (steamutils.IsOwner(lobby)) then
+                ArenaGameplay.AddRound()
+
                 local winner_key = tostring(winner) .. "_wins"
                 local winstreak_key = tostring(winner) .. "_winstreak"
 
@@ -1055,6 +1058,10 @@ ArenaGameplay = {
         end
     end,
     LoadLobby = function(lobby, data, show_message, first_entry)
+
+        -- get rounds
+        local rounds = ArenaGameplay.GetNumRounds()
+
         if(not steamutils.IsSpectator(lobby))then
             local catchup_mechanic = GlobalsGetValue("perk_catchup", "losers")
             if(catchup_mechanic == "everyone")then
@@ -1175,7 +1182,6 @@ ArenaGameplay = {
                 if(GameHasFlagRun("picked_health"))then
                     GameAddFlagRun("skip_health")
                 end
-                ArenaGameplay.RemoveRound()
             else
                 if(GlobalsGetValue("upgrades_system", "false") == "true" and GameHasFlagRun("pick_upgrade"))then
                     data.upgrade_system = upgrade_system.create(3, function(upgrade)
@@ -1186,8 +1192,7 @@ ArenaGameplay = {
                 GameRemoveFlagRun("picked_perk")
             end
         end
-        -- get rounds
-        local rounds = ArenaGameplay.GetNumRounds()
+
 
         -- Give gold
         local rounds_limited = ArenaGameplay.GetRoundTier() --math.max(0, math.min(math.ceil(rounds / 2), 7))
@@ -1244,9 +1249,6 @@ ArenaGameplay = {
             end
         end
 
-        -- increment holy mountain count
-
-        ArenaGameplay.AddRound()
 
         if(not steamutils.IsSpectator(lobby))then
             RunWhenPlayerExists(function()
