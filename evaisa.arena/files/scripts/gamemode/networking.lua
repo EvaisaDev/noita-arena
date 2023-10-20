@@ -724,7 +724,7 @@ networking = {
             -- check which inputs have changed
             if (data.spectator_mode or (GameHasFlagRun("player_is_unlocked") and (not GameHasFlagRun("no_shooting")))) then
                 if (data.players[tostring(user)] ~= nil and data.players[tostring(user)].entity ~= nil and EntityGetIsAlive(data.players[tostring(user)].entity)) then
-                    print(json.stringify(message))
+                    --print(json.stringify(message))
                     
                     local controls_data = data.players[tostring(user)].controls
                     local controlsComp = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity,
@@ -906,13 +906,13 @@ networking = {
                             -- aim_x
                             local aim_x, aim_y = ComponentGetValue2(controlsComp, "mAimingVector")
                             ComponentSetValue2(controlsComp, "mAimingVector", value, aim_y)
-                            print("aim_x: " .. tostring(value))
+                            --print("aim_x: " .. tostring(value))
                         end,
                         [16] = function (value)
                             -- aim_y
                             local aim_x, aim_y = ComponentGetValue2(controlsComp, "mAimingVector")
                             ComponentSetValue2(controlsComp, "mAimingVector", aim_x, value)
-                            print("aim_y: " .. tostring(value))
+                            --print("aim_y: " .. tostring(value))
                         end,
                         [17] = function (value)
                             -- aimNormal_x
