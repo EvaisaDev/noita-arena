@@ -10,7 +10,7 @@ ArenaLoadCountdown = ArenaLoadCountdown or nil
 
 ArenaGameplay = {
     GetNumRounds = function(lobby)
-        local holyMountainCount = steam.matchmaking.getLobbyData(lobby, "holyMountainCount")
+        local holyMountainCount = steam.matchmaking.getLobbyData(lobby, "holyMountainCount") or 0
         GlobalsSetValue("holyMountainCount", tostring(holyMountainCount))
         return holyMountainCount
     end,
@@ -59,8 +59,8 @@ ArenaGameplay = {
         end
         return spawns
     end,
-    GetRoundTier = function()
-        local rounds = ArenaGameplay.GetNumRounds()
+    GetRoundTier = function(lobby)
+        local rounds = ArenaGameplay.GetNumRounds(lobby)
         -- how many rounds it takes for the shop level to increment
         local shop_scaling = tonumber(GlobalsGetValue("shop_scaling", "2"))
         -- how much the shop level increments by
@@ -93,7 +93,7 @@ ArenaGameplay = {
                 end
             end,
             ["best_of"] = function(value)
-                local current_round = ArenaGameplay.GetNumRounds()
+                local current_round = ArenaGameplay.GetNumRounds(lobby)
                 if(current_round >= value)then
                     local members = steamutils.getLobbyMembers(lobby)
                     local best_player = nil
@@ -802,7 +802,7 @@ ArenaGameplay = {
         if (alive == 1) then
             -- if we are owner, add win to tally
             if (steamutils.IsOwner(lobby)) then
-                ArenaGameplay.AddRound()
+                ArenaGameplay.AddRound(lobby)
 
                 local winner_key = tostring(winner) .. "_wins"
                 local winstreak_key = tostring(winner) .. "_winstreak"
@@ -1060,7 +1060,7 @@ ArenaGameplay = {
     LoadLobby = function(lobby, data, show_message, first_entry)
 
         -- get rounds
-        local rounds = ArenaGameplay.GetNumRounds()
+        local rounds = ArenaGameplay.GetNumRounds(lobby)
 
         if(not steamutils.IsSpectator(lobby))then
             local catchup_mechanic = GlobalsGetValue("perk_catchup", "losers")
@@ -1195,7 +1195,7 @@ ArenaGameplay = {
 
 
         -- Give gold
-        local rounds_limited = ArenaGameplay.GetRoundTier() --math.max(0, math.min(math.ceil(rounds / 2), 7))
+        local rounds_limited = ArenaGameplay.GetRoundTier(lobby) --math.max(0, math.min(math.ceil(rounds / 2), 7))
 
         local extra_gold_count = tonumber( GlobalsGetValue( "EXTRA_MONEY_COUNT", "0" ) )
 
@@ -2068,7 +2068,7 @@ ArenaGameplay = {
         if (data.preparing) then
             local rng = dofile_once("mods/evaisa.arena/lib/rng.lua")
             local world_seed = tonumber(steam.matchmaking.getLobbyData(lobby, "seed") or 1)
-            local spawn_seed = world_seed + (ArenaGameplay.GetNumRounds() * 62362)
+            local spawn_seed = world_seed + (ArenaGameplay.GetNumRounds(lobby) * 62362)
             local spawn_rng = rng.new(spawn_seed)
             local spawn_points = ArenaGameplay.GetSpawnPoints()
             -- shuffle spawn points using spawn_rng.range(a, b)
