@@ -36,7 +36,7 @@ Random = function(a, b)
 	if(a == nil and b == nil)then
 		return random.next_float()
 	elseif(b == nil)then
-		return random.next_int(a)
+		return random.range(0, a)
 	else
 		return random.range(a, b)
 	end

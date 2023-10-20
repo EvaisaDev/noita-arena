@@ -1,5 +1,5 @@
 local steamutils = dofile_once("mods/evaisa.mp/lib/steamutils.lua")
-local rng = dofile_once("mods/evaisa.arena/lib/rng.lua")
+local rng = dofile("mods/evaisa.arena/lib/rng.lua")
 local playerinfo = dofile("mods/evaisa.arena/files/scripts/gamemode/playerinfo.lua")
 local data = {}
 

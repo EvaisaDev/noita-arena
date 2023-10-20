@@ -107,7 +107,7 @@ function RandomAction(max_level, x, y)
         total_probability = total_probability + action.probability
     end
 
-    local random_value = random.next_float() * total_probability
+    local random_value = random.random() * total_probability
 
     for _, action in ipairs(available_actions) do
         random_value = random_value - action.probability
@@ -151,7 +151,7 @@ function RandomActionWithType(max_level, action_type, x, y)
         total_probability = total_probability + action.probability
     end
 
-    local random_value = random.next_float() * total_probability
+    local random_value = random.random() * total_probability
 
     for _, action in ipairs(available_actions) do
         random_value = random_value - action.probability

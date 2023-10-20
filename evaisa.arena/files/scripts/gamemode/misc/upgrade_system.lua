@@ -39,7 +39,7 @@ local upgrade_system = {
                 totalWeight = totalWeight + upgrade.weight
             end
             
-            local targetWeight = random.next_float() * totalWeight
+            local targetWeight = random.random() * totalWeight
             
             for _, upgrade in ipairs(upgrades) do
                 targetWeight = targetWeight - upgrade.weight

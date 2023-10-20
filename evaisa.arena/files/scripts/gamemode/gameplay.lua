@@ -1605,7 +1605,9 @@ ArenaGameplay = {
                             for i = 1, 3 do
                                 local map_id = nil
                                 while(map_id == nil or picked_maps[map_id] ~= nil)do
-                                    map_id = available_map_list[data.random.range(1, #available_map_list)].id
+                                    local index = data.random.range(1, #available_map_list)
+                                    print(tostring(index))
+                                    map_id = available_map_list[index].id
                                 end
                                 table.insert(map_ids, map_id)
                                 picked_maps[map_id] = true
