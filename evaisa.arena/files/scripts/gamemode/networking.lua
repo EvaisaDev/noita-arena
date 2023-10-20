@@ -683,6 +683,37 @@ networking = {
                 mouseDelta_x = 27,
                 mouseDelta_y = 28,
             }
+
+            local reverse_input_map = {
+                "kick",
+                "fire",
+                "fire2",
+                "action",
+                "throw",
+                "interact",
+                "left",
+                "right",
+                "up",
+                "down",
+                "jump",
+                "fly",
+                "leftClick",
+                "rightClick",
+                "aim_x",
+                "aim_y",
+                "aimNormal_x",
+                "aimNormal_y",
+                "aimNonZero_x",
+                "aimNonZero_y",
+                "mouse_x",
+                "mouse_y",
+                "mouseRaw_x",
+                "mouseRaw_y",
+                "mouseRawPrev_x",
+                "mouseRawPrev_y",
+                "mouseDelta_x",
+                "mouseDelta_y",
+            }
             
            -- print(json.stringify(message))
 
@@ -693,11 +724,13 @@ networking = {
             -- check which inputs have changed
             if (data.spectator_mode or (GameHasFlagRun("player_is_unlocked") and (not GameHasFlagRun("no_shooting")))) then
                 if (data.players[tostring(user)] ~= nil and data.players[tostring(user)].entity ~= nil and EntityGetIsAlive(data.players[tostring(user)].entity)) then
+                    print(json.stringify(message))
+                    
                     local controls_data = data.players[tostring(user)].controls
                     local controlsComp = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity,
                         "ControlsComponent")
                     local update_handlers = {
-                        function (value)
+                        [1] = function (value)
                             -- kick
                             if (value) then
                                 ComponentSetValue2(controlsComp, "mButtonDownKick", true)
@@ -709,7 +742,7 @@ networking = {
                                 ComponentSetValue2(controlsComp, "mButtonDownKick", false)
                             end
                         end,
-                        function (value)
+                        [2] = function (value)
                             -- fire
                             if (value) then
                                 ComponentSetValue2(controlsComp, "mButtonDownFire", true)
@@ -724,7 +757,7 @@ networking = {
                                 ComponentSetValue2(controlsComp, "mButtonDownFire", false)
                             end
                         end,
-                        function (value)
+                        [3] = function (value)
                             -- fire2
                             if (value) then
                                 ComponentSetValue2(controlsComp, "mButtonDownFire2", true)
@@ -737,7 +770,7 @@ networking = {
                                 ComponentSetValue2(controlsComp, "mButtonDownFire2", false)
                             end
                         end,
-                        function (value)
+                        [4] = function (value)
                             -- action
                             if (value) then
                                 ComponentSetValue2(controlsComp, "mButtonDownAction", true)
@@ -749,7 +782,7 @@ networking = {
                                 ComponentSetValue2(controlsComp, "mButtonDownAction", false)
                             end
                         end,
-                        function (value)
+                        [5] = function (value)
                             -- throw
                             if (value) then
                                 ComponentSetValue2(controlsComp, "mButtonDownThrow", true)
@@ -761,7 +794,7 @@ networking = {
                                 ComponentSetValue2(controlsComp, "mButtonDownThrow", false)
                             end
                         end,
-                        function (value)
+                        [6] = function (value)
                             -- interact
                             if (value) then
                                 ComponentSetValue2(controlsComp, "mButtonDownInteract", true)
@@ -773,7 +806,7 @@ networking = {
                                 ComponentSetValue2(controlsComp, "mButtonDownInteract", false)
                             end
                         end,
-                        function (value)
+                        [7] = function (value)
                             -- left
                             if (value) then
                                 ComponentSetValue2(controlsComp, "mButtonDownLeft", true)
@@ -785,7 +818,7 @@ networking = {
                                 ComponentSetValue2(controlsComp, "mButtonDownLeft", false)
                             end
                         end,
-                        function (value)
+                        [8] = function (value)
                             -- right
                             if (value) then
                                 ComponentSetValue2(controlsComp, "mButtonDownRight", true)
@@ -797,7 +830,7 @@ networking = {
                                 ComponentSetValue2(controlsComp, "mButtonDownRight", false)
                             end
                         end,
-                        function (value)
+                        [9] = function (value)
                             -- up
                             if (value) then
                                 ComponentSetValue2(controlsComp, "mButtonDownUp", true)
@@ -809,7 +842,7 @@ networking = {
                                 ComponentSetValue2(controlsComp, "mButtonDownUp", false)
                             end
                         end,
-                        function (value)
+                        [10] = function (value)
                             -- down
                             if (value) then
                                 ComponentSetValue2(controlsComp, "mButtonDownDown", true)
@@ -821,7 +854,7 @@ networking = {
                                 ComponentSetValue2(controlsComp, "mButtonDownDown", false)
                             end
                         end,
-                        function (value)
+                        [11] = function (value)
                             -- jump
                             if (value) then
                                 ComponentSetValue2(controlsComp, "mButtonDownJump", true)
@@ -833,7 +866,7 @@ networking = {
                                 ComponentSetValue2(controlsComp, "mButtonDownJump", false)
                             end
                         end,
-                        function (value)
+                        [12] = function (value)
                             -- fly
                             if (value) then
                                 ComponentSetValue2(controlsComp, "mButtonDownFly", true)
@@ -845,7 +878,7 @@ networking = {
                                 ComponentSetValue2(controlsComp, "mButtonDownFly", false)
                             end
                         end,
-                        function (value)
+                        [13] = function (value)
                             -- leftClick
                             if (value) then
                                 ComponentSetValue2(controlsComp, "mButtonDownLeftClick", true)
@@ -857,7 +890,7 @@ networking = {
                                 ComponentSetValue2(controlsComp, "mButtonDownLeftClick", false)
                             end
                         end,
-                        function (value)
+                        [14] = function (value)
                             -- rightClick
                             if (value) then
                                 ComponentSetValue2(controlsComp, "mButtonDownRightClick", true)
@@ -869,74 +902,74 @@ networking = {
                                 ComponentSetValue2(controlsComp, "mButtonDownRightClick", false)
                             end
                         end,
-                        function (value)
+                        [15] = function (value)
                             -- aim_x
                             local aim_x, aim_y = ComponentGetValue2(controlsComp, "mAimingVector")
                             ComponentSetValue2(controlsComp, "mAimingVector", value, aim_y)
                             print("aim_x: " .. tostring(value))
                         end,
-                        function (value)
+                        [16] = function (value)
                             -- aim_y
                             local aim_x, aim_y = ComponentGetValue2(controlsComp, "mAimingVector")
                             ComponentSetValue2(controlsComp, "mAimingVector", aim_x, value)
                             print("aim_y: " .. tostring(value))
                         end,
-                        function (value)
+                        [17] = function (value)
                             -- aimNormal_x
                             local aimNormal_x, aimNormal_y = ComponentGetValue2(controlsComp, "mAimingVectorNormalized")
                             ComponentSetValue2(controlsComp, "mAimingVectorNormalized", value, aimNormal_y)
                         end,
-                        function (value)
+                        [18] = function (value)
                             -- aimNormal_y
                             local aimNormal_x, aimNormal_y = ComponentGetValue2(controlsComp, "mAimingVectorNormalized")
                             ComponentSetValue2(controlsComp, "mAimingVectorNormalized", aimNormal_x, value)
                         end,
-                        function (value)
+                        [19] = function (value)
                             -- aimNonZero_x
                             local aimNonZero_x, aimNonZero_y = ComponentGetValue2(controlsComp, "mAimingVectorNonZeroLatest")
                             ComponentSetValue2(controlsComp, "mAimingVectorNonZeroLatest", value, aimNonZero_y)
                         end,
-                        function (value)
+                        [20] = function (value)
                             -- aimNonZero_y
                             local aimNonZero_x, aimNonZero_y = ComponentGetValue2(controlsComp, "mAimingVectorNonZeroLatest")
                             ComponentSetValue2(controlsComp, "mAimingVectorNonZeroLatest", aimNonZero_x, value)
                         end,
-                        function (value)
+                        [21] = function (value)
                             -- mouse_x
                             local mouse_x, mouse_y = ComponentGetValue2(controlsComp, "mMousePosition")
                             ComponentSetValue2(controlsComp, "mMousePosition", value, mouse_y)
                         end,
-                        function (value)
+                        [22] = function (value)
                             -- mouse_y
                             local mouse_x, mouse_y = ComponentGetValue2(controlsComp, "mMousePosition")
                             ComponentSetValue2(controlsComp, "mMousePosition", mouse_x, value)
                         end,
-                        function (value)
+                        [23] = function (value)
                             -- mouseRaw_x
                             local mouseRaw_x, mouseRaw_y = ComponentGetValue2(controlsComp, "mMousePositionRaw")
                             ComponentSetValue2(controlsComp, "mMousePositionRaw", value, mouseRaw_y)
                         end,
-                        function (value)
+                        [24] = function (value)
                             -- mouseRaw_y
                             local mouseRaw_x, mouseRaw_y = ComponentGetValue2(controlsComp, "mMousePositionRaw")
                             ComponentSetValue2(controlsComp, "mMousePositionRaw", mouseRaw_x, value)
                         end,
-                        function (value)
+                        [25] = function (value)
                             -- mouseRawPrev_x
                             local mouseRawPrev_x, mouseRawPrev_y = ComponentGetValue2(controlsComp, "mMousePositionRawPrev")
                             ComponentSetValue2(controlsComp, "mMousePositionRawPrev", value, mouseRawPrev_y)
                         end,
-                        function (value)
+                        [26] = function (value)
                             -- mouseRawPrev_y
                             local mouseRawPrev_x, mouseRawPrev_y = ComponentGetValue2(controlsComp, "mMousePositionRawPrev")
                             ComponentSetValue2(controlsComp, "mMousePositionRawPrev", mouseRawPrev_x, value)
                         end,
-                        function (value)
+                        [27] = function (value)
                             -- mouseDelta_x
                             local mouseDelta_x, mouseDelta_y = ComponentGetValue2(controlsComp, "mMouseDelta")
                             ComponentSetValue2(controlsComp, "mMouseDelta", value, mouseDelta_y)
                         end,
-                        function (value)
+                        [28] = function (value)
                             -- mouseDelta_y
                             local mouseDelta_x, mouseDelta_y = ComponentGetValue2(controlsComp, "mMouseDelta")
                             ComponentSetValue2(controlsComp, "mMouseDelta", mouseDelta_x, value)
@@ -946,8 +979,9 @@ networking = {
                     for i, v in ipairs(message)do
                         local type = v[1]
                         local value = v[2]
-                        if(input_map[type] ~= nil)then
-                            update_handlers[input_map[type]](value)
+                        --print(tostring(type) .. "(" .. reverse_input_map[type] .. ")" .. ": " .. tostring(value))
+                        if(update_handlers[type] ~= nil)then
+                            update_handlers[type](value)
                         end
                     end
 
