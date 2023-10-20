@@ -847,14 +847,14 @@ ArenaMode = {
                         local scale = 1
 
                         GuiZSetForNextWidget(gui, -5605)
-                        local icon_width, icon_height = GuiGetImageDimensions(gui, map.thumbnail)
+                        local icon_width, icon_height = GuiGetImageDimensions(gui, map.thumbnail or "mods/evaisa.arena/content/arenas/default_thumbnail.png")
                         GuiImage(gui, new_id("map_list_stuff"), 0, 0, map.frame, 1, scale, scale)
                         GuiZSetForNextWidget(gui, -5600)
                         local alpha = 1
                         if(is_blacklisted)then
                             alpha = 0.4
                         end
-                        GuiImage(gui, new_id("map_list_stuff"), -(icon_width * scale) - 2.5, 1, map.thumbnail, alpha, scale * 0.99, scale * 0.99)
+                        GuiImage(gui, new_id("map_list_stuff"), -(icon_width * scale) - 2.5, 1, map.thumbnail or "mods/evaisa.arena/content/arenas/default_thumbnail.png", alpha, scale * 0.99, scale * 0.99)
                         
                         local visible, clicked, _, hovered = get_widget_info(gui)
 
@@ -1552,7 +1552,10 @@ ArenaMode = {
             end
         end
 
-
+        if(input:WasKeyPressed("f10"))then
+            ArenaGameplay.LoadLobby(lobby, data, false)
+            networking.send.load_lobby(lobby)
+        end
         --[[if(input:WasKeyPressed("f10"))then
             local world_state = GameGetWorldStateEntity()
 

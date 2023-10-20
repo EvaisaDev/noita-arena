@@ -1646,6 +1646,12 @@ networking = {
                 data.vote_loop.was_tie = message[2]
             end
         end,
+        load_lobby = function(lobby, message, user, data)
+            if (not steamutils.IsOwner(lobby, user))then
+                return
+            end
+            ArenaGameplay.LoadLobby(lobby, data, false)
+        end,
     },
     send = {
         handshake = function(lobby)
@@ -1680,9 +1686,9 @@ networking = {
                 local vel_x, vel_y = ComponentGetValue2(characterData, "mVelocity")
 
                 if(to_spectators)then
-                    steamutils.send("character_position", { x, y, vel_x, vel_y }, steamutils.messageTypes.Spectators, lobby, false, true)
+                    steamutils.send("character_position", { round_to_decimal(x, 2), round_to_decimal(y, 2), round_to_decimal(vel_x, 2), round_to_decimal(vel_y, 2) }, steamutils.messageTypes.Spectators, lobby, false, true)
                 else
-                    steamutils.send("character_position", { x, y, vel_x, vel_y }, steamutils.messageTypes.OtherPlayers, lobby, false, true)
+                    steamutils.send("character_position", { round_to_decimal(x, 2), round_to_decimal(y, 2), round_to_decimal(vel_x, 2), round_to_decimal(vel_y, 2) }, steamutils.messageTypes.OtherPlayers, lobby, false, true)
                 end
 
             end
@@ -2029,7 +2035,7 @@ networking = {
                     
 
                     -- get current mana
-                    local mana = ComponentGetValue2(abilityComp, "mana")
+                    local mana = round_to_decimal(ComponentGetValue2(abilityComp, "mana"), 2)
                     -- mCastDelayStartFrame
                     local cast_delay_start_frame = ComponentGetValue2(abilityComp, "mCastDelayStartFrame")
                     -- mReloadFramesLeft
@@ -2205,6 +2211,9 @@ networking = {
         end,
         map_vote_finish = function(lobby, winner, was_tie)
             steamutils.send("map_vote_finish", {winner, was_tie}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+        end,
+        load_lobby = function(lobby)
+            steamutils.send("load_lobby", {}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
         end,
     },
 }

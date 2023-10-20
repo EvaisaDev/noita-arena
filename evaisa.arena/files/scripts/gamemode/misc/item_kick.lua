@@ -4,6 +4,10 @@ function kick( entity_who_kicked )
 
     local entity = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/entity.lua")
 
+    if(item_ent ~= EntityGetRootEntity(item_ent))then
+        return
+    end
+
     local id = entity.GetVariable(item_ent, "arena_entity_id")
     if(id ~= nil)then
         local body_ids = PhysicsBodyIDGetFromEntity( item_ent )

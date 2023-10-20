@@ -1851,7 +1851,7 @@ ArenaGameplay = {
                     end
                     
                     local frame_width, frame_height = GuiGetImageDimensions(vote_gui, v.frame, 1)
-                    local thumbnail_width, thumbnail_height = GuiGetImageDimensions(vote_gui, v.thumbnail, 1)
+                    local thumbnail_width, thumbnail_height = GuiGetImageDimensions(vote_gui, v.thumbnail or "mods/evaisa.arena/content/arenas/default_thumbnail.png", 1)
 
                     local card_y = (screen_h / 2) - (frame_height / 2)
                     local card_x = x + ((i - 1) * (frame_width + distance_between_cards))
@@ -1878,7 +1878,7 @@ ArenaGameplay = {
                     GuiZSetForNextWidget(vote_gui, -10)
                     GuiImage(vote_gui, new_id(), card_x, card_y, v.frame, 1, size, size)
                     GuiZSetForNextWidget(vote_gui, -9)
-                    GuiImage(vote_gui, new_id(), (card_x + (frame_width / 2)) - (thumbnail_width / 2), (card_y + (frame_height / 2)) - (thumbnail_height / 2), v.thumbnail, 1, size, size)
+                    GuiImage(vote_gui, new_id(), (card_x + (frame_width / 2)) - (thumbnail_width / 2), (card_y + (frame_height / 2)) - (thumbnail_height / 2), v.thumbnail or "mods/evaisa.arena/content/arenas/default_thumbnail.png", 1, size, size)
                     local clicked, _, hovered = GuiGetPreviousWidgetInfo(vote_gui)
                     if(frames_left > 0)then
                         if(hovered)then
