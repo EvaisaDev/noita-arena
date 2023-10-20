@@ -34,6 +34,7 @@ local pack_damage_details = function(details)
         details.ragdoll_fx,
         details.damage_types,
         details.knockback_force,
+        details.blood_multiplier,
         details.impulse[1],
         details.impulse[2],
         details.world_pos[1],
@@ -50,8 +51,9 @@ local unpack_damage_details = function(data)
         ragdoll_fx = data[1],
         damage_types = data[2],
         knockback_force = data[3],
-        impulse = {data[4], data[5]},
-        world_pos = {data[6], data[7]},
+        blood_multiplier = data[4],
+        impulse = {data[5], data[6]},
+        world_pos = {data[7], data[8]},
     }
 end
 
