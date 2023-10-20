@@ -25,6 +25,11 @@ local pack_damage_details = function(details)
         }
     ]]
     -- store in indexed array to save on data
+
+    if(details.impulse == nil)then
+        return {}
+    end
+
     local data = {
         details.ragdoll_fx,
         details.damage_types,
@@ -38,6 +43,9 @@ local pack_damage_details = function(details)
 end
 
 local unpack_damage_details = function(data)
+    if(data[1] == nil)then
+        return nil
+    end
     return {
         ragdoll_fx = data[1],
         damage_types = data[2],
