@@ -1828,10 +1828,14 @@ networking = {
                     mouseDelta_x = 27,
                     mouseDelta_y = 28,
                 }
-
+                if(data.client.previous_input == nil)then
+                    data.client.previous_input = {}
+                end
+                
                 -- figure out which inputs changed since last frame
                 local changed_inputs = {}
                 for k, v in pairs(input_map)do
+
                     if(data.client.previous_input[k] ~= nil)then
                         if(data.client.previous_input[k] ~= inputs[k])then
                             table.insert(changed_inputs, {
