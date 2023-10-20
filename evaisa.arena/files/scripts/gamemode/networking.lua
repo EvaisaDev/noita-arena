@@ -871,11 +871,13 @@ networking = {
                             -- aim_x
                             local aim_x, aim_y = ComponentGetValue2(controlsComp, "mAimingVector")
                             ComponentSetValue2(controlsComp, "mAimingVector", value, aim_y)
+                            print("aim_x: " .. tostring(value))
                         end,
                         function (value)
                             -- aim_y
                             local aim_x, aim_y = ComponentGetValue2(controlsComp, "mAimingVector")
                             ComponentSetValue2(controlsComp, "mAimingVector", aim_x, value)
+                            print("aim_y: " .. tostring(value))
                         end,
                         function (value)
                             -- aimNormal_x
@@ -1877,7 +1879,7 @@ networking = {
 
                 -- send changed inputs to spectators and store current inputs
                 if(#changed_inputs > 0)then
-                    print(json.stringify(changed_inputs))
+                    --print(json.stringify(changed_inputs))
                     if(to_spectators)then
                         steamutils.send("input", changed_inputs, steamutils.messageTypes.Spectators, lobby, false, true)
                     else
