@@ -1554,7 +1554,7 @@ ArenaMode = {
 
         if(input:WasKeyPressed("f10"))then
             ArenaGameplay.AddRound(lobby)
-            delay.new(30, function()
+            delay.new(5, function()
                 ArenaGameplay.LoadLobby(lobby, data, false)
                 networking.send.load_lobby(lobby)
             end)

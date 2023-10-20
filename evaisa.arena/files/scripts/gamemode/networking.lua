@@ -1652,6 +1652,12 @@ networking = {
             end
             ArenaGameplay.LoadLobby(lobby, data, false)
         end,
+        update_round = function(lobby, message, user, data)
+            if (not steamutils.IsOwner(lobby, user))then
+                return
+            end
+            GlobalsSetValue("holyMountainCount", tostring(message[1]))
+        end,
     },
     send = {
         handshake = function(lobby)
@@ -2214,6 +2220,9 @@ networking = {
         end,
         load_lobby = function(lobby)
             steamutils.send("load_lobby", {}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+        end,
+        update_round = function(lobby, round)
+            steamutils.send("update_round", { round }, steamutils.messageTypes.OtherPlayers, lobby, true, true)
         end,
     },
 }

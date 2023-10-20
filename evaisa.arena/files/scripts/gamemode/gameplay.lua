@@ -10,8 +10,7 @@ ArenaLoadCountdown = ArenaLoadCountdown or nil
 
 ArenaGameplay = {
     GetNumRounds = function(lobby)
-        local holyMountainCount = steam.matchmaking.getLobbyData(lobby, "holyMountainCount") or 0
-        GlobalsSetValue("holyMountainCount", tostring(holyMountainCount))
+        local holyMountainCount = tonumber(GlobalsGetValue("holyMountainCount", "0"))
         return holyMountainCount
     end,
     GetPlayerIndex = function(lobby)
@@ -36,6 +35,7 @@ ArenaGameplay = {
             local rounds = ArenaGameplay.GetNumRounds(lobby)
             rounds = tonumber(rounds) or 0
             rounds = rounds + 1
+            networking.send.update_round(lobby, rounds)
             steam.matchmaking.setLobbyData(lobby, "holyMountainCount", tostring(rounds))
         end
     end,
