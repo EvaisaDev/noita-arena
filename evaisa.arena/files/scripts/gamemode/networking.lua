@@ -55,6 +55,11 @@ local unpack_damage_details = function(data)
     }
 end
 
+local round_to_decimal = function(num, numDecimalPlaces)
+    local mult = 10^(numDecimalPlaces or 0)
+    return math.floor(num * mult + 0.5) / mult
+end
+
 networking = {
     receive = {
         ready = function(lobby, message, user, data)
@@ -676,6 +681,8 @@ networking = {
                 mouseDelta_x = 27,
                 mouseDelta_y = 28,
             }
+            
+           -- print(json.stringify(message))
 
             if (not gameplay_handler.CheckPlayer(lobby, user, data)) then
                 return
@@ -862,59 +869,73 @@ networking = {
                         end,
                         function (value)
                             -- aim_x
-                            ComponentSetValue2(controlsComp, "mAimingVector", value, ComponentGetValue2(controlsComp, "mAimingVector")[2])
+                            local aim_x, aim_y = ComponentGetValue2(controlsComp, "mAimingVector")
+                            ComponentSetValue2(controlsComp, "mAimingVector", value, aim_y)
                         end,
                         function (value)
                             -- aim_y
-                            ComponentSetValue2(controlsComp, "mAimingVector", ComponentGetValue2(controlsComp, "mAimingVector")[1], value)
+                            local aim_x, aim_y = ComponentGetValue2(controlsComp, "mAimingVector")
+                            ComponentSetValue2(controlsComp, "mAimingVector", aim_x, value)
                         end,
                         function (value)
                             -- aimNormal_x
-                            ComponentSetValue2(controlsComp, "mAimingVectorNormalized", value, ComponentGetValue2(controlsComp, "mAimingVectorNormalized")[2])
+                            local aimNormal_x, aimNormal_y = ComponentGetValue2(controlsComp, "mAimingVectorNormalized")
+                            ComponentSetValue2(controlsComp, "mAimingVectorNormalized", value, aimNormal_y)
                         end,
                         function (value)
                             -- aimNormal_y
-                            ComponentSetValue2(controlsComp, "mAimingVectorNormalized", ComponentGetValue2(controlsComp, "mAimingVectorNormalized")[1], value)
+                            local aimNormal_x, aimNormal_y = ComponentGetValue2(controlsComp, "mAimingVectorNormalized")
+                            ComponentSetValue2(controlsComp, "mAimingVectorNormalized", aimNormal_x, value)
                         end,
                         function (value)
                             -- aimNonZero_x
-                            ComponentSetValue2(controlsComp, "mAimingVectorNonZeroLatest", value, ComponentGetValue2(controlsComp, "mAimingVectorNonZeroLatest")[2])
+                            local aimNonZero_x, aimNonZero_y = ComponentGetValue2(controlsComp, "mAimingVectorNonZeroLatest")
+                            ComponentSetValue2(controlsComp, "mAimingVectorNonZeroLatest", value, aimNonZero_y)
                         end,
                         function (value)
                             -- aimNonZero_y
-                            ComponentSetValue2(controlsComp, "mAimingVectorNonZeroLatest", ComponentGetValue2(controlsComp, "mAimingVectorNonZeroLatest")[1], value)
+                            local aimNonZero_x, aimNonZero_y = ComponentGetValue2(controlsComp, "mAimingVectorNonZeroLatest")
+                            ComponentSetValue2(controlsComp, "mAimingVectorNonZeroLatest", aimNonZero_x, value)
                         end,
                         function (value)
                             -- mouse_x
-                            ComponentSetValue2(controlsComp, "mMousePosition", value, ComponentGetValue2(controlsComp, "mMousePosition")[2])
+                            local mouse_x, mouse_y = ComponentGetValue2(controlsComp, "mMousePosition")
+                            ComponentSetValue2(controlsComp, "mMousePosition", value, mouse_y)
                         end,
                         function (value)
                             -- mouse_y
-                            ComponentSetValue2(controlsComp, "mMousePosition", ComponentGetValue2(controlsComp, "mMousePosition")[1], value)
+                            local mouse_x, mouse_y = ComponentGetValue2(controlsComp, "mMousePosition")
+                            ComponentSetValue2(controlsComp, "mMousePosition", mouse_x, value)
                         end,
                         function (value)
                             -- mouseRaw_x
-                            ComponentSetValue2(controlsComp, "mMousePositionRaw", value, ComponentGetValue2(controlsComp, "mMousePositionRaw")[2])
+                            local mouseRaw_x, mouseRaw_y = ComponentGetValue2(controlsComp, "mMousePositionRaw")
+                            ComponentSetValue2(controlsComp, "mMousePositionRaw", value, mouseRaw_y)
                         end,
                         function (value)
                             -- mouseRaw_y
-                            ComponentSetValue2(controlsComp, "mMousePositionRaw", ComponentGetValue2(controlsComp, "mMousePositionRaw")[1], value)
+                            local mouseRaw_x, mouseRaw_y = ComponentGetValue2(controlsComp, "mMousePositionRaw")
+                            ComponentSetValue2(controlsComp, "mMousePositionRaw", mouseRaw_x, value)
                         end,
                         function (value)
                             -- mouseRawPrev_x
-                            ComponentSetValue2(controlsComp, "mMousePositionRawPrev", value, ComponentGetValue2(controlsComp, "mMousePositionRawPrev")[2])
+                            local mouseRawPrev_x, mouseRawPrev_y = ComponentGetValue2(controlsComp, "mMousePositionRawPrev")
+                            ComponentSetValue2(controlsComp, "mMousePositionRawPrev", value, mouseRawPrev_y)
                         end,
                         function (value)
                             -- mouseRawPrev_y
-                            ComponentSetValue2(controlsComp, "mMousePositionRawPrev", ComponentGetValue2(controlsComp, "mMousePositionRawPrev")[1], value)
+                            local mouseRawPrev_x, mouseRawPrev_y = ComponentGetValue2(controlsComp, "mMousePositionRawPrev")
+                            ComponentSetValue2(controlsComp, "mMousePositionRawPrev", mouseRawPrev_x, value)
                         end,
                         function (value)
                             -- mouseDelta_x
-                            ComponentSetValue2(controlsComp, "mMouseDelta", value, ComponentGetValue2(controlsComp, "mMouseDelta")[2])
+                            local mouseDelta_x, mouseDelta_y = ComponentGetValue2(controlsComp, "mMouseDelta")
+                            ComponentSetValue2(controlsComp, "mMouseDelta", value, mouseDelta_y)
                         end,
                         function (value)
                             -- mouseDelta_y
-                            ComponentSetValue2(controlsComp, "mMouseDelta", ComponentGetValue2(controlsComp, "mMouseDelta")[1], value)
+                            local mouseDelta_x, mouseDelta_y = ComponentGetValue2(controlsComp, "mMouseDelta")
+                            ComponentSetValue2(controlsComp, "mMouseDelta", mouseDelta_x, value)
                         end,
                     }
                     
@@ -1790,20 +1811,20 @@ networking = {
                     fly = fly,
                     leftClick = leftClick,
                     rightClick = rightClick,
-                    aim_x = aim_x,
-                    aim_y = aim_y,
-                    aimNormal_x = aimNormal_x,
-                    aimNormal_y = aimNormal_y,
-                    aimNonZero_x = aimNonZero_x,
-                    aimNonZero_y = aimNonZero_y,
-                    mouse_x = mouse_x,
-                    mouse_y = mouse_y,
-                    mouseRaw_x = mouseRaw_x,
-                    mouseRaw_y = mouseRaw_y,
-                    mouseRawPrev_x = mouseRawPrev_x,
-                    mouseRawPrev_y = mouseRawPrev_y,
-                    mouseDelta_x = mouseDelta_x,
-                    mouseDelta_y = mouseDelta_y,
+                    aim_x = round_to_decimal(aim_x, 2),
+                    aim_y = round_to_decimal(aim_y, 2),
+                    aimNormal_x = round_to_decimal(aimNormal_x, 2),
+                    aimNormal_y = round_to_decimal(aimNormal_y, 2),
+                    aimNonZero_x = round_to_decimal(aimNonZero_x, 2),
+                    aimNonZero_y = round_to_decimal(aimNonZero_y, 2),
+                    mouse_x = round_to_decimal(mouse_x, 2),
+                    mouse_y = round_to_decimal(mouse_y, 2),
+                    mouseRaw_x = round_to_decimal(mouseRaw_x, 2),
+                    mouseRaw_y = round_to_decimal(mouseRaw_y, 2),
+                    mouseRawPrev_x = round_to_decimal(mouseRawPrev_x, 2),
+                    mouseRawPrev_y = round_to_decimal(mouseRawPrev_y, 2),
+                    mouseDelta_x = round_to_decimal(mouseDelta_x, 2),
+                    mouseDelta_y = round_to_decimal(mouseDelta_y, 2),
                 }
 
                 local input_map = {
@@ -1839,6 +1860,8 @@ networking = {
                 if(data.client.previous_input == nil)then
                     data.client.previous_input = {}
                 end
+
+                --print(json.stringify(inputs))
                 
                 -- figure out which inputs changed since last frame
                 local changed_inputs = {}
@@ -1846,16 +1869,15 @@ networking = {
 
                     if(data.client.previous_input[k] ~= nil)then
                         if(data.client.previous_input[k] ~= inputs[k])then
-                            table.insert(changed_inputs, {
-                                v,
-                                inputs[k]
-                            })
+                           
+                            table.insert( changed_inputs, { v, inputs[k] })
                         end
                     end
                 end
 
                 -- send changed inputs to spectators and store current inputs
                 if(#changed_inputs > 0)then
+                    print(json.stringify(changed_inputs))
                     if(to_spectators)then
                         steamutils.send("input", changed_inputs, steamutils.messageTypes.Spectators, lobby, false, true)
                     else
