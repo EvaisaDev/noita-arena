@@ -1590,6 +1590,11 @@ networking = {
             gameplay_handler.StartMapVote(lobby, data, message[1])
         end,
         add_vote = function(lobby, message, user, data)
+
+            if data.vote_loop and data.vote_loop.vote_finished then
+                return
+            end
+
             GamePlaySound( "data/audio/Desktop/ui.bank", "ui/streaming_integration/new_vote", GameGetCameraPos() )
             local map = message[1]
             if data.map_vote == nil then
