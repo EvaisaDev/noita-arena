@@ -64,7 +64,6 @@ spawnlists =
 				load_entity_func = 
 					function( data, x, y )
 						-- NOTE( Petri ): 6.3.2023 - Changed the SetRandomSeed to be different, so that we might get other runestones than edges
-						SetRandomSeed( x+2617.941, y-1229.3581 )
 						local opts = { "laser", "fireball", "lava", "slow", "null", "disc", "metal" }
 						local rnd = Random( 1, #opts )
 						local opt = opts[rnd]
@@ -176,7 +175,16 @@ spawnlists =
 
 function spawn_from_list( listname, x, y )
 	local spawnlist
-	
+
+	local rounds = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0
+	local seed_x, seed_y = (x * 3256) + rounds * 765 + (GameGetFrameNum() / 30), (y * 5326) + rounds * 123 + (GameGetFrameNum() / 20)
+	if(GameHasFlagRun("shop_sync"))then
+        seed_x, seed_y = (x * 3256) + rounds * 765, (y * 5326) + rounds * 123
+	end
+
+	print("Item spawn seed: " .. tostring(seed_x) .. ", " .. tostring(seed_y))
+	SetRandomSeed( seed_x, seed_y )
+
 	if ( type( listname ) == "string" ) then
 		spawnlist = spawnlists[listname]
 	elseif ( type( listname ) == "table" ) then
@@ -193,6 +201,8 @@ function spawn_from_list( listname, x, y )
 	
 	local rnd = Random( rndmin, rndmax )
 	
+	print("Item Spawn Random: " .. tostring(rnd) .. " (" .. tostring(rndmin) .. " - " .. tostring(rndmax) .. ")")
+
 	if ( spawnlist.spawns ~= nil ) then
 		for i,data in ipairs( spawnlist.spawns ) do
 			local vmin = data.value_min or rndmin

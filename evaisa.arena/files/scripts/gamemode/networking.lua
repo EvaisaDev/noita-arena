@@ -1332,7 +1332,32 @@ networking = {
                     local player_data = {
                         mFlyingTimeLeft = message[1],
                         status_list = message[2],
+                        cosmetics = message[3],
                     }
+
+                    local loaded_cosmetics = {}
+                    for _, id in ipairs(player_data.cosmetics)do
+                        loaded_cosmetics[id] = true
+                        if(not data.players[tostring(user)].cosmetics[id])then
+                            -- add cosmetic
+                            data.players[tostring(user)].cosmetics[id] = true
+                            if(player)then
+                                print("Loading client cosmetic: " .. tostring(id))
+                                ArenaGameplay.UpdateCosmetics(lobby, data, "load", player, true)
+                            end
+                        end
+                    end
+
+                    for k, v in pairs(data.players[tostring(user)].cosmetics)do
+                        if(not loaded_cosmetics[k])then
+                            -- remove cosmetic
+                            data.players[tostring(user)].cosmetics[k] = nil
+                            if(player)then
+                                ArenaGameplay.UpdateCosmetics(lobby, data, "unload", player, true)
+                            end
+                        end
+                    end
+
 
                     local valid_ids = {}
 
@@ -1742,6 +1767,7 @@ networking = {
             if(item_data ~= nil)then
                 local data = { item_data, force, GameHasFlagRun( "arena_unlimited_spells" ) }
 
+                
                 if (user ~= nil) then
                     steamutils.sendToPlayer("item_update", data, user, true)
                 else
@@ -1938,11 +1964,17 @@ networking = {
                 local character_data_comp = EntityGetFirstComponentIncludingDisabled(player, "CharacterDataComponent")
                 if(character_data_comp ~= nil)then
                     
+                    local cosmetics = {}
+                    for k, v in pairs(data.cosmetics)do
+                        table.insert(cosmetics, k)
+                    end
+                    
                     local status_list = GetActiveStatusEffects(player, true)
 
                     local message = {
                         ComponentGetValue2(character_data_comp, "mFlyingTimeLeft"),
-                        status_list
+                        status_list,
+                        cosmetics
                     }
 
                     --print("mFlyingTimeLeft: " .. tostring(message.mFlyingTimeLeft))

@@ -24,6 +24,7 @@ function data:New()
 
         lobby_spectated_player = nil,
         controlled_physics_entities = {},
+        cosmetics = {},
 
         big_font = font_helper.NewFont("mods/evaisa.arena/files/font/Daydream_128.xml"),
         client = {

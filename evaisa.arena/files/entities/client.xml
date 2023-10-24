@@ -1,4 +1,8 @@
 <Entity name="client" tags="client,mortal,human,hittable,peasant,prey,polymorphable_NOT,enemy">
+  <HotspotComponent
+    _tags="hat"
+    sprite_hotspot_name="hat"
+  />
 
   <VelocityComponent
     updates_velocity="0"
@@ -203,7 +207,7 @@
   <SpriteComponent 
     _tags="character" 
     alpha="1" 
-    image_file="data/enemies_gfx/player.xml" 
+    image_file="mods/evaisa.arena/files/gfx/player.xml" 
     next_rect_animation="" 
     offset_x="6" 
     offset_y="14" 

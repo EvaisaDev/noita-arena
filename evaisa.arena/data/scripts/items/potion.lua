@@ -106,13 +106,12 @@ materials_magic =
 function init( entity_id )
 	local x,y = EntityGetTransform( entity_id )
 
-    local rounds = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0
+	local rounds = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0
+	local seed_x, seed_y = (x * 3256) + rounds * 765 + (GameGetFrameNum() / 30), (y * 5326) + rounds * 123 + (GameGetFrameNum() / 20)
 	if(GameHasFlagRun("shop_sync"))then
-		local random_seed = ((tonumber(GlobalsGetValue("world_seed", "0")) or 1) * 214) * rounds
-        SetRandomSeed( x + random_seed, y + (random_seed * 37)) 
-    else
-        SetRandomSeed( x + GameGetFrameNum(), y +  (tonumber(GlobalsGetValue("world_seed", "0")) or 1))
+        seed_x, seed_y = (x * 3256) + rounds * 765, (y * 5326) + rounds * 123
 	end
+	SetRandomSeed( seed_x, seed_y )
 
 	
 	local potion_material = "water"

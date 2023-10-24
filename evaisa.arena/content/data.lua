@@ -64,3 +64,47 @@ arena_list = {
         time = 0.5, -- world time, optional. default will be day.
     },
 }
+
+cosmetics = {
+    {
+        id = "dunce_hat",
+        name = "Dunce Hat",
+        description = "A hat for those who couldn't hurry up",
+        icon = "mods/evaisa.arena/content/cosmetics/dunce_hat/icon.png",
+        --sprite_sheet = "mods/evaisa.arena/content/cosmetics/dunce_hat/sprite_sheet.png",
+        type = "hat",
+        hat_offset = {x = 2, y = 5},
+        hat_sprite = "mods/evaisa.arena/content/cosmetics/dunce_hat/hat.png",
+        --unlock_flag = "cosmetic_unlocked_dunce_hat",
+        can_be_unlocked = false,
+        can_be_purchased = false,
+        unlocked_default = false,
+        price = 0,
+        try_unlock = function(lobby, data) -- runs every frame, if true, unlock flag is added
+            return false
+        end,
+        try_force_enable = function(lobby, data) -- if this condition is true, the cosmetic will be enabled even if it's not unlocked
+            local ready_count = ArenaGameplay.ReadyAmount(data, lobby)
+            local total_count = ArenaGameplay.TotalPlayers(lobby)
+            if((total_count > 1 and ready_count == (total_count - 1) and not GameHasFlagRun("ready_check")) or GameHasFlagRun("was_last_ready"))then
+                return true
+            end
+            return false
+        end,
+        on_update = function(lobby, data, entity) -- runs every frame while hat is worn
+        end,
+        on_load = function(lobby, data, entity) -- runs when cosmetic is loaded, can be used to load entities etc.
+        end,
+        on_unload = function(lobby, data, entity) -- runs when cosmetic is unloaded, can be used to unload entities etc.
+
+        end,
+        on_arena_unlocked = function(lobby, data, entity) -- runs when player is unlocked in arena.
+        end,
+    }
+}
+
+cosmetic_types = {
+    hat = {
+        max_stack = 1, -- how many items of this type can be worn at the same time.
+    }
+}

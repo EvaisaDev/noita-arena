@@ -60,9 +60,7 @@ function spawn_all_shopitems( x, y )
 	a, b, c, d, e, f = GameGetDateAndTimeLocal()
 	
 	local random_seed = GlobalsGetValue("unique_seed", "0")
-	
-	print("random_seed = "..tostring(random_seed))
-	
+
 	local rounds = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0
 	if(GameHasFlagRun("shop_sync"))then
 		random_seed = ((tonumber(GlobalsGetValue("world_seed", "0")) or 1) * 214) * rounds
@@ -95,26 +93,24 @@ function spawn_all_shopitems( x, y )
 	end
 	
 	
-	print("Shop tier: "..round_scaled)
+	--print("Shop tier: "..round_scaled)
 
 
 	EntityLoad( "data/entities/buildings/shop_hitbox.xml", x, y )
 	
 	print("Generated shop items for mountain #"..tostring(rounds))
 
-	a, b, c, d, e, f = GameGetDateAndTimeLocal()
+	local seed_x, seed_y = (x * 3256) + rounds * 765 + (GameGetFrameNum() / 30), (y * 5326) + rounds * 123 + (GameGetFrameNum() / 20)
 	if(GameHasFlagRun("shop_sync"))then
-		local local_seed = tonumber(GlobalsGetValue("world_seed", "0")) or 0
-		SetRandomSeed( ((x * 325) * rounds) + local_seed, ((y * 453) * rounds) + local_seed)
-	else
-		SetRandomSeed( x + GameGetFrameNum() + GameGetRealWorldTimeSinceStarted() + a + b + c + d + e + f, y  + GameGetFrameNum() + GameGetRealWorldTimeSinceStarted() + a + b + c + d + e + f)
+        seed_x, seed_y = (x * 3256) + rounds * 765, (y * 5326) + rounds * 123
 	end
+	SetRandomSeed( seed_x, seed_y )
 	local count = tonumber( GlobalsGetValue( "TEMPLE_SHOP_ITEM_COUNT", "5" ) )
 	local width = 132
 	local item_width = width / count
 	local sale_item_i = random.range( 1, count, true )
 
-	print("Sale item: "..tostring(sale_item_i))
+	--print("Sale item: "..tostring(sale_item_i))
 
 	-- Get the shop type from the settings
 	local shop_type = GlobalsGetValue("shop_type", "mixed")
@@ -215,14 +211,12 @@ end
 
 function spawn_all_perks( x, y )
 	if(GameHasFlagRun("first_death") and not GameHasFlagRun("skip_perks"))then
-		a, b, c, d, e, f = GameGetDateAndTimeLocal()
 		local rounds = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0
+		local seed_x, seed_y = (x * 3256) + rounds * 765 + (GameGetFrameNum() / 30), (y * 5326) + rounds * 123 + (GameGetFrameNum() / 20)
 		if(GameHasFlagRun("shop_sync"))then
-			local local_seed = tonumber(GlobalsGetValue("world_seed", "0")) or 0
-			SetRandomSeed( ((x * 325) * rounds) + local_seed, ((y * 453) * rounds) + local_seed)
-		else
-			SetRandomSeed( x + GameGetFrameNum() + GameGetRealWorldTimeSinceStarted() + a + b + c + d + e + f, y  + GameGetFrameNum() + GameGetRealWorldTimeSinceStarted() + a + b + c + d + e + f)
+			seed_x, seed_y = (x * 3256) + rounds * 765, (y * 5326) + rounds * 123
 		end
+		SetRandomSeed( seed_x, seed_y )
 		perk_spawn_many( x, y )
 	end
 end
@@ -243,9 +237,7 @@ function spawn_item_shop_item( x, y )
 	a, b, c, d, e, f = GameGetDateAndTimeLocal()
 	
 	local random_seed = GlobalsGetValue("unique_seed", "0")
-	
-	print("random_seed = "..tostring(random_seed))
-	
+
 	local rounds = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0
 	if(GameHasFlagRun("shop_sync"))then
 		random_seed = ((tonumber(GlobalsGetValue("world_seed", "0")) or 1) * 214) * rounds
@@ -277,13 +269,11 @@ function spawn_item_shop_item( x, y )
 		round_scaled = 0
 	end
 	
-	a, b, c, d, e, f = GameGetDateAndTimeLocal()
+	local seed_x, seed_y = (x * 3256) + rounds * 765 + (GameGetFrameNum() / 30), (y * 5326) + rounds * 123 + (GameGetFrameNum() / 20)
 	if(GameHasFlagRun("shop_sync"))then
-		local local_seed = tonumber(GlobalsGetValue("world_seed", "0")) or 0
-		SetRandomSeed( ((x * 325) * rounds) + local_seed, ((y * 453) * rounds) + local_seed)
-	else
-		SetRandomSeed( x + GameGetFrameNum() + GameGetRealWorldTimeSinceStarted() + a + b + c + d + e + f, y  + GameGetFrameNum() + GameGetRealWorldTimeSinceStarted() + a + b + c + d + e + f)
+        seed_x, seed_y = (x * 3256) + rounds * 765, (y * 5326) + rounds * 123
 	end
+	SetRandomSeed( seed_x, seed_y )
 
 	generate_shop_potion(x, y, round_scaled)
 end

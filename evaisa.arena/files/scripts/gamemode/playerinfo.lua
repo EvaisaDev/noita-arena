@@ -20,6 +20,7 @@ function playerinfo:New(user)
         status_effect_entities = {},
         status_effect_comps = {},
         previous_positions = {},
+        cosmetics = {},
         ping = 0,
         delay_frames = 0,
         wins = nil,
@@ -88,6 +89,7 @@ function playerinfo:New(user)
         end
         self.entity = nil
         self.held_item = nil
+        self.cosmetics = {}
         if(self.hp_bar)then
             self.hp_bar:destroy()
             self.hp_bar = nil
