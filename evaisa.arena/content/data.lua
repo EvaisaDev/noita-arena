@@ -3,7 +3,7 @@ arena_list = {
         id = "original",
         name = "Origins",
         description = "The original arena, created during closed beta",
-        thumbnail = "mods/evaisa.arena/content/arenas/default_thumbnail.png",
+        thumbnail = "mods/evaisa.arena/content/arenas/original/thumbnail.png",
         frame = "mods/evaisa.arena/content/arenas/frame.png",
         biome_map = "mods/evaisa.arena/content/arenas/original/map.lua",
         pixel_scenes = "mods/evaisa.arena/content/arenas/original/arena_scenes.xml",
@@ -20,52 +20,11 @@ arena_list = {
         zone_size = 600, -- size of damage zone, should be max distance from 0, 0 players can travel
         zone_floor = 400 -- damage floor, if player falls below this they die.
     },
-    
-    --[[{
-        id = "alias",
-        name = "Lethal Lava Land",
-        description = "Map made by alias",
-        thumbnail = "mods/evaisa.arena/content/arenas/alias_map/thumbnail.png",
-        frame = "mods/evaisa.arena/content/arenas/frame.png",
-        biome_map = "mods/evaisa.arena/content/arenas/alias_map/map.lua",
-        custom_biomes = {
-            {
-                biome_filename="mods/evaisa.arena/content/arenas/alias_map/lava.xml",
-                height_index="1",
-                color="ffab3e3a"
-            }
-        },
-        pixel_scenes = "mods/evaisa.arena/content/arenas/alias_map/arena_scenes.xml",
-        spawn_points = { -- optional, can also use spawn pixels, 0,0 is there as a backup in case spawn pixels fail somehow.
-            {x = 0, y = 0}
-        },
-        zone_size = 1000, -- size of damage zone, should be max distance from 0, 0 players can travel
-        zone_floor = 500 -- damage floor, if player falls below this they die.
-    },
-    {
-        id = "underwater",
-        name = "Underwater",
-        description = "Map made by kaliuresis",
-        thumbnail = "mods/evaisa.arena/content/arenas/underwater/underwater_thumbnail.png",
-        frame = "mods/evaisa.arena/content/arenas/frame.png",
-        biome_map = "mods/evaisa.arena/content/arenas/underwater/map.lua",
-        custom_biomes = {
-            biome_filename="mods/evaisa.arena/content/arenas/underwater/underwater_biome.xml",
-            height_index="1",
-            color="ff322cab",
-        },
-        pixel_scenes = "mods/evaisa.arena/content/arenas/underwater/arena_scenes.xml",
-        spawn_points = { -- optional, can also use spawn pixels, 0,0 is there as a backup in case spawn pixels fail somehow.
-            {x = 0, y = 0}
-        },
-        zone_size = 1024, -- size of damage zone, should be max distance from 0, 0 players can travel
-        zone_floor = 512 -- damage floor, if player falls below this they die.
-    },]]
     {
         id = "spoop",
         name = "Unholy Temple",
         description = "Arena made by Spoopy",
-        thumbnail = "mods/evaisa.arena/content/arenas/default_thumbnail.png",
+        thumbnail = "mods/evaisa.arena/content/arenas/spoop/thumbnail.png",
         frame = "mods/evaisa.arena/content/arenas/frame.png",
         biome_map = "mods/evaisa.arena/content/arenas/spoop/map.lua",
         custom_biomes = {
@@ -86,7 +45,7 @@ arena_list = {
         id = "stadium",
         name = "Stadium",
         description = "Football anyone?",
-        thumbnail = "mods/evaisa.arena/content/arenas/default_thumbnail.png",
+        thumbnail = "mods/evaisa.arena/content/arenas/stadium/thumbnail.png",
         frame = "mods/evaisa.arena/content/arenas/frame.png",
         biome_map = "mods/evaisa.arena/content/arenas/stadium/map.lua",
         custom_biomes = {
@@ -104,4 +63,47 @@ arena_list = {
         zone_floor = 400, -- damage floor, if player falls below this they die.
         time = 0.5, -- world time, optional. default will be day.
     },
+}
+
+cosmetics = {
+    {
+        id = "dunce_hat",
+        name = "Dunce Hat",
+        description = "A hat for those who couldn't hurry up",
+        icon = "mods/evaisa.arena/content/cosmetics/dunce_hat/icon.png",
+        --sprite_sheet = "mods/evaisa.arena/content/cosmetics/dunce_hat/sprite_sheet.png",
+        type = "hat",
+        hat_offset = {x = 2, y = 5},
+        hat_sprite = "mods/evaisa.arena/content/cosmetics/dunce_hat/hat.png",
+        --unlock_flag = "cosmetic_unlocked_dunce_hat",
+        can_be_unlocked = false,
+        can_be_purchased = false,
+        unlocked_default = false,
+        price = 0,
+        try_unlock = function(lobby, data) -- runs every frame, if true, unlock flag is added
+            return false
+        end,
+        try_force_enable = function(lobby, data) -- if this condition is true, the cosmetic will be enabled even if it's not unlocked
+            local ready_count = ArenaGameplay.ReadyAmount(data, lobby)
+            local total_count = ArenaGameplay.TotalPlayers(lobby)
+            if((total_count > 1 and ready_count == (total_count - 1) and not GameHasFlagRun("ready_check")) or GameHasFlagRun("was_last_ready"))then
+                return true
+            end
+            return false
+        end,
+        on_update = function(lobby, data, entity) -- runs every frame while hat is worn
+        end,
+        on_load = function(lobby, data, entity) -- runs when cosmetic is loaded, can be used to load entities etc.
+        end,
+        on_unload = function(lobby, data, entity) -- runs when cosmetic is unloaded, can be used to unload entities etc.
+        end,
+        on_arena_unlocked = function(lobby, data, entity) -- runs when player is unlocked in arena.
+        end,
+    }
+}
+
+cosmetic_types = {
+    hat = {
+        max_stack = 1, -- how many items of this type can be worn at the same time.
+    }
 }

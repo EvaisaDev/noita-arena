@@ -233,14 +233,14 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 0.7,
-    required_online_version = 1.651,
+    version = 0.72,
+    required_online_version = 1.7,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
     end,
     version_flavor_text = "$arena_dev",
     spectator_unfinished_warning = true,
-    disable_spectator_system = not ModSettingGet("evaisa.arena.spectator_unstable"),
+    disable_spectator_system = true, --not ModSettingGet("evaisa.arena.spectator_unstable"),
     enable_presets = true,
     binding_register = function(bindings)
         print("Registering bindings for Noita Arena")
@@ -847,14 +847,14 @@ ArenaMode = {
                         local scale = 1
 
                         GuiZSetForNextWidget(gui, -5605)
-                        local icon_width, icon_height = GuiGetImageDimensions(gui, map.thumbnail)
+                        local icon_width, icon_height = GuiGetImageDimensions(gui, map.thumbnail or "mods/evaisa.arena/content/arenas/default_thumbnail.png")
                         GuiImage(gui, new_id("map_list_stuff"), 0, 0, map.frame, 1, scale, scale)
                         GuiZSetForNextWidget(gui, -5600)
                         local alpha = 1
                         if(is_blacklisted)then
                             alpha = 0.4
                         end
-                        GuiImage(gui, new_id("map_list_stuff"), -(icon_width * scale) - 2.5, 1, map.thumbnail, alpha, scale * 0.99, scale * 0.99)
+                        GuiImage(gui, new_id("map_list_stuff"), -(icon_width * scale) - 2.5, 1, map.thumbnail or "mods/evaisa.arena/content/arenas/default_thumbnail.png", alpha, scale * 0.99, scale * 0.99)
                         
                         local visible, clicked, _, hovered = get_widget_info(gui)
 
@@ -1552,7 +1552,31 @@ ArenaMode = {
             end
         end
 
+        if(input:WasKeyPressed("f10"))then
+            if(steamutils.IsOwner(lobby))then
+                ArenaGameplay.AddRound(lobby)
+                delay.new(5, function()
+                    ArenaGameplay.LoadLobby(lobby, data, false)
+                    networking.send.load_lobby(lobby)
+                end)
+            end
+        elseif(input:WasKeyPressed("f9"))then
+            local item_data = player.GetItemData()
+            if(item_data ~= nil)then
+                local data = { item_data, false, GameHasFlagRun( "arena_unlimited_spells" ) }
+                
+                local encodedData, err = zstd:compress(bitser.dumps(data))
+                -- write to file
+                if(err)then
+                    print("Error compressing item data: " .. err)
+                else
+                    local file = io.open("item_data.txt", "w")
+                    file:write(encodedData)
+                    file:close()
+                end
 
+            end
+        end
         --[[if(input:WasKeyPressed("f10"))then
             local world_state = GameGetWorldStateEntity()
 

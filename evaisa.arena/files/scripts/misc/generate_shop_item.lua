@@ -4,14 +4,12 @@ dofile("mods/evaisa.arena/files/scripts/misc/random_action.lua")
 
 function generate_shop_item( x, y, cheap_item, biomeid_, is_stealable )
 	
-	a, b, c, d, e, f = GameGetDateAndTimeLocal()
+	local rounds = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0
+	local seed_x, seed_y = (x * 3256) + rounds * 765 + (GameGetFrameNum() / 30), (y * 5326) + rounds * 123 + (GameGetFrameNum() / 20)
 	if(GameHasFlagRun("shop_sync"))then
-		local_seed = tonumber(GlobalsGetValue("world_seed", "0")) or 0
-		SetRandomSeed( (x * 325) + local_seed, (y * 453) + local_seed)
-	else
-		SetRandomSeed( x + GameGetFrameNum() + GameGetRealWorldTimeSinceStarted() + a + b + c + d + e + f, y  + GameGetFrameNum() + GameGetRealWorldTimeSinceStarted() + a + b + c + d + e + f)
+        seed_x, seed_y = (x * 3256) + rounds * 765, (y * 5326) + rounds * 123
 	end
-	
+	SetRandomSeed( seed_x, seed_y )
 
 
 	local biomes =
@@ -190,15 +188,12 @@ end
 ------------ generate shop wand -----------------------------------------------
 
 function generate_shop_wand( x, y, cheap_item, biomeid_ )
-	a, b, c, d, e, f = GameGetDateAndTimeLocal()
-
-	-- this makes the shop items deterministic
+	local rounds = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0
+	local seed_x, seed_y = (x * 3256) + rounds * 765 + (GameGetFrameNum() / 30), (y * 5326) + rounds * 123 + (GameGetFrameNum() / 20)
 	if(GameHasFlagRun("shop_sync"))then
-		local_seed = tonumber(GlobalsGetValue("world_seed", "0")) or 0
-		SetRandomSeed( (x * 325) + local_seed, (y * 453) + local_seed)
-	else
-		SetRandomSeed( x + GameGetFrameNum() + GameGetRealWorldTimeSinceStarted() + a + b + c + d + e + f, y  + GameGetFrameNum() + GameGetRealWorldTimeSinceStarted() + a + b + c + d + e + f)
+        seed_x, seed_y = (x * 3256) + rounds * 765, (y * 5326) + rounds * 123
 	end
+	SetRandomSeed( seed_x, seed_y )
 
 	local biomes =
 	{
@@ -352,8 +347,6 @@ function generate_shop_potion( x, y, biome_id )
 	local offsetx = 6
 
 	local eid = spawn_from_list("potion_spawnlist", x, y)
-
-	print(tostring(eid))
 
 	--if(eid == nil)then return end
 	

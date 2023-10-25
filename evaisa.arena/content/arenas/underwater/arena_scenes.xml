@@ -1,5 +1,0 @@
-<PixelScenes>
-    <mBufferedPixelScenes>
-        <PixelScene clean_area_before="0" background_filename="mods/evaisa.arena/content/arenas/underwater/underwater_background.png" colors_filename="mods/evaisa.arena/content/arenas/underwater/underwater_colors.png" material_filename="mods/evaisa.arena/content/arenas/underwater/underwater_materials.png" pos_x="-512" pos_y="-512" skip_biome_checks="1" ></PixelScene>
-    </mBufferedPixelScenes>
-</PixelScenes>

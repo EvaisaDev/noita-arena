@@ -42,6 +42,9 @@ function damage_received( damage, message, entity_thats_responsible, is_fatal, p
     local entity_id = GetUpdatedEntityID()
     local x, y = EntityGetTransform(entity_id)
     local damage_details = GetDamageDetails()
+
+    --print(json.stringify(damage_details))
+
     --[[
         {
             ragdoll_fx = 1 

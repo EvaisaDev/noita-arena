@@ -14,6 +14,11 @@
   ></HotspotComponent>
 
   <HotspotComponent
+    _tags="hat"
+    sprite_hotspot_name="hat"
+  />
+
+  <HotspotComponent
     _tags="kick_pos"
     offset.x="0"
     offset.y="2"
@@ -199,9 +204,9 @@
   </SpriteAnimatorComponent>
 
   <SpriteComponent 
-    _tags="character,lukki_disable" 
+    _tags="character" 
     alpha="1" 
-    image_file="data/enemies_gfx/player.xml" 
+    image_file="mods/evaisa.arena/files/gfx/player.xml" 
     next_rect_animation="" 
     offset_x="6" 
     offset_y="14" 
@@ -209,18 +214,6 @@
     z_index="0.6"
   ></SpriteComponent>
   
-  <SpriteComponent 
-    _tags="character,lukki_enable"
-	_enabled="0"
-    alpha="1" 
-    image_file="data/enemies_gfx/player_lukky.xml" 
-    next_rect_animation="" 
-    offset_x="6" 
-    offset_y="14" 
-    rect_animation="walk" 
-    z_index="0.6"
-  ></SpriteComponent>
-
   <HotspotComponent
     _tags="right_arm_root"
     sprite_hotspot_name="right_arm_start"
@@ -433,85 +426,6 @@
 		name="kantele_song_pos"
 		value_int="0"
 	></VariableStorageComponent>
-	
-	<SpriteComponent 
-		_tags="character,player_amulet" 
-		alpha="1" 
-		image_file="data/enemies_gfx/player_amulet.xml" 
-		next_rect_animation="" 
-		offset_x="6" 
-		offset_y="14" 
-		rect_animation="walk" 
-		z_index="0.59"
-		_enabled="0"
-	></SpriteComponent>
-	
-	<SpriteComponent 
-		_tags="character,player_amulet_gem" 
-		alpha="1" 
-		image_file="data/enemies_gfx/player_amulet_gem.xml" 
-		next_rect_animation="" 
-		offset_x="6" 
-		offset_y="14" 
-		rect_animation="walk" 
-		z_index="0.58"
-		_enabled="0"
-	></SpriteComponent>
-	
-	<SpriteComponent 
-		_tags="character,player_hat"
-		alpha="1" 
-		image_file="data/enemies_gfx/player_hat.xml" 
-		next_rect_animation="" 
-		offset_x="6" 
-		offset_y="14" 
-		rect_animation="walk" 
-		z_index="0.59"
-		_enabled="0"
-	></SpriteComponent>
-	
-	<SpriteComponent 
-		_tags="character,player_hat2"
-		alpha="1" 
-		image_file="data/enemies_gfx/player_hat2.xml" 
-		next_rect_animation="" 
-		offset_x="6" 
-		offset_y="14" 
-		rect_animation="walk" 
-		z_index="0.58"
-		_enabled="0"
-	></SpriteComponent>
-	
-	<SpriteComponent 
-		_tags="character,player_hat2_shadow"
-		alpha="1" 
-		image_file="data/enemies_gfx/player_hat2_shadow.xml" 
-		next_rect_animation="" 
-		offset_x="6" 
-		offset_y="14" 
-		rect_animation="walk" 
-		z_index="0.58"
-		_enabled="0"
-	></SpriteComponent>
 
-	<LuaComponent
-		script_source_file="data/scripts/magic/amulet.lua"
-		execute_on_added="1"
-		remove_after_executed="1"
-		>
-	</LuaComponent>
-	
-	<LuaComponent
-		script_source_file="data/scripts/magic/player_biome_check.lua"
-		execute_every_n_frame="80"
-		>
-	</LuaComponent>
-	
-	<LuaComponent
-		script_source_file="data/scripts/magic/orb_map_init.lua"
-		execute_every_n_frame="10"
-		remove_after_executed="1"
-		>
-	</LuaComponent>
 
 </Entity>

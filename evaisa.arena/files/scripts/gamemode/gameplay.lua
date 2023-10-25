@@ -9,28 +9,150 @@ local EZWand = dofile("mods/evaisa.arena/files/scripts/utilities/EZWand.lua")
 ArenaLoadCountdown = ArenaLoadCountdown or nil
 
 ArenaGameplay = {
-    GetNumRounds = function()
-        local holyMountainCount = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0
+    UpdateCosmetics = function(lobby, data, callback, entity, is_client)
+        for k, v in ipairs(cosmetics)do
+            local can_run = false
+            if(not is_client and ((v.unlock_flag and GameHasFlagRun(v.unlock_flag)) or (v.try_force_enable ~= nil and v.try_force_enable(lobby, data))))then
+                can_run = true
+            elseif(is_client and entity and data.players[EntityGetName(entity)] ~= nil and data.players[EntityGetName(entity)].cosmetics[v.id])then
+                can_run = true
+            end
+
+            if(can_run and not is_client and not data.cosmetics[v.id])then
+                data.cosmetics[v.id] = true
+                --print("Cosmetic enabled: "..v.id)
+                if(entity)then
+                    ArenaGameplay.UpdateCosmetics(lobby, data, "load", entity, is_client)
+                end
+            elseif(not can_run and not is_client and data.cosmetics[v.id])then
+                data.cosmetics[v.id] = nil
+                --print("Cosmetic disabled: "..v.id)
+                if(entity)then
+                    ArenaGameplay.UpdateCosmetics(lobby, data, "unload", entity, is_client)
+                end
+            end
+
+
+            if(callback == "try_unlock")then
+                if(not is_client and v.try_unlock ~= nil)then
+                    local unlock_attempt = v.try_unlock(lobby, data)
+                    if(unlock_attempt and v.unlock_flag ~= nil and not GameHasFlagRun(v.unlock_flag))then
+                        GameAddFlagRun(v.unlock_flag)
+                    end
+                end
+            elseif(callback == "update")then
+
+                if(entity and v.on_update ~= nil and can_run)then
+                    v.on_update(lobby, data, entity)
+                end
+            elseif(callback == "load")then
+                if(entity and v.on_load ~= nil and can_run)then
+                    if(v.sprite_sheet)then
+                        EntityAddComponent2(entity, "SpriteComponent", {
+                            _tags="character",
+                            alpha=1, 
+                            image_file=v.sprite_sheet, 
+                            next_rect_animation="", 
+                            offset_x=6, 
+                            offset_y=14, 
+                            rect_animation="walk", 
+                            z_index=0.6,
+                        })
+                    end
+                    if(v.hat_sprite)then
+                        local offset_x, offset_y = 0, 0
+                        if(v.hat_offset)then
+                            offset_x = v.hat_offset.x or 0
+                            offset_y = v.hat_offset.y or 0
+                        end
+                        local hat_entity = EntityCreateNew(v.id)
+                        EntityAddChild(entity, hat_entity)
+                        EntityAddComponent2(hat_entity, "SpriteComponent", {
+                            _tags="character",
+                            alpha=1, 
+                            image_file=v.hat_sprite, 
+                            next_rect_animation="", 
+                            offset_x=offset_x, 
+                            offset_y=offset_y, 
+                            rect_animation="walk", 
+                            z_index=0.4,
+                        })
+                        EntityAddComponent2(hat_entity, "InheritTransformComponent", {
+                            parent_hotspot_tag="hat"
+                        })
+                    end
+                    v.on_load(lobby, data, entity)
+                end
+            elseif(callback == "unload")then
+                if(entity and v.on_unload ~= nil)then
+                    if(v.sprite_sheet)then
+                        local sprite_components = EntityGetComponent(entity, "SpriteComponent") or {}
+                        for k, component in ipairs(sprite_components)do
+                            if(ComponentGetValue(component, "image_file") == v.sprite_sheet)then
+                                EntityRemoveComponent(entity, component)
+                            end
+                        end
+                    end
+                    if(v.hat_sprite)then
+                        local children = EntityGetAllChildren(entity) or {}
+                        for k, child in ipairs(children)do
+                            local name = EntityGetName(child)
+                            if(name == v.id)then
+                                EntityKill(child)
+                                print("Killed child: "..name)
+                            end
+                        end
+                    end
+                    v.on_unload(lobby, data, entity)
+                end
+            elseif(callback == "arena_unlocked" and can_run)then
+                if(entity and v.on_arena_unlocked ~= nil)then
+                    v.on_arena_unlocked(lobby, data, entity)
+                end
+            end
+        end
+    end,
+    GetLocalCosmetics = function(lobby, data)
+        local cosmetics = {}
+        for k, v in ipairs(cosmetics)do
+            if(((v.try_force_enable ~= nil and v.try_force_enable(lobby, data)) or data.client.cosmetics[v.id]))then
+                table.insert(cosmetics, v.id)
+            end
+        end
+    end,
+    GetNumRounds = function(lobby)
+        local holyMountainCount = tonumber(GlobalsGetValue("holyMountainCount", "0"))
         return holyMountainCount
     end,
     GetPlayerIndex = function(lobby)
+        local player_ids = {}
         local members = steamutils.getLobbyMembers(lobby)
         for i, member in ipairs(members) do
-            if(member.id == steam.user.getSteamID())then
+            table.insert(player_ids, tostring(member.id))
+        end
+        table.sort(player_ids, function(a, b) return a < b end)
+        local local_player = tostring(steam.user.getSteamID())
+        for i, player_id in ipairs(player_ids) do
+            --print(player_id)
+            if(player_id == local_player)then
+                --GamePrint("player index: "..tostring(i))
                 return i
             end
         end
         return 1
     end,
-    AddRound = function()
-        local holyMountainCount = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0
-        holyMountainCount = holyMountainCount + 1
-        GlobalsSetValue("holyMountainCount", tostring(holyMountainCount))
+    AddRound = function(lobby)
+        if(steamutils.IsOwner(lobby))then
+            local rounds = ArenaGameplay.GetNumRounds(lobby)
+            rounds = tonumber(rounds) or 0
+            rounds = rounds + 1
+            networking.send.update_round(lobby, rounds)
+            GlobalsSetValue("holyMountainCount", tostring(rounds))
+            steam.matchmaking.setLobbyData(lobby, "holyMountainCount", tostring(rounds))
+        end
     end,
     RemoveRound = function()
-        local holyMountainCount = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0
-        holyMountainCount = holyMountainCount - 1
-        GlobalsSetValue("holyMountainCount", tostring(holyMountainCount))
+
     end,
     GetSpawnPoints = function()
         local spawns = {}
@@ -49,8 +171,8 @@ ArenaGameplay = {
         end
         return spawns
     end,
-    GetRoundTier = function()
-        local rounds = ArenaGameplay.GetNumRounds()
+    GetRoundTier = function(lobby)
+        local rounds = ArenaGameplay.GetNumRounds(lobby)
         -- how many rounds it takes for the shop level to increment
         local shop_scaling = tonumber(GlobalsGetValue("shop_scaling", "2"))
         -- how much the shop level increments by
@@ -83,7 +205,7 @@ ArenaGameplay = {
                 end
             end,
             ["best_of"] = function(value)
-                local current_round = ArenaGameplay.GetNumRounds() + 1
+                local current_round = ArenaGameplay.GetNumRounds(lobby)
                 if(current_round >= value)then
                     local members = steamutils.getLobbyMembers(lobby)
                     local best_player = nil
@@ -119,7 +241,6 @@ ArenaGameplay = {
         end
     end,
     SendGameData = function(lobby, data)
-        steam.matchmaking.setLobbyData(lobby, "holyMountainCount", tostring(ArenaGameplay.GetNumRounds()))
         local ready_players = {}
         local members = steamutils.getLobbyMembers(lobby)
         for k, member in pairs(members) do
@@ -251,7 +372,7 @@ ArenaGameplay = {
         end
     end,
     ResetEverything = function(lobby)
-        local player = player.Get()
+        local player_entity = player.Get()
 
         dofile_once("data/scripts/perks/perk_list.lua")
         for i, perk_data in ipairs(perk_list) do
@@ -272,7 +393,7 @@ ArenaGameplay = {
         if (player ~= nil) then
             EntityKill(player)
         end
-
+        GameRemoveFlagRun("was_last_ready")
         GameRemoveFlagRun( "arena_unlimited_spells" )
         GlobalsSetValue("TEMPLE_SHOP_ITEM_COUNT", "5")
         GlobalsSetValue("TEMPLE_PERK_REROLL_COUNT", "0")
@@ -383,11 +504,7 @@ ArenaGameplay = {
         return nil
     end,
     TotalPlayers = function(lobby)
-        local amount = 0
-        for k, v in pairs(steamutils.getLobbyMembers(lobby)) do
-            amount = amount + 1
-        end
-        return amount
+        return steamutils.getPlayerCount(lobby, false)
     end,
     ReadyCounter = function(lobby, data)
         data.ready_counter = counter.create(GameTextGetTranslatedOrNot("$arena_players_ready"), function()
@@ -420,6 +537,8 @@ ArenaGameplay = {
 
         player.Deserialize(data.client.serialized_player, (not data.client.player_loaded_from_data))
 
+        gameplay_handler.UpdateCosmetics(lobby, data, "load", current_player, false)
+        
         GameRemoveFlagRun("player_unloaded")
     end,
     AllowFiring = function(data)
@@ -793,6 +912,8 @@ ArenaGameplay = {
         if (alive == 1) then
             -- if we are owner, add win to tally
             if (steamutils.IsOwner(lobby)) then
+                ArenaGameplay.AddRound(lobby)
+
                 local winner_key = tostring(winner) .. "_wins"
                 local winstreak_key = tostring(winner) .. "_winstreak"
 
@@ -909,6 +1030,10 @@ ArenaGameplay = {
                 end)
             end)
         elseif (alive == 0) then
+            if (steamutils.IsOwner(lobby)) then
+                ArenaGameplay.AddRound(lobby)
+            end
+
 
             local win_condition_user = ArenaGameplay.CheckWinCondition(lobby, data)
 
@@ -1047,6 +1172,10 @@ ArenaGameplay = {
         end
     end,
     LoadLobby = function(lobby, data, show_message, first_entry)
+
+        -- get rounds
+        local rounds = ArenaGameplay.GetNumRounds(lobby)
+
         if(not steamutils.IsSpectator(lobby))then
             local catchup_mechanic = GlobalsGetValue("perk_catchup", "losers")
             if(catchup_mechanic == "everyone")then
@@ -1073,6 +1202,7 @@ ArenaGameplay = {
         GameRemoveFlagRun("can_save_player")
         GameRemoveFlagRun("countdown_completed")
         GameRemoveFlagRun("round_finished")
+        GameRemoveFlagRun("was_last_ready")
         GlobalsSetValue("smash_knockback", "1" )
         GlobalsSetValue("smash_knockback_dummy", "1")
         show_message = show_message or false
@@ -1167,7 +1297,6 @@ ArenaGameplay = {
                 if(GameHasFlagRun("picked_health"))then
                     GameAddFlagRun("skip_health")
                 end
-                ArenaGameplay.RemoveRound()
             else
                 if(GlobalsGetValue("upgrades_system", "false") == "true" and GameHasFlagRun("pick_upgrade"))then
                     data.upgrade_system = upgrade_system.create(3, function(upgrade)
@@ -1178,11 +1307,10 @@ ArenaGameplay = {
                 GameRemoveFlagRun("picked_perk")
             end
         end
-        -- get rounds
-        local rounds = ArenaGameplay.GetNumRounds()
+
 
         -- Give gold
-        local rounds_limited = ArenaGameplay.GetRoundTier() --math.max(0, math.min(math.ceil(rounds / 2), 7))
+        local rounds_limited = ArenaGameplay.GetRoundTier(lobby) --math.max(0, math.min(math.ceil(rounds / 2), 7))
 
         local extra_gold_count = tonumber( GlobalsGetValue( "EXTRA_MONEY_COUNT", "0" ) )
 
@@ -1236,12 +1364,10 @@ ArenaGameplay = {
             end
         end
 
-        -- increment holy mountain count
-
-        ArenaGameplay.AddRound()
 
         if(not steamutils.IsSpectator(lobby))then
             RunWhenPlayerExists(function()
+                local player_entity = player.Get()
                 if(not first_entry)then
                     local was_winner = GameHasFlagRun("arena_winner")
                     local was_loser = GameHasFlagRun("arena_loser")
@@ -1345,6 +1471,10 @@ ArenaGameplay = {
         -- print member data
         --print(json.stringify(data))
     end,
+    round_to_decimal = function(num, numDecimalPlaces)
+        local mult = 10^(numDecimalPlaces or 0)
+        return math.floor(num * mult + 0.5) / mult
+    end,
     LoadArena = function(lobby, data, show_message, map)
         if(not steamutils.IsSpectator(lobby))then
             ArenaGameplay.SavePlayerData(lobby, data, true)
@@ -1424,16 +1554,14 @@ ArenaGameplay = {
             end
         else
             local map_picker = GlobalsGetValue("map_picker", "random")
-            for i = 1, 30 do
-                local seed = data.random.range(1, 2)
-                --print("test: "..seed)
-            end
+            
             if(map_picker == "random")then
-                SetRandomSeed(seed, seed)
+                SetRandomSeed(ArenaGameplay.GetNumRounds(lobby), (tonumber(GlobalsGetValue("world_seed", "0")) or 1) + GameGetFrameNum())
                 arena = available_map_list[Random(1, #available_map_list)]
             elseif(map_picker == "ordered")then
                 local last_arena = data.current_arena and data.current_arena.id or nil
-                if(arena == nil)then
+                print("Last arena: "..tostring(last_arena) )
+                if(last_arena == nil)then
                     arena = available_map_list[1]
                 else
                     -- get the next arena, loop around if past last
@@ -1441,6 +1569,7 @@ ArenaGameplay = {
                     local next_arena = nil
                     for k, v in ipairs(available_map_list)do
                         if(v.id == last_arena)then
+
                             next_arena = available_map_list[k + 1]
                             break
                         end
@@ -1450,6 +1579,7 @@ ArenaGameplay = {
                     end
                     arena = next_arena
                 end
+                print("new arena: "..tostring(arena.id))
             end
         end
         data.current_arena = arena
@@ -1509,8 +1639,16 @@ ArenaGameplay = {
             GameRemoveFlagRun("ready_check")
         end
 
+        local ready_count = ArenaGameplay.ReadyAmount(data, lobby)
+        local total_count = ArenaGameplay.TotalPlayers(lobby)
+
         networking.send.ready(lobby, ready, silent or false)
         data.client.ready = ready
+
+        if(total_count > 1 and ready_count == (total_count - 1) and data.client.ready)then
+            GameAddFlagRun("was_last_ready")
+        end
+
         if (steamutils.IsOwner(lobby)) then
             steam.matchmaking.setLobbyData(lobby, tostring(steam.user.getSteamID()) .. "_ready", tostring(ready))
         end
@@ -1605,7 +1743,9 @@ ArenaGameplay = {
                             for i = 1, 3 do
                                 local map_id = nil
                                 while(map_id == nil or picked_maps[map_id] ~= nil)do
-                                    map_id = available_map_list[data.random.range(1, #available_map_list)].id
+                                    local index = data.random.range(1, #available_map_list)
+                                    print(tostring(index))
+                                    map_id = available_map_list[index].id
                                 end
                                 table.insert(map_ids, map_id)
                                 picked_maps[map_id] = true
@@ -1655,6 +1795,11 @@ ArenaGameplay = {
             -- tick
             local frames_left = frames - finish_time
 
+            if(data.vote_loop.vote_finished and frames_left > 0)then
+                frames = finish_time
+                frames_left = 0
+            end
+
             if(frames_left < 0)then
                 frames_left = 0
             end
@@ -1683,12 +1828,59 @@ ArenaGameplay = {
                         if(highest_vote_id == nil)then
                             highest_vote_id = maps[data.random.range(1, #maps)]
                         end
+
+                        if(not was_tie)then
+                            data.vote_loop.frames = 30
+                        end
                         
                         data.vote_loop.winner = highest_vote_id
                         data.vote_loop.was_tie = was_tie
                         networking.send.map_vote_finish(lobby, highest_vote_id, was_tie)
                     end
                     data.vote_loop.vote_finished = true
+                else
+                    local total_votes = 0
+                    for k, v in pairs(data.map_vote)do
+                        total_votes = total_votes + v
+                    end
+                    -- check if everyone voted
+                    local total_players = ArenaGameplay.TotalPlayers(lobby)
+                    if(total_votes >= total_players)then
+
+                        if(not data.vote_loop.vote_finished)then
+                            local highest_vote = 0
+                            local highest_vote_id = nil
+                            local was_tie = false
+                            for k, v in pairs(data.map_vote)do
+                                if(v > highest_vote)then
+                                    highest_vote = v
+                                    highest_vote_id = k
+                                    was_tie = false
+                                elseif(v == highest_vote)then
+                                    if(data.random.range(1, 2) == 1)then
+                                        highest_vote = v
+                                        highest_vote_id = k
+                                    end
+                                    was_tie = true
+                                end
+                            end
+            
+                            if(highest_vote_id == nil)then
+                                highest_vote_id = maps[data.random.range(1, #maps)]
+                            end
+
+                            if(not was_tie)then
+                                data.vote_loop.frames = 30
+                            else
+                                data.vote_loop.frames = finish_time
+                            end
+                            
+                            data.vote_loop.winner = highest_vote_id
+                            data.vote_loop.was_tie = was_tie
+                            networking.send.map_vote_finish(lobby, highest_vote_id, was_tie)
+                        end
+                        data.vote_loop.vote_finished = true
+                    end
                 end
             end
 
@@ -1818,17 +2010,21 @@ ArenaGameplay = {
     
 
                 local map_header = GameTextGetTranslatedOrNot("$arena_map_vote_header")
+                if(data.vote_loop.vote_finished)then
+                    map_header = GameTextGetTranslatedOrNot("$arena_map_vote_completed")
+                end
                 local map_header_width, map_header_height = GuiGetTextDimensions(vote_gui, map_header, 1)
                 GuiZSetForNextWidget(vote_gui, -11)
                 GuiText(vote_gui, (screen_w / 2) - (map_header_width / 2), (screen_h / 2) - (max_height / 2) - 30, map_header)
 
                 local timer_text = string.format(GameTextGetTranslatedOrNot("$arena_map_vote_timer"), tostring(math.floor(frames_left / 60)))
                 local timer_text_width, timer_text_height = GuiGetTextDimensions(vote_gui, timer_text, 1)
-                GuiZSetForNextWidget(vote_gui, -11)
-                GuiColorSetForNextWidget(vote_gui, 0.6, 0.6, 0.6, 1)
-                
-                GuiText(vote_gui, (screen_w / 2) - (timer_text_width / 2), (screen_h / 2) + (max_height / 2) + 7 + (last_hovered ~= nil and (timer_text_height + 1) or 0), timer_text)
-
+                if(not data.vote_loop.vote_finished)then
+                    GuiZSetForNextWidget(vote_gui, -11)
+                    GuiColorSetForNextWidget(vote_gui, 0.6, 0.6, 0.6, 1)
+                    
+                    GuiText(vote_gui, (screen_w / 2) - (timer_text_width / 2), (screen_h / 2) + (max_height / 2) + 7 + (last_hovered ~= nil and (timer_text_height + 1) or 0), timer_text)
+                end
                 local x = (screen_w / 2) - (total_card_width / 2)
                 
                 for i = 1, #all_vote_maps do
@@ -1841,7 +2037,7 @@ ArenaGameplay = {
                     end
                     
                     local frame_width, frame_height = GuiGetImageDimensions(vote_gui, v.frame, 1)
-                    local thumbnail_width, thumbnail_height = GuiGetImageDimensions(vote_gui, v.thumbnail, 1)
+                    local thumbnail_width, thumbnail_height = GuiGetImageDimensions(vote_gui, v.thumbnail or "mods/evaisa.arena/content/arenas/default_thumbnail.png", 1)
 
                     local card_y = (screen_h / 2) - (frame_height / 2)
                     local card_x = x + ((i - 1) * (frame_width + distance_between_cards))
@@ -1868,9 +2064,9 @@ ArenaGameplay = {
                     GuiZSetForNextWidget(vote_gui, -10)
                     GuiImage(vote_gui, new_id(), card_x, card_y, v.frame, 1, size, size)
                     GuiZSetForNextWidget(vote_gui, -9)
-                    GuiImage(vote_gui, new_id(), (card_x + (frame_width / 2)) - (thumbnail_width / 2), (card_y + (frame_height / 2)) - (thumbnail_height / 2), v.thumbnail, 1, size, size)
+                    GuiImage(vote_gui, new_id(), (card_x + (frame_width / 2)) - (thumbnail_width / 2), (card_y + (frame_height / 2)) - (thumbnail_height / 2), v.thumbnail or "mods/evaisa.arena/content/arenas/default_thumbnail.png", 1, size, size)
                     local clicked, _, hovered = GuiGetPreviousWidgetInfo(vote_gui)
-                    if(frames_left > 0)then
+                    if(frames_left > 0 and not data.vote_loop.vote_finished)then
                         if(hovered)then
                             last_hovered = i
                             local text_width = GuiGetTextDimensions(vote_gui, v.description)
@@ -1914,7 +2110,7 @@ ArenaGameplay = {
             networking.send.character_position(lobby, data, true)
         --end
        -- networking.send.wand_update(lobby, data, nil, nil, true)
-        networking.send.input_update(lobby, true)
+        networking.send.input(lobby, data, true)
         networking.send.animation_update(lobby, data, true)
         if(GameGetFrameNum() % 15 == 0)then
             networking.send.player_data_update(lobby, data, true)
@@ -1983,6 +2179,16 @@ ArenaGameplay = {
             data.countdown = nil
             --message_handler.send.Unlock(lobby)
             networking.send.unlock(lobby)
+
+            local player_entity = player.Get()
+            gameplay_handler.UpdateCosmetics(lobby, data, "arena_unlocked", player_entity, false)
+
+            for k, v in pairs(data.players) do
+                if(v.entity ~= nil)then
+                    gameplay_handler.UpdateCosmetics(lobby, data, "arena_unlocked", v.entity, true)
+                end
+            end
+
             GameAddFlagRun("countdown_completed")
             if(not steamutils.IsSpectator(lobby))then
                 player.Immortal(false)
@@ -2053,64 +2259,95 @@ ArenaGameplay = {
         return nil
     end,
     ArenaUpdate = function(lobby, data)
-        if (data.preparing) then
-            local rng = dofile_once("mods/evaisa.arena/lib/rng.lua")
-            local world_seed = tonumber(steam.matchmaking.getLobbyData(lobby, "seed") or 1)
-            local spawn_seed = world_seed + (ArenaGameplay.GetNumRounds() * 62362)
-            local spawn_rng = rng.new(spawn_seed)
-            local spawn_points = ArenaGameplay.GetSpawnPoints()
-            -- shuffle spawn points using spawn_rng.range(a, b)
-            for i = #spawn_points, 2, -1 do
-                local j = spawn_rng.range(1, i)
-                spawn_points[i], spawn_points[j] = spawn_points[j], spawn_points[i]
-            end
-
-
-            print("Spawn RNG: "..tostring(spawn_seed))
-
-
-            if (spawn_points ~= nil and #spawn_points > 0 and data.current_arena ~= nil) then
-                data.ready_for_zone = true
-
-                local spawn_index = math.floor(ArenaGameplay.GetPlayerIndex(lobby) % #spawn_points)
-
-                if(spawn_index < 1)then
-                    spawn_index = 1
-                end
-
-                local spawn_point = spawn_points[spawn_index]
-                local x, y = EntityGetTransform(spawn_point)
-
-                local spawn_loaded = DoesWorldExistAt(x - 100, y - 100, x + 100, y + 100)
-
-                player.Move(x, y)
-
-                arena_log:print("Arena loaded? " .. tostring(spawn_loaded))
-
-                local in_bounds = ArenaGameplay.IsInBounds(0, 0, data.current_arena.zone_size)
-
-                if (not in_bounds) then
-                    arena_log:print("Game tried to spawn player out of bounds, retrying...")
-                    GamePrint("Game attempted to spawn you out of bounds, retrying...")
-                end
-
-                if (spawn_loaded and in_bounds) then
-                    data.preparing = false
-
-
-                    --GamePrint("Spawned!!")
-
-                    if (not steamutils.IsOwner(lobby)) then
-                        networking.send.arena_loaded(lobby)
-                        --message_handler.send.Loaded(lobby)
-                    end
-
-                    --message_handler.send.Health(lobby)
-                    networking.send.health_update(lobby, data, true)
+        if (data.preparing and data.current_arena ~= nil) then
+            local map_size = data.current_arena.zone_size
+            --game_funcs.LoadRegion(0, 0, map_size * 2, map_size * 2)
+            data.load_frames = data.load_frames or 0
+            if(data.load_frames < 30)then
+                data.load_frames = data.load_frames + 1
+                
+                local map_size = data.current_arena.zone_size
+                if(not data.chunkloaders_initialized)then
+                    data.chunkloaders_initialized = true
+                    data.spawn_loader = EntityCreateNew("chunk_loader")
+                    EntityAddComponent2(data.spawn_loader, "StreamingKeepAliveComponent")
+                    EntityAddComponent2(data.spawn_loader, "HitboxComponent", {
+                        aabb_min_x=-map_size,
+                        aabb_min_y=-map_size,
+                        aabb_max_x=map_size,
+                        aabb_max_y=map_size,
+                    })
                 end
             else
-                player.Move(data.spawn_point.x, data.spawn_point.y)
+                local rng = dofile_once("mods/evaisa.arena/lib/rng.lua")
+                local world_seed = tonumber(GlobalsGetValue("world_seed", "0"))
+                local spawn_seed = world_seed + (ArenaGameplay.GetNumRounds(lobby) * 62362)
+                local spawn_rng = rng.new(spawn_seed)
+                local spawn_points = ArenaGameplay.GetSpawnPoints()
+                -- shuffle spawn points using spawn_rng.range(a, b)
+                for i = #spawn_points, 2, -1 do
+                    local j = spawn_rng.range(1, i)
+                    spawn_points[i], spawn_points[j] = spawn_points[j], spawn_points[i]
+                end
+
+                -- shuffle again for good measure
+                for i = #spawn_points, 2, -1 do
+                    local j = spawn_rng.range(1, i)
+                    spawn_points[i], spawn_points[j] = spawn_points[j], spawn_points[i]
+                end
+
+    
+                --print("Spawn RNG: "..tostring(spawn_seed))
+                --print("spawnpoint_count: " .. tostring(#spawn_points))
+    
+    
+                if (spawn_points ~= nil and #spawn_points > 0) then
+                    data.ready_for_zone = true
+    
+                    local spawn_index = math.floor(ArenaGameplay.GetPlayerIndex(lobby) % #spawn_points)
+    
+                    if(spawn_index < 1)then
+                        spawn_index = 1
+                    end
+    
+                    local spawn_point = spawn_points[spawn_index]
+                    local x, y = EntityGetTransform(spawn_point)
+    
+                    local spawn_loaded = DoesWorldExistAt(x - 100, y - 100, x + 100, y + 100)
+    
+                    player.Move(x, y)
+    
+                    arena_log:print("Arena loaded? " .. tostring(spawn_loaded))
+    
+                    local in_bounds = ArenaGameplay.IsInBounds(0, 0, data.current_arena.zone_size)
+    
+                    if (not in_bounds) then
+                        arena_log:print("Game tried to spawn player out of bounds, retrying...")
+                        GamePrint("Game attempted to spawn you out of bounds, retrying...")
+                    end
+    
+                    if (spawn_loaded and in_bounds) then
+                        data.preparing = false
+                        data.chunkloaders_initialized = false
+                        if(EntityGetIsAlive(data.spawn_loader))then
+                            EntityKill(data.spawn_loader)
+                        end
+                        data.load_frames = 0
+                        --GamePrint("Spawned!!")
+    
+                        if (not steamutils.IsOwner(lobby)) then
+                            networking.send.arena_loaded(lobby)
+                            --message_handler.send.Loaded(lobby)
+                        end
+    
+                        --message_handler.send.Health(lobby)
+                        networking.send.health_update(lobby, data, true)
+                    end
+                else
+                    player.Move(data.spawn_point.x, data.spawn_point.y)
+                end
             end
+
         end
         local player_entities = {}
         for k, v in pairs(data.players) do
@@ -2139,6 +2376,7 @@ ArenaGameplay = {
                 --message_handler.send.StartCountdown(lobby)
                 networking.send.start_countdown(lobby)
                 ArenaGameplay.FightCountdown(lobby, data)
+                networking.send.unlock(lobby)
             end
         end
         if (data.countdown ~= nil) then
@@ -2162,9 +2400,7 @@ ArenaGameplay = {
                 networking.send.wand_update(lobby, data, nil, true)
                 networking.send.switch_item(lobby, data, nil, true)
             end]]
-            if (GameGetFrameNum() % 2 == 0 and GameHasFlagRun("countdown_completed")) then
-                networking.send.unlock(lobby)
-            end
+
 
 
             --message_handler.send.SwitchItem(lobby, data)
@@ -2176,7 +2412,7 @@ ArenaGameplay = {
             end
             --message_handler.send.AimUpdate(lobby)
             --message_handler.send.SyncControls(lobby, data)
-            networking.send.input_update(lobby)
+            networking.send.input(lobby, data)
 
             ArenaGameplay.CheckFiringBlock(lobby, data)
         end
@@ -2226,7 +2462,33 @@ ArenaGameplay = {
         end
         return alive_players
     end,
+    GetActionInfo = function(id)
+        if(card_action_list == nil)then
+            card_action_list = {}
+            dofile("data/scripts/gun/gun_actions.lua")
+            for k, v in ipairs(actions)do
+                card_action_list[v.id] = v
+            end
+            return card_action_list[id] or nil
+        else
+            return card_action_list[id] or nil
+        end
+
+
+    end,
     Update = function(lobby, data)
+        
+        local player_entity = player.Get()
+
+        if(player_entity ~= nil)then
+            gameplay_handler.UpdateCosmetics(lobby, data, "try_unlock", player_entity, false)
+            gameplay_handler.UpdateCosmetics(lobby, data, "update", player_entity, false)
+            for k, v in pairs(data.players) do
+                if(v.entity ~= nil)then
+                    gameplay_handler.UpdateCosmetics(lobby, data, "update", v.entity, true)
+                end
+            end
+        end
         SpectatorMode.SpectateUpdate(lobby, data)
 
         if(data.upgrade_system ~= nil and not IsPaused())then
@@ -2234,25 +2496,37 @@ ArenaGameplay = {
         end
         
 
-        local spells = EntityGetWithTag("card_action")
-        for k, card in ipairs(spells)do
-            if(not EntityHasTag(card, "patched_unlimited"))then
-                local root = EntityGetRootEntity(card)
-                if((GameHasFlagRun( "arena_unlimited_spells" ) and not EntityHasTag(root, "client")) or EntityHasTag(root, "unlimited_spells"))then
-                    local ability_comp = EntityGetFirstComponentIncludingDisabled(card, "AbilityComponent")
-                    if(ability_comp ~= nil)then
-                        ComponentObjectSetValue2(ability_comp, "gunaction_config", "action_max_uses", -1)
+        if(GameHasFlagRun( "arena_unlimited_spells" ))then
+            local spells = EntityGetWithTag("card_action")
+            for k, card in ipairs(spells)do
+                if(not EntityHasTag(card, "patched_unlimited"))then
+                    local root = EntityGetRootEntity(card)
+                    if((not EntityHasTag(root, "client")) or EntityHasTag(root, "unlimited_spells"))then
+                        local item_action_comp = EntityGetFirstComponentIncludingDisabled(card, "ItemActionComponent")
+                        if(item_action_comp ~= nil)then
+                            local action_id = ComponentGetValue2(item_action_comp, "action_id")
+
+                            local action_info = ArenaGameplay.GetActionInfo(action_id)
+
+                            if(action_info and not action_info.never_unlimited)then
+
+                                local ability_comp = EntityGetFirstComponentIncludingDisabled(card, "AbilityComponent")
+                                if(ability_comp ~= nil)then
+                                    ComponentObjectSetValue2(ability_comp, "gunaction_config", "action_max_uses", -1)
+                                end
+                                local item_comp = EntityGetFirstComponentIncludingDisabled(card, "ItemComponent")
+                                if(item_comp ~= nil)then
+                                    ComponentSetValue2(item_comp, "uses_remaining", -2)
+                                end
+                            end
+                        end
                     end
-                    local item_comp = EntityGetFirstComponentIncludingDisabled(card, "ItemComponent")
-                    if(item_comp ~= nil)then
-                        ComponentSetValue2(item_comp, "uses_remaining", -2)
+                    local inventory2_comp = EntityGetFirstComponentIncludingDisabled( root, "Inventory2Component" )
+                    if( inventory2_comp ) then
+                        ComponentSetValue( inventory2_comp, "mActualActiveItem", "0" )
                     end
+                    EntityAddTag(card, "patched_unlimited")
                 end
-                local inventory2_comp = EntityGetFirstComponentIncludingDisabled( root, "Inventory2Component" )
-                if( inventory2_comp ) then
-                    ComponentSetValue( inventory2_comp, "mActualActiveItem", "0" )
-                end
-                EntityAddTag(card, "patched_unlimited")
             end
         end
  
@@ -2265,7 +2539,7 @@ ArenaGameplay = {
             local chunk_loader_x, chunk_loader_y = EntityGetTransform(v)
             game_funcs.LoadRegion(chunk_loader_x, chunk_loader_y, 1000, 1000)
         end]]
-        for k, v in pairs(data.players) do
+        --[[for k, v in pairs(data.players) do
             if (v.entity ~= nil and EntityGetIsAlive(v.entity)) then
                 local controls = EntityGetFirstComponentIncludingDisabled(v.entity, "ControlsComponent")
                 if (controls) then
@@ -2276,7 +2550,7 @@ ArenaGameplay = {
                     ComponentSetValue2(controls, "mButtonDownRightClick", false)
                 end
             end
-        end
+        end]]
 
         if (data.state == "lobby") then
             networking.send.sync_wand_stats(lobby, data, true)
@@ -2336,8 +2610,8 @@ ArenaGameplay = {
                     if(body_ids ~= nil and #body_ids > 0)then
                         local body_id = body_ids[1]
                         local x, y, r, vel_x, vel_y, vel_a =  PhysicsBodyIDGetTransform( body_id )
-
-                        networking.send.physics_update(lobby, arena_entity_id, x, y, r, vel_x, vel_y, vel_a, first_update[entity])
+                        
+                        networking.send.physics_update(lobby, arena_entity_id, gameplay_handler.round_to_decimal(x, 2), gameplay_handler.round_to_decimal(y, 2), gameplay_handler.round_to_decimal(r, 2), gameplay_handler.round_to_decimal(vel_x, 2), gameplay_handler.round_to_decimal(vel_y, 2), gameplay_handler.round_to_decimal(vel_a, 2), first_update[entity])
                     end
                 end
             end
@@ -2361,9 +2635,9 @@ ArenaGameplay = {
         if (data.state == "arena") then
             ArenaGameplay.KillCheck(lobby, data)
 
-            local player = player.Get()
+            local player_entity = player.Get()
 
-            local inventory_gui_comp = EntityGetFirstComponentIncludingDisabled(player, "InventoryGuiComponent")
+            local inventory_gui_comp = EntityGetFirstComponentIncludingDisabled(player_entity, "InventoryGuiComponent")
 
             local inventory_open = ComponentGetValue2(inventory_gui_comp, "mActive")
             if(inventory_open)then
@@ -2389,9 +2663,9 @@ ArenaGameplay = {
             data.client.projectile_rng_stack = {}
             data.client.projectiles_fired = 0]]
         else
-            local player = player.Get()
+            local player_entity = player.Get()
 
-            local inventory_gui_comp = EntityGetFirstComponentIncludingDisabled(player, "InventoryGuiComponent")
+            local inventory_gui_comp = EntityGetFirstComponentIncludingDisabled(player_entity, "InventoryGuiComponent")
 
             local inventory_open = ComponentGetValue2(inventory_gui_comp, "mActive")
             if(inventory_open)then

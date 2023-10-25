@@ -11,6 +11,8 @@ perk_get_spawn_order = function ( ignore_these_ )
         oldSetRandomSeed(local_seed, local_seed)
     end
 
+    
+
     ignore_these_ = ignore_these_ or {}
     
     for i, perk in ipairs(perk_list)do
@@ -19,7 +21,11 @@ perk_get_spawn_order = function ( ignore_these_ )
         end
     end
 
-    return old_perk_get_spawn_order(ignore_these_)
+    local out =  old_perk_get_spawn_order(ignore_these_)
+
+    SetRandomSeed = oldSetRandomSeed
+
+    return out
 end
 
 local old_perk_pickup = perk_pickup
@@ -38,7 +44,11 @@ perk_pickup = function( entity_item, entity_who_picked, item_name, do_cosmetic_f
 
     GameAddFlagRun("picked_perk")
 
-    return old_perk_pickup( entity_item, entity_who_picked, item_name, do_cosmetic_fx, kill_other_perks, no_perk_entity_ )
+    local out = old_perk_pickup( entity_item, entity_who_picked, item_name, do_cosmetic_fx, kill_other_perks, no_perk_entity_ )
+
+    SetRandomSeed = oldSetRandomSeed
+
+    return out
 end
 
 local old_perk_spawn_many = perk_spawn_many

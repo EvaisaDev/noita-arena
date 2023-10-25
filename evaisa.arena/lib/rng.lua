@@ -2,6 +2,10 @@
 
 local rng = {}
 
+local round = function(x)
+    return math.floor(x + 0.5)
+end
+
 function rng.new(seed)
     local self = {}
     self.seed = seed
@@ -14,10 +18,10 @@ function rng.new(seed)
         return self.next() / 4294967296
     end
     self.next_int = function(max)
-        return math.floor(self.next_float() * max)
+        return round(self.next_float() * max)
     end
     self.next_range = function(min, max)
-        return min + self.next_float() * (max - min)
+        return min + self.next_float() * (max - min + 1)
     end
     self.next_bool = function()
         return self.next() % 2 == 0
@@ -46,14 +50,12 @@ function rng.new(seed)
     end
     self.range = function(min, max, debug)
         local out = self.next_range(min, max)
-        if(debug)then
-            print("Getting random number between "..tostring(min).." and "..tostring(max)..": "..tostring(math.floor(out)).." ("..out..")")
-        end
         return math.floor(out)
     end
     self.float_range = function(min, max)
         return self.next_range(min, max)
     end
+    self.random = self.next_float
     return self
 end
 

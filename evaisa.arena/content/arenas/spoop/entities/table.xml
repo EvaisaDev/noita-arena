@@ -21,7 +21,7 @@
     </LuaComponent>
     <VariableStorageComponent
         name = "arena_entity_id"
-        value_float = "69"
+        value_float = "72"
         value_int = "0"
     />
 </Entity>
