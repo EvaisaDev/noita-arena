@@ -1143,14 +1143,14 @@ networking = {
                             ComponentSetValue2(damage_model_comp, "blood_multiplier", blood_multiplier)
                             for i, damage_type in ipairs(damage_types) do
                                 EntityInflictDamage(data.players[tostring(user)].entity, damage_per_type, damage_type, "damage_fake",
-                                ragdoll_fx, damage_details.impulse[1], damage_details.impulse[2], nil, damage_details.world_pos[1], damage_details.world_pos[2], damage_details.knockback_force)
+                                ragdoll_fx, damage_details.impulse[1], damage_details.impulse[2], EntityGetWithName("dummy_damage"), damage_details.world_pos[1], damage_details.world_pos[2], damage_details.knockback_force)
                             end
                             if(old_blood_multiplier ~= nil)then
                                 ComponentSetValue2(damage_model_comp, "blood_multiplier", old_blood_multiplier)
                             end
                         else
                             EntityInflictDamage(data.players[tostring(user)].entity, damage, "DAMAGE_DROWNING", "damage_fake",
-                            "NONE", 0, 0, nil)
+                            "NONE", 0, 0, EntityGetWithName("dummy_damage"))
                         end
 
                     end

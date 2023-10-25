@@ -2167,6 +2167,7 @@ ArenaGameplay = {
     end,
     FightCountdown = function(lobby, data)
         player.Unlock(data)
+        EntityCreateNew("dummy_damage")
         data.countdown = countdown.create({
             "mods/evaisa.arena/files/sprites/ui/countdown/ready.png",
             "mods/evaisa.arena/files/sprites/ui/countdown/3.png",
