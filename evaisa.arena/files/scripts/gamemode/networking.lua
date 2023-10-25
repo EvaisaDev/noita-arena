@@ -1160,6 +1160,9 @@ networking = {
 
                     if (DamageModelComp ~= nil) then
                         ComponentSetValue2(DamageModelComp, "max_hp", maxHealth)
+                        if(health <= 0)then
+                            health = 0.25
+                        end
                         ComponentSetValue2(DamageModelComp, "hp", health)
                     end
 
