@@ -1161,7 +1161,7 @@ networking = {
                     if (DamageModelComp ~= nil) then
                         ComponentSetValue2(DamageModelComp, "max_hp", maxHealth)
                         if(health <= 0)then
-                            health = 0.025
+                            health = 0.04
                         end
                         print("hp set to: " .. tostring(health))
                         ComponentSetValue2(DamageModelComp, "hp", health)

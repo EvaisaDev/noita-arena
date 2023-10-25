@@ -47,7 +47,7 @@ function playerinfo:New(user)
 
                 local damage_model_comp = EntityGetFirstComponentIncludingDisabled(self.entity, "DamageModelComponent")
                 if(damage_model_comp ~= nil)then
-                    ComponentSetValue2(damage_model_comp, "hp", 0.025)
+                    ComponentSetValue2(damage_model_comp, "hp", 0.04)
                     ComponentSetValue2(damage_model_comp, "ui_report_damage", false)
                 end
 
