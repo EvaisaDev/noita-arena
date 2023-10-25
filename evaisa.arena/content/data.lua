@@ -96,7 +96,6 @@ cosmetics = {
         on_load = function(lobby, data, entity) -- runs when cosmetic is loaded, can be used to load entities etc.
         end,
         on_unload = function(lobby, data, entity) -- runs when cosmetic is unloaded, can be used to unload entities etc.
-
         end,
         on_arena_unlocked = function(lobby, data, entity) -- runs when player is unlocked in arena.
         end,
