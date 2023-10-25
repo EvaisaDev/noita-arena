@@ -599,6 +599,13 @@ ArenaMode = {
             type = "bool",
             default = false
         }, 
+        {
+            id = "dunce",
+            name = "$arena_settings_dunce_name",
+            description = "$arena_settings_dunce_description",
+            type = "bool",
+            default = false
+        }, 
     },
     lobby_menus = {
 
@@ -1214,6 +1221,16 @@ ArenaMode = {
             GameAddFlagRun("smash_mode")
         else
             GameRemoveFlagRun("smash_mode")
+        end
+
+        local dunce = steam.matchmaking.getLobbyData(lobby, "setting_dunce")
+        if (dunce == nil) then
+            dunce = "false"
+        end
+        if(dunce == "true")then
+            GameAddFlagRun("dunce")
+        else
+            GameRemoveFlagRun("dunce")
         end
 
         arena_log:print("Lobby data refreshed")

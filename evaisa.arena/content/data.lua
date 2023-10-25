@@ -80,14 +80,17 @@ cosmetics = {
         can_be_purchased = false,
         unlocked_default = false,
         price = 0,
+        priority = 9999,
         try_unlock = function(lobby, data) -- runs every frame, if true, unlock flag is added
             return false
         end,
         try_force_enable = function(lobby, data) -- if this condition is true, the cosmetic will be enabled even if it's not unlocked
-            local ready_count = ArenaGameplay.ReadyAmount(data, lobby)
-            local total_count = ArenaGameplay.TotalPlayers(lobby)
-            if((total_count > 1 and ready_count == (total_count - 1) and not GameHasFlagRun("ready_check")) or GameHasFlagRun("was_last_ready"))then
-                return true
+            if(GameHasFlagRun("dunce"))then
+                local ready_count = ArenaGameplay.ReadyAmount(data, lobby)
+                local total_count = ArenaGameplay.TotalPlayers(lobby)
+                if((total_count > 1 and ready_count == (total_count - 1) and not GameHasFlagRun("ready_check")) or GameHasFlagRun("was_last_ready"))then
+                    return true
+                end
             end
             return false
         end,
