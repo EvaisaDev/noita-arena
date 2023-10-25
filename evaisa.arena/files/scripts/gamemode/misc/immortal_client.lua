@@ -1,6 +1,6 @@
 function damage_about_to_be_received( damage, x, y, entity_thats_responsible, critical_hit_chance )
-    print("Responsible: "..tostring(entity_thats_responsible))
-    print("damage: "..tostring(damage))
+   -- print("Responsible: "..tostring(entity_thats_responsible))
+    --print("damage: "..tostring(damage))
     local is_dummy = nil
     if(entity_thats_responsible ~= 0 and EntityGetName(entity_thats_responsible) == "dummy_damage")then
         is_dummy = true
@@ -9,7 +9,7 @@ function damage_about_to_be_received( damage, x, y, entity_thats_responsible, cr
         return 0, 0
     end
 
-    print("Returning original damage")
+    --print("Returning original damage")
 
     return damage, 0
 end

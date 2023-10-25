@@ -59,6 +59,10 @@ function playerinfo:New(user)
                 local damage_per_type = 69420 / #damage_types
 
                 for i, damage_type in ipairs(damage_types) do
+                    print("Damage type: "..damage_type)
+                    if(damage_type == "DAMAGE_ICE")then
+                        damage_type = "DAMAGE_PROJECTILE"
+                    end
                     EntityInflictDamage(self.entity, damage_per_type, damage_type, "damage_fake",
                     ragdoll_fx, damage_details.impulse[1], damage_details.impulse[2], GameGetWorldStateEntity(), damage_details.world_pos[1], damage_details.world_pos[2], damage_details.knockback_force)
                 end
