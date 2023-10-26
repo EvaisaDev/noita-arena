@@ -340,12 +340,12 @@
   
   </Base>
 
-  <GameLogComponent
+  <!--<GameLogComponent
     report_damage="0"
     report_death="1"
-  ></GameLogComponent>
+  ></GameLogComponent>-->
 
-  <GameStatsComponent is_player="1" />
+  <!--<GameStatsComponent is_player="0" />-->
 
   <LightComponent 
     r="255"

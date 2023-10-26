@@ -9,16 +9,59 @@ local EZWand = dofile("mods/evaisa.arena/files/scripts/utilities/EZWand.lua")
 ArenaLoadCountdown = ArenaLoadCountdown or nil
 
 ArenaGameplay = {
+    GetCosmetic = function(id)
+        for k, v in ipairs(cosmetics)do
+            if(v.id == id)then
+                return v
+            end
+        end
+    end,
+    CosmeticMaxStackDisable = function(lobby, data, id)
+        for k, v in ipairs(cosmetics)do
+            if(v.id == id)then
+                local player_entity = player.Get()
+
+                if(player_entity and v.type and cosmetic_types[v.type] ~= nil)then
+                    local type_data = cosmetic_types[v.type]
+                    local max_stack = type_data.max_stack
+                    if(max_stack ~= nil and max_stack > 0)then
+                        local count = 0
+                        for k, v in pairs(data.cosmetics)do
+                            if(v)then
+                                count = count + 1
+                            end
+                        end
+                        -- disable random cosmetic if max stack is reached
+                        if(count >= max_stack)then
+                            local random_cosmetic = nil
+                            for k, v in pairs(data.cosmetics)do
+                                if(v)then
+                                    random_cosmetic = k
+                                    break
+                                end
+                            end
+                            if(random_cosmetic ~= nil)then
+                                data.cosmetics[random_cosmetic] = nil
+                                ArenaGameplay.UpdateCosmetics(lobby, data, "unload", player_entity, false)
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end,
     UpdateCosmetics = function(lobby, data, callback, entity, is_client)
         for k, v in ipairs(cosmetics)do
             local can_run = false
-            if(not is_client and ((v.unlock_flag and GameHasFlagRun(v.unlock_flag)) or (v.try_force_enable ~= nil and v.try_force_enable(lobby, data))))then
+            if(not is_client and (v.try_force_enable ~= nil and v.try_force_enable(lobby, data)))then
                 can_run = true
             elseif(is_client and entity and data.players[EntityGetName(entity)] ~= nil and data.players[EntityGetName(entity)].cosmetics[v.id])then
                 can_run = true
             end
 
             if(can_run and not is_client and not data.cosmetics[v.id])then
+                ArenaGameplay.CosmeticMaxStackDisable(lobby, data, v.id)
+
                 data.cosmetics[v.id] = true
                 --print("Cosmetic enabled: "..v.id)
                 if(entity)then
@@ -46,7 +89,9 @@ ArenaGameplay = {
                     v.on_update(lobby, data, entity)
                 end
             elseif(callback == "load")then
+                
                 if(entity and v.on_load ~= nil and can_run)then
+
                     if(v.sprite_sheet)then
                         EntityAddComponent2(entity, "SpriteComponent", {
                             _tags="character",
@@ -109,14 +154,6 @@ ArenaGameplay = {
                 if(entity and v.on_arena_unlocked ~= nil)then
                     v.on_arena_unlocked(lobby, data, entity)
                 end
-            end
-        end
-    end,
-    GetLocalCosmetics = function(lobby, data)
-        local cosmetics = {}
-        for k, v in ipairs(cosmetics)do
-            if(((v.try_force_enable ~= nil and v.try_force_enable(lobby, data)) or data.client.cosmetics[v.id]))then
-                table.insert(cosmetics, v.id)
             end
         end
     end,
@@ -1118,8 +1155,8 @@ ArenaGameplay = {
 
             data.arena_spectator = true
 
-            player.Lock()
-            player.Immortal(true)
+            --player.Lock()
+            --player.Immortal(true)
             --player.Move(-3000, -3000)
 
             ArenaGameplay.WinnerCheck(lobby, data)
@@ -1481,6 +1518,8 @@ ArenaGameplay = {
 
             GameRemoveFlagRun("can_save_player")
         end
+
+        GameRemoveFlagRun("player_is_unlocked")
 
         show_message = show_message or false
 
@@ -2106,9 +2145,9 @@ ArenaGameplay = {
             data.ready_counter:update()
         end
 
-        --if (GameGetFrameNum() % 2 == 0) then
+        if (GameGetFrameNum() % 2 == 0) then
             networking.send.character_position(lobby, data, true)
-        --end
+        end
        -- networking.send.wand_update(lobby, data, nil, nil, true)
         networking.send.input(lobby, data, true)
         networking.send.animation_update(lobby, data, true)
@@ -2167,6 +2206,7 @@ ArenaGameplay = {
     end,
     FightCountdown = function(lobby, data)
         player.Unlock(data)
+        EntityCreateNew("dummy_damage")
         data.countdown = countdown.create({
             "mods/evaisa.arena/files/sprites/ui/countdown/ready.png",
             "mods/evaisa.arena/files/sprites/ui/countdown/3.png",
@@ -2356,6 +2396,7 @@ ArenaGameplay = {
             end
         end
         if (not IsPaused() and GameHasFlagRun("player_is_unlocked") and (not GameHasFlagRun("no_shooting"))) then
+            --print("drawing markers!!")
             game_funcs.RenderOffScreenMarkers(player_entities)
             game_funcs.RenderAboveHeadMarkers(player_entities, 0, 27)
             ArenaGameplay.UpdateHealthbars(data)
@@ -2383,8 +2424,10 @@ ArenaGameplay = {
             data.countdown:update()
         end
 
-        if (GameGetFrameNum() % 2 == 0) then
-            networking.send.character_position(lobby, data)
+        if(GameHasFlagRun("player_is_unlocked") and (not GameHasFlagRun("no_shooting")))then
+            if (GameGetFrameNum() % 2 == 0) then
+                networking.send.character_position(lobby, data)
+            end
         end
 
         if (GameHasFlagRun("took_damage")) then
@@ -2494,30 +2537,29 @@ ArenaGameplay = {
         if(data.upgrade_system ~= nil and not IsPaused())then
             data.upgrade_system:draw()
         end
-        
+    
 
-        if(GameHasFlagRun( "arena_unlimited_spells" ))then
-            local spells = EntityGetWithTag("card_action")
-            for k, card in ipairs(spells)do
-                if(not EntityHasTag(card, "patched_unlimited"))then
-                    local root = EntityGetRootEntity(card)
-                    if((not EntityHasTag(root, "client")) or EntityHasTag(root, "unlimited_spells"))then
-                        local item_action_comp = EntityGetFirstComponentIncludingDisabled(card, "ItemActionComponent")
-                        if(item_action_comp ~= nil)then
-                            local action_id = ComponentGetValue2(item_action_comp, "action_id")
+        local spells = EntityGetWithTag("card_action")
+        for k, card in ipairs(spells)do
+            if(not EntityHasTag(card, "patched_unlimited"))then
+                local root = EntityGetRootEntity(card)
+                local changed = false
+                if((GameHasFlagRun( "arena_unlimited_spells" ) and not EntityHasTag(root, "client")) or EntityHasTag(root, "unlimited_spells"))then
+                    local item_action_comp = EntityGetFirstComponentIncludingDisabled(card, "ItemActionComponent")
+                    if(item_action_comp ~= nil)then
+                        local action_id = ComponentGetValue2(item_action_comp, "action_id")
 
-                            local action_info = ArenaGameplay.GetActionInfo(action_id)
+                        local action_info = ArenaGameplay.GetActionInfo(action_id)
 
-                            if(action_info and not action_info.never_unlimited)then
+                        if(action_info and not action_info.never_unlimited)then
 
-                                local ability_comp = EntityGetFirstComponentIncludingDisabled(card, "AbilityComponent")
-                                if(ability_comp ~= nil)then
-                                    ComponentObjectSetValue2(ability_comp, "gunaction_config", "action_max_uses", -1)
-                                end
-                                local item_comp = EntityGetFirstComponentIncludingDisabled(card, "ItemComponent")
-                                if(item_comp ~= nil)then
-                                    ComponentSetValue2(item_comp, "uses_remaining", -2)
-                                end
+                            local ability_comp = EntityGetFirstComponentIncludingDisabled(card, "AbilityComponent")
+                            if(ability_comp ~= nil)then
+                                ComponentObjectSetValue2(ability_comp, "gunaction_config", "action_max_uses", -1)
+                            end
+                            local item_comp = EntityGetFirstComponentIncludingDisabled(card, "ItemComponent")
+                            if(item_comp ~= nil)then
+                                ComponentSetValue2(item_comp, "uses_remaining", -2)
                             end
                         end
                     end
@@ -2529,7 +2571,7 @@ ArenaGameplay = {
                 end
             end
         end
- 
+
         --if(GameGetFrameNum() % 60 == 0)then
         --message_handler.send.Handshake(lobby)
         --end

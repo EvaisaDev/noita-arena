@@ -71,6 +71,7 @@ cosmetics = {
         name = "Dunce Hat",
         description = "A hat for those who couldn't hurry up",
         icon = "mods/evaisa.arena/content/cosmetics/dunce_hat/icon.png",
+        credits = "Evaisa",
         --sprite_sheet = "mods/evaisa.arena/content/cosmetics/dunce_hat/sprite_sheet.png",
         type = "hat",
         hat_offset = {x = 2, y = 5},
@@ -84,10 +85,12 @@ cosmetics = {
             return false
         end,
         try_force_enable = function(lobby, data) -- if this condition is true, the cosmetic will be enabled even if it's not unlocked
-            local ready_count = ArenaGameplay.ReadyAmount(data, lobby)
-            local total_count = ArenaGameplay.TotalPlayers(lobby)
-            if((total_count > 1 and ready_count == (total_count - 1) and not GameHasFlagRun("ready_check")) or GameHasFlagRun("was_last_ready"))then
-                return true
+            if(GameHasFlagRun("dunce"))then
+                local ready_count = ArenaGameplay.ReadyAmount(data, lobby)
+                local total_count = ArenaGameplay.TotalPlayers(lobby)
+                if((total_count > 1 and ready_count == (total_count - 1) and not GameHasFlagRun("ready_check")) or GameHasFlagRun("was_last_ready"))then
+                    return true
+                end
             end
             return false
         end,

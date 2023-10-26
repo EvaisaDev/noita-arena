@@ -166,7 +166,10 @@ networking = {
                 return
             end
 
+           
             if (data.spectator_mode or (GameHasFlagRun("player_is_unlocked") and (not GameHasFlagRun("no_shooting")))) then
+                --print("is spectator: " .. tostring(data.spectator_mode) .. "; is unlocked: " .. tostring(GameHasFlagRun("player_is_unlocked")) .. "; no shooting: " .. tostring(GameHasFlagRun("no_shooting")))
+
                 local x, y = message[1], message[2]
 
                 local entity = data.players[tostring(user)].entity
@@ -1115,7 +1118,7 @@ networking = {
                         ]]
 
                         if(damage_details ~= nil and damage_details.ragdoll_fx ~= nil)then
-                            print(json.stringify(damage_details))
+                            --print(json.stringify(damage_details))
 
                             local damage_types = mp_helpers.GetDamageTypes(damage_details.damage_types)
                             local ragdoll_fx = mp_helpers.GetRagdollFX(damage_details.ragdoll_fx)
@@ -1143,14 +1146,14 @@ networking = {
                             ComponentSetValue2(damage_model_comp, "blood_multiplier", blood_multiplier)
                             for i, damage_type in ipairs(damage_types) do
                                 EntityInflictDamage(data.players[tostring(user)].entity, damage_per_type, damage_type, "damage_fake",
-                                ragdoll_fx, damage_details.impulse[1], damage_details.impulse[2], nil, damage_details.world_pos[1], damage_details.world_pos[2], damage_details.knockback_force)
+                                ragdoll_fx, damage_details.impulse[1], damage_details.impulse[2], EntityGetWithName("dummy_damage"), damage_details.world_pos[1], damage_details.world_pos[2], damage_details.knockback_force)
                             end
                             if(old_blood_multiplier ~= nil)then
                                 ComponentSetValue2(damage_model_comp, "blood_multiplier", old_blood_multiplier)
                             end
                         else
                             EntityInflictDamage(data.players[tostring(user)].entity, damage, "DAMAGE_DROWNING", "damage_fake",
-                            "NONE", 0, 0, nil)
+                            "NONE", 0, 0, EntityGetWithName("dummy_damage"))
                         end
 
                     end
@@ -1160,6 +1163,10 @@ networking = {
 
                     if (DamageModelComp ~= nil) then
                         ComponentSetValue2(DamageModelComp, "max_hp", maxHealth)
+                        if(health <= 0)then
+                            health = 0.04
+                        end
+                        --print("hp set to: " .. tostring(health))
                         ComponentSetValue2(DamageModelComp, "hp", health)
                     end
 
