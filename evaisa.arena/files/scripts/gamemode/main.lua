@@ -233,7 +233,7 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 0.72,
+    version = 0.73,
     required_online_version = 1.7,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
@@ -596,6 +596,13 @@ ArenaMode = {
             id = "smash_mode",
             name = "$arena_settings_smash_mode_name",
             description = "$arena_settings_smash_mode_description",
+            type = "bool",
+            default = false
+        }, 
+        {
+            id = "dunce",
+            name = "$arena_settings_dunce_name",
+            description = "$arena_settings_dunce_description",
             type = "bool",
             default = false
         }, 
@@ -1216,6 +1223,16 @@ ArenaMode = {
             GameRemoveFlagRun("smash_mode")
         end
 
+        local dunce = steam.matchmaking.getLobbyData(lobby, "setting_dunce")
+        if (dunce == nil) then
+            dunce = "false"
+        end
+        if(dunce == "true")then
+            GameAddFlagRun("dunce")
+        else
+            GameRemoveFlagRun("dunce")
+        end
+
         arena_log:print("Lobby data refreshed")
     end,
     enter = function(lobby)
@@ -1576,6 +1593,10 @@ ArenaMode = {
                 end
 
             end
+        elseif(input:WasKeyPressed("f6"))then
+            local player_entity = EntityGetWithTag("player_unit")[1]
+            local x, y = EntityGetTransform(player_entity)
+            EntityInflictDamage(player_entity, 0.2, "DAMAGE_SLICE", "player", "BLOOD_EXPLOSION", 0, 0, GameGetWorldStateEntity(), x, y, 0)
         end
         --[[if(input:WasKeyPressed("f10"))then
             local world_state = GameGetWorldStateEntity()

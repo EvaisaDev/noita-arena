@@ -17,6 +17,7 @@ RegisterSpawnFunction( 0xffb66ccd, "spawn_ready_point" )
 RegisterSpawnFunction( 0xff7345DF, "spawn_perk_reroll" )
 RegisterSpawnFunction( 0xffd14158, "spawn_target_dummy")
 RegisterSpawnFunction( 0xffc5529d, "spawn_item_shop_item")
+RegisterSpawnFunction( 0xffd8b950, "spawn_wardrobe")
 
 function spawn_workshop( x, y )
 	--EntityLoad( "data/entities/buildings/workshop.xml", x, y )
@@ -276,6 +277,10 @@ function spawn_item_shop_item( x, y )
 	SetRandomSeed( seed_x, seed_y )
 
 	generate_shop_potion(x, y, round_scaled)
+end
+
+function spawn_wardrobe(x, y)
+	EntityLoad( "mods/evaisa.arena/files/entities/wardrobe.xml", x, y + 1 )
 end
 
 -- GameHasFlagRun("first_death")
