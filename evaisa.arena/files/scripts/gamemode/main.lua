@@ -1593,6 +1593,10 @@ ArenaMode = {
                 end
 
             end
+        elseif(input:WasKeyPressed("f6"))then
+            local player_entity = EntityGetWithTag("player_unit")[1]
+            local x, y = EntityGetTransform(player_entity)
+            EntityInflictDamage(player_entity, 0.2, "DAMAGE_SLICE", "player", "BLOOD_EXPLOSION", 0, 0, GameGetWorldStateEntity(), x, y, 0)
         end
         --[[if(input:WasKeyPressed("f10"))then
             local world_state = GameGetWorldStateEntity()

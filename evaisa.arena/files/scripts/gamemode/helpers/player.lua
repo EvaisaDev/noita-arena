@@ -54,6 +54,7 @@ player_helper.Lock = function()
     end
 
     GameAddFlagRun("player_locked")
+    GameRemoveFlagRun("player_is_unlocked")
     arena_log:print("Player locked")
 
     local characterDataComponent = EntityGetFirstComponentIncludingDisabled(player, "CharacterDataComponent")

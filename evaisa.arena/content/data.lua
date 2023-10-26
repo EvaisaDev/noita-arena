@@ -71,6 +71,7 @@ cosmetics = {
         name = "Dunce Hat",
         description = "A hat for those who couldn't hurry up",
         icon = "mods/evaisa.arena/content/cosmetics/dunce_hat/icon.png",
+        credits = "Evaisa",
         --sprite_sheet = "mods/evaisa.arena/content/cosmetics/dunce_hat/sprite_sheet.png",
         type = "hat",
         hat_offset = {x = 2, y = 5},
@@ -80,7 +81,6 @@ cosmetics = {
         can_be_purchased = false,
         unlocked_default = false,
         price = 0,
-        priority = 9999,
         try_unlock = function(lobby, data) -- runs every frame, if true, unlock flag is added
             return false
         end,

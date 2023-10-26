@@ -166,7 +166,10 @@ networking = {
                 return
             end
 
+           
             if (data.spectator_mode or (GameHasFlagRun("player_is_unlocked") and (not GameHasFlagRun("no_shooting")))) then
+                --print("is spectator: " .. tostring(data.spectator_mode) .. "; is unlocked: " .. tostring(GameHasFlagRun("player_is_unlocked")) .. "; no shooting: " .. tostring(GameHasFlagRun("no_shooting")))
+
                 local x, y = message[1], message[2]
 
                 local entity = data.players[tostring(user)].entity
@@ -1115,7 +1118,7 @@ networking = {
                         ]]
 
                         if(damage_details ~= nil and damage_details.ragdoll_fx ~= nil)then
-                            print(json.stringify(damage_details))
+                            --print(json.stringify(damage_details))
 
                             local damage_types = mp_helpers.GetDamageTypes(damage_details.damage_types)
                             local ragdoll_fx = mp_helpers.GetRagdollFX(damage_details.ragdoll_fx)
@@ -1163,7 +1166,7 @@ networking = {
                         if(health <= 0)then
                             health = 0.04
                         end
-                        print("hp set to: " .. tostring(health))
+                        --print("hp set to: " .. tostring(health))
                         ComponentSetValue2(DamageModelComp, "hp", health)
                     end
 
