@@ -123,7 +123,7 @@ ArenaGameplay = {
                             z_index=0.4,
                         })
                         EntityAddComponent2(hat_entity, "InheritTransformComponent", {
-                            parent_hotspot_tag="hat"
+                            parent_hotspot_tag="head_left"
                         })
                     end
                     v.on_load(lobby, data, entity)

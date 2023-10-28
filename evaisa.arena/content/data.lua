@@ -74,7 +74,7 @@ cosmetics = {
         credits = "Evaisa",
         --sprite_sheet = "mods/evaisa.arena/content/cosmetics/dunce_hat/sprite_sheet.png",
         type = "hat",
-        hat_offset = {x = 2, y = 5},
+        hat_offset = {x = 0, y = 4},
         hat_sprite = "mods/evaisa.arena/content/cosmetics/dunce_hat/hat.png",
         --unlock_flag = "cosmetic_unlocked_dunce_hat",
         can_be_unlocked = false,
@@ -85,6 +85,7 @@ cosmetics = {
             return false
         end,
         try_force_enable = function(lobby, data) -- if this condition is true, the cosmetic will be enabled even if it's not unlocked
+            do return true end
             if(GameHasFlagRun("dunce"))then
                 local ready_count = ArenaGameplay.ReadyAmount(data, lobby)
                 local total_count = ArenaGameplay.TotalPlayers(lobby)
@@ -102,11 +103,56 @@ cosmetics = {
         end,
         on_arena_unlocked = function(lobby, data, entity) -- runs when player is unlocked in arena.
         end,
+    },
+    {
+        id = "test",
+        name = "Test",
+        description = "Test",
+        icon = "mods/evaisa.arena/content/cosmetics/test/icon.png",
+        credits = "Evaisa",
+        type = "outfit",
+        outfit = {
+            lower_body = {
+            },
+            upper_body = {
+                {
+                    filename = "data/ragdolls/alchemist/torso.png",
+                    scale = 1,
+                    z_index = 0.599,
+                    y = -3,
+                    rot = 0,
+                    alpha = 1,
+                    flip = 1,
+                    h = 19,
+                    w = 18,
+                    x = -4,
+                },
+            },
+            arm = {
+            },
+            head = {
+                {
+                    filename = "data/ragdolls/alchemist/head.png",
+                    scale = 1,
+                    z_index = 0.598,
+                    y = -3,
+                    rot = 0,
+                    alpha = 1,
+                    flip = 1,
+                    h = 19,
+                    w = 18,
+                    x = -5,
+                },
+            },
+        },
     }
 }
 
 cosmetic_types = {
     hat = {
         max_stack = 1, -- how many items of this type can be worn at the same time.
-    }
+    },
+    outfit = {
+        max_stack = 1, -- how many items of this type can be worn at the same time.
+    },
 }

@@ -14,8 +14,13 @@
   ></HotspotComponent>
 
   <HotspotComponent
-    _tags="hat"
-    sprite_hotspot_name="hat"
+    _tags="head_left"
+    sprite_hotspot_name="head_left"
+  />
+
+  <HotspotComponent
+    _tags="head_right"
+    sprite_hotspot_name="head_right"
   />
 
   <HotspotComponent
