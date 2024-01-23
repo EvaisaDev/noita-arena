@@ -1398,12 +1398,12 @@ ArenaMode = {
 
 
 
-        local local_seed = data.random.range(100, 10000000)
+        --local local_seed = data.random.range(100, 10000000)
 
-        GlobalsSetValue("local_seed", tostring(local_seed))
+        --GlobalsSetValue("local_seed", tostring(local_seed))
 
-        local unique_seed = data.random.range(100, 10000000)
-        GlobalsSetValue("unique_seed", tostring(unique_seed))
+        --local unique_seed = data.random.range(100, 10000000)
+        --GlobalsSetValue("unique_seed", tostring(unique_seed))
 
         if (steamutils.IsOwner(lobby)) then
             local unique_game_id = data.random.range(100, 10000000)
@@ -1464,12 +1464,12 @@ ArenaMode = {
         data.spectator_mode = steamutils.IsSpectator(lobby)
         data:DefinePlayers(lobby)
 
-        local local_seed = data.random.range(100, 10000000)
+        --local local_seed = data.random.range(100, 10000000)
 
-        GlobalsSetValue("local_seed", tostring(local_seed))
+        --GlobalsSetValue("local_seed", tostring(local_seed))
 
-        local unique_seed = data.random.range(100, 10000000)
-        GlobalsSetValue("unique_seed", tostring(unique_seed))
+        --local unique_seed = data.random.range(100, 10000000)
+        --GlobalsSetValue("unique_seed", tostring(unique_seed))
 
         if (steamutils.IsOwner(lobby)) then
             local unique_game_id = data.random.range(100, 10000000)
@@ -1544,8 +1544,8 @@ ArenaMode = {
             ComponentSetValue2(world_state_component, "fog", 0)
             ComponentSetValue2(world_state_component, "intro_weather", true)
 
-            local unique_seed = data.random.range(100, 10000000)
-            GlobalsSetValue("unique_seed", tostring(unique_seed))
+            --local unique_seed = data.random.range(100, 10000000)
+            --GlobalsSetValue("unique_seed", tostring(unique_seed))
         end
 
         local update_seed = steam.matchmaking.getLobbyData(lobby, "update_seed")

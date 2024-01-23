@@ -81,19 +81,19 @@ function OnMagicNumbersAndWorldSeedInitialized()
     dofile("mods/evaisa.arena/content/data.lua")
     local nxml = dofile("mods/evaisa.arena/lib/nxml.lua")
     
-    print("wharrrrr???")
+    --print("wharrrrr???")
 
     local biome_list = nxml.parse(ModTextFileGetContent("data/biome/_biomes_all.xml"))
     for k, v in pairs(arena_list)do
         if(v.custom_biomes ~= nil)then
             for k2, v2 in ipairs(v.custom_biomes)do
-                print("[evaisa.arena] Adding biome: "..v2.biome_filename)
+                --print("[evaisa.arena] Adding biome: "..v2.biome_filename)
                 biome_list:add_child(nxml.parse([[<Biome biome_filename="]]..v2.biome_filename..[[" height_index="]]..v2.height_index..[[" color="]]..v2.color..[["/>]]))
             end
         end
     end
 
-    print(tostring(biome_list))
+    --print(tostring(biome_list))
 
     ModTextFileSetContent("data/biome/_biomes_all.xml", tostring(biome_list))
 

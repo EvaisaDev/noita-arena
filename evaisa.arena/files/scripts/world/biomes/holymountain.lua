@@ -6,6 +6,9 @@ dofile_once("data/scripts/lib/utilities.lua")
 dofile( "data/scripts/biomes/temple_shared.lua" )
 dofile( "data/scripts/perks/perk.lua" )
 dofile_once("data/scripts/biomes/temple_altar_top_shared.lua")
+dofile("mods/evaisa.arena/files/scripts/gamemode/misc/seed_gen.lua")
+
+
 
 RegisterSpawnFunction( 0xff6d934c, "spawn_hp" )
 
@@ -60,12 +63,10 @@ function spawn_all_shopitems( x, y )
 
 	a, b, c, d, e, f = GameGetDateAndTimeLocal()
 	
-	local random_seed = GlobalsGetValue("unique_seed", "0")
+	local random_seed = get_new_seed(x, y, GameHasFlagRun("shop_sync"))
 
 	local rounds = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0
-	if(GameHasFlagRun("shop_sync"))then
-		random_seed = ((tonumber(GlobalsGetValue("world_seed", "0")) or 1) * 214) * rounds
-	end
+
 
 	local random = rng.new(random_seed)
 
@@ -237,7 +238,7 @@ function spawn_item_shop_item( x, y )
 
 	a, b, c, d, e, f = GameGetDateAndTimeLocal()
 	
-	local random_seed = GlobalsGetValue("unique_seed", "0")
+	local random_seed = get_new_seed(x, y, GameHasFlagRun("shop_sync"))
 
 	local rounds = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0
 	if(GameHasFlagRun("shop_sync"))then

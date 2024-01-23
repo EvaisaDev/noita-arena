@@ -3,6 +3,8 @@ dofile_once( "data/scripts/gun/gun_enums.lua")
 dofile("data/scripts/gun/gun_actions.lua")
 local rng = dofile_once("mods/evaisa.arena/lib/rng.lua")
 
+dofile("mods/evaisa.arena/files/scripts/gamemode/misc/seed_gen.lua")
+
 local a, b, c, d, e, f = GameGetDateAndTimeLocal()
 
 local rounds = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0
@@ -66,27 +68,16 @@ local generate_spell_list = function()
 end
 
 
-local get_new_seed = function(x, y)
-    local rounds = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0
-    local a, b, c, d, e, f = GameGetDateAndTimeLocal()
-    local seed = ((GameGetFrameNum() + GameGetRealWorldTimeSinceStarted() + a * 34 + b / 14 + c + d * 3 + e + f * 53) / 2) * rounds
-    if(GameHasFlagRun("shop_sync"))then
-        seed = ((tonumber(GlobalsGetValue("world_seed", "0")) or 1) * 214) * rounds
-    end
-	if(x and y)then
-		seed = seed + (x * 324) + (y * 436)
-	end
-    return seed
-end
+
 
 
 function RandomAction(max_level, x, y)
     --if(GameHasFlagRun("shop_sync"))then
-        local seed = get_new_seed(x, y)
+        local seed = get_new_seed(x, y, GameHasFlagRun("shop_sync"))
         if(seed ~= random_seed)then
             random = rng.new(seed)
             random_seed = seed
-            --print("new seed: "..tostring(seed))
+            print("new seed: "..tostring(seed))
         end
     --end
 
@@ -122,7 +113,7 @@ end
 -- GetRandomActionWithType function to find a random action with the specified action_type and max_level
 function RandomActionWithType(max_level, action_type, x, y)
     --if(GameHasFlagRun("shop_sync"))then
-    local seed = get_new_seed(x, y)
+    local seed = get_new_seed(x, y, GameHasFlagRun("shop_sync"))
     if(seed ~= random_seed)then
         random = rng.new(seed)
         random_seed = seed

@@ -182,7 +182,7 @@ function spawn_from_list( listname, x, y )
         seed_x, seed_y = (x * 3256) + rounds * 765, (y * 5326) + rounds * 123
 	end
 
-	print("Item spawn seed: " .. tostring(seed_x) .. ", " .. tostring(seed_y))
+	--print("Item spawn seed: " .. tostring(seed_x) .. ", " .. tostring(seed_y))
 	SetRandomSeed( seed_x, seed_y )
 
 	if ( type( listname ) == "string" ) then
@@ -201,7 +201,7 @@ function spawn_from_list( listname, x, y )
 	
 	local rnd = Random( rndmin, rndmax )
 	
-	print("Item Spawn Random: " .. tostring(rnd) .. " (" .. tostring(rndmin) .. " - " .. tostring(rndmax) .. ")")
+	--print("Item Spawn Random: " .. tostring(rnd) .. " (" .. tostring(rndmin) .. " - " .. tostring(rndmax) .. ")")
 
 	if ( spawnlist.spawns ~= nil ) then
 		for i,data in ipairs( spawnlist.spawns ) do

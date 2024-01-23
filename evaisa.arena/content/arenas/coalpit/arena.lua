@@ -11,7 +11,7 @@ RegisterSpawnFunction( 0xff0250FF, "spawn_wheel_tiny" )
 
 function spawn_point( x, y )
 
-	print("spawning point")
+	--print("spawning point")
 
 	EntityLoad( "mods/evaisa.arena/files/entities/misc/spawn_point.xml", x, y )
 end

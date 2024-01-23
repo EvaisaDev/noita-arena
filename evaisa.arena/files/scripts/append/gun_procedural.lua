@@ -1,15 +1,11 @@
 dofile("mods/evaisa.arena/files/scripts/misc/random_action.lua")
 
 local rng = dofile_once("mods/evaisa.arena/lib/rng.lua")
+dofile("mods/evaisa.arena/files/scripts/gamemode/misc/seed_gen.lua")
 
 local a, b, c, d, e, f = GameGetDateAndTimeLocal()
 
-local random_seed = tonumber(GlobalsGetValue("unique_seed", tostring(GameGetFrameNum() + GameGetRealWorldTimeSinceStarted())))
-
-local rounds = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0
-if(GameHasFlagRun("shop_sync"))then
-	random_seed = ((tonumber(GlobalsGetValue("world_seed", "0")) or 1) * 214) * rounds
-end
+local random_seed = get_new_seed(0, 0, GameHasFlagRun("shop_sync"))
 
 
 local random = rng.new(random_seed)
@@ -20,17 +16,6 @@ GetRandomActionWithType = function( x, y, level, type, i)
 	return action
 end
 
-local get_new_seed = function(x, y)
-	local rounds = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0
-    local seed = tonumber(GlobalsGetValue("unique_seed", tostring(GameGetFrameNum() + GameGetRealWorldTimeSinceStarted()))) + (rounds * 2425)
-    if(GameHasFlagRun("shop_sync"))then
-        seed = ((tonumber(GlobalsGetValue("world_seed", "0")) or 1) * 214) * rounds
-    end
-	if(x and y)then
-		seed = seed + (x * 3424) + (y * 4365)
-	end
-    return seed
-end
 
 Random = function(a, b)
 	if(a == nil and b == nil)then
@@ -43,13 +28,11 @@ Random = function(a, b)
 end
 
 SetRandomSeed = function(x, y)
-	--if(GameHasFlagRun("shop_sync"))then
-		local seed = get_new_seed(x, y)
-		if(seed ~= random_seed)then
-			random = rng.new(seed)
-			random_seed = seed
-		end
-	--end
+	local seed = get_new_seed(x, y, GameHasFlagRun("shop_sync"))
+	if(seed ~= random_seed)then
+		random = rng.new(seed)
+		random_seed = seed
+	end
 end
 
 local old_wand_add_random_cards = wand_add_random_cards
