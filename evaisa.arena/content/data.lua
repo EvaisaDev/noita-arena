@@ -63,6 +63,27 @@ arena_list = {
         zone_floor = 400, -- damage floor, if player falls below this they die.
         time = 0.5, -- world time, optional. default will be day.
     },
+    {
+        id = "coalpit",
+        name = "Excavation Site",
+        description = "Made by Autumnis. An arena based off the Coal Pit.",
+        thumbnail = "mods/evaisa.arena/content/arenas/coalpit/thumbnail.png",
+        frame = "mods/evaisa.arena/content/arenas/frame.png",
+        biome_map = "mods/evaisa.arena/content/arenas/coalpit/map.lua",
+        custom_biomes = {
+            {
+                biome_filename="mods/evaisa.arena/content/arenas/coalpit/coalpit.xml",
+                height_index="1",
+                color="ff35f34a"
+            }
+        },
+        pixel_scenes = "mods/evaisa.arena/content/arenas/coalpit/scenes.xml",
+        spawn_points = { -- optional, can also use spawn pixels, 0,0 is there as a backup in case spawn pixels fail somehow.
+            {x = 0, y = 0}
+        },
+        zone_size = 600, -- size of damage zone, should be max distance from 0, 0 players can travel
+        zone_floor = 400, -- damage floor, if player falls below this they die.
+    },
 }
 
 cosmetics = {

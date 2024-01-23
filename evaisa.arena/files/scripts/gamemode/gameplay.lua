@@ -551,8 +551,8 @@ ArenaGameplay = {
             return playersReady, totalPlayers
         end)
     end,
-    LoadPlayer = function(lobby, data)
-        local current_player = EntityLoad("data/entities/player.xml", 0, 0)
+    LoadPlayer = function(lobby, data, x, y)
+        local current_player = EntityLoad("data/entities/player.xml", x or 0, y or 0)
 
         local aiming_reticle = EntityGetComponentIncludingDisabled(current_player, "SpriteComponent", "aiming_reticle") or {}
 
@@ -1735,6 +1735,11 @@ ArenaGameplay = {
                     print("all players ready!")
                     GameAddFlagRun("lock_ready_state")
                     networking.send.lock_ready_state(lobby)
+                    -- kill any entity with workshop tag to prevent wand edits
+                    local all_entities = EntityGetWithTag("workshop")
+                    for k, v in pairs(all_entities) do
+                        EntityKill(v)
+                    end
                     ArenaLoadCountdown = GameGetFrameNum() + 62
                 end
             else
@@ -2205,8 +2210,11 @@ ArenaGameplay = {
         return ready
     end,
     FightCountdown = function(lobby, data)
-        player.Unlock(data)
+        RunWhenPlayerExists(function()
+            player.Unlock(data)
+        end)
         EntityCreateNew("dummy_damage")
+        
         data.countdown = countdown.create({
             "mods/evaisa.arena/files/sprites/ui/countdown/ready.png",
             "mods/evaisa.arena/files/sprites/ui/countdown/3.png",
@@ -2237,9 +2245,14 @@ ArenaGameplay = {
 
             arena_log:print("Completed countdown.")
 
-            --message_handler.send.RequestWandUpdate(lobby, data)
             networking.send.request_item_update(lobby)
+        end, function(frame, index) 
+            -- if we are host
+            if (steamutils.IsOwner(lobby)) then
+                networking.send.sync_countdown(lobby, frame, index)
+            end
         end)
+
     end,
     SpawnClientPlayer = function(lobby, user, data, x, y)
         local client = EntityLoad("mods/evaisa.arena/files/entities/client.xml", x or -1000, y or -1000)
@@ -2300,7 +2313,6 @@ ArenaGameplay = {
     end,
     ArenaUpdate = function(lobby, data)
         if (data.preparing and data.current_arena ~= nil) then
-            local map_size = data.current_arena.zone_size
             --game_funcs.LoadRegion(0, 0, map_size * 2, map_size * 2)
             data.load_frames = data.load_frames or 0
             if(data.load_frames < 30)then
@@ -2355,7 +2367,7 @@ ArenaGameplay = {
     
                     local spawn_loaded = DoesWorldExistAt(x - 100, y - 100, x + 100, y + 100)
     
-                    player.Move(x, y)
+                    --player.Move(x, y)
     
                     arena_log:print("Arena loaded? " .. tostring(spawn_loaded))
     
@@ -2375,16 +2387,21 @@ ArenaGameplay = {
                         data.load_frames = 0
                         --GamePrint("Spawned!!")
     
+                        ArenaGameplay.LoadPlayer(lobby, data, x, y)
+
                         if (not steamutils.IsOwner(lobby)) then
-                            networking.send.arena_loaded(lobby)
+                            RunWhenPlayerExists(function()
+                                networking.send.arena_loaded(lobby)
+                            end)
+                            
                             --message_handler.send.Loaded(lobby)
                         end
     
                         --message_handler.send.Health(lobby)
                         networking.send.health_update(lobby, data, true)
                     end
-                else
-                    player.Move(data.spawn_point.x, data.spawn_point.y)
+                --else
+                 --   player.Move(data.spawn_point.x, data.spawn_point.y)
                 end
             end
 
@@ -2788,7 +2805,7 @@ ArenaGameplay = {
         GlobalsSetValue("wand_fire_count", "0")
 
 
-        if ((not GameHasFlagRun("player_unloaded")) and current_player == nil) then
+        if ((not GameHasFlagRun("player_unloaded")) and current_player == nil and not data.preparing) then
             ArenaGameplay.LoadPlayer(lobby, data)
             arena_log:print("Player is missing, spawning player.")
         else

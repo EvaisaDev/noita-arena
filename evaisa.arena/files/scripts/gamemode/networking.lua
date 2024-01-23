@@ -140,6 +140,15 @@ networking = {
                 end
             end
         end,
+        sync_countdown = function(lobby, message, user, data)
+            if (not steamutils.IsOwner(lobby, user))then
+                return
+            end
+            if(data.state == "arena" and data.countdown ~= nil)then
+                data.countdown.frame = message[1]
+                data.countdown.image_index = message[2]
+            end
+        end,
         unlock = function(lobby, message, user, data)
             if (not steamutils.IsOwner(lobby, user))then
                 return
@@ -1441,7 +1450,12 @@ networking = {
             if (not steamutils.IsOwner(lobby, user)) then
                 return
             end
-
+            
+            -- kill any entity with workshop tag to prevent wand edits
+            local all_entities = EntityGetWithTag("workshop")
+            for k, v in pairs(all_entities) do
+                EntityKill(v)
+            end
             GameAddFlagRun("lock_ready_state")
             GameAddFlagRun("player_ready")
             GameAddFlagRun("ready_check")
@@ -1706,6 +1720,9 @@ networking = {
         end,
         start_countdown = function(lobby)
             steamutils.send("start_countdown", {}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+        end,
+        sync_countdown = function(lobby, frames, index)
+            steamutils.send("sync_countdown", {frames, index}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
         end,
         unlock = function(lobby)
             steamutils.send("unlock", {}, steamutils.messageTypes.OtherPlayers, lobby, true)

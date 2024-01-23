@@ -18,6 +18,6 @@ function interacting( entity_who_interacted, entity_interacted, interactable_nam
         ComponentSetValue2(interactComp, "ui_text", GameTextGetTranslatedOrNot("$arena_wardrobe_interact_closed"))
     end
 
-    GamePrint("Not implemented.")
-    print("Not implemented.")
+    GamePrint("Not implemented yet :(")
+    print("Not implemented yet :(")
 end

@@ -1,6 +1,6 @@
 local countdown = {}
 
-function countdown.create( table_images, frames_between_images, finish_callback )
+function countdown.create( table_images, frames_between_images, finish_callback, update_callback )
     local gui_countdown = GuiCreate()
     
     GuiOptionsAdd(gui_countdown, 2)
@@ -12,6 +12,7 @@ function countdown.create( table_images, frames_between_images, finish_callback 
         image_index = 1,
         table_images = table_images,
         finish_callback = finish_callback,
+        update_callback = update_callback,
         update = function(self)
             local gui_id = 125918
             local new_id = function()
@@ -30,6 +31,10 @@ function countdown.create( table_images, frames_between_images, finish_callback 
                     GuiDestroy(gui_countdown)
                     return true
                 end
+            end
+
+            if(self.update_callback)then
+                self.update_callback(self.frame, self.image_index)
             end
 
 
