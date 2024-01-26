@@ -120,25 +120,14 @@ networking = {
             if (not steamutils.IsOwner(lobby, user))then
                 return
             end
-            if(data.state == "arena")then
-                if(data.spectator_mode)then
-                    GamePrint("Starting countdown...")
 
-                    arena_log:print("Received all clear for starting countdown.")
+            GamePrint("Starting countdown...")
 
-                    data.players_loaded = true
-                    gameplay_handler.FightCountdown(lobby, data)
-                else
-                    RunWhenPlayerExists(function()
-                        GamePrint("Starting countdown...")
+            arena_log:print("Received all clear for starting countdown.")
 
-                        arena_log:print("Received all clear for starting countdown.")
-
-                        data.players_loaded = true
-                        gameplay_handler.FightCountdown(lobby, data)
-                    end)
-                end
-            end
+            data.players_loaded = true
+            gameplay_handler.FightCountdown(lobby, data)
+    
         end,
         sync_countdown = function(lobby, message, user, data)
             if (not steamutils.IsOwner(lobby, user))then
@@ -153,22 +142,25 @@ networking = {
             if (not steamutils.IsOwner(lobby, user))then
                 return
             end
-            if (GameHasFlagRun("Immortal") and not GameHasFlagRun("player_died") and data.state == "arena") then
-                --print("Received unlock message, attempting to unlock player.")
+            RunWhenPlayerExists(function()
+                if (GameHasFlagRun("Immortal") and not GameHasFlagRun("player_died") and data.state == "arena") then
+                    --print("Received unlock message, attempting to unlock player.")
 
-                --player_helper.immortal(false)
+                    --player_helper.immortal(false)
 
-                
-                GameRemoveFlagRun("Immortal")
+                    
+                    
+                    GameRemoveFlagRun("Immortal")
 
-                gameplay_handler.AllowFiring(data)
-                --message_handler.send.RequestWandUpdate(lobby, data)
-                networking.send.request_item_update(lobby)
-                if (data.countdown ~= nil) then
-                    data.countdown:cleanup()
-                    data.countdown = nil
+                    gameplay_handler.AllowFiring(data)
+                    --message_handler.send.RequestWandUpdate(lobby, data)
+                    networking.send.request_item_update(lobby)
+                    if (data.countdown ~= nil) then
+                        data.countdown:cleanup()
+                        data.countdown = nil
+                    end
                 end
-            end
+            end)
         end,
         character_position = function(lobby, message, user, data)
             if (not gameplay_handler.CheckPlayer(lobby, user, data)) then

@@ -2211,16 +2211,17 @@ ArenaGameplay = {
     end,
     FightCountdown = function(lobby, data)
         RunWhenPlayerExists(function()
+            print("Unlocking player!!")
             player.Unlock(data)
         end)
         EntityCreateNew("dummy_damage")
         
         data.countdown = countdown.create({
-            "mods/evaisa.arena/files/sprites/ui/countdown/ready.png",
-            "mods/evaisa.arena/files/sprites/ui/countdown/3.png",
-            "mods/evaisa.arena/files/sprites/ui/countdown/2.png",
-            "mods/evaisa.arena/files/sprites/ui/countdown/1.png",
-            "mods/evaisa.arena/files/sprites/ui/countdown/fight.png",
+            "mods/evaisa.arena/files/sprites/ui/countdown_new/ready.png",
+            "mods/evaisa.arena/files/sprites/ui/countdown_new/3.png",
+            "mods/evaisa.arena/files/sprites/ui/countdown_new/2.png",
+            "mods/evaisa.arena/files/sprites/ui/countdown_new/1.png",
+            "mods/evaisa.arena/files/sprites/ui/countdown_new/fight.png",
         }, 60, function()
             print("Countdown completed")
             data.countdown:cleanup()
@@ -2242,6 +2243,7 @@ ArenaGameplay = {
                 player.Immortal(false)
             end
             ArenaGameplay.AllowFiring(data)
+            
 
             arena_log:print("Completed countdown.")
 
@@ -2434,7 +2436,6 @@ ArenaGameplay = {
                 --message_handler.send.StartCountdown(lobby)
                 networking.send.start_countdown(lobby)
                 ArenaGameplay.FightCountdown(lobby, data)
-                networking.send.unlock(lobby)
             end
         end
         if (data.countdown ~= nil) then
