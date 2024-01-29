@@ -1,6 +1,6 @@
 local old_perk_get_spawn_order = perk_get_spawn_order
 
-
+dofile("mods/evaisa.arena/files/scripts/gamemode/misc/seed_gen.lua")
 
 
 perk_get_spawn_order = function ( ignore_these_ )
