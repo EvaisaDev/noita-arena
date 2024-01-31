@@ -12,7 +12,7 @@ dofile_once("data/scripts/gun/procedural/wands.lua")
 -- ##########################
 
 -- Removes spells from a table whose ID is not found in the gun_actions table
-local function filter_spells(spells)
+local function filter_spells(spells, uses_remaining)
   dofile_once("data/scripts/gun/gun_actions.lua")
   if not spell_lookup then
     spell_lookup = {}
@@ -21,12 +21,16 @@ local function filter_spells(spells)
     end
   end
   local out = {}
+  local out_uses = {}
   for i, spell in ipairs(spells) do
     if spell == "" or spell_lookup[spell] then
       table.insert(out, spell)
+      if uses_remaining then
+        table.insert(out_uses, uses_remaining[i])
+      end
     end
   end
-  return out
+  return out, out_uses
 end
 
 local function string_split(inputstr, sep)
@@ -232,7 +236,7 @@ local function deserialize(str)
     return "Wrong wand import string format"
   end
   local values = string_split(str, ";")
-  if #values < 18 then
+  if #values < 19 then
     return "Wrong wand import string format"
   end
 
@@ -250,17 +254,23 @@ local function deserialize(str)
       speedMultiplier = tonumber(values[11])
     },
     spells = string_split(values[12] == "-" and "" or values[12], ","),
-    always_cast_spells = string_split(values[13] == "-" and "" or values[13], ","),
-    sprite_image_file = values[14],
-    offset_x = tonumber(values[15]),
-    offset_y = tonumber(values[16]),
-    tip_x = tonumber(values[17]),
-    tip_y = tonumber(values[18])
+    spells_uses_remaining = string_split(values[13] == "-" and "" or values[13], ","),
+    always_cast_spells = string_split(values[14] == "-" and "" or values[14], ","),
+    sprite_image_file = values[15],
+    offset_x = tonumber(values[16]),
+    offset_y = tonumber(values[17]),
+    tip_x = tonumber(values[18]),
+    tip_y = tonumber(values[19])
   }
 
   if #out.spells == 1 and out.spells[1] == "" then
     out.spells = {}
   end
+
+  if #out.spells_uses_remaining == 1 and out.spells_uses_remaining[1] == "" then
+    out.spells_uses_remaining = {}
+  end
+
   if #out.always_cast_spells == 1 and out.always_cast_spells[1] == "" then
     out.always_cast_spells = {}
   end
@@ -525,8 +535,9 @@ local function refresh_wand_if_in_inventory(wand_id)
   end
 end
 
-local function add_spell_at_pos(wand, action_id, pos)
+local function add_spell_at_pos(wand, action_id, pos, uses_remaining)
   local spells_on_wand = wand:GetSpells()
+  local uses_remaining = uses_remaining or -1
   -- Check if there's space for one more spell
   if wand.capacity == #spells_on_wand then
     return false
@@ -542,6 +553,8 @@ local function add_spell_at_pos(wand, action_id, pos)
   EntitySetComponentsWithTagEnabled(action_entity_id, "enabled_in_world", false)
   local item_component = EntityGetFirstComponentIncludingDisabled(action_entity_id, "ItemComponent")
   ComponentSetValue2(item_component, "inventory_slot", pos-1, 0)
+  ComponentSetValue2(item_component, "uses_remaining", tonumber(uses_remaining))
+
   return true
 end
 -- ##########################
@@ -598,11 +611,11 @@ function wand:new(from, rng_seed_x, rng_seed_y)
       o:RemoveSpells()
       o:DetachSpells()
       -- Filter spells whose ID no longer exist (for instance when a modded spellpack was disabled)
-      values.spells = filter_spells(values.spells)
+      values.spells, values.spells_uses_remaining = filter_spells(values.spells, values.spells_uses_remaining)
       values.always_cast_spells = filter_spells(values.always_cast_spells)
       for i, action_id in ipairs(values.spells) do
         if action_id ~= "" then
-          add_spell_at_pos(o, action_id, i)
+          add_spell_at_pos(o, action_id, i, values.spells_uses_remaining[i])
         end
       end      
       o:AttachSpells(values.always_cast_spells)
@@ -845,6 +858,7 @@ function wand:GetSpells()
 	for _, spell in ipairs(children) do
 		local action_id = nil
 		local permanent = false
+    local uses_remaining = -1
     local item_action_component = EntityGetFirstComponentIncludingDisabled(spell, "ItemActionComponent")
     if item_action_component then
       local val = ComponentGetValue2(item_action_component, "action_id")
@@ -855,12 +869,13 @@ function wand:GetSpells()
     if item_component then
       permanent = ComponentGetValue2(item_component, "permanently_attached")
       inventory_x, inventory_y = ComponentGetValue2(item_component, "inventory_slot")
+      uses_remaining = ComponentGetValue2(item_component, "uses_remaining")
     end
     if action_id then
 			if permanent == true then
 				table.insert(always_cast_spells, { action_id = action_id, entity_id = spell, inventory_x = inventory_x, inventory_y = inventory_y })
 			else
-				table.insert(spells, { action_id = action_id, entity_id = spell, inventory_x = inventory_x, inventory_y = inventory_y })
+				table.insert(spells, { action_id = action_id, entity_id = spell, uses_remaining = uses_remaining, inventory_x = inventory_x, inventory_y = inventory_y })
 			end
 		end
   end
@@ -1157,6 +1172,7 @@ function wand:Serialize(include_mana, include_offsets)
   include_mana = include_mana or false
   include_offsets = include_offsets or false
   local spells_string = ""
+  local spells_uses_string = ""
   local always_casts_string = ""
   local spells, always_casts = self:GetSpells()
   local slots = {}
@@ -1165,6 +1181,17 @@ function wand:Serialize(include_mana, include_offsets)
   end
   for i=1, self.capacity do
     spells_string = spells_string .. (i == 1 and "" or ",") .. (slots[i] and slots[i].action_id or "")
+    -- create spell uses string
+    
+    if(slots[i])then
+      local uses_remaining = slots[i].uses_remaining
+      if uses_remaining == nil then
+        uses_remaining = -1
+      end
+      spells_uses_string = spells_uses_string .. (i == 1 and "" or ",") .. tostring(uses_remaining)
+    else
+      spells_uses_string = spells_uses_string .. (i == 1 and "" or ",") .. "0"
+    end
   end
   for i, spell in ipairs(always_casts) do
     always_casts_string = always_casts_string .. (i == 1 and "" or ",") .. spell.action_id
@@ -1187,7 +1214,7 @@ function wand:Serialize(include_mana, include_offsets)
 
   local serialize_version = "1"
 
-  return ("EZWv%s;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%s;%s;%s;%d;%d;%d;%d"):format(
+  return ("EZWv%s;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%s;%s;%s;%s;%d;%d;%d;%d"):format(
     serialize_version,
     self.shuffle and 1 or 0,
     self.spellsPerCast,
@@ -1200,6 +1227,7 @@ function wand:Serialize(include_mana, include_offsets)
     self.spread,
     self.speedMultiplier,
     spells_string == "" and "-" or spells_string,
+    spells_uses_string == "" and "-" or spells_uses_string,
     always_casts_string == "" and "-" or always_casts_string,
     sprite_image_file, include_offsets and offset_x or 0, include_offsets and offset_y or 0, include_offsets and tip_x or 0, include_offsets and tip_y or 0
   )

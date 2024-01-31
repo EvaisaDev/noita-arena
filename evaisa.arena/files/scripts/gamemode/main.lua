@@ -37,7 +37,11 @@ end
 
 playermenu = nil
 
+local was_content_mismatched = false
+
 playerRunQueue = {}
+
+local player_mods = "";
 
 function RunWhenPlayerExists(func)
     table.insert(playerRunQueue, func)
@@ -233,8 +237,8 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 125,
-    required_online_version = 322,
+    version = 126,
+    required_online_version = 323,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
     end,
@@ -963,17 +967,24 @@ ArenaMode = {
             if(steamutils.IsOwner(lobby))then
                 print("content hash mismatch, updating")
                 steam.matchmaking.setLobbyData(lobby, "content_hash", content_hash)
+                steam.matchmaking.setLobbyData(lobby, "mod_list", player_mods)
             else
+                was_content_mismatched = true
                 content_hash_popup_active = content_hash_popup_active or false
                 if(content_hash_popup_active)then
                     return
                 end
+
                 popup.create("content_mismatch", GameTextGetTranslatedOrNot("$arena_content_mismatch_name"),{
 					{
 						text = GameTextGetTranslatedOrNot("$arena_content_mismatch_description"),
 						color = {214 / 255, 60 / 255, 60 / 255, 1}
 					},
-                    GameTextGetTranslatedOrNot("$arena_content_mismatch_description_2"),
+                    {
+						text = GameTextGetTranslatedOrNot("$arena_content_mismatch_description_2"),
+						color = {214 / 255, 60 / 255, 60 / 255, 1}
+					},
+                    GameTextGetTranslatedOrNot("$arena_content_mismatch_description_3")
 				}, {
 					{
 						text = GameTextGetTranslatedOrNot("$mp_close_popup"),
@@ -1237,6 +1248,20 @@ ArenaMode = {
     end,
     enter = function(lobby)
 
+        was_content_mismatched = false
+
+        player_mods = ""
+        local mod_data = ModData()
+        if (mod_data ~= nil) then
+            for i, v in ipairs(mod_data)do
+                player_mods = player_mods .. (v.name .. (v.id ~= nil and " ( "..v.id.." )" or "")) .. (i < #mod_data and ", " or "")
+            end
+        end
+        
+        if(steamutils.IsOwner())then
+            steam.matchmaking.setLobbyData(lobby, "mod_list", player_mods)
+        end
+
         if(MP_VERSION < ArenaMode.required_online_version)then
             invalid_version_popup_active = invalid_version_popup_active or false
             if(not invalid_version_popup_active)then
@@ -1334,7 +1359,19 @@ ArenaMode = {
         BiomeMapLoad_KeepPlayer("mods/evaisa.arena/files/scripts/world/map_arena.lua")
     end,
     start = function(lobby, was_in_progress)
+
         arena_log:print("Start called!!!")
+
+        if(was_content_mismatched)then
+            -- reopen lobby menu
+            in_game = false
+            gui_closed = false
+            invite_menu_open = false 
+            selected_player = nil
+            -- show content mismatch popup
+            ArenaMode.refresh(lobby)
+            return
+        end
 
         delay.reset()
         wait.reset()
@@ -1428,6 +1465,18 @@ ArenaMode = {
     end,
     spectate = function(lobby, was_in_progress)
         arena_log:print("Spectate called!!!")
+
+        if(was_content_mismatched)then
+            -- reopen lobby menu
+            in_game = false
+            gui_closed = false
+            invite_menu_open = false 
+            selected_player = nil
+            -- show content mismatch popup
+            ArenaMode.refresh(lobby)
+            return
+        end
+
 
         delay.reset()
         wait.reset()
@@ -1623,6 +1672,12 @@ ArenaMode = {
             gameplay_handler.LateUpdate(lobby, data)
         else
             spectator_handler.LateUpdate(lobby, data)
+        end
+    end,
+    player_enter = function(lobby, user)
+        if(steamutils.IsOwner())then
+            SendLobbyData(lobby)
+            print("Player joined - Sending lobby data!")
         end
     end,
     leave = function(lobby)

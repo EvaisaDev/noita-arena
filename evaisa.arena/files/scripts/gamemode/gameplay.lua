@@ -1730,7 +1730,13 @@ ArenaGameplay = {
         if (steamutils.IsOwner(lobby)) then
             --print("we are owner!")
             -- check if all players are ready
+            if(not data.spectator_mode and steam.matchmaking.getNumLobbyMembers(lobby) == 1)then
+                -- we are only player in lobby, skip ready check
+                return
+            end
+
             if (ArenaGameplay.ReadyCheck(lobby, data)) then
+
                 if(ArenaLoadCountdown == nil)then
                     print("all players ready!")
                     GameAddFlagRun("lock_ready_state")
@@ -2158,12 +2164,13 @@ ArenaGameplay = {
         networking.send.animation_update(lobby, data, true)
         if(GameGetFrameNum() % 15 == 0)then
             networking.send.player_data_update(lobby, data, true)
+            ArenaGameplay.RunReadyCheck(lobby, data)
         end
         networking.send.spectate_data(lobby, data, nil, false)
 
         GameAddFlagRun("Immortal")
 
-        ArenaGameplay.RunReadyCheck(lobby, data)
+
 
         if (GameHasFlagRun("player_ready")) then
             GameRemoveFlagRun("player_ready")
