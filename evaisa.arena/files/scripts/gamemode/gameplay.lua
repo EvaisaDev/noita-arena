@@ -1730,10 +1730,7 @@ ArenaGameplay = {
         if (steamutils.IsOwner(lobby)) then
             --print("we are owner!")
             -- check if all players are ready
-            if(not data.spectator_mode and steam.matchmaking.getNumLobbyMembers(lobby) == 1)then
-                -- we are only player in lobby, skip ready check
-                return
-            end
+
 
             if (ArenaGameplay.ReadyCheck(lobby, data)) then
 
@@ -1742,10 +1739,13 @@ ArenaGameplay = {
                     GameAddFlagRun("lock_ready_state")
                     networking.send.lock_ready_state(lobby)
                     -- kill any entity with workshop tag to prevent wand edits
-                    local all_entities = EntityGetWithTag("workshop")
-                    for k, v in pairs(all_entities) do
-                        EntityKill(v)
+                    if(not data.spectator_mode and steam.matchmaking.getNumLobbyMembers(lobby) == 1)then
+                        local all_entities = EntityGetWithTag("workshop")
+                        for k, v in pairs(all_entities) do
+                            EntityKill(v)
+                        end
                     end
+
                     ArenaLoadCountdown = GameGetFrameNum() + 62
                 end
             else
@@ -2817,7 +2817,7 @@ ArenaGameplay = {
             ArenaGameplay.LoadPlayer(lobby, data)
             arena_log:print("Player is missing, spawning player.")
         else
-            if (GameGetFrameNum() % 30 == 0 and GameHasFlagRun("can_save_player")) then
+            if (GameGetFrameNum() % 40 == 0 and GameHasFlagRun("can_save_player")) then
                 ArenaGameplay.SavePlayerData(lobby, data)
             end
         end

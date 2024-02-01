@@ -537,7 +537,6 @@ end
 
 local function add_spell_at_pos(wand, action_id, pos, uses_remaining)
   local spells_on_wand = wand:GetSpells()
-  local uses_remaining = uses_remaining or -1
   -- Check if there's space for one more spell
   if wand.capacity == #spells_on_wand then
     return false
@@ -553,7 +552,9 @@ local function add_spell_at_pos(wand, action_id, pos, uses_remaining)
   EntitySetComponentsWithTagEnabled(action_entity_id, "enabled_in_world", false)
   local item_component = EntityGetFirstComponentIncludingDisabled(action_entity_id, "ItemComponent")
   ComponentSetValue2(item_component, "inventory_slot", pos-1, 0)
-  ComponentSetValue2(item_component, "uses_remaining", tonumber(uses_remaining))
+  if(uses_remaining) then
+    ComponentSetValue2(item_component, "uses_remaining", tonumber(uses_remaining))
+  end
 
   return true
 end
@@ -580,7 +581,11 @@ wand.__index = function(table, key)
   return table:GetProperties({ key })[key]
 end
 
-function wand:new(from, rng_seed_x, rng_seed_y)
+function wand:new(from, rng_seed_x, rng_seed_y, refresh)
+  refresh = refresh or false
+
+  --print("refresh? " .. tostring(refresh))
+
   -- 'protected' should not be accessed by end users!
   local protected = {}
   local o = {
@@ -613,9 +618,16 @@ function wand:new(from, rng_seed_x, rng_seed_y)
       -- Filter spells whose ID no longer exist (for instance when a modded spellpack was disabled)
       values.spells, values.spells_uses_remaining = filter_spells(values.spells, values.spells_uses_remaining)
       values.always_cast_spells = filter_spells(values.always_cast_spells)
+
+      
+
       for i, action_id in ipairs(values.spells) do
         if action_id ~= "" then
-          add_spell_at_pos(o, action_id, i, values.spells_uses_remaining[i])
+          local remaining = nil
+          if(not refresh)then
+            remaining = values.spells_uses_remaining[i]
+          end
+          add_spell_at_pos(o, action_id, i, remaining)
         end
       end      
       o:AttachSpells(values.always_cast_spells)
@@ -1269,8 +1281,8 @@ local function get_all_wands()
 end
 
 return setmetatable({}, {
-  __call = function(self, from, rng_seed_x, rng_seed_y)
-    return wand:new(from, rng_seed_x, rng_seed_y)
+  __call = function(self, from, rng_seed_x, rng_seed_y, refresh)
+    return wand:new(from, rng_seed_x, rng_seed_y, refresh)
   end,
   __newindex = function(self)
     error("Can't assign to this object.", 2)

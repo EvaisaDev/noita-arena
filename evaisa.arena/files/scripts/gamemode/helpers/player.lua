@@ -385,7 +385,7 @@ player_helper.SetItemData = function(item_data)
 
             local item = nil
             if(itemInfo.is_wand)then
-                item = EZWand(itemInfo.data, x, y)
+                item = EZWand(itemInfo.data, x, y, true)
                 
             else
                 item = EntityCreateNew()
