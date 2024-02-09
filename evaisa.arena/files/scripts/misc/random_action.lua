@@ -7,7 +7,11 @@ dofile("mods/evaisa.arena/files/scripts/gamemode/misc/seed_gen.lua")
 
 local a, b, c, d, e, f = GameGetDateAndTimeLocal()
 
-local rounds = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0
+local worldState = GameGetWorldStateEntity()
+local rounds = 0
+if(worldState ~= 0)then
+    rounds = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0
+end
 local random_seed = (GameGetFrameNum() + GameGetRealWorldTimeSinceStarted() + a + b + c + d + e + f) / 2
 if(GameHasFlagRun("shop_sync"))then
     random_seed = ((tonumber(GlobalsGetValue("world_seed", "0")) or 1) * 214) * rounds

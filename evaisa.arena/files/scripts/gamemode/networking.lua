@@ -1779,6 +1779,12 @@ networking = {
             end]]
         end,
         item_update = function(lobby, data, user, force, to_spectators)
+
+            local playerEnt = player.Get()
+            if (playerEnt == nil) then
+                return;
+            end
+
             local item_data = player.GetItemData()
             if(item_data ~= nil)then
                 local data = { item_data, force, GameHasFlagRun( "arena_unlimited_spells" ) }
@@ -2018,7 +2024,7 @@ networking = {
         end,
         switch_item = function(lobby, data, user, force, to_spectators)
             local held_item = player.GetActiveHeldItem()
-            if (held_item ~= nil) then
+            if (held_item ~= nil and held_item ~= 0) then
                 if (force or user ~= nil or held_item ~= data.client.previous_selected_item) then
                     --local wand_id = tonumber(GlobalsGetValue(tostring(held_item) .. "_item")) or -1
                     --if (wand_id ~= -1) then

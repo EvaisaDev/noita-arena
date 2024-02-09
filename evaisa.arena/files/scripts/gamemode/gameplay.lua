@@ -2704,22 +2704,23 @@ ArenaGameplay = {
 
             local player_entity = player.Get()
 
-            local inventory_gui_comp = EntityGetFirstComponentIncludingDisabled(player_entity, "InventoryGuiComponent")
+            if(player_entity)then
+                local inventory_gui_comp = EntityGetFirstComponentIncludingDisabled(player_entity, "InventoryGuiComponent")
 
-            local inventory_open = ComponentGetValue2(inventory_gui_comp, "mActive")
-            if(inventory_open)then
-                if(not data.client.inventory_was_open)then
-                    --GamePrint("inventory_was_opened")
+                local inventory_open = ComponentGetValue2(inventory_gui_comp, "mActive")
+                if(inventory_open)then
+                    if(not data.client.inventory_was_open)then
+                        --GamePrint("inventory_was_opened")
+                    end
+                    data.client.inventory_was_open = true
+                else
+                    if(data.client.inventory_was_open)then
+                        --GamePrint("inventory_was_closed")
+                        networking.send.item_update(lobby, data, nil, true, false)
+                    end
+                    data.client.inventory_was_open = false
                 end
-                data.client.inventory_was_open = true
-            else
-                if(data.client.inventory_was_open)then
-                    --GamePrint("inventory_was_closed")
-                    networking.send.item_update(lobby, data, nil, true, false)
-                end
-                data.client.inventory_was_open = false
             end
-
             if(GlobalsGetValue("arena_item_pickup", "0") ~= "0")then
                 networking.send.item_picked_up(lobby, tonumber(GlobalsGetValue("arena_item_pickup", "0")))
                 GlobalsSetValue("arena_item_pickup", "0")
