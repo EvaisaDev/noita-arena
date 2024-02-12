@@ -2170,9 +2170,8 @@ ArenaGameplay = {
             data.ready_counter:update()
         end
 
-        if (GameGetFrameNum() % 2 == 0) then
-            networking.send.character_position(lobby, data, true)
-        end
+        networking.send.character_position(lobby, data, true)
+
        -- networking.send.wand_update(lobby, data, nil, nil, true)
         networking.send.input(lobby, data, true)
         networking.send.animation_update(lobby, data, true)
@@ -2471,9 +2470,7 @@ ArenaGameplay = {
         end
 
         if(GameHasFlagRun("player_is_unlocked") and (not GameHasFlagRun("no_shooting")))then
-            if (GameGetFrameNum() % 2 == 0) then
-                networking.send.character_position(lobby, data)
-            end
+            networking.send.character_position(lobby, data)
         end
 
         if (GameHasFlagRun("took_damage")) then
