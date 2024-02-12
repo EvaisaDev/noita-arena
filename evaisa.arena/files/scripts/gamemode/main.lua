@@ -30,6 +30,7 @@ local playerinfo_menu = dofile("mods/evaisa.arena/files/scripts/utilities/player
 dofile_once("data/scripts/perks/perk_list.lua")
 dofile_once("mods/evaisa.arena/content/data.lua")
 
+
 perk_sprites = {}
 for k, perk in pairs(perk_list) do
     perk_sprites[perk.id] = perk.ui_icon
@@ -63,6 +64,8 @@ sorted_perk_list = sorted_perk_list or nil
 sorted_perk_list_ids = sorted_perk_list_ids or nil
 sorted_map_list = sorted_map_list or nil
 sorted_map_list_ids = sorted_map_list_ids or nil
+
+
 
 local function ifind(s, pattern, init, plain)
     return string.find(s:lower(), pattern:lower(), init, plain)
@@ -237,14 +240,14 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 127,
-    required_online_version = 323,
+    version = 128,
+    required_online_version = 328,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
     end,
     version_flavor_text = "$arena_dev",
     spectator_unfinished_warning = true,
-    disable_spectator_system = true, --not ModSettingGet("evaisa.arena.spectator_unstable"),
+    disable_spectator_system = not ModSettingGet("evaisa.arena.spectator_unstable"),
     enable_presets = true,
     binding_register = function(bindings)
         print("Registering bindings for Noita Arena")
@@ -1258,7 +1261,7 @@ ArenaMode = {
             end
         end
         
-        if(steamutils.IsOwner())then
+        if(steamutils.IsOwner(lobby))then
             steam.matchmaking.setLobbyData(lobby, "mod_list", player_mods)
         end
 
@@ -1536,6 +1539,9 @@ ArenaMode = {
 
     end,
     update = function(lobby)
+
+
+
         if (data == nil) then
             return
         end
@@ -1646,20 +1652,17 @@ ArenaMode = {
             local player_entity = EntityGetWithTag("player_unit")[1]
             local x, y = EntityGetTransform(player_entity)
             EntityInflictDamage(player_entity, 0.2, "DAMAGE_SLICE", "player", "BLOOD_EXPLOSION", 0, 0, GameGetWorldStateEntity(), x, y, 0)
+        elseif (input:WasKeyPressed("f7")) then
+            local inspect = dofile("mods/evaisa.arena/lib/inspect.lua")
+            -- global table snapshot
+            -- json stringify global table
+            local json_string = inspect(data)
+            -- write to file
+            
+            file:write(json_string)
+            file:close()
         end
-        --[[if(input:WasKeyPressed("f10"))then
-            local world_state = GameGetWorldStateEntity()
 
-            EntityKill(world_state)
-        elseif(input:WasKeyPressed("f6"))then
-            local player_entity = EntityGetWithTag("player_unit")[1]
-            local x, y = EntityGetTransform(player_entity)
-            EntityInflictDamage(player_entity, 0.2, "DAMAGE_SLICE", "player", "BLOOD_EXPLOSION", 0, 0, GameGetWorldStateEntity(), x, y, 0)
-        elseif(input:WasKeyPressed("f7"))then
-            local player_entity = EntityGetWithTag("player_unit")[1]
-            local x, y = EntityGetTransform(player_entity)
-            EntityLoad("data/entities/animals/slimeshooter.xml", x, y)
-        end]]
 
         --print("Did something go wrong?")
     end,
@@ -1673,6 +1676,9 @@ ArenaMode = {
         else
             spectator_handler.LateUpdate(lobby, data)
         end
+
+        
+
     end,
     player_enter = function(lobby, user)
         if(steamutils.IsOwner())then

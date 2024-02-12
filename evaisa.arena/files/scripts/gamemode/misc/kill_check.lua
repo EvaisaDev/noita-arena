@@ -1,6 +1,4 @@
 local helpers = dofile("mods/evaisa.mp/files/scripts/helpers.lua")
-local json = dofile("mods/evaisa.arena/lib/json.lua")
-
 function damage_about_to_be_received( damage, x, y, entity_thats_responsible, critical_hit_chance )
     local entity_id = GetUpdatedEntityID()
 
@@ -37,6 +35,19 @@ function damage_about_to_be_received( damage, x, y, entity_thats_responsible, cr
 
     return damage, critical_hit_chance
 end
+
+local function serialize_damage_details(tbl)
+    return string.format("%d|%d|%f|%f|%f|%f",
+        tbl.ragdoll_fx,
+        tbl.damage_types,
+        tbl.knockback_force,
+        tbl.impulse[1],
+        tbl.impulse[2],
+        tbl.world_pos[1],
+        tbl.world_pos[2]
+    )
+end
+
 
 function damage_received( damage, message, entity_thats_responsible, is_fatal, projectile_thats_responsible )
     local entity_id = GetUpdatedEntityID()
@@ -121,7 +132,7 @@ function damage_received( damage, message, entity_thats_responsible, is_fatal, p
     --print(json.stringify(damage_details))
     -- check if would kill
     GameAddFlagRun("took_damage")
-    GlobalsSetValue("last_damage_details", tostring(json.stringify(damage_details)))
+    GlobalsSetValue("last_damage_details", tostring(serialize_damage_details(damage_details)))
 
     local damageModelComponent = EntityGetFirstComponentIncludingDisabled( entity_id, "DamageModelComponent" )
     if damageModelComponent ~= nil then

@@ -239,7 +239,7 @@ _start_shot = function( current_mana )
             end
         end
     elseif(EntityHasTag(shooter, "player_unit"))then
-        GlobalsSetValue("player_cast_state", smallfolk.dumpsies(cast_state_data))
+        GlobalsSetValue("player_cast_state", smallfolk.dumps(cast_state_data))
     end
 
 end]]

@@ -34,6 +34,30 @@ entity.ClearGameEffects = function( ent )
     end
 end
 
+-- make a item network synced
+entity.NetworkRegister = function(item_entity, x, y, id)
+    local EntityHelper = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/entity.lua")
+    EntityHelper.SetVariable(item_entity, "arena_entity_id", id ~= nil and id or tonumber(tostring(x)..tostring(y)))
+
+    local lua_comps = EntityGetComponentIncludingDisabled(item_entity, "LuaComponent") or {}
+    local has_pickup_script = false
+    for i, lua_comp in ipairs(lua_comps) do
+        if (ComponentGetValue2(lua_comp, "script_item_picked_up") == "mods/evaisa.arena/files/scripts/gamemode/misc/item_pickup.lua") then
+            has_pickup_script = true
+        end
+    end
+
+    if (not has_pickup_script) then
+        EntityAddTag(item_entity, "does_physics_update")
+        EntityAddComponent(item_entity, "LuaComponent", {
+            _tags = "enabled_in_world,enabled_in_hand,enabled_in_inventory",
+            script_item_picked_up = "mods/evaisa.arena/files/scripts/gamemode/misc/item_pickup.lua",
+            script_kick = "mods/evaisa.arena/files/scripts/gamemode/misc/item_kick.lua",
+            script_throw_item = "mods/evaisa.arena/files/scripts/gamemode/misc/item_throw.lua",
+        })
+    end
+end
+
 entity.SetVariable = function(ent, name, value)
     --print("entity: "..tostring(ent))
     if(ent == nil or ent == 0 or not EntityGetIsAlive(ent))then

@@ -6,9 +6,9 @@ local dump_type = {}
 
 function dump_type:string(nmemo, memo, acc)
 	local nacc = #acc
-	acc[nacc + 1] = '"'
-	acc[nacc + 2] = self:gsub('"', '""')
-	acc[nacc + 3] = '"'
+	acc[nacc + 1] = "'"
+	acc[nacc + 2] = self:gsub("'", "''")
+	acc[nacc + 3] = "'"
 	return nmemo
 end
 
@@ -33,7 +33,6 @@ function dump_type:table(nmemo, memo, acc)
 	end
 	for k, v in pairs(self) do
 		if type(k) ~= 'number' or floor(k) ~= k or k < 1 or k > nself then
-			--print(tostring(k))
 			nmemo = dump_object(k, nmemo, memo, acc)
 			acc[#acc + 1] = ':'
 			nmemo = dump_object(v, nmemo, memo, acc)
@@ -71,7 +70,7 @@ function dump_object(object, nmemo, memo, acc)
 	return nmemo
 end
 
-function M.dumpsies(object)
+function M.dumps(object)
 	local nmemo = 0
 	local memo = {}
 	local acc = {}
@@ -139,12 +138,12 @@ local expect_object_head = {
 	N = function(string, i) return 0/0, i end,
 	I = function(string, i) return 1/0, i end,
 	i = function(string, i) return -1/0, i end,
-	['"'] = function(string, i)
+	["'"] = function(string, i)
 		local nexti = i - 1
 		repeat
-			nexti = string:find('"', nexti + 1, true) + 1
-		until string:sub(nexti, nexti) ~= '"'
-		return string:sub(i, nexti - 2):gsub('""', '"'), nexti
+			nexti = string:find("'", nexti + 1, true) + 1
+		until string:sub(nexti, nexti) ~= "'"
+		return string:sub(i, nexti - 2):gsub("''", "'"), nexti
 	end,
 	['0'] = function(string, i)
 		return expect_number(string, i - 1)
@@ -204,7 +203,7 @@ expect_object = function(string, i, tables)
 	invalid(i)
 end
 
-function M.loadsies(string, maxsize)
+function M.loads(string, maxsize)
 	if #string > (maxsize or 10000) then
 		error 'input too large'
 	end

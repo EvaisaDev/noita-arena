@@ -84,6 +84,32 @@ arena_list = {
         zone_size = 600, -- size of damage zone, should be max distance from 0, 0 players can travel
         zone_floor = 400, -- damage floor, if player falls below this they die.
     },
+    {
+        id = "biomes",
+        name = "[WIP] Biomes",
+        description = "Generates noita biomes.",
+        thumbnail = "mods/evaisa.arena/content/arenas/biomes/thumbnail.png",
+        frame = "mods/evaisa.arena/content/arenas/frame.png",
+        biome_map = "mods/evaisa.arena/content/arenas/biomes/map.lua",
+        custom_biomes = {
+            {
+                biome_filename="mods/evaisa.arena/content/arenas/biomes/walls.xml",
+                height_index="1",
+                color="FF688384"
+            },
+            {
+                biome_filename="mods/evaisa.arena/content/arenas/biomes/allbiomes/coalmine_alt.xml",
+                height_index="1",
+                color="FF7B8FE9"
+            },
+        },
+        pixel_scenes = "mods/evaisa.arena/content/arenas/biomes/scenes.xml",
+        spawn_points = { -- optional, can also use spawn pixels, 0,0 is there as a backup in case spawn pixels fail somehow.
+            {x = 0, y = 0}
+        },
+        zone_size = 600, -- size of damage zone, should be max distance from 0, 0 players can travel
+        zone_floor = 400, -- damage floor, if player falls below this they die.
+    },
 }
 
 cosmetics = {

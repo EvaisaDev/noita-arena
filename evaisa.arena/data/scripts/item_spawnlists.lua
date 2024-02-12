@@ -1,3 +1,4 @@
+local EntityHelper = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/entity.lua")
 spawnlists =
 {
 	potion_spawnlist =
@@ -173,12 +174,12 @@ spawnlists =
 	},
 }
 
-function spawn_from_list( listname, x, y )
+function spawn_from_list( listname, x, y, sync )
 	local spawnlist
 
 	local rounds = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0
 	local seed_x, seed_y = (x * 3256) + rounds * 765 + (GameGetFrameNum() / 30), (y * 5326) + rounds * 123 + (GameGetFrameNum() / 20)
-	if(GameHasFlagRun("shop_sync"))then
+	if(GameHasFlagRun("shop_sync") or sync)then
         seed_x, seed_y = (x * 3256) + rounds * 765, (y * 5326) + rounds * 123
 	end
 
@@ -213,13 +214,16 @@ function spawn_from_list( listname, x, y )
 				local oy = data.offset_y or 0
 				
 				if ( data.load_entity_func ~= nil ) then
-					return data.load_entity_func( data, x, y )
+					local item_entity = data.load_entity_func( data, x, y )
+					EntityHelper.NetworkRegister(item_entity, x, y)
 				elseif ( data.load_entity_from_list ~= nil ) then
 					
-					return spawn_from_list( data.load_entity_from_list, x, y )
+					local item_entity = spawn_from_list( data.load_entity_from_list, x, y )
+					EntityHelper.NetworkRegister(item_entity, x, y)
 				elseif ( data.load_entity ~= nil ) then
 					
-					return EntityLoad( data.load_entity, x + ox, y + oy )
+					local item_entity = EntityLoad( data.load_entity, x + ox, y + oy )
+					EntityHelper.NetworkRegister(item_entity, x, y)
 				end
 			end
 		end

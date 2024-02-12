@@ -2,11 +2,11 @@ dofile_once("data/scripts/lib/utilities.lua")
 dofile( "data/scripts/gun/gun_actions.lua" )
 dofile("mods/evaisa.arena/files/scripts/misc/random_action.lua")
 
-function generate_shop_item( x, y, cheap_item, biomeid_, is_stealable )
+function generate_shop_item( x, y, cheap_item, biomeid_, is_stealable, sync )
 	
 	local rounds = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0
 	local seed_x, seed_y = (x * 3256) + rounds * 765 + (GameGetFrameNum() / 30), (y * 5326) + rounds * 123 + (GameGetFrameNum() / 20)
-	if(GameHasFlagRun("shop_sync"))then
+	if(GameHasFlagRun("shop_sync") or sync)then
         seed_x, seed_y = (x * 3256) + rounds * 765, (y * 5326) + rounds * 123
 	end
 	SetRandomSeed( seed_x, seed_y )

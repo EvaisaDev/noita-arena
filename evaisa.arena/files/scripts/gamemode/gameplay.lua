@@ -3,7 +3,6 @@ local player = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/player.l
 local EntityHelper = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/entity.lua")
 local counter = dofile_once("mods/evaisa.arena/files/scripts/utilities/ready_counter.lua")
 local countdown = dofile_once("mods/evaisa.arena/files/scripts/utilities/countdown.lua")
-local json = dofile("mods/evaisa.arena/lib/json.lua")
 local EZWand = dofile("mods/evaisa.arena/files/scripts/utilities/EZWand.lua")
 
 ArenaLoadCountdown = ArenaLoadCountdown or nil
@@ -1048,6 +1047,11 @@ ArenaGameplay = {
                     end
 
                     if(win_condition_user == nil or not GameHasFlagRun("win_condition_end_match"))then
+                        local new_seed = GameGetFrameNum() + tonumber(GlobalsGetValue("world_seed", "0"));
+
+                        networking.send.update_world_seed(lobby, new_seed)
+                        SetWorldSeed(new_seed)
+                        
                         delay.new(5 * 60, function()
                             ArenaGameplay.LoadLobby(lobby, data, false)
                         end, function(frames)
@@ -1078,6 +1082,11 @@ ArenaGameplay = {
 
             if(win_condition_user == nil or not GameHasFlagRun("win_condition_end_match"))then
                 GamePrintImportant(GameTextGetTranslatedOrNot("$arena_tie_text"), GameTextGetTranslatedOrNot("$arena_round_end_text"))
+                local new_seed = GameGetFrameNum() + tonumber(GlobalsGetValue("world_seed", "0"));
+
+                networking.send.update_world_seed(lobby, new_seed)
+                SetWorldSeed(new_seed)
+                
                 delay.new(5 * 60, function()
                     ArenaGameplay.LoadLobby(lobby, data, false)
                 end, function(frames)
@@ -1735,6 +1744,11 @@ ArenaGameplay = {
             if (ArenaGameplay.ReadyCheck(lobby, data)) then
 
                 if(ArenaLoadCountdown == nil)then
+                    local new_seed = GameGetFrameNum() + tonumber(GlobalsGetValue("world_seed", "0"));
+
+                    networking.send.update_world_seed(lobby, new_seed)
+                    SetWorldSeed(new_seed)
+
                     print("all players ready!")
                     GameAddFlagRun("lock_ready_state")
                     networking.send.lock_ready_state(lobby)
@@ -2393,6 +2407,9 @@ ArenaGameplay = {
                         if(EntityGetIsAlive(data.spawn_loader))then
                             EntityKill(data.spawn_loader)
                         end
+
+
+
                         data.load_frames = 0
                         --GamePrint("Spawned!!")
     
@@ -2409,16 +2426,20 @@ ArenaGameplay = {
                         --message_handler.send.Health(lobby)
                         networking.send.health_update(lobby, data, true)
                     end
-                --else
+
                  --   player.Move(data.spawn_point.x, data.spawn_point.y)
                 end
             end
-
+        else
+                                    
+            for k, v in ipairs(EntityGetWithTag("spawn_point") or {})do
+                EntityKill(v)
+            end
         end
         local player_entities = {}
         for k, v in pairs(data.players) do
             if (v.entity ~= nil and EntityGetIsAlive(v.entity)) then
-                table.insert(player_entities, v.entity)
+                player_entities[k] = v.entity
             end
         end
         if (not IsPaused() and GameHasFlagRun("player_is_unlocked") and (not GameHasFlagRun("no_shooting"))) then
@@ -2735,21 +2756,24 @@ ArenaGameplay = {
 
             local inventory_gui_comp = EntityGetFirstComponentIncludingDisabled(player_entity, "InventoryGuiComponent")
 
-            local inventory_open = ComponentGetValue2(inventory_gui_comp, "mActive")
-            if(inventory_open)then
-                data.client.inventory_was_open = true
-            else
-                if(data.client.inventory_was_open)then
-                    networking.send.item_update(lobby, data, nil, true, true)
+            if(inventory_gui_comp ~= nil)then
+                
+
+                local inventory_open = ComponentGetValue2(inventory_gui_comp, "mActive")
+                if(inventory_open)then
+                    data.client.inventory_was_open = true
+                else
+                    if(data.client.inventory_was_open)then
+                        networking.send.item_update(lobby, data, nil, true, true)
+                    end
+                    data.client.inventory_was_open = false
                 end
-                data.client.inventory_was_open = false
-            end
 
-            if(GlobalsGetValue("arena_item_pickup", "0") ~= "0")then
-                networking.send.item_picked_up(lobby, tonumber(GlobalsGetValue("arena_item_pickup", "0")), true)
-                GlobalsSetValue("arena_item_pickup", "0")
+                if(GlobalsGetValue("arena_item_pickup", "0") ~= "0")then
+                    networking.send.item_picked_up(lobby, tonumber(GlobalsGetValue("arena_item_pickup", "0")), true)
+                    GlobalsSetValue("arena_item_pickup", "0")
+                end
             end
-
         end
 
 
