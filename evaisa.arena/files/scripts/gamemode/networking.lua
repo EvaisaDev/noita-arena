@@ -694,14 +694,23 @@ networking = {
                         controls_data.rightClick = false
                     end
 
+                    --[[
+                    local aim_x, aim_y = ComponentGetValue2(controls, "mAimingVector") -- float, float
+                    local aimNormal_x, aimNormal_y = ComponentGetValue2(controls, "mAimingVectorNormalized") -- float, float
+                    local aimNonZero_x, aimNonZero_y = ComponentGetValue2(controls, "mAimingVectorNonZeroLatest") -- float, float
+                    local mouse_x, mouse_y = ComponentGetValue2(controls, "mMousePosition") -- float, float
+                    local mouseRaw_x, mouseRaw_y = ComponentGetValue2(controls, "mMousePositionRaw") -- float, float
+                    local mouseRawPrev_x, mouseRawPrev_y = ComponentGetValue2(controls, "mMousePositionRawPrev") -- float, float
+                    local mouseDelta_x, mouseDelta_y = ComponentGetValue2(controls, "mMouseDelta") -- float, float
+                    ]]
+    
                     ComponentSetValue2(controlsComp, "mAimingVector", message.aim_x, message.aim_y)
-                    ComponentSetValue2(controlsComp, "mAimingNormal", message.aimNormal_x, message.aimNormal_y)
-                    ComponentSetValue2(controlsComp, "mAimingNonZero", message.aimNonZero_x, message.aimNonZero_y)
-                    ComponentSetValue2(controlsComp, "mMousePos", message.mouse_x, message.mouse_y)
-                    ComponentSetValue2(controlsComp, "mMousePosRaw", message.mouseRaw_x, message.mouseRaw_y)
-                    ComponentSetValue2(controlsComp, "mMousePosRawPrev", message.mouseRawPrev_x, message.mouseRawPrev_y)
+                    ComponentSetValue2(controlsComp, "mAimingVectorNormalized", message.aimNormal_x, message.aimNormal_y)
+                    ComponentSetValue2(controlsComp, "mAimingVectorNonZeroLatest", message.aimNonZero_x, message.aimNonZero_y)
+                    ComponentSetValue2(controlsComp, "mMousePosition", message.mouse_x, message.mouse_y)
+                    ComponentSetValue2(controlsComp, "mMousePositionRaw", message.mouseRaw_x, message.mouseRaw_y)
+                    ComponentSetValue2(controlsComp, "mMousePositionRawPrev", message.mouseRawPrev_x, message.mouseRawPrev_y)
                     ComponentSetValue2(controlsComp, "mMouseDelta", message.mouseDelta_x, message.mouseDelta_y)
-
 
                     local children = EntityGetAllChildren(data.players[tostring(user)].entity) or {}
                     for i, child in ipairs(children) do
