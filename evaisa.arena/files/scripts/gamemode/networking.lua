@@ -47,6 +47,8 @@ typedef struct A {
     bool fly:1;
     bool leftClick:1;
     bool rightClick:1;
+    bool is_on_ground:1;
+    bool is_on_slippery_ground:1;
 } Controls;
 #pragma pack(pop)
 ]])
@@ -538,6 +540,7 @@ networking = {
                     
                     local controls_data = data.players[tostring(user)].controls
                     local controlsComp = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity, "ControlsComponent")
+                    local characterData = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity, "CharacterDataComponent")
 
                     if(message.kick)then
                         ComponentSetValue2(controlsComp, "mButtonDownKick", true)
@@ -693,6 +696,10 @@ networking = {
                         ComponentSetValue2(controlsComp, "mButtonDownRightClick", false)
                         controls_data.rightClick = false
                     end
+
+                    ComponentSetValue2(controlsComp, "is_on_ground", message.is_on_ground or false)
+                    ComponentSetValue2(controlsComp, "is_on_slippery_ground", message.is_on_slippery_ground or false)
+
 
                     --[[
                     local aim_x, aim_y = ComponentGetValue2(controls, "mAimingVector") -- float, float
@@ -1590,8 +1597,13 @@ networking = {
             end
         end,
         input = function(lobby, data, to_spectators)
-            local controls = player.GetControlsComponent()
-            if (controls ~= nil) then
+            local player = player_helper.Get()
+            if (player == nil) then
+                return
+            end
+            local controls = EntityGetFirstComponentIncludingDisabled(player, "ControlsComponent")
+            local characterData = EntityGetFirstComponentIncludingDisabled(player, "CharacterDataComponent")
+            if (controls ~= nil and characterData ~= nil) then
                 local kick = ComponentGetValue2(controls, "mButtonDownKick") -- boolean
                 local fire = ComponentGetValue2(controls, "mButtonDownFire")  -- boolean
                 local fire2 = ComponentGetValue2(controls, "mButtonDownFire2")  -- boolean
@@ -1643,6 +1655,8 @@ networking = {
                     mouseRawPrev_y = mouseRawPrev_y,
                     mouseDelta_x = mouseDelta_x,
                     mouseDelta_y = mouseDelta_y,
+                    is_on_ground = ComponentGetValue2(characterData, "is_on_ground"),
+                    is_on_slippery_ground = ComponentGetValue2(characterData, "is_on_slippery_ground"),
                 }
 
                 if(to_spectators)then
