@@ -2174,7 +2174,7 @@ ArenaGameplay = {
 
        -- networking.send.wand_update(lobby, data, nil, nil, true)
         networking.send.input(lobby, data, true)
-        networking.send.animation_update(lobby, data, true)
+        --networking.send.animation_update(lobby, data, true)
         if(GameGetFrameNum() % 15 == 0)then
             networking.send.player_data_update(lobby, data, true)
             ArenaGameplay.RunReadyCheck(lobby, data)
@@ -2492,7 +2492,7 @@ ArenaGameplay = {
             --message_handler.send.SwitchItem(lobby, data)
             --message_handler.send.Kick(lobby, data)
             --message_handler.send.AnimationUpdate(lobby, data)
-            networking.send.animation_update(lobby, data)
+            --networking.send.animation_update(lobby, data)
             if(GameGetFrameNum() % 15 == 0)then
                 networking.send.player_data_update(lobby, data)
             end
