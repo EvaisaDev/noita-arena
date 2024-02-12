@@ -2170,12 +2170,11 @@ ArenaGameplay = {
             data.ready_counter:update()
         end
 
-        if (GameGetFrameNum() % 2 == 0) then
-            networking.send.character_position(lobby, data, true)
-        end
+        networking.send.character_position(lobby, data, true)
+
        -- networking.send.wand_update(lobby, data, nil, nil, true)
         networking.send.input(lobby, data, true)
-        networking.send.animation_update(lobby, data, true)
+        --networking.send.animation_update(lobby, data, true)
         if(GameGetFrameNum() % 15 == 0)then
             networking.send.player_data_update(lobby, data, true)
             ArenaGameplay.RunReadyCheck(lobby, data)
@@ -2471,9 +2470,7 @@ ArenaGameplay = {
         end
 
         if(GameHasFlagRun("player_is_unlocked") and (not GameHasFlagRun("no_shooting")))then
-            if (GameGetFrameNum() % 2 == 0) then
-                networking.send.character_position(lobby, data)
-            end
+            networking.send.character_position(lobby, data)
         end
 
         if (GameHasFlagRun("took_damage")) then
@@ -2495,7 +2492,7 @@ ArenaGameplay = {
             --message_handler.send.SwitchItem(lobby, data)
             --message_handler.send.Kick(lobby, data)
             --message_handler.send.AnimationUpdate(lobby, data)
-            networking.send.animation_update(lobby, data)
+            --networking.send.animation_update(lobby, data)
             if(GameGetFrameNum() % 15 == 0)then
                 networking.send.player_data_update(lobby, data)
             end
@@ -2867,6 +2864,7 @@ ArenaGameplay = {
             end
         end
 
+        --[[
         for k, v in pairs(data.players) do
             if (v.entity ~= nil and EntityGetIsAlive(v.entity)) then
                 local controls = EntityGetFirstComponentIncludingDisabled(v.entity, "ControlsComponent")
@@ -2929,6 +2927,7 @@ ArenaGameplay = {
                 end
             end
         end
+        ]]
 
         local current_player = player.Get()
 
@@ -2946,6 +2945,8 @@ ArenaGameplay = {
     OnProjectileFired = function(lobby, data, shooter_id, projectile_id, rng, position_x, position_y, target_x, target_y, send_message, unknown1, multicast_index, unknown3)
         --print(tostring(shooter_id))
         
+        local is_physics = #(PhysicsBodyIDGetFromEntity(projectile_id) or {}) > 0
+
         local playerEntity = player.Get()
         if (playerEntity ~= nil and playerEntity == shooter_id) then
     
@@ -2969,7 +2970,13 @@ ArenaGameplay = {
                 --GamePrint("Setting spread rng: "..tostring(rng))
 
                 np.SetProjectileSpreadRNG(rng)
+                
+                
 
+                if(is_physics)then
+                    EntityHelper.NetworkRegister(projectile_id, position_x, position_y, rng)
+                    print("registered physics")
+                end
                 --data.client.spread_index = data.client.spread_index + 1
 
                 --[[if(data.client.spread_index > 10)then
@@ -2979,6 +2986,10 @@ ArenaGameplay = {
                 if (data.projectile_seeds[entity_that_shot]) then
                     local new_seed = data.projectile_seeds[entity_that_shot] + 25
                     np.SetProjectileSpreadRNG(new_seed)
+                    if(is_physics)then
+                        EntityHelper.NetworkRegister(projectile_id, position_x, position_y, new_seed)
+                        print("registered physics")
+                    end
                     data.projectile_seeds[entity_that_shot] = data.projectile_seeds[entity_that_shot] + 10
                     data.projectile_seeds[projectile_id] = new_seed
                 end
@@ -3004,12 +3015,20 @@ ArenaGameplay = {
                     --GamePrint("Setting client spread rng: "..tostring(rng))
 
                     np.SetProjectileSpreadRNG(rng)
+                    if(is_physics)then
+                        EntityHelper.NetworkRegister(projectile_id, position_x, position_y, rng)
+                        print("registered physics")
+                    end
 
                     data.players[EntityGetName(shooter_id)].next_rng = rng + 1
                 else
                     if (data.projectile_seeds[entity_that_shot]) then
                         local new_seed = data.projectile_seeds[entity_that_shot] + 25
                         np.SetProjectileSpreadRNG(new_seed)
+                        if(is_physics)then
+                            EntityHelper.NetworkRegister(projectile_id, position_x, position_y, new_seed)
+                            print("registered physics")
+                        end
                         data.projectile_seeds[entity_that_shot] = data.projectile_seeds[entity_that_shot] + 10
                     end
                 end

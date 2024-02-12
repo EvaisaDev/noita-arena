@@ -167,7 +167,7 @@ SpectatorMode = {
         
         if(data.spectator_entity)then
             local camera_x, camera_y = GameGetCameraPos()
-            EntitySetTransform(data.spectator_entity, camera_x, camera_y)
+            --EntitySetTransform(data.spectator_entity, camera_x, camera_y)
             EntityApplyTransform(data.spectator_entity, camera_x, camera_y)
         end
     end,

@@ -320,4 +320,37 @@
     eating_cells_per_frame="2"
   ></PlatformShooterPlayerComponent>
 
+
+  <StatusEffectDataComponent>
+  </StatusEffectDataComponent>
+
+  <IngestionComponent/>
+
+  <PlayerCollisionComponent 
+    getting_crushed_threshold="6"
+    moving_up_before_getting_crushed_threshold="6"
+  ></PlayerCollisionComponent >
+
+  <AudioComponent
+    file="data/audio/Desktop/player.bank"
+    event_root="player"
+    audio_physics_material="character_player"
+    set_latest_event_position="1"
+  ></AudioComponent>
+
+  <AudioLoopComponent
+    _tags="sound_jetpack"
+    file="data/audio/Desktop/player.bank"
+    event_name="player/jetpack"
+    volume_autofade_speed="0.25"
+  ></AudioLoopComponent>
+
+  <AudioLoopComponent
+    _tags="sound_pick_gold_sand"
+    file="data/audio/Desktop/player.bank"
+    event_name="player/pick_gold_sand"
+    volume_autofade_speed="0.05"
+  ></AudioLoopComponent>
+
+
 </Entity>

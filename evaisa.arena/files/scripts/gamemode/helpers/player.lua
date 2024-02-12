@@ -113,7 +113,7 @@ player_helper.Move = function(x, y)
     if (player == nil) then
         return
     end
-    EntitySetTransform(player, x, y)
+    --EntitySetTransform(player, x, y)
     EntityApplyTransform(player, x, y)
 end
 
