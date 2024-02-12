@@ -547,6 +547,7 @@ networking = {
                         controls_data.kick = true
                     else
                         ComponentSetValue2(controlsComp, "mButtonDownKick", false)
+                        controls_data.kick = false
                     end
 
                     if(message.fire)then
@@ -558,6 +559,7 @@ networking = {
                         controls_data.fire = true
                     else
                         ComponentSetValue2(controlsComp, "mButtonDownFire", false)
+                        controls_data.fire = false
                     end
 
                     if(message.fire2)then
@@ -568,6 +570,7 @@ networking = {
                         controls_data.fire2 = true
                     else
                         ComponentSetValue2(controlsComp, "mButtonDownFire2", false)
+                        controls_data.fire2 = false
                     end
 
                     if(message.action)then
@@ -578,6 +581,7 @@ networking = {
                         controls_data.action = true
                     else
                         ComponentSetValue2(controlsComp, "mButtonDownAction", false)
+                        controls_data.action = false
                     end
 
                     if(message.throw)then
@@ -588,6 +592,7 @@ networking = {
                         controls_data.throw = true
                     else
                         ComponentSetValue2(controlsComp, "mButtonDownThrow", false)
+                        controls_data.throw = false
                     end
 
                     if(message.interact)then
@@ -598,6 +603,7 @@ networking = {
                         controls_data.interact = true
                     else
                         ComponentSetValue2(controlsComp, "mButtonDownInteract", false)
+                        controls_data.interact = false
                     end
 
                     if(message.left)then
@@ -608,6 +614,7 @@ networking = {
                         controls_data.left = true
                     else
                         ComponentSetValue2(controlsComp, "mButtonDownLeft", false)
+                        controls_data.left = false
                     end
 
                     if(message.right)then
@@ -618,6 +625,7 @@ networking = {
                         controls_data.right = true
                     else
                         ComponentSetValue2(controlsComp, "mButtonDownRight", false)
+                        controls_data.right = false
                     end
 
                     if(message.up)then
@@ -628,6 +636,7 @@ networking = {
                         controls_data.up = true
                     else
                         ComponentSetValue2(controlsComp, "mButtonDownUp", false)
+                        controls_data.up = false
                     end
 
                     if(message.down)then
@@ -638,6 +647,7 @@ networking = {
                         controls_data.down = true
                     else
                         ComponentSetValue2(controlsComp, "mButtonDownDown", false)
+                        controls_data.down = false
                     end
 
                     if(message.jump)then
@@ -648,6 +658,7 @@ networking = {
                         controls_data.jump = true
                     else
                         ComponentSetValue2(controlsComp, "mButtonDownJump", false)
+                        controls_data.jump = false
                     end
 
                     if(message.fly)then
@@ -658,6 +669,7 @@ networking = {
                         controls_data.fly = true
                     else
                         ComponentSetValue2(controlsComp, "mButtonDownFly", false)
+                        controls_data.fly = false
                     end
 
                     if(message.leftClick)then
@@ -668,6 +680,7 @@ networking = {
                         controls_data.leftClick = true
                     else
                         ComponentSetValue2(controlsComp, "mButtonDownLeftClick", false)
+                        controls_data.leftClick = false
                     end
 
                     if(message.rightClick)then
@@ -678,6 +691,7 @@ networking = {
                         controls_data.rightClick = true
                     else
                         ComponentSetValue2(controlsComp, "mButtonDownRightClick", false)
+                        controls_data.rightClick = false
                     end
 
                     ComponentSetValue2(controlsComp, "mAimingVector", message.aim_x, message.aim_y)

@@ -797,8 +797,8 @@ upgrades = {
     },    
     {
         id = "GOLD",
-        ui_name = "Payday",
-        ui_description = "You gain an additional set of gold this round.",
+        ui_name = "$arena_upgrades_gold_name",
+        ui_description = "$arena_upgrades_gold_description",
         card_symbol = "mods/evaisa.arena/files/sprites/ui/upgrades/symbols/gold.png",
         weight = 1.0,
         func = function(entity_who_picked)
@@ -817,8 +817,8 @@ upgrades = {
     },
     {
         id = "RANDOM_PERK",
-        ui_name = "Random Perk",
-        ui_description = "You gain a random perk.",
+        ui_name = "$arena_upgrades_random_perk_name",
+        ui_description = "$arena_upgrades_random_perk_description",
         card_symbol = "mods/evaisa.arena/files/sprites/ui/upgrades/symbols/random_perk.png",
         weight = 1.0,
         func = function(entity_who_picked)
@@ -832,8 +832,8 @@ upgrades = {
     },
     {
         id = "HEALTH",
-        ui_name = "Health",
-        ui_description = "You gain 25% extra max health.",
+        ui_name = "$arena_upgrades_health_name",
+        ui_description = "$arena_upgrades_health_description",
         card_symbol = "mods/evaisa.arena/files/sprites/ui/upgrades/symbols/health.png",
         weight = 1.0,
         func = function(entity_who_picked)

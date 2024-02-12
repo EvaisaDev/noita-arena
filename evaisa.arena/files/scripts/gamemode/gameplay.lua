@@ -2864,6 +2864,7 @@ ArenaGameplay = {
             end
         end
 
+        --[[
         for k, v in pairs(data.players) do
             if (v.entity ~= nil and EntityGetIsAlive(v.entity)) then
                 local controls = EntityGetFirstComponentIncludingDisabled(v.entity, "ControlsComponent")
@@ -2926,7 +2927,8 @@ ArenaGameplay = {
                 end
             end
         end
-
+        ]]
+        
         local current_player = player.Get()
 
         if ((not GameHasFlagRun("player_unloaded")) and current_player ~= nil and EntityGetIsAlive(current_player)) then
