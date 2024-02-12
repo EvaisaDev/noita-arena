@@ -1235,7 +1235,7 @@ networking = {
         physics_update = function(lobby, message, user, data)
             local entities = EntityGetInRadiusWithTag(0, 0, 1000000000, "does_physics_update")
             local item_id = message.id
-            local x, y, r, vx, vy, vr = message.x, message.y, message.r, message.vx, message.vy, message.vr
+            local x, y, r, vx, vy, vr = message.x, message.y, message.r, message.vel_x, message.vel_y, message.vel_a
             local takes_control = message.takes_control
             for k, v in ipairs(entities)do
                 --if(EntityGetFirstComponentIncludingDisabled(v, "ItemComponent") ~= nil)then
