@@ -343,8 +343,8 @@ networking = {
 
                         local characterData = EntityGetFirstComponentIncludingDisabled(entity, "CharacterDataComponent")
 
-                        ComponentSetValue2(controlsComp, "is_on_ground", message.is_on_ground or false)
-                        ComponentSetValue2(controlsComp, "is_on_slippery_ground", message.is_on_slippery_ground or false)
+                        ComponentSetValue2(characterData, "is_on_ground", message.is_on_ground or false)
+                        ComponentSetValue2(characterData, "is_on_slippery_ground", message.is_on_slippery_ground or false)
     
                     end
                 end
