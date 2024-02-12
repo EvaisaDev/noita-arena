@@ -326,6 +326,11 @@
 
   <IngestionComponent/>
 
+  <PlayerCollisionComponent 
+    getting_crushed_threshold="6"
+    moving_up_before_getting_crushed_threshold="6"
+  ></PlayerCollisionComponent >
+
   <AudioComponent
     file="data/audio/Desktop/player.bank"
     event_root="player"
