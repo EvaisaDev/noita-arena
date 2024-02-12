@@ -333,7 +333,7 @@ function generate_shop_wand( x, y, cheap_item, biomeid_ )
 		script_item_picked_up="data/scripts/items/shop_effect.lua"
 		} )
 
-	EntitySetTransform( eid, x, y )
+	--EntitySetTransform( eid, x, y )
 	EntityApplyTransform( eid, x, y )
 
 	return eid

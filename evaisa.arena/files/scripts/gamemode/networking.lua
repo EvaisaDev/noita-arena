@@ -47,8 +47,6 @@ typedef struct A {
     bool fly:1;
     bool leftClick:1;
     bool rightClick:1;
-    bool is_on_ground:1;
-    bool is_on_slippery_ground:1;
 } Controls;
 #pragma pack(pop)
 ]])
@@ -87,6 +85,8 @@ typedef struct D {
     float y;
     float vel_x;
     float vel_y;
+    bool is_on_ground:1;
+    bool is_on_slippery_ground:1;
 } CharacterPos;
 #pragma pack(pop)
 ]])
@@ -330,7 +330,7 @@ networking = {
                         end
                         table.insert(data.players[tostring(user)].previous_positions, {x = x, y = y} )
 
-                        EntitySetTransform(entity, new_x, new_y)
+                        --EntitySetTransform(entity, new_x, new_y)
                         EntityApplyTransform(entity, new_x, new_y)
                         
                         --[[
@@ -338,8 +338,14 @@ networking = {
                         EntityApplyTransform(entity, x, y)
                         ]]
                     else
-                        EntitySetTransform(entity, x, y)
+                        --EntitySetTransform(entity, x, y)
                         EntityApplyTransform(entity, x, y)
+
+                        local characterData = EntityGetFirstComponentIncludingDisabled(entity, "CharacterDataComponent")
+
+                        ComponentSetValue2(controlsComp, "is_on_ground", message.is_on_ground or false)
+                        ComponentSetValue2(controlsComp, "is_on_slippery_ground", message.is_on_slippery_ground or false)
+    
                     end
                 end
             end
@@ -540,7 +546,6 @@ networking = {
                     
                     local controls_data = data.players[tostring(user)].controls
                     local controlsComp = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity, "ControlsComponent")
-                    local characterData = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity, "CharacterDataComponent")
 
                     if(message.kick)then
                         ComponentSetValue2(controlsComp, "mButtonDownKick", true)
@@ -697,9 +702,6 @@ networking = {
                         controls_data.rightClick = false
                     end
 
-                    ComponentSetValue2(controlsComp, "is_on_ground", message.is_on_ground or false)
-                    ComponentSetValue2(controlsComp, "is_on_slippery_ground", message.is_on_slippery_ground or false)
-
 
                     --[[
                     local aim_x, aim_y = ComponentGetValue2(controls, "mAimingVector") -- float, float
@@ -722,7 +724,7 @@ networking = {
                     local children = EntityGetAllChildren(data.players[tostring(user)].entity) or {}
                     for i, child in ipairs(children) do
                         if (EntityGetName(child) == "cursor") then
-                            EntitySetTransform(child, message.mouse_x, message.mouse_y)
+                            --EntitySetTransform(child, message.mouse_x, message.mouse_y)
                             EntityApplyTransform(child, message.mouse_x, message.mouse_y)
                         end
                     end
@@ -978,7 +980,7 @@ networking = {
 
                         local wand_x, wand_y, wand_r = message[1], message[2], message[3]
 
-                        EntitySetTransform(mActiveItem, wand_x, wand_y, wand_r)
+                        --EntitySetTransform(mActiveItem, wand_x, wand_y, wand_r)
                         EntityApplyTransform(mActiveItem, wand_x, wand_y, wand_r)
 
                         local x = wand_x + (aimNormal_x * 2)
@@ -1488,11 +1490,14 @@ networking = {
                 local characterData = EntityGetFirstComponentIncludingDisabled(player, "CharacterDataComponent")
                 local vel_x, vel_y = ComponentGetValue2(characterData, "mVelocity")
 
+                
                 local c = CharacterPos{
                     x = x,
                     y = y,
                     vx = vel_x,
                     vy = vel_y,
+                    is_on_ground = ComponentGetValue2(characterData, "is_on_ground"),
+                    is_on_slippery_ground = ComponentGetValue2(characterData, "is_on_slippery_ground"),
                 }
 
                 if(to_spectators)then
@@ -1602,8 +1607,9 @@ networking = {
                 return
             end
             local controls = EntityGetFirstComponentIncludingDisabled(player, "ControlsComponent")
-            local characterData = EntityGetFirstComponentIncludingDisabled(player, "CharacterDataComponent")
-            if (controls ~= nil and characterData ~= nil) then
+
+            
+            if (controls ~= nil) then
                 local kick = ComponentGetValue2(controls, "mButtonDownKick") -- boolean
                 local fire = ComponentGetValue2(controls, "mButtonDownFire")  -- boolean
                 local fire2 = ComponentGetValue2(controls, "mButtonDownFire2")  -- boolean
@@ -1655,8 +1661,6 @@ networking = {
                     mouseRawPrev_y = mouseRawPrev_y,
                     mouseDelta_x = mouseDelta_x,
                     mouseDelta_y = mouseDelta_y,
-                    is_on_ground = ComponentGetValue2(characterData, "is_on_ground"),
-                    is_on_slippery_ground = ComponentGetValue2(characterData, "is_on_slippery_ground"),
                 }
 
                 if(to_spectators)then
