@@ -348,7 +348,9 @@ function generate_shop_potion( x, y, biome_id )
 
 	local eid = spawn_from_list("potion_spawnlist", x, y)
 
-	--if(eid == nil)then return end
+	print(tostring(eid))
+
+	if(eid == nil)then return end
 	
 	if(biome_id >= 10)then
 		biome_id = 10
@@ -383,6 +385,7 @@ function generate_shop_potion( x, y, biome_id )
 	offsetx = textwidth * 0.5 - 0.5
 
 	if( GlobalsGetValue("no_shop_cost") == "false")then
+
 		EntityAddComponent( eid, "SpriteComponent", { 
 			_tags="shop_cost,enabled_in_world",
 			image_file="data/fonts/font_pixel_white.xml", 
@@ -401,8 +404,18 @@ function generate_shop_potion( x, y, biome_id )
 			cost=itemcost,
 			stealable="0"
 		} )
-	end
+
+		local damage_model_comp = EntityGetFirstComponentIncludingDisabled( eid, "DamageModelComponent" )
 		
+		if( damage_model_comp ~= nil ) then
+			EntitySetComponentIsEnabled( eid, damage_model_comp, false )
+		end
+
+		EntityAddComponent( eid, "LuaComponent", { 
+			script_item_picked_up="mods/evaisa.arena/files/scripts/gamemode/misc/enable_damage_on_pick.lua"
+			} )
+	end
+
 	EntityAddComponent( eid, "LuaComponent", { 
 		script_item_picked_up="data/scripts/items/shop_effect.lua"
 		} )

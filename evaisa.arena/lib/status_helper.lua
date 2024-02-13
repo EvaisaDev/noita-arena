@@ -76,7 +76,7 @@ GetActiveStatusEffects = function( entity_id, combined )
         --table.insert(active_effects.ingestion, effect)
         if combined then
           active_effects[effect] = v
-        else
+        elseif(not combined)then
           active_effects.ingestion[effect] = v
         end
       end
@@ -91,7 +91,7 @@ GetActiveStatusEffects = function( entity_id, combined )
         --table.insert(active_effects.stain, effect)
         if(combined and (active_effects[effect] == nil or v > active_effects[effect]))then
           active_effects[effect] = v
-        else
+        elseif(not combined)then
           active_effects.stain[effect] = v
         end
       end

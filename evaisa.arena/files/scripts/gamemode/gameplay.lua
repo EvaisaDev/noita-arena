@@ -2975,7 +2975,7 @@ ArenaGameplay = {
 
                 if(is_physics)then
                     EntityHelper.NetworkRegister(projectile_id, position_x, position_y, rng)
-                    print("registered physics")
+                    table.insert(data.controlled_physics_entities, projectile_id)
                 end
                 --data.client.spread_index = data.client.spread_index + 1
 
@@ -2988,7 +2988,7 @@ ArenaGameplay = {
                     np.SetProjectileSpreadRNG(new_seed)
                     if(is_physics)then
                         EntityHelper.NetworkRegister(projectile_id, position_x, position_y, new_seed)
-                        print("registered physics")
+                        table.insert(data.controlled_physics_entities, projectile_id)
                     end
                     data.projectile_seeds[entity_that_shot] = data.projectile_seeds[entity_that_shot] + 10
                     data.projectile_seeds[projectile_id] = new_seed
@@ -3017,7 +3017,7 @@ ArenaGameplay = {
                     np.SetProjectileSpreadRNG(rng)
                     if(is_physics)then
                         EntityHelper.NetworkRegister(projectile_id, position_x, position_y, rng)
-                        print("registered physics")
+                        table.insert(data.controlled_physics_entities, projectile_id)
                     end
 
                     data.players[EntityGetName(shooter_id)].next_rng = rng + 1
@@ -3027,7 +3027,7 @@ ArenaGameplay = {
                         np.SetProjectileSpreadRNG(new_seed)
                         if(is_physics)then
                             EntityHelper.NetworkRegister(projectile_id, position_x, position_y, new_seed)
-                            print("registered physics")
+                            table.insert(data.controlled_physics_entities, projectile_id)
                         end
                         data.projectile_seeds[entity_that_shot] = data.projectile_seeds[entity_that_shot] + 10
                     end

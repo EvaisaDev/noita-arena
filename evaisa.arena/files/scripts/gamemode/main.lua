@@ -240,7 +240,7 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 130,
+    version = 131,
     required_online_version = 330,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
@@ -1462,7 +1462,8 @@ ArenaMode = {
 
         playermenu = playerinfo_menu:New()
 
-
+        -- request ready states
+        networking.send.request_ready_states(lobby)
 
         --message_handler.send.Handshake(lobby)
     end,

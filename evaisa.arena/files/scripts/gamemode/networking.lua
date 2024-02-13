@@ -183,6 +183,9 @@ networking = {
                 end
             end
         end,
+        request_ready_states = function(lobby, message, user, data)
+            networking.send.ready(lobby, data.client.ready, true)
+        end,
         allow_round_end = function(lobby, message, user, data)
             if(steamutils.IsOwner(lobby, user))then
                 data.allow_round_end = true
@@ -1468,6 +1471,9 @@ networking = {
             silent = silent or false
             steamutils.send("ready", { is_ready, silent }, steamutils.messageTypes.OtherPlayers, lobby, true, true)
         end,
+        request_ready_states = function(lobby)
+            steamutils.send("request_ready_states", {}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+        end,
         arena_loaded = function(lobby)
             steamutils.send("arena_loaded", {}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
         end,
@@ -1811,6 +1817,12 @@ networking = {
                     --local wand_id = tonumber(GlobalsGetValue(tostring(held_item) .. "_item")) or -1
                     --if (wand_id ~= -1) then
                     local item_comp = EntityGetFirstComponentIncludingDisabled(held_item, "ItemComponent")
+
+                    -- the hell??
+                    if(item_comp == nil)then
+                        return
+                    end
+
                     local slot_x, slot_y = ComponentGetValue2(item_comp, "inventory_slot")
                     local ability_comp = EntityGetFirstComponentIncludingDisabled(held_item, "AbilityComponent")
                     
@@ -1818,6 +1830,8 @@ networking = {
                     if(ability_comp and ComponentGetValue2(ability_comp, "use_gun_script"))then
                         is_wand = true
                     end
+
+
 
                     --GamePrint("Switching to item in slot " .. tostring(slot_x) .. ", " .. tostring(slot_y))
 
