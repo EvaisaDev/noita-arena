@@ -91,11 +91,33 @@ typedef struct D {
 #pragma pack(pop)
 ]])
 
+-- fire_wand
+--[[
+    x,
+    y,
+    r,
+    rng,
+    special_seed,
+    player_action_rng
+]]
+ffi.cdef([[
+#pragma pack(push, 1)
+typedef struct E {
+    float x;
+    float y;
+    float r;
+    int special_seed;
+    int player_action_rng;
+} FireWand;
+#pragma pack(pop)
+]])
+
 
 local Controls = ffi.typeof("Controls")
 local ZoneUpdate = ffi.typeof("ZoneUpdate")
 local PhysicsUpdate = ffi.typeof("PhysicsUpdate")
 local CharacterPos = ffi.typeof("CharacterPos")
+local FireWand = ffi.typeof("FireWand")
 
 
 
@@ -953,16 +975,20 @@ networking = {
             if (not gameplay_handler.CheckPlayer(lobby, user, data)) then
                 return
             end
+            
+            local rng = message[1]
+            local message = message[2]
+
 
             if (data.spectator_mode or (GameHasFlagRun("player_is_unlocked") and (not GameHasFlagRun("no_shooting"))) and data.players[tostring(user)].entity ~= nil and EntityGetIsAlive(data.players[tostring(user)].entity)) then
                 data.players[tostring(user)].can_fire = true
 
-                GlobalsSetValue("shooter_rng_" .. tostring(user), tostring(message[5]))
+                GlobalsSetValue("shooter_rng_" .. tostring(user), tostring(message.special_seed))
                 
-                GlobalsSetValue("action_rng_"..tostring(user), tostring(message[6] or 0))
+                GlobalsSetValue("action_rng_"..tostring(user), tostring(message.player_action_rng or 0))
 
 
-                data.players[tostring(user)].projectile_rng_stack = message[4]
+                data.players[tostring(user)].projectile_rng_stack = rng
 
                 local controlsComp = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity,
                     "ControlsComponent")
@@ -981,10 +1007,12 @@ networking = {
                         local aimNormal_x, aimNormal_y = ComponentGetValue2(controlsComp, "mAimingVectorNormalized")
                         local aim_x, aim_y = ComponentGetValue2(controlsComp, "mAimingVector")
 
-                        local wand_x, wand_y, wand_r = message[1], message[2], message[3]
+                        local wand_x, wand_y, wand_r = message.x, message.y, message.r
+
+                        --print("Firing wand at " .. tostring(wand_x) .. ", " .. tostring(wand_y))	
 
                         --EntitySetTransform(mActiveItem, wand_x, wand_y, wand_r)
-                        EntityApplyTransform(mActiveItem, wand_x, wand_y, wand_r)
+                        --EntityApplyTransform(mActiveItem, wand_x, wand_y, wand_r)
 
                         local x = wand_x + (aimNormal_x * 2)
                         local y = wand_y + (aimNormal_y * 2)
@@ -996,7 +1024,8 @@ networking = {
                         EntityHelper.BlockFiring(data.players[tostring(user)].entity, false)
 
 
-                        --print("Firing wand at " .. tostring(x) .. ", " .. tostring(y) .. ", " .. tostring(r))
+                        print("Firing wand at " .. tostring(x) .. ", " .. tostring(y))
+                        print("Target " .. tostring(target_x) .. ", " .. tostring(target_y))
 
                         EntityAddTag(data.players[tostring(user)].entity, "player_unit")
                         np.UseItem(data.players[tostring(user)].entity, mActiveItem, true, true, true, x, y, target_x,
@@ -1233,7 +1262,7 @@ networking = {
         item_picked_up = function(lobby, message, user, data)
             --GamePrint("pickup received.")
             local entities = EntityGetInRadius(0, 0, 1000000000)
-            local item_id = message[1]
+            local item_id = message
             for k, v in ipairs(entities)do
                 if(EntityGetFirstComponentIncludingDisabled(v, "ItemComponent") ~= nil)then
                     local entity_id = EntityHelper.GetVariable(v, "arena_entity_id")
@@ -1424,7 +1453,7 @@ networking = {
             if (not steamutils.IsOwner(lobby, user))then
                 return
             end
-            local frames = message[1]
+            local frames = message
             if(data.vote_loop ~= nil)then
                 data.vote_loop.frames = frames
             end
@@ -1449,13 +1478,13 @@ networking = {
             if (not steamutils.IsOwner(lobby, user))then
                 return
             end
-            GlobalsSetValue("holyMountainCount", tostring(message[1]))
+            GlobalsSetValue("holyMountainCount", tostring(message))
         end,
         update_world_seed = function(lobby, message, user, data)
             if (not steamutils.IsOwner(lobby, user))then
                 return
             end
-            SetWorldSeed( message[1] )
+            SetWorldSeed( message )
         end,
     },
     send = {
@@ -1981,20 +2010,30 @@ networking = {
 
                    
 
-                    local data = {
+                    --[[local data = {
                         x,
                         y,
                         r,
                         rng,
                         special_seed,
                         GlobalsGetValue("player_action_rng", "0")
+                    }]]
+
+
+                    local c = FireWand{
+                        x = x,
+                        y = y,
+                        r = r,
+                        special_seed = tonumber(special_seed),
+                        action_rng = tonumber(GlobalsGetValue("player_action_rng", "0"))
                     }
+
                     GlobalsSetValue("player_action_rng", "0")
                     
                     if(to_spectators)then
-                        steamutils.send("fire_wand", data, steamutils.messageTypes.Spectators, lobby, false, true)
+                        steamutils.send("fire_wand", {rng, c}, steamutils.messageTypes.Spectators, lobby, false, true)
                     else
-                        steamutils.send("fire_wand", data, steamutils.messageTypes.OtherPlayers, lobby, false, true)
+                        steamutils.send("fire_wand", {rng, c}, steamutils.messageTypes.OtherPlayers, lobby, false, true)
                     end
                 end
             end
@@ -2046,9 +2085,9 @@ networking = {
         end,
         item_picked_up = function(lobby, item_id, to_spectators)
             if(to_spectators)then
-                steamutils.send("item_picked_up", { item_id }, steamutils.messageTypes.Spectators, lobby, true, true)
+                steamutils.send("item_picked_up", item_id, steamutils.messageTypes.Spectators, lobby, true, true)
             else
-                steamutils.send("item_picked_up", { item_id }, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+                steamutils.send("item_picked_up", item_id, steamutils.messageTypes.OtherPlayers, lobby, true, true)
             end
         end,
         physics_update = function(lobby, id, x, y, r, vel_x, vel_y, vel_a, takes_control)
@@ -2074,7 +2113,7 @@ networking = {
             steamutils.send("add_vote", { map }, steamutils.messageTypes.OtherPlayers, lobby, true, true)
         end,
         map_vote_timer_update = function(lobby, frames)
-            steamutils.send("map_vote_timer_update", { frames }, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+            steamutils.send("map_vote_timer_update", frames, steamutils.messageTypes.OtherPlayers, lobby, true, true)
         end,
         map_vote_finish = function(lobby, winner, was_tie)
             steamutils.send("map_vote_finish", {winner, was_tie}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
@@ -2083,10 +2122,10 @@ networking = {
             steamutils.send("load_lobby", {}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
         end,
         update_round = function(lobby, round)
-            steamutils.send("update_round", { round }, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+            steamutils.send("update_round", round, steamutils.messageTypes.OtherPlayers, lobby, true, true)
         end,
         update_world_seed = function(lobby, seed)
-            steamutils.send("update_world_seed", { seed }, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+            steamutils.send("update_world_seed", seed, steamutils.messageTypes.OtherPlayers, lobby, true, true)
         end,
     },
 }

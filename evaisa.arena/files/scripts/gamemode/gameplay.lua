@@ -2124,7 +2124,7 @@ ArenaGameplay = {
                     GuiZSetForNextWidget(vote_gui, -11)
                     GuiText(vote_gui, ((card_x + (frame_width * size)) - 6) - vote_text_width, ((card_y + (frame_height * size)) - 4) - vote_text_height, vote_text)
                     GuiZSetForNextWidget(vote_gui, -11)
-                    GuiText(vote_gui, card_x + 8, card_y + 6, v.name)
+                    GuiText(vote_gui, card_x + 8, card_y + 6, GameTextGetTranslatedOrNot(v.name))
                     GuiZSetForNextWidget(vote_gui, -10)
                     GuiImage(vote_gui, new_id(), card_x, card_y, v.frame, 1, size, size)
                     GuiZSetForNextWidget(vote_gui, -9)
@@ -2133,8 +2133,8 @@ ArenaGameplay = {
                     if(frames_left > 0 and not data.vote_loop.vote_finished)then
                         if(hovered)then
                             last_hovered = i
-                            local text_width = GuiGetTextDimensions(vote_gui, v.description)
-                            GuiText(vote_gui, (screen_w / 2) - (text_width / 2), old_card_y + max_height + 7, v.description)
+                            local text_width = GuiGetTextDimensions(vote_gui, GameTextGetTranslatedOrNot(v.description))
+                            GuiText(vote_gui, (screen_w / 2) - (text_width / 2), old_card_y + max_height + 7, GameTextGetTranslatedOrNot(v.description))
                         else
                             if(last_hovered == i)then
                                 last_hovered = nil
@@ -2945,7 +2945,9 @@ ArenaGameplay = {
     OnProjectileFired = function(lobby, data, shooter_id, projectile_id, rng, position_x, position_y, target_x, target_y, send_message, unknown1, multicast_index, unknown3)
         --print(tostring(shooter_id))
         
-        local is_physics = #(PhysicsBodyIDGetFromEntity(projectile_id) or {}) > 0
+        --local is_physics = #(PhysicsBodyIDGetFromEntity(projectile_id) or {}) > 0
+
+        print("x: "..tostring(position_x)..", y: "..tostring(position_y))
 
         local playerEntity = player.Get()
         if (playerEntity ~= nil and playerEntity == shooter_id) then
@@ -2963,7 +2965,7 @@ ArenaGameplay = {
                 
                 --rng = data.client.spread_index
                 local rand = data.random.range(0, 100000)
-                local rng = math.floor(rand)
+                local rng = math.floor(rand + position_x + position_y + projectile_id)
 
                 table.insert(data.client.projectile_rng_stack, rng)
 
@@ -2973,10 +2975,10 @@ ArenaGameplay = {
                 
                 
 
-                if(is_physics)then
+                --[[if(is_physics)then
                     EntityHelper.NetworkRegister(projectile_id, position_x, position_y, rng)
                     table.insert(data.controlled_physics_entities, projectile_id)
-                end
+                end]]
                 --data.client.spread_index = data.client.spread_index + 1
 
                 --[[if(data.client.spread_index > 10)then
@@ -2986,10 +2988,10 @@ ArenaGameplay = {
                 if (data.projectile_seeds[entity_that_shot]) then
                     local new_seed = data.projectile_seeds[entity_that_shot] + 25
                     np.SetProjectileSpreadRNG(new_seed)
-                    if(is_physics)then
+                    --[[if(is_physics)then
                         EntityHelper.NetworkRegister(projectile_id, position_x, position_y, new_seed)
                         table.insert(data.controlled_physics_entities, projectile_id)
-                    end
+                    end]]
                     data.projectile_seeds[entity_that_shot] = data.projectile_seeds[entity_that_shot] + 10
                     data.projectile_seeds[projectile_id] = new_seed
                 end
@@ -3015,20 +3017,20 @@ ArenaGameplay = {
                     --GamePrint("Setting client spread rng: "..tostring(rng))
 
                     np.SetProjectileSpreadRNG(rng)
-                    if(is_physics)then
+                    --[[if(is_physics)then
                         EntityHelper.NetworkRegister(projectile_id, position_x, position_y, rng)
                         table.insert(data.controlled_physics_entities, projectile_id)
-                    end
+                    end]]
 
                     data.players[EntityGetName(shooter_id)].next_rng = rng + 1
                 else
                     if (data.projectile_seeds[entity_that_shot]) then
                         local new_seed = data.projectile_seeds[entity_that_shot] + 25
                         np.SetProjectileSpreadRNG(new_seed)
-                        if(is_physics)then
+                        --[[if(is_physics)then
                             EntityHelper.NetworkRegister(projectile_id, position_x, position_y, new_seed)
                             table.insert(data.controlled_physics_entities, projectile_id)
-                        end
+                        end]]
                         data.projectile_seeds[entity_that_shot] = data.projectile_seeds[entity_that_shot] + 10
                     end
                 end
@@ -3102,6 +3104,8 @@ ArenaGameplay = {
     end,
     OnProjectileFiredPost = function(lobby, data, shooter_id, projectile_id, rng, position_x, position_y, target_x,
                                      target_y, send_message, unknown1, multicast_index, unknown3)
+
+        print("post x: "..tostring(position_x)..", post y: "..tostring(position_y))
         --[[local projectileComp = EntityGetFirstComponentIncludingDisabled(projectile_id, "ProjectileComponent")
         if(projectileComp ~= nil)then
             local who_shot = ComponentGetValue2(projectileComp, "mWhoShot")

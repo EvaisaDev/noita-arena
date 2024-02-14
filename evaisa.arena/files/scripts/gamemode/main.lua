@@ -240,7 +240,7 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 131,
+    version = 132,
     required_online_version = 330,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
@@ -882,21 +882,21 @@ ArenaMode = {
                             end
                         end
                         if(visible and hovered)then
-                            GuiTooltip(gui, GameTextGetTranslatedOrNot("$arena_settings_hover_tooltip_blacklist"), map.description)
+                            GuiTooltip(gui, GameTextGetTranslatedOrNot("$arena_settings_hover_tooltip_blacklist"), GameTextGetTranslatedOrNot(GameTextGetTranslatedOrNot(map.name)))
                         end
                         
 
                         SetRandomSeed(iteration * 21, iteration * 245)
        
                         GuiZSetForNextWidget(gui, -5630)
-                        local text_width, text_height = GuiGetTextDimensions(gui, map.name)
+                        local text_width, text_height = GuiGetTextDimensions(gui, GameTextGetTranslatedOrNot(GameTextGetTranslatedOrNot(map.name)))
 
                         local offset = 6
 
                         GuiColorSetForNextWidget(gui, 0, 0, 0, 1)
-                        GuiText(gui, -(icon_width * scale) + offset, offset, map.name)
+                        GuiText(gui, -(icon_width * scale) + offset, offset, GameTextGetTranslatedOrNot(map.name))
                         GuiZSetForNextWidget(gui, -5631)
-                        if(GuiButton(gui, new_id("map_list_stuff"), -(text_width + 2) - 1, offset-1, map.name))then
+                        if(GuiButton(gui, new_id("map_list_stuff"), -(text_width + 2) - 1, offset-1, GameTextGetTranslatedOrNot(map.name)))then
                             if(steamutils.IsOwner(lobby))then
                                 map_blacklist_data[map.id] = not is_blacklisted
                                 SendLobbyData(lobby)
@@ -904,7 +904,7 @@ ArenaMode = {
                         end
                         local clicked, _, hovered = GuiGetPreviousWidgetInfo(gui)
                         if(visible and hovered)then
-                            GuiTooltip(gui, GameTextGetTranslatedOrNot("$arena_settings_hover_tooltip_blacklist"), map.description)
+                            GuiTooltip(gui, GameTextGetTranslatedOrNot("$arena_settings_hover_tooltip_blacklist"), GameTextGetTranslatedOrNot(map.name))
                         end
                         GuiLayoutEnd(gui)
                     end
@@ -1634,21 +1634,7 @@ ArenaMode = {
                 end)
             end
         elseif(input:WasKeyPressed("f9"))then
-            local item_data = player.GetItemData()
-            if(item_data ~= nil)then
-                local data = { item_data, false, GameHasFlagRun( "arena_unlimited_spells" ) }
-                
-                local encodedData, err = zstd:compress(bitser.dumps(data))
-                -- write to file
-                if(err)then
-                    print("Error compressing item data: " .. err)
-                else
-                    local file = io.open("item_data.txt", "w")
-                    file:write(encodedData)
-                    file:close()
-                end
-
-            end
+            EntityKill(GameGetWorldStateEntity())
         elseif(input:WasKeyPressed("f6"))then
             local player_entity = EntityGetWithTag("player_unit")[1]
             local x, y = EntityGetTransform(player_entity)
@@ -1690,6 +1676,14 @@ ArenaMode = {
     leave = function(lobby)
         GameAddFlagRun("player_unloaded")
         gameplay_handler.ResetEverything(lobby)
+
+        local keybinds_global = GlobalsGetValue("evaisa.mp.keybinds", "{}")
+        local keybinds_order_global = GlobalsGetValue("evaisa.mp.keybinds_order", "{}")
+        
+        ComponentSetValue(EntityGetFirstComponent(GameGetWorldStateEntity(), "WorldStateComponent"), "lua_globals", "")
+
+        GlobalsSetValue("evaisa.mp.keybinds", keybinds_global)
+        GlobalsSetValue("evaisa.mp.keybinds_order", keybinds_order_global)
     end,
     --[[
     message = function(lobby, message, user)

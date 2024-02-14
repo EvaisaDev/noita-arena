@@ -5,6 +5,9 @@ genomes:add("pvp", 0, 0, 0, {})
 genomes:add("pvp_client", 0, 0, 0, {})
 genomes:finish()
 
+popup = dofile("mods/evaisa.dome/files/scripts/ui/popup.lua")
+
+
 --[[
 local post_final = ModTextFileGetContent("data/shaders/post_final.frag")
 
@@ -67,14 +70,61 @@ function OnModPostInit()
     end
 end
 
+function IsPaused()
+	return GameHasFlagRun("game_paused_arena")
+end
+
+function OnPausedChanged(paused, is_wand_pickup)
+	if (paused) then
+		GameAddFlagRun("game_paused_arena")
+		--GamePrint("paused")
+	else
+		GameRemoveFlagRun("game_paused_arena")
+		--GamePrint("unpaused")
+	end
+end
+
+local warning_shown_mp = false
+local warning_shown_save = false
+local ready = false
+
 function OnWorldPreUpdate()
-    if(not ModIsEnabled("evaisa.mp"))then
-        GamePrint(GameTextGetTranslatedOrNot("$arena_noita_online_missing"))
+    if(not ready)then
+       --print("not ready")
+        return
+    end
+
+    --print("world pre update")
+
+	if (not IsPaused()) then
+		popup.update()
+	end
+
+    if(not ModIsEnabled("evaisa.mp") and not warning_shown_mp)then
+        warning_shown_mp = true
+        print("showing mp warning")
+        popup.create("mp_warning", "$arena_mp_missing_warning", {
+            "$arena_mp_missing_warning_description",
+            "$arena_mp_missing_warning_description_2",
+        }, {
+        }, -6000)
+    end
+
+    if(GameHasFlagRun("mp_blocked_load") and not warning_shown_save)then
+        warning_shown_save = true
+        print("showing save warning")
+        popup.create("save_warning", "$arena_save_warning", {
+            "$arena_save_warning_description",
+            "$arena_save_warning_description_2",
+        }, {
+        }, -6000)
     end
 end
 
 
 function OnMagicNumbersAndWorldSeedInitialized()
+
+    
     GameAddFlagRun("no_progress_flags_perk")
     GameAddFlagRun("no_progress_flags_action")
     GameAddFlagRun("no_progress_flags_animal")
@@ -98,10 +148,29 @@ function OnMagicNumbersAndWorldSeedInitialized()
 
     ModTextFileSetContent("data/biome/_biomes_all.xml", tostring(biome_list))
 
+
+    
+
+
     --print("Init content: \n"..ModTextFileGetContent("data/scripts/init.lua"))
     --print("Biome mod content: \n"..ModTextFileGetContent("data/scripts/biome_modifiers.lua"))
 end
 
 function OnPlayerSpawned(player)
+
+    print("Player spawned??")
+
     EntityKill(player)
+
+    GameRemoveFlagRun("game_paused_arena")
+
+    ready = true
+    if(GameHasFlagRun("loaded_from_save"))then
+        GameAddFlagRun("mp_blocked_load")
+        return
+    end
+
+
+    GameAddFlagRun("loaded_from_save")
+
 end

@@ -1,8 +1,9 @@
 arena_list = {
     {
         id = "original",
-        name = "Origins",
-        description = "The original arena, created during closed beta",
+        name = "$arena_maps_original_name",
+        description = "$arena_maps_original_name",
+        credits = "Evaisa",
         thumbnail = "mods/evaisa.arena/content/arenas/original/thumbnail.png",
         frame = "mods/evaisa.arena/content/arenas/frame.png",
         biome_map = "mods/evaisa.arena/content/arenas/original/map.lua",
@@ -22,8 +23,9 @@ arena_list = {
     },
     {
         id = "spoop",
-        name = "Unholy Temple",
-        description = "Arena made by Spoopy",
+        name = "$arena_maps_temple_name",
+        description = "$arena_maps_temple_description",
+        credits = "SpoopyBoi",
         thumbnail = "mods/evaisa.arena/content/arenas/spoop/thumbnail.png",
         frame = "mods/evaisa.arena/content/arenas/frame.png",
         biome_map = "mods/evaisa.arena/content/arenas/spoop/map.lua",
@@ -43,8 +45,9 @@ arena_list = {
     },
     {
         id = "stadium",
-        name = "Stadium",
-        description = "Football anyone?",
+        name = "$arena_maps_stadium_name",
+        description = "$arena_maps_stadium_description",
+        credits = "Evaisa",
         thumbnail = "mods/evaisa.arena/content/arenas/stadium/thumbnail.png",
         frame = "mods/evaisa.arena/content/arenas/frame.png",
         biome_map = "mods/evaisa.arena/content/arenas/stadium/map.lua",
@@ -65,8 +68,9 @@ arena_list = {
     },
     {
         id = "coalpit",
-        name = "Excavation Site",
-        description = "Made by Autumnis. An arena based off the Coal Pit.",
+        name = "$arena_maps_coalpit_name",
+        description = "$arena_maps_coalpit_description",
+        credits = "Autumnis",
         thumbnail = "mods/evaisa.arena/content/arenas/coalpit/thumbnail.png",
         frame = "mods/evaisa.arena/content/arenas/frame.png",
         biome_map = "mods/evaisa.arena/content/arenas/coalpit/map.lua",
@@ -86,8 +90,9 @@ arena_list = {
     },
     {
         id = "biomes",
-        name = "[WIP] Biomes",
-        description = "Generates noita biomes.",
+        name = "$arena_maps_biomes_name",
+        description = "$arena_maps_biomes_description",
+        credits = "Evaisa",
         thumbnail = "mods/evaisa.arena/content/arenas/biomes/thumbnail.png",
         frame = "mods/evaisa.arena/content/arenas/frame.png",
         biome_map = "mods/evaisa.arena/content/arenas/biomes/map.lua",
@@ -115,8 +120,8 @@ arena_list = {
 cosmetics = {
     {
         id = "dunce_hat",
-        name = "Dunce Hat",
-        description = "A hat for those who couldn't hurry up",
+        name = "$arena_cosmetics_dunce_hat_name",
+        description = "$arena_cosmetics_dunce_hat_description",
         icon = "mods/evaisa.arena/content/cosmetics/dunce_hat/icon.png",
         credits = "Evaisa",
         --sprite_sheet = "mods/evaisa.arena/content/cosmetics/dunce_hat/sprite_sheet.png",

@@ -5,6 +5,7 @@
   BIOME_MAP = "mods/evaisa.arena/files/scripts/world/map_arena.lua"
   STREAMING_CHUNK_TARGET = "12"
   DEBUG_FREE_CAMERA_SPEED = "0"
-  _DEBUG_DONT_SAVE_MAGIC_NUMBERS = "1"
+  STREAMING_AUTOSAVE_PERIOD_SECONDS="268435456"
+  DEBUG_ENABLE_AUTOSAVE="0"
   > 
 </MagicNumbers>

@@ -215,17 +215,17 @@ function spawn_from_list( listname, x, y, sync )
 				
 				if ( data.load_entity_func ~= nil ) then
 					local item_entity = data.load_entity_func( data, x, y )
-					EntityHelper.NetworkRegister(item_entity, x, y)
+					EntityHelper.NetworkRegister(item_entity, x, y, math.floor(rnd + x + y + GameGetFrameNum() + i))
 					return item_entity
 				elseif ( data.load_entity_from_list ~= nil ) then
 					
 					local item_entity = spawn_from_list( data.load_entity_from_list, x, y )
-					EntityHelper.NetworkRegister(item_entity, x, y)
+					EntityHelper.NetworkRegister(item_entity, x, y, math.floor(rnd + x + y + GameGetFrameNum() + i))
 					return item_entity
 				elseif ( data.load_entity ~= nil ) then
 					
 					local item_entity = EntityLoad( data.load_entity, x + ox, y + oy )
-					EntityHelper.NetworkRegister(item_entity, x, y)
+					EntityHelper.NetworkRegister(item_entity, x, y, math.floor(rnd + x + y + GameGetFrameNum() + i))
 					return item_entity
 				end
 			end
