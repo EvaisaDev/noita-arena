@@ -2,7 +2,7 @@ arena_list = {
     {
         id = "original",
         name = "$arena_maps_original_name",
-        description = "$arena_maps_original_name",
+        description = "$arena_maps_original_description",
         credits = "Evaisa",
         thumbnail = "mods/evaisa.arena/content/arenas/original/thumbnail.png",
         frame = "mods/evaisa.arena/content/arenas/frame.png",
