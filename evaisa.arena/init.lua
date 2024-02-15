@@ -5,7 +5,7 @@ genomes:add("pvp", 0, 0, 0, {})
 genomes:add("pvp_client", 0, 0, 0, {})
 genomes:finish()
 
-popup = dofile("mods/evaisa.dome/files/scripts/ui/popup.lua")
+popup = dofile("mods/evaisa.arena/lib/popup.lua")
 
 
 --[[
