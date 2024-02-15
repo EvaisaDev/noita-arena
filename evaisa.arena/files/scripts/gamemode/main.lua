@@ -882,14 +882,52 @@ ArenaMode = {
                             end
                         end
                         if(visible and hovered)then
-                            GuiTooltip(gui, GameTextGetTranslatedOrNot("$arena_settings_hover_tooltip_blacklist"), GameTextGetTranslatedOrNot(GameTextGetTranslatedOrNot(map.name)))
+                            CustomTooltip(gui, function() 
+
+                                local widest_string = GuiGetTextDimensions(gui, GameTextGetTranslatedOrNot("$arena_settings_hover_tooltip_blacklist"))
+
+                                local text_width, text_height = GuiGetTextDimensions(gui, GameTextGetTranslatedOrNot(map.name))
+
+                                if text_width > widest_string then
+                                    widest_string = text_width
+                                end
+
+                                local text_width, text_height = GuiGetTextDimensions(gui, GameTextGetTranslatedOrNot(map.description))
+
+                                if text_width > widest_string then
+                                    widest_string = text_width
+                                end
+
+                                local text_width, text_height = GuiGetTextDimensions(gui, string.format(GameTextGetTranslatedOrNot("$arena_maps_credits"), GameTextGetTranslatedOrNot(map.credits or "???")))
+
+                                if text_width > widest_string then
+                                    widest_string = text_width
+                                end
+
+
+
+                                --GuiZSetForNextWidget(menu_gui, -5110)
+                                GuiColorSetForNextWidget( gui, 1, 0.4, 0.4, 1 )
+                                GuiZSetForNextWidget(gui, -7110)
+                                GuiText(gui, -widest_string, 0, GameTextGetTranslatedOrNot("$arena_settings_hover_tooltip_blacklist"))
+                                GuiColorSetForNextWidget( gui, 1, 1, 1, 1 )
+                                GuiZSetForNextWidget(gui, -7110)
+                                GuiText(gui, -widest_string, 0, GameTextGetTranslatedOrNot(map.name))
+                                GuiColorSetForNextWidget( gui, 1, 1, 1, 0.8 )
+                                GuiZSetForNextWidget(gui, -7110)
+                                GuiText(gui, -widest_string, 0, GameTextGetTranslatedOrNot(map.description))
+                                GuiColorSetForNextWidget( gui, 1, 1, 1, 0.6 )
+                                GuiZSetForNextWidget(gui, -7110)
+                                GuiText(gui, -widest_string, 0, string.format(GameTextGetTranslatedOrNot("$arena_maps_credits"), GameTextGetTranslatedOrNot(map.credits or "???")))
+                            end, -7100, -255, 10)
+                            --GuiTooltip(gui, GameTextGetTranslatedOrNot("$arena_settings_hover_tooltip_blacklist"), GameTextGetTranslatedOrNot(map.name))
                         end
                         
 
                         SetRandomSeed(iteration * 21, iteration * 245)
        
                         GuiZSetForNextWidget(gui, -5630)
-                        local text_width, text_height = GuiGetTextDimensions(gui, GameTextGetTranslatedOrNot(GameTextGetTranslatedOrNot(map.name)))
+                        local text_width, text_height = GuiGetTextDimensions(gui, GameTextGetTranslatedOrNot(map.name))
 
                         local offset = 6
 
@@ -903,9 +941,19 @@ ArenaMode = {
                             end
                         end
                         local clicked, _, hovered = GuiGetPreviousWidgetInfo(gui)
-                        if(visible and hovered)then
-                            GuiTooltip(gui, GameTextGetTranslatedOrNot("$arena_settings_hover_tooltip_blacklist"), GameTextGetTranslatedOrNot(map.name))
-                        end
+                        --[[if(visible and hovered)then
+                            CustomTooltip(gui, function() 
+                                --GuiZSetForNextWidget(menu_gui, -5110)
+                                GuiColorSetForNextWidget( gui, 1, 1, 1, 0.8 )
+                                --GuiText(menu_gui, 0, 0, "Show Code")
+                                GuiZSetForNextWidget(gui, -5110)
+                                GuiText(gui, 0, 0, GameTextGetTranslatedOrNot("$arena_settings_hover_tooltip_blacklist"))
+                                GuiText(gui, 0, 0, GameTextGetTranslatedOrNot(map.name))
+                                GuiText(gui, 0, 0, GameTextGetTranslatedOrNot(map.description))
+                                GuiText(gui, 0, 0, string.format(GameTextGetTranslatedOrNot("$arena_maps_credits"), GameTextGetTranslatedOrNot(map.credits)))
+                            end, -5100, -68, -20)
+                            --GuiTooltip(gui, GameTextGetTranslatedOrNot("$arena_settings_hover_tooltip_blacklist"), GameTextGetTranslatedOrNot(map.name))
+                        end]]
                         GuiLayoutEnd(gui)
                     end
                 end
