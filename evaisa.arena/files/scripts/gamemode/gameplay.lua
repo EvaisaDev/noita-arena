@@ -2947,8 +2947,6 @@ ArenaGameplay = {
         
         --local is_physics = #(PhysicsBodyIDGetFromEntity(projectile_id) or {}) > 0
 
-        print("x: "..tostring(position_x)..", y: "..tostring(position_y))
-
         local playerEntity = player.Get()
         if (playerEntity ~= nil and playerEntity == shooter_id) then
     
@@ -3105,7 +3103,7 @@ ArenaGameplay = {
     OnProjectileFiredPost = function(lobby, data, shooter_id, projectile_id, rng, position_x, position_y, target_x,
                                      target_y, send_message, unknown1, multicast_index, unknown3)
 
-        print("post x: "..tostring(position_x)..", post y: "..tostring(position_y))
+
         --[[local projectileComp = EntityGetFirstComponentIncludingDisabled(projectile_id, "ProjectileComponent")
         if(projectileComp ~= nil)then
             local who_shot = ComponentGetValue2(projectileComp, "mWhoShot")

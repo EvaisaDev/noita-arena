@@ -975,7 +975,7 @@ networking = {
             if (not gameplay_handler.CheckPlayer(lobby, user, data)) then
                 return
             end
-            
+
             local rng = message[1]
             local message = message[2]
 
@@ -1024,9 +1024,7 @@ networking = {
                         EntityHelper.BlockFiring(data.players[tostring(user)].entity, false)
 
 
-                        print("Firing wand at " .. tostring(x) .. ", " .. tostring(y))
-                        print("Target " .. tostring(target_x) .. ", " .. tostring(target_y))
-
+                        -- Add player_unit tag to fix physics projectile lob strength
                         EntityAddTag(data.players[tostring(user)].entity, "player_unit")
                         np.UseItem(data.players[tostring(user)].entity, mActiveItem, true, true, true, x, y, target_x,
                             target_y)
