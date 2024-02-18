@@ -3,9 +3,9 @@
   DESIGN_PLAYER_START_POS_X = "0"
   DESIGN_PLAYER_START_POS_Y = "0"
   BIOME_MAP = "mods/evaisa.arena/files/scripts/world/map_arena.lua"
-  STREAMING_CHUNK_TARGET = "12"
+
   DEBUG_FREE_CAMERA_SPEED = "0"
   STREAMING_AUTOSAVE_PERIOD_SECONDS="268435456"
   DEBUG_ENABLE_AUTOSAVE="0"
-  > 
+  > <!--  STREAMING_CHUNK_TARGET = "12"-->
 </MagicNumbers>

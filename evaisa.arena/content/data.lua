@@ -79,7 +79,7 @@ arena_list = {
                 biome_filename="mods/evaisa.arena/content/arenas/coalpit/coalpit.xml",
                 height_index="1",
                 color="ff35f34a"
-            }
+            },
         },
         pixel_scenes = "mods/evaisa.arena/content/arenas/coalpit/scenes.xml",
         spawn_points = { -- optional, can also use spawn pixels, 0,0 is there as a backup in case spawn pixels fail somehow.
@@ -107,6 +107,46 @@ arena_list = {
                 height_index="1",
                 color="FF7B8FE9"
             },
+            {
+                biome_filename="mods/evaisa.arena/content/arenas/biomes/allbiomes/coalmine.xml",
+                height_index="1",
+                color="FF6EADE1"
+            },
+            {
+                biome_filename="mods/evaisa.arena/content/arenas/biomes/allbiomes/crypt.xml",
+                height_index="1",
+                color="FF6EE1BD"
+            },
+            {
+                biome_filename="mods/evaisa.arena/content/arenas/biomes/allbiomes/excavationsite.xml",
+                height_index="1",
+                color="FF6EE190"
+            },
+            {
+                biome_filename="mods/evaisa.arena/content/arenas/biomes/allbiomes/fungicave.xml",
+                height_index="1",
+                color="FFB1E16E"
+            },
+            {
+                biome_filename="mods/evaisa.arena/content/arenas/biomes/allbiomes/rainforest.xml",
+                height_index="1",
+                color="FFE1DD6E"
+            },
+            {
+                biome_filename="mods/evaisa.arena/content/arenas/biomes/allbiomes/snowcave.xml",
+                height_index="1",
+                color="FFE1926E"
+            },
+            {
+                biome_filename="mods/evaisa.arena/content/arenas/biomes/allbiomes/snowcastle.xml",
+                height_index="1",
+                color="FFE16E6E"
+            },
+            {
+                biome_filename="mods/evaisa.arena/content/arenas/biomes/allbiomes/vault.xml",
+                height_index="1",
+                color="FFC94C4C"
+            },
         },
         pixel_scenes = "mods/evaisa.arena/content/arenas/biomes/scenes.xml",
         spawn_points = { -- optional, can also use spawn pixels, 0,0 is there as a backup in case spawn pixels fail somehow.
@@ -114,6 +154,50 @@ arena_list = {
         },
         zone_size = 600, -- size of damage zone, should be max distance from 0, 0 players can travel
         zone_floor = 400, -- damage floor, if player falls below this they die.
+    },
+    {
+        id = "bureon",
+        name = "$arena_maps_bureon_name",
+        description = "$arena_maps_bureon_description",
+        credits = "burr/weturtle",
+        thumbnail = "mods/evaisa.arena/content/arenas/bureon/thumbnail.png",
+        frame = "mods/evaisa.arena/content/arenas/frame.png",
+        biome_map = "mods/evaisa.arena/content/arenas/bureon/map.lua",
+        custom_biomes = {
+            {
+                biome_filename="mods/evaisa.arena/content/arenas/bureon/Biome.xml",
+                height_index="1",
+                color="FFD828DE"
+            }
+        },
+        pixel_scenes = "mods/evaisa.arena/content/arenas/bureon/scenes.xml",
+        spawn_points = { -- optional, can also use spawn pixels, 0,0 is there as a backup in case spawn pixels fail somehow.
+            {x = 0, y = 0}
+        },
+        zone_size = 600, -- size of damage zone, should be max distance from 0, 0 players can travel
+        zone_floor = 400 -- damage floor, if player falls below this they die.
+    },
+    {
+        id = "tryon",
+        name = "$arena_maps_tryon_name",
+        description = "$arena_maps_tryon_description",
+        credits = "burr/weturtle",
+        thumbnail = "mods/evaisa.arena/content/arenas/tryon/thumbnail.png",
+        frame = "mods/evaisa.arena/content/arenas/frame.png",
+        biome_map = "mods/evaisa.arena/content/arenas/tryon/map.lua",
+        custom_biomes = {
+            {
+                biome_filename="mods/evaisa.arena/content/arenas/tryon/Biome.xml",
+                height_index="1",
+                color="FFD828D1"
+            }
+        },
+        pixel_scenes = "mods/evaisa.arena/content/arenas/tryon/scenes.xml",
+        spawn_points = { -- optional, can also use spawn pixels, 0,0 is there as a backup in case spawn pixels fail somehow.
+            {x = 0, y = 0}
+        },
+        zone_size = 600, -- size of damage zone, should be max distance from 0, 0 players can travel
+        zone_floor = 400 -- damage floor, if player falls below this they die.
     },
 }
 

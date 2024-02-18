@@ -1,9 +1,11 @@
 <Entity>
     <SpriteComponent
         is_text_sprite = "1"
-        image_file = "mods/evaisa.arena/files/font/Daydream_128.xml"
+        image_file = "mods/evaisa.mp/files/fonts/noto_sans_regular_20.xml"
         text = "Spectator"
         never_ragdollify_on_death = "1"
         ui_is_parent = "1"
+        smooth_filtering = "1"
+        has_special_scale = "1"
     ></SpriteComponent>
 </Entity>

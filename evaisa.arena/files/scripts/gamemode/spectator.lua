@@ -172,6 +172,7 @@ SpectatorMode = {
         end
     end,
     SpectatorText = function(lobby, data)
+
         if (data.spectator_gui_entity == nil or not EntityGetIsAlive(data.spectator_gui_entity)) then
             data.spectator_gui_entity = EntityLoad("mods/evaisa.arena/files/entities/misc/spectator_text.xml")
 
@@ -192,14 +193,28 @@ SpectatorMode = {
             text = string.format(text, "")
         end
 
+        local language = GameTextGetTranslatedOrNot("$current_language")
 
-        local font_width, font_height = data.big_font:GetTextDimensions(text, 0.25, 0.25)
+        local font = data.spectator_fonts[language] or data.spectator_fonts["unknown"]
+
+        if(font.upper)then
+            text = utf8.upper(text)
+        end
+
+        --print(text)
+
+        local font_width, font_height = font.font:GetTextDimensions(text, font.size, font.size)
 
         local text_sprite_component = EntityGetFirstComponentIncludingDisabled(data.spectator_gui_entity,
             "SpriteComponent")
 
         ComponentSetValue2(text_sprite_component, "text", text)
-        ComponentSetValue2(text_sprite_component, "transform_offset", screen_text_width / 2 - font_width / 2, 0)
+        ComponentSetValue2(text_sprite_component, "transform_offset", screen_text_width / 2 - font_width / 2, font.size)
+        
+        ComponentSetValue2(text_sprite_component, "image_file", font.font.font)
+        ComponentSetValue2(text_sprite_component, "special_scale_x", font.size)
+        ComponentSetValue2(text_sprite_component, "special_scale_y", font.size)
+        ComponentSetValue2(text_sprite_component, "smooth_filtering", font.smooth or false)
 
         EntityRefreshSprite(data.spectator_gui_entity, text_sprite_component)
     end,

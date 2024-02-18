@@ -4,6 +4,7 @@ local font_helper = {
     NewFont = function(font)
 
         local self = {
+            font = font,
             character_scales = {},
             GetTextDimensions = function(self, text, scale_x, scale_y)
     
@@ -12,7 +13,7 @@ local font_helper = {
             
             
                 for i = 1, #text do
-                    local character = text:sub(i, i)
+                    local character = utf8.sub(font, i, i)
                     local character_scale = self.character_scales[character] or self.character_scales["?"]
                     if(character_scale ~= nil)then
                         if(i == #text)then
@@ -36,7 +37,7 @@ local font_helper = {
         for elem in font_parsed:each_child() do
             if(elem.name == "QuadChar")then
                 if(elem.attr.id ~= nil)then
-                    local character = string.char(tonumber(elem.attr.id))
+                    local character = utf8.char(tonumber(elem.attr.id))
                     local character_width = tonumber(elem.attr.rect_w)
                     local character_height = tonumber(elem.attr.rect_h)
                     local character_spacing = tonumber(elem.attr.width)

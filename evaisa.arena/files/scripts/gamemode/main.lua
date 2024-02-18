@@ -863,13 +863,25 @@ ArenaMode = {
                         GuiZSetForNextWidget(gui, -5605)
                         local icon_width, icon_height = GuiGetImageDimensions(gui, map.thumbnail or "mods/evaisa.arena/content/arenas/default_thumbnail.png")
                         GuiImage(gui, new_id("map_list_stuff"), 0, 0, map.frame, 1, scale, scale)
+                        local frame_width, frame_height = GuiGetImageDimensions(gui, map.frame)
+
+                        
+                        if(is_blacklisted)then
+                            GuiZSetForNextWidget(gui, -5610)
+                            GuiOptionsAddForNextWidget(gui, GUI_OPTION.NonInteractive)
+                            GuiImage(gui, new_id(), -frame_width-2, 0, "mods/evaisa.arena/content/arenas/disabled.png", 1, 1, 1)
+                        end
+
                         GuiZSetForNextWidget(gui, -5600)
                         local alpha = 1
                         if(is_blacklisted)then
                             alpha = 0.4
                         end
+                        
                         GuiImage(gui, new_id("map_list_stuff"), -(icon_width * scale) - 2.5, 1, map.thumbnail or "mods/evaisa.arena/content/arenas/default_thumbnail.png", alpha, scale * 0.99, scale * 0.99)
                         
+                        
+
                         local visible, clicked, _, hovered = get_widget_info(gui)
 
 

@@ -5,15 +5,15 @@ dofile_once("data/scripts/director_helpers.lua")
 dofile_once("data/scripts/director_helpers_design.lua")
 dofile_once("data/scripts/biome_scripts.lua")
 dofile_once("data/scripts/biome_modifiers.lua")
-dofile( "data/scripts/items/generate_shop_item.lua" )
+dofile( "mods/evaisa.arena/files/scripts/misc/generate_shop_item.lua" )
 
 RegisterSpawnFunction( 0xff0000ff, "spawn_nest" )
 RegisterSpawnFunction( 0xffB40000, "spawn_fungi" )
-RegisterSpawnFunction( 0xff969678, "load_structures" )
+--[[RegisterSpawnFunction( 0xff969678, "load_structures" )
 RegisterSpawnFunction( 0xff967878, "load_large_structures" )
 RegisterSpawnFunction( 0xff967896, "load_i_structures" )
 RegisterSpawnFunction( 0xff80FF5A, "spawn_vines" )
-RegisterSpawnFunction( 0xffC35700, "load_oiltank" )
+RegisterSpawnFunction( 0xffC35700, "load_oiltank" )]]
 RegisterSpawnFunction( 0xff55AF4B, "load_altar" )
 RegisterSpawnFunction( 0xff23B9C3, "spawn_altar_torch" )
 RegisterSpawnFunction( 0xff55AF8C, "spawn_skulls" )
@@ -1067,37 +1067,21 @@ end
 
 
 function spawn_small_enemies(x, y, w, h, is_open_path)
-	EntityLoad( "mods/evaisa.arena/files/entities/misc/spawn_point.xml", x, y )
-	--[[if( is_open_path ) then
-		local r = ProceduralRandom( x, y )
-		local spawn_percent = BiomeMapGetVerticalPositionInsideBiome( x, y )
-		spawn_percent = ( 2.1 * spawn_percent ) + 0.2
-		if( r > spawn_percent ) then return end
-		spawn_with_limited_random(g_small_enemies,x,y,0,0,{"longleg","fungus"})
-		--spawn_hp(g_small_enemies,x,y,0,0,0.4,"coalmines")
-	else
-		spawn_with_limited_random(g_small_enemies,x,y,0,0,{"longleg","fungus"})
-		--spawn_hp(g_small_enemies,x,y,0,0,0.4,"coalmines")
-	end]]
+	local distance = math.sqrt(x*x + y*y)
+	if(distance < 600)then
+		EntityLoad( "mods/evaisa.arena/files/entities/misc/spawn_point.xml", x, y )
+	end
 end
 
 function spawn_big_enemies(x, y, w, h, is_open_path)
-	EntityLoad( "mods/evaisa.arena/files/entities/misc/spawn_point.xml", x, y )
-	--[[if( is_open_path ) then
-		local r = ProceduralRandom( x, y )
-		local spawn_percent = BiomeMapGetVerticalPositionInsideBiome( x, y )
-		spawn_percent = ( 1.75 * spawn_percent ) - 0.1
-		if( r > spawn_percent ) then return end
-		spawn_with_limited_random(g_big_enemies,x,y,0,0,{"longleg","fungus"})
-		--spawn_hp(g_big_enemies,x,y,0,0,0.4,"coalmines")
-	else
-		spawn_with_limited_random(g_big_enemies,x,y,0,0,{"longleg","fungus"})
-		--spawn_hp(g_big_enemies,x,y,0,0,0.4,"coalmines")
-	end]]
+	local distance = math.sqrt(x*x + y*y)
+	if(distance < 600)then
+		EntityLoad( "mods/evaisa.arena/files/entities/misc/spawn_point.xml", x, y )
+	end
 end
 
 function spawn_lamp(x, y)
-	spawn(g_lamp,x,y,0,0)
+	--spawn(g_lamp,x,y,0,0)
 end
 
 function spawn_ghostlamp(x, y)
@@ -1105,15 +1089,15 @@ function spawn_ghostlamp(x, y)
 end
 
 function spawn_props(x, y)
-	spawn(g_props,x,y-3,0,0)
+	--spawn(g_props,x,y-3,0,0)
 end
 
 function spawn_props2(x, y)
-	spawn(g_props2,x,y-3,0,0)
+	--spawn(g_props2,x,y-3,0,0)
 end
 
 function spawn_props3(x, y)
-	spawn(g_props3,x,y,0,0)
+	--spawn(g_props3,x,y,0,0)
 end
 
 function spawn_unique_enemy(x, y)
@@ -1143,6 +1127,7 @@ function load_pixel_scene( x, y )
 end
 
 function load_pixel_scene2( x, y )
+	SetRandomSeed( x, y )
 	load_random_pixel_scene( g_pixel_scene_02, x, y )
 end
 
@@ -1181,11 +1166,11 @@ function spawn_stash(x,y)
 end
 
 function spawn_nest(x, y)
-	spawn(g_nest,x+4,y)
+	--spawn(g_nest,x+4,y)
 end
 
 function spawn_vines(x, y)
-	spawn(g_vines,x+5,y+5)
+	--spawn(g_vines,x+5,y+5)
 end
 
 function spawn_altar_torch(x, y)
@@ -1226,7 +1211,7 @@ function spawn_trapwand(x, y)
 end
 
 function spawn_bbqbox( x, y )
-	SetRandomSeed( x, y )
+	--[[SetRandomSeed( x, y )
 	local rnd = Random( 1, 100 )
 	if( rnd <= 99 ) then
 		spawn_big_enemies( x, y )
@@ -1236,22 +1221,22 @@ function spawn_bbqbox( x, y )
 	else
 		EntityLoadCameraBound( "data/entities/items/pickup/jar_of_urine.xml", x, y )
 		EntityLoad( "data/entities/animals/shotgunner_weak.xml", x + 10, y )
-	end
+	end]]
 end
 
 function spawn_swing_puzzle_box( x, y )
-	EntityLoad( "data/entities/props/physics/trap_electricity_suspended.xml", x, y)
+	--EntityLoad( "data/entities/props/physics/trap_electricity_suspended.xml", x, y)
 end
 
 function spawn_swing_puzzle_target( x, y )
-	EntityLoad( "data/entities/buildings/swing_puzzle_target.xml", x, y)
+	--EntityLoad( "data/entities/buildings/swing_puzzle_target.xml", x, y)
 end
 
 function spawn_oiltank_puzzle( x, y )
-	EntityLoad( "data/entities/buildings/oiltank_puzzle.xml", x, y)
+	--EntityLoad( "data/entities/buildings/oiltank_puzzle.xml", x, y)
 end
 
 function spawn_receptacle_oil( x, y )
-	EntityLoad( "data/entities/buildings/receptacle_oil.xml", x, y )
-	EntityLoad( "data/entities/items/pickup/potion_empty.xml", x+72, y-17 )
+	--[[EntityLoad( "data/entities/buildings/receptacle_oil.xml", x, y )
+	EntityLoad( "data/entities/items/pickup/potion_empty.xml", x+72, y-17 )]]
 end
