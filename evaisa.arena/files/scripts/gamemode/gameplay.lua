@@ -796,12 +796,12 @@ ArenaGameplay = {
                             if (not IsPaused()) then
                                 local screen_width, screen_height = GuiGetScreenDimensions(data.zone_gui)
 
-                                local text = "Zone will shrink in " ..
-                                    math.ceil((zone_step_interval - (GameGetFrameNum() - data.last_step_frame)) / 60) ..
-                                    " seconds"
-
+            
                                 zone_shrink_time = math.ceil((zone_step_interval - (GameGetFrameNum() - data.last_step_frame)) /
                                     60)
+
+                                local text = string.format("$arena_zone_shrink_countdown", tostring( zone_shrink_time))
+
 
                                 local text_width, text_height = GuiGetTextDimensions(data.zone_gui, text)
 

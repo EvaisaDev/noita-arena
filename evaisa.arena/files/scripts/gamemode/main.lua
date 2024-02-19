@@ -50,14 +50,19 @@ end
 
 lobby_member_names = {}
 
-perk_blacklist_data = perk_blacklist_data or {}
-perk_blacklist_string = perk_blacklist_string or ""
 content_hash = content_hash or 0
 content_string = content_string or ""
+
+perk_blacklist_data = perk_blacklist_data or {}
+perk_blacklist_string = perk_blacklist_string or ""
 spell_blacklist_data = spell_blacklist_data or {}
 spell_blacklist_string = spell_blacklist_string or ""
 map_blacklist_data = map_blacklist_data or {}
 map_blacklist_string = map_blacklist_string or ""
+card_blacklist_data = card_blacklist_data or {}
+card_blacklist_string = card_blacklist_string or ""
+
+
 sorted_spell_list = sorted_spell_list or nil
 sorted_spell_list_ids = sorted_spell_list_ids or nil
 sorted_perk_list = sorted_perk_list or nil
@@ -71,9 +76,12 @@ local function ifind(s, pattern, init, plain)
     return string.find(s:lower(), pattern:lower(), init, plain)
 end
 
+dofile("data/scripts/perks/perk_list.lua")
+dofile("data/scripts/gun/gun_actions.lua")
+dofile("mods/evaisa.arena/files/scripts/gamemode/misc/upgrades.lua")
+
 local function TryUpdateData(lobby)
-    dofile("data/scripts/perks/perk_list.lua")
-    dofile("data/scripts/gun/gun_actions.lua")
+
     
     
     if(sorted_spell_list == nil)then
@@ -135,6 +143,26 @@ local function TryUpdateData(lobby)
         end)
     end
 
+    if(sorted_card_list == nil)then
+        -- sort card list blah
+        sorted_card_list = {}
+        sorted_card_list_ids = {}
+        for _, card in pairs(upgrades)do
+            table.insert(sorted_card_list, card)
+            table.insert(sorted_card_list_ids, card)
+            content_hash = content_hash + string.bytes(card.id)
+            content_string = content_string .. card.id .. "\n"
+        end
+
+        table.sort(sorted_card_list, function(a, b)
+            return GameTextGetTranslatedOrNot(a.ui_name) < GameTextGetTranslatedOrNot(b.ui_name)
+        end)
+
+        table.sort(sorted_card_list_ids, function(a, b)
+            return GameTextGetTranslatedOrNot(a.id) < GameTextGetTranslatedOrNot(b.id)
+        end)
+    end
+
 
     GlobalsSetValue("content_string", tostring(content_string))
 
@@ -187,6 +215,22 @@ local function TryUpdateData(lobby)
             end
         end
     end
+
+    -- card blacklist
+    if(lobby_data_last_frame["card_blacklist_data"] ~= nil and card_blacklist_string ~= lobby_data_last_frame["card_blacklist_data"])then
+        print("Updating card blacklist data")
+        -- split byte string into table
+        card_blacklist_data = {}
+        card_blacklist_string = lobby_data_last_frame["card_blacklist_data"]
+        for i = 1, #card_blacklist_string do
+            local enabled = card_blacklist_string:sub(i, i) == "1"
+            if(enabled)then
+                card_blacklist_data[sorted_card_list_ids[i].id] = enabled
+            else
+                card_blacklist_data[sorted_card_list_ids[i].id] = nil
+            end
+        end
+    end
     
 end
 
@@ -230,6 +274,19 @@ local function SendLobbyData(lobby)
         --print(map_blacklist_string_temp)
         steam.matchmaking.setLobbyData(lobby, "map_blacklist_data", map_blacklist_string_temp)
     end
+
+    if(sorted_card_list_ids)then
+        local card_blacklist_string_temp = ""
+        for _, card in pairs(sorted_card_list_ids)do
+            if(card_blacklist_data[card.id] == nil)then
+                card_blacklist_string_temp = card_blacklist_string_temp .. "0"
+            else
+                card_blacklist_string_temp = card_blacklist_string_temp .. (card_blacklist_data[card.id] and "1" or "0")
+            end
+        end
+        --print(card_blacklist_string_temp)
+        steam.matchmaking.setLobbyData(lobby, "card_blacklist_data", card_blacklist_string_temp)
+    end
         
     steam.matchmaking.sendLobbyChatMsg(lobby, "refresh")
 end
@@ -240,7 +297,7 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 134,
+    version = 135,
     required_online_version = 330,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
@@ -608,8 +665,8 @@ ArenaMode = {
         }, 
         {
             id = "dunce",
-            name = "$arena_settings_dunce_name",
-            description = "$arena_settings_dunce_description",
+            name = "$arena_cosmetics_dunce_hat_name",
+            description = "$arena_cosmetics_dunce_hat_description",
             type = "bool",
             default = false
         }, 
@@ -805,6 +862,96 @@ ArenaMode = {
 
             end
         },
+        {
+            id = "card_blacklist",
+            name = "$arena_settings_card_blacklist_name",
+            button_text = "$arena_settings_card_blacklist_name",
+            draw = function(lobby, gui, new_id)
+                GuiLayoutBeginVertical(gui, 0, 0, true, 0, 0)
+                
+                TryUpdateData(lobby)
+
+                local id = new_id("card_search_input")
+                GuiZSetForNextWidget(gui, -5600)
+                card_search_content = GuiTextInput(gui, id, 0, 0, card_search_content or "", 140, 20)
+
+                local _, _, hover = GuiGetPreviousWidgetInfo(gui)
+
+                if(hover)then
+                    GameAddFlagRun("chat_bind_disabled")
+                end
+
+                if(steamutils.IsOwner(lobby))then
+                    GuiZSetForNextWidget(gui, -5600)
+                    if GuiButton(gui, new_id(), 0, 0, "$arena_disable_all") then
+                        for i, card in ipairs(sorted_card_list)do
+  
+                            card_blacklist_data[card.id] = true
+                        end
+                        SendLobbyData(lobby)
+                    end
+                    GuiZSetForNextWidget(gui, -5600)
+                    if GuiButton(gui, new_id(), 0, 0, "$arena_enable_all") then
+                        for i, card in ipairs(sorted_card_list)do
+ 
+                            card_blacklist_data[card.id] = false
+                        end
+                        SendLobbyData(lobby)
+                    end
+                end
+                local iteration = 0
+                for i, card in ipairs(sorted_card_list)do
+                    if(card_search_content == "" or ifind(string.lower(GameTextGetTranslatedOrNot(card.ui_name)), string.lower(card_search_content), 1, true)) then
+                        iteration = iteration + 1
+                        GuiLayoutBeginHorizontal(gui, 0, -((iteration - 1) * 2), true)
+                        local is_blacklisted = card_blacklist_data[card.id]--steamutils.GetLobbyData("card_blacklist_"..card.id) == "true"
+                        GuiZSetForNextWidget(gui, -5600)
+                        GuiColorSetForNextWidget(gui, card.card_symbol_tint and card.card_symbol_tint[1] or 1, card.card_symbol_tint and card.card_symbol_tint[2] or 1, card.card_symbol_tint and card.card_symbol_tint[3] or 1, 1)
+                        GuiImage(gui, new_id(), 0, 0, card.card_symbol, is_blacklisted and 0.4 or 1, 1, 1)
+                        local visible, clicked, _, hovered = get_widget_info(gui)
+
+                        if(visible and clicked)then
+                            if(steamutils.IsOwner(lobby))then
+                                GamePlaySound( "data/audio/Desktop/ui.bank", "ui/button_click", GameGetCameraPos() )
+                                card_blacklist_data[card.id] = not is_blacklisted
+                                SendLobbyData(lobby)
+                            end
+                        end
+                        if(visible and hovered)then
+                            GuiTooltip(gui, GameTextGetTranslatedOrNot("$arena_settings_hover_tooltip_blacklist"), card.ui_description)
+                        end
+                        local icon_width, icon_height = GuiGetImageDimensions(gui, card.card_symbol)
+                        SetRandomSeed(iteration * 21, iteration * 245)
+                        local strike_out = "mods/evaisa.arena/files/sprites/ui/strikeout/small_"..tostring(Random(1, 4))..".png"
+                        local offset = 0
+                        if(is_blacklisted)then
+                            GuiZSetForNextWidget(gui, -5610)
+                            GuiOptionsAddForNextWidget(gui, GUI_OPTION.NonInteractive)
+                            GuiImage(gui, new_id(), -(icon_width - 1), 2, strike_out, 1, 1, 1)
+                            offset = 2
+                        end
+                        local text_width, text_height = GuiGetTextDimensions(gui, card.ui_name)
+                        GuiZSetForNextWidget(gui, -5600)
+                        if(GuiButton(gui, new_id(), offset, ((icon_height / 2) - (text_height / 2)), card.ui_name))then
+                            if(steamutils.IsOwner(lobby))then
+                                card_blacklist_data[card.id] = not is_blacklisted
+                                SendLobbyData(lobby)
+                            end
+                        end
+                        local _, _, hovered = GuiGetPreviousWidgetInfo(gui)
+                        if(visible and hovered)then
+                            GuiTooltip(gui, GameTextGetTranslatedOrNot("$arena_settings_hover_tooltip_blacklist"), card.ui_description)
+                        end
+                        GuiLayoutEnd(gui)
+                    end
+                end
+                GuiLayoutEnd(gui)
+            end,
+            close = function()
+
+            end
+        },
+        
         {
             id = "map_pool",
             name = "$arena_settings_map_pool_name",
@@ -1007,12 +1154,14 @@ ArenaMode = {
         preset_data.perk_blacklist_data = perk_blacklist_data
         preset_data.spell_blacklist_data = spell_blacklist_data
         preset_data.map_blacklist_data = map_blacklist_data
+        preset_data.card_blacklist_data = card_blacklist_data
         return preset_data
     end,
     load_preset = function(lobby, preset_data)
         perk_blacklist_data = preset_data.perk_blacklist_data or {}
         spell_blacklist_data = preset_data.spell_blacklist_data or {}
         map_blacklist_data = preset_data.map_blacklist_data or {}
+        card_blacklist_data = preset_data.card_blacklist_data or {}
 
         --print(json.stringify(perk_blacklist_data))
 
@@ -1087,6 +1236,15 @@ ArenaMode = {
                 GameAddFlagRun("map_blacklist_"..map.id)
             else
                 GameRemoveFlagRun("map_blacklist_"..map.id)
+            end
+        end
+
+        for _, card in pairs(upgrades)do
+            local is_blacklisted = card_blacklist_data[card.id]--steam.matchmaking.getLobbyData(lobby, "card_blacklist_"..card.id) == "true"
+            if(is_blacklisted)then
+                GameAddFlagRun("card_blacklist_"..card.id)
+            else
+                GameRemoveFlagRun("card_blacklist_"..card.id)
             end
         end
 

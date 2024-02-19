@@ -29,19 +29,25 @@ local upgrade_system = {
             random_seed = ((tonumber(GlobalsGetValue("world_seed", "0")) or 1) * 214) * rounds
         end
 
+        local valid_upgrades = {}
+        for k, v in ipairs(upgrades) do
+            if(not GameHasFlagRun("card_blacklist_"..v.id))then
+                table.insert(valid_upgrades, v)
+            end
+        end
 
         local random = rng.new(random_seed)
 
-        local function getRandomWeightedChoice(upgrades)
+        local function getRandomWeightedChoice(options)
             local totalWeight = 0
             
-            for _, upgrade in ipairs(upgrades) do
+            for _, upgrade in ipairs(options) do
                 totalWeight = totalWeight + upgrade.weight
             end
             
             local targetWeight = random.random() * totalWeight
             
-            for _, upgrade in ipairs(upgrades) do
+            for _, upgrade in ipairs(options) do
                 targetWeight = targetWeight - upgrade.weight
                 if targetWeight <= 0 then
                     return upgrade
@@ -50,13 +56,13 @@ local upgrade_system = {
         end
         
         local function GetUpgrades(count)
-            local recycle = (count > #upgrades)
+            local recycle = (count > #valid_upgrades)
         
             local result = {}
             local usedUpgrades = {}
         
             while count > 0 do
-                local upgrade = getRandomWeightedChoice(upgrades)
+                local upgrade = getRandomWeightedChoice(valid_upgrades)
         
                 if not recycle then
                     if not usedUpgrades[upgrade.id] then

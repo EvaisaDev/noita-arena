@@ -535,6 +535,26 @@ upgrades = {
         card_symbol = "mods/evaisa.arena/files/sprites/ui/upgrades/symbols/reload.png",
         weight = 0.8,
         func = function( entity_who_picked )
+            --[[
+            local x,y = EntityGetTransform( entity_who_picked )
+            
+            local wands = get_all_wands()
+
+            for k, wand in ipairs(wands)do
+            
+                SetRandomSeed( entity_who_picked + x + GameGetFrameNum(), wand + y + GameGetFrameNum() )
+
+                local comp = EntityGetFirstComponentIncludingDisabled( wand, "AbilityComponent" )
+                
+                if ( comp ~= nil ) then
+                    local recharge_time = ComponentObjectGetValue2( comp, "gunaction_config", "reload_time" )
+                    recharge_time = recharge_time * 0.8 - 5
+                    ComponentObjectSetValue2( comp, "gunaction_config", "reload_time", recharge_time)
+                end
+            end
+            ]]
+
+
             local x,y = EntityGetTransform( entity_who_picked )
             
             SetRandomSeed( entity_who_picked + x + GameGetFrameNum(), y + GameGetFrameNum() )
@@ -549,6 +569,8 @@ upgrades = {
                     local recharge_time = ComponentObjectGetValue2( comp, "gun_config", "reload_time" )
                     recharge_time = recharge_time * 0.8 - 5
                     ComponentObjectSetValue2( comp, "gun_config", "reload_time", recharge_time)
+
+                    print("recharge_time: " .. recharge_time)
                 end
             end
         end,
