@@ -1,11 +1,14 @@
 arena_log = logger.init("noita-arena.log")
 perk_log = logger.init("noita-arena-perk.log")
+
+
 mp_helpers = dofile("mods/evaisa.mp/files/scripts/helpers.lua")
 local steamutils = dofile_once("mods/evaisa.mp/lib/steamutils.lua")
 game_funcs = dofile("mods/evaisa.mp/files/scripts/game_functions.lua")
 EZWand = dofile("mods/evaisa.arena/files/scripts/utilities/EZWand.lua")
 
 wait = dofile("mods/evaisa.arena/files/scripts/utilities/wait.lua")
+local inspect = dofile("mods/evaisa.arena/lib/inspect.lua")
 
 local data_holder = dofile("mods/evaisa.arena/files/scripts/gamemode/data.lua")
 local data = nil
@@ -297,7 +300,7 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 135,
+    version = 136,
     required_online_version = 330,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
@@ -1856,16 +1859,34 @@ ArenaMode = {
         elseif(input:WasKeyPressed("f6"))then
             local player_entity = EntityGetWithTag("player_unit")[1]
             local x, y = EntityGetTransform(player_entity)
-            EntityInflictDamage(player_entity, 0.2, "DAMAGE_SLICE", "player", "BLOOD_EXPLOSION", 0, 0, GameGetWorldStateEntity(), x, y, 0)
-        elseif (input:WasKeyPressed("f7")) then
-            local inspect = dofile("mods/evaisa.arena/lib/inspect.lua")
+            EntityInflictDamage(player_entity, 10000, "DAMAGE_SLICE", "player", "BLOOD_EXPLOSION", 0, 0, GameGetWorldStateEntity(), x, y, 0)
+        elseif (input:WasKeyPressed("f5")) then
+            
             -- global table snapshot
             -- json stringify global table
             local json_string = inspect(data)
             -- write to file
+
+            --print(type(json_string))
+
+            --GamePrint(tostring(json_string).."wawa")
+
+            --[[local file = io.open("arena_data.lua", "w")
             
             file:write(json_string)
-            file:close()
+            file:close()]]
+        elseif (input:WasKeyPressed("f3")) then
+            if(not dev_log or not dev_log.enabled)then
+                dev_log = logger.init("arena-dev.log")
+                print("Dev log enabled")
+                dev_log.enabled = true
+                dev_log:print("Dev log enabled")
+            else
+                dev_log.enabled = false
+            end
+
+
+            
         end
 
 
@@ -1886,8 +1907,16 @@ ArenaMode = {
 
     end,
     player_enter = function(lobby, user)
+
+        if(data and data.players[tostring(user)] ~= nil)then
+            
+            data.players[tostring(user)].entity = nil
+            data.players[tostring(user)].alive = false
+        end
+
         if(steamutils.IsOwner())then
             SendLobbyData(lobby)
+            
             print("Player joined - Sending lobby data!")
         end
     end,
@@ -1917,12 +1946,23 @@ ArenaMode = {
             data:DefinePlayer(lobby, user)
         end
 
+        --print("Received event: " .. event)
+
         if (data ~= nil) then
+            --[[if(dev_log)then
+                dev_log:print("Received event: " .. event)
+            end]]
+
+            
+
             --if (not data.spectator_mode) then
                 if (networking.receive[event]) then
                     --[[if(event == "death")then
                         print("Received death event [regular]")
                     end]]
+
+                    --print("wawa: " .. event)
+
                     networking.receive[event](lobby, message, user, data)
                    -- print("Received event [regular networking]: " .. event)
                 end

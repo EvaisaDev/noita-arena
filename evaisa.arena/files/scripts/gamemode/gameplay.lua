@@ -2303,9 +2303,26 @@ ArenaGameplay = {
     end,
     CheckPlayer = function(lobby, user, data)
         if (not data.players[tostring(user)].entity and data.players[tostring(user)].alive) then
+
+            -- find entity by name
+            local entity = EntityGetWithName(tostring(user))
+
+            if (entity ~= nil) then
+                data.players[tostring(user)].entity = entity
+                return false
+            else
+                ArenaGameplay.SpawnClientPlayer(lobby, user, data)
+            end
+
             --ArenaGameplay.SpawnClientPlayer(lobby, user, data)
             return false
         end
+
+        if(data.players[tostring(user)].alive and not EntityGetIsAlive(data.players[tostring(user)].entity))then
+            ArenaGameplay.SpawnClientPlayer(lobby, user, data)
+            return false
+        end
+
         return true
     end,
     LoadClientPlayers = function(lobby, data)
@@ -2468,10 +2485,17 @@ ArenaGameplay = {
         if (data.countdown ~= nil) then
             data.countdown:update()
         end
+        
+        --[[if(dev_log)then
+            dev_log:print("unlocked? " .. tostring(GameHasFlagRun("player_is_unlocked")))
+            dev_log:print("no_shooting? " .. tostring(GameHasFlagRun("no_shooting")))
+        end]]
 
-        if(GameHasFlagRun("player_is_unlocked") and (not GameHasFlagRun("no_shooting")))then
+        --print("Arena update!")
+
+        --if(GameHasFlagRun("player_is_unlocked") and (not GameHasFlagRun("no_shooting")))then
             networking.send.character_position(lobby, data)
-        end
+        --end
 
         if (GameHasFlagRun("took_damage")) then
             GameRemoveFlagRun("took_damage")

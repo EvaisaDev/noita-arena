@@ -210,7 +210,7 @@
       grass_requires_neighbors="1"
       material_on_top_of="soil"
     ></VegetationComponent>
-
+<!--
     <VegetationComponent 
       _enabled="1" 
       is_visual="1" 
@@ -408,6 +408,8 @@
       visual_offset_x="15" 
       visual_offset_y="32" >
     </VegetationComponent>
+
+    -->
   </Materials>
 
 </Biome>

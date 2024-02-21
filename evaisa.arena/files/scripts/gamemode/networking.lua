@@ -284,13 +284,27 @@ networking = {
             end)
         end,
         character_position = function(lobby, message, user, data)
+
+            --[[if(dev_log)then
+                dev_log:print("Received character position update.")
+            end]]
+
             if (not gameplay_handler.CheckPlayer(lobby, user, data)) then
+                --[[if (dev_log) then
+                    dev_log:print("player is invalid!!")
+                end]]
                 return
             end
 
-           
+            --[[if(dev_log)then
+                dev_log:print("player is valid!!")
+                dev_log:print("spectator mode: " .. tostring(data.spectator_mode))
+                dev_log:print("player is unlocked: " .. tostring(GameHasFlagRun("player_is_unlocked")))
+                dev_log:print("no shooting: " .. tostring(GameHasFlagRun("no_shooting")))
+            end]]
+
             if (data.spectator_mode or (GameHasFlagRun("player_is_unlocked") and (not GameHasFlagRun("no_shooting")))) then
-                --print("is spectator: " .. tostring(data.spectator_mode) .. "; is unlocked: " .. tostring(GameHasFlagRun("player_is_unlocked")) .. "; no shooting: " .. tostring(GameHasFlagRun("no_shooting")))
+                
 
                 local x, y = message.x, message.y
 
@@ -1518,11 +1532,17 @@ networking = {
         end,
         character_position = function(lobby, data, to_spectators)
             local player = player.Get()
+            --print("Attempting to send character position")
             if (player) then
                 local x, y = EntityGetTransform(player)
                 local characterData = EntityGetFirstComponentIncludingDisabled(player, "CharacterDataComponent")
                 local vel_x, vel_y = ComponentGetValue2(characterData, "mVelocity")
 
+                --[[if(dev_log)then
+                    dev_log:print("Sending character position: " .. tostring(x) .. ", " .. tostring(y) .. " | " .. tostring(vel_x) .. ", " .. tostring(vel_y))
+                end]]
+  
+                --print("Sending character position: " .. tostring(x) .. ", " .. tostring(y) .. " | " .. tostring(vel_x) .. ", " .. tostring(vel_y))
                 
                 local c = CharacterPos{
                     x = x,
