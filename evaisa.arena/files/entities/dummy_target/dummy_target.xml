@@ -1,4 +1,4 @@
-<Entity  tags="prop,hittable,mortal,homing_target,enemy,touchmagic_immunity,teleportable_NOT,polymorphable_NOT" >
+<Entity  tags="prop,hittable,mortal,homing_target,enemy,touchmagic_immunity,teleportable_NOT,polymorphable_NOT,target_dummy" >
 	<VelocityComponent gravity_y="0" terminal_velocity="0"/>
     <SimplePhysicsComponent/>
 	<SpriteAnimatorComponent/>
@@ -9,11 +9,60 @@
 		z_index="1"
 		image_file="mods/evaisa.arena/files/entities/dummy_target/dummy_target_sprite.xml"/>
 	
+	
 	<SpriteOffsetAnimatorComponent
         _tags="enabled_in_world"
         y_amount="2"
         y_speed="2.5"
         sprite_id="0" />
+
+	<SpriteOffsetAnimatorComponent
+        _tags="enabled_in_world"
+        y_amount="2"
+        y_speed="2.5"
+        sprite_id="1" />
+
+	<SpriteOffsetAnimatorComponent
+        _tags="enabled_in_world"
+        y_amount="2"
+        y_speed="2.5"
+        sprite_id="2" />
+
+
+    <SpriteComponent
+        _tags="username"
+        image_file = "data/fonts/font_pixel_white.xml"
+        emissive = "1"
+        is_text_sprite = "1"
+        offset_x = "0"
+        offset_y = "-16"
+        alpha = "1"
+        update_transform = "1"
+        update_transform_rotation = "0"
+        never_ragdollify_on_death = "1"
+        text = ""
+        has_special_scale = "1"
+        special_scale_x = "0.7"
+        special_scale_y = "0.7"
+        z_index = "-5000"
+    ></SpriteComponent>
+
+    <SpriteComponent
+        _tags="face"
+        image_file = "mods/evaisa.mp/files/gfx/ui/no_avatar.png"
+        emissive = "1"
+        offset_x = "14"
+        offset_y = "41.8"
+        alpha = "1"
+        update_transform = "1"
+        update_transform_rotation = "0"
+        never_ragdollify_on_death = "1"
+        text = ""
+        has_special_scale = "1"
+        special_scale_x = "0.22"
+        special_scale_y = "0.22"
+        z_index = "-5000"
+    ></SpriteComponent>
 
 	<AnimalAIComponent 
         attack_melee_enabled="0"
@@ -71,7 +120,13 @@
 		script_damage_received="mods/evaisa.arena/files/scripts/gamemode/misc/dummy_damage.lua"
 	>
 	</LuaComponent>
+	<LuaComponent script_interacting="mods/evaisa.arena/files/entities/dummy_target/switch_target.lua"/>
 
+	<InteractableComponent
+		radius = "20"
+		ui_text = "Switch Target"
+		name = "target"
+	/>
 
 	<VariableStorageComponent name="gkbrkn_always_show_damage_numbers"/>
 	<VariableStorageComponent name="gkbrkn_no_health_bar"/>

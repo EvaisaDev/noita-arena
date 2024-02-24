@@ -39,6 +39,12 @@ for k, perk in pairs(perk_list) do
     perk_sprites[perk.id] = perk.ui_icon
 end
 
+for k, arena in pairs(arena_list) do
+    if(arena.init)then
+        arena:init()
+    end
+end
+
 playermenu = nil
 
 local was_content_mismatched = false
@@ -300,7 +306,7 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 136,
+    version = 138,
     required_online_version = 330,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)

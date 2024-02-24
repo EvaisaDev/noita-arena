@@ -19,7 +19,37 @@ arena_list = {
             {x = 0, y = 0}
         },
         zone_size = 600, -- size of damage zone, should be max distance from 0, 0 players can travel
-        zone_floor = 400 -- damage floor, if player falls below this they die.
+        zone_floor = 400, -- damage floor, if player falls below this they die.
+        init = function(self) -- called when the gamemode is loaded, this is before even entering a lobby, can be used for storing variables.
+            --[[game_funcs.ExposeImage("data/weather_gfx/parallax_mountains_01.png")
+            game_funcs.ExposeImage("data/weather_gfx/parallax_mountains_02.png")
+            game_funcs.ExposeImage("data/weather_gfx/parallax_mountains_layer_01.png")
+            game_funcs.ExposeImage("data/weather_gfx/parallax_mountains_layer_02.png")
+
+            -- expose mod images
+            game_funcs.ExposeImage("mods/evaisa.arena/content/arenas/city_test/parallax_mountains_01.png")
+            game_funcs.ExposeImage("mods/evaisa.arena/content/arenas/city_test/parallax_mountains_02.png")
+            game_funcs.ExposeImage("mods/evaisa.arena/content/arenas/city_test/parallax_mountains_layer_01.png")
+            game_funcs.ExposeImage("mods/evaisa.arena/content/arenas/city_test/parallax_mountains_layer_02.png")
+
+            print("Parallax Background Exposed")]]
+        end,
+        load = function(self, lobby, data) -- called when the lobby is loaded, can be used for setting up the arena.
+            --[[game_funcs.ReplaceImage("data/weather_gfx/parallax_mountains_01.png", "mods/evaisa.arena/content/arenas/city_test/parallax_mountains_01.png")
+            game_funcs.ReplaceImage("data/weather_gfx/parallax_mountains_02.png", "mods/evaisa.arena/content/arenas/city_test/parallax_mountains_02.png")
+            game_funcs.ReplaceImage("data/weather_gfx/parallax_mountains_layer_01.png", "mods/evaisa.arena/content/arenas/city_test/parallax_mountains_layer_01.png")
+            game_funcs.ReplaceImage("data/weather_gfx/parallax_mountains_layer_02.png", "mods/evaisa.arena/content/arenas/city_test/parallax_mountains_layer_02.png")
+
+            game_funcs.RefreshParallax()
+
+            print("Parallax Background Refreshed")]]
+        end,
+        unload = function(self, lobby, data)
+
+        end,
+        update = function(self, lobby, data) -- Ran every frame while in the arena.
+
+        end,
     },
     {
         id = "spoop",

@@ -1219,6 +1219,11 @@ ArenaGameplay = {
     end,
     LoadLobby = function(lobby, data, show_message, first_entry)
 
+        if(data.current_arena ~= nil and data.current_arena.unload)then
+            data.current_arena:unload(lobby, data)
+        end
+
+
         -- get rounds
         local rounds = ArenaGameplay.GetNumRounds(lobby)
 
@@ -1649,11 +1654,14 @@ ArenaGameplay = {
             })
             return
         end
-
         GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_map_loaded"), tostring(arena.name)))
 
         BiomeMapLoad_KeepPlayer(arena.biome_map, arena.pixel_scenes)
+        if(data.current_arena.load)then
+            data.current_arena:load(lobby, data)
+        end
 
+        
         if(not steamutils.IsSpectator(lobby))then
             RunWhenPlayerExists(function()
                 player.Lock()
@@ -2170,6 +2178,8 @@ ArenaGameplay = {
             data.ready_counter:update()
         end
 
+        ArenaGameplay.UpdateDummy(lobby, data)
+
         networking.send.character_position(lobby, data, true)
 
        -- networking.send.wand_update(lobby, data, nil, nil, true)
@@ -2324,6 +2334,127 @@ ArenaGameplay = {
         end
 
         return true
+    end,
+    SwitchDummy = function(dummy, lobby, data)
+        local dummy_target = data.target_dummy_player or steam.user.getSteamID()
+        local new_target = nil
+        -- check if target is in lobby
+        local next_is_target = false
+
+        -- kill dummy and respawn in same location
+        local x, y = EntityGetTransform(dummy)
+        EntityKill(dummy)
+        dummy = EntityLoad("mods/evaisa.arena/files/entities/dummy_target/dummy_target.xml", x, y)
+
+        local players = {
+            [tostring(steam.user.getSteamID())] = {
+                perks = data.client.perks or {},
+                health = data.client.hp or 100,
+                max_health = data.client.max_hp or 100,
+            }
+        }
+
+        for k, v in pairs(data.players) do
+            players[tostring(k)] = {
+                perks = v.perks or {},
+                health = v.health or 100,
+                max_health = v.max_health or 100,
+            }
+        end
+
+        local target_data = nil
+
+        for k, v in pairs(players) do
+            if (k == tostring(dummy_target)) then
+                next_is_target = true
+            end
+            if (next_is_target)then
+                new_target = gameplay_handler.FindUser(lobby, dummy_target)
+                target_data = v
+                break
+            end
+        end
+
+        if (new_target == nil) then
+            -- first player
+            for k, v in pairs(players) do
+                new_target = gameplay_handler.FindUser(lobby, k)
+                target_data = v
+                break
+            end
+        end
+
+        data.target_dummy_player = new_target
+        local new_target_name = steamutils.getTranslatedPersonaName(new_target)
+        local new_target_avatar = steamutils.getUserAvatar(new_target)
+
+        new_target_name = "this is a test user"
+
+        local usernameSprite = EntityGetFirstComponentIncludingDisabled(dummy, "SpriteComponent", "username")
+        
+        local temp_gui = GuiCreate()
+        --GuiStartFrame(temp_gui)
+
+        ComponentSetValue2(usernameSprite, "text", new_target_name)
+
+        local width = GuiGetTextDimensions(temp_gui, new_target_name, 0.9)
+        ComponentSetValue2(usernameSprite, "offset_x", (width * 0.5))
+
+        GuiDestroy(temp_gui)
+
+        local faceSprite = EntityGetFirstComponentIncludingDisabled(dummy, "SpriteComponent", "face")
+        ComponentSetValue2(faceSprite, "image_file", new_target_avatar)
+
+        print("User: "..tostring(new_target))
+        print("Switched dummy to " .. new_target_name .. " (" .. new_target_avatar .. ")")
+        
+        EntityRefreshSprite(dummy, usernameSprite)
+        EntityRefreshSprite(dummy, faceSprite)
+
+        if (target_data and target_data.perks) then
+            for k, v in ipairs(target_data.perks) do
+                local perk = v[1]
+                local count = v[2]
+
+                for i = 1, count do
+                    EntityHelper.GivePerk(dummy, perk, i, true)
+                end
+            end
+        end
+
+        if (target_data and target_data.health) then
+            local hp = target_data.health
+            local max_hp = target_data.max_health
+            local hp_component = EntityGetFirstComponentIncludingDisabled(dummy, "DamageModelComponent")
+            ComponentSetValue2(hp_component, "hp", hp)
+            ComponentSetValue2(hp_component, "max_hp", max_hp)
+        end
+
+    end,
+    UpdateDummy = function(lobby, data)
+        local dummies = EntityGetWithTag("target_dummy") or {}
+
+        local id = 322352
+        local new_id = function()
+            id = id + 1
+            return id
+        end
+
+        dummy_gui = dummy_gui or GuiCreate()
+        GuiStartFrame(dummy_gui)
+
+        if(#dummies > 0)then
+        
+            for i, v in ipairs(dummies)do
+                if(data.target_dummy_player == nil or GameHasFlagRun( "target_dummy_switch" ))then
+                    ArenaGameplay.SwitchDummy(v, lobby, data)
+                end
+            end
+
+            GameRemoveFlagRun( "target_dummy_switch" )
+
+        end
+        
     end,
     LoadClientPlayers = function(lobby, data)
         local members = steamutils.getLobbyMembers(lobby)
@@ -2485,7 +2616,10 @@ ArenaGameplay = {
         if (data.countdown ~= nil) then
             data.countdown:update()
         end
-        
+
+        if(data.current_arena.update)then
+            data.current_arena:update(lobby, data)
+        end
         --[[if(dev_log)then
             dev_log:print("unlocked? " .. tostring(GameHasFlagRun("player_is_unlocked")))
             dev_log:print("no_shooting? " .. tostring(GameHasFlagRun("no_shooting")))

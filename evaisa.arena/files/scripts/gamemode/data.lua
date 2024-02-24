@@ -20,6 +20,7 @@ function data:New()
         countdown = nil,
         upgrade_system = nil,
         ----- spectator mode -----
+        target_dummy_player = nil,
         spectator_gui_entity = nil,
         spectator_gui = nil,
         spectator_text_gui = nil,
