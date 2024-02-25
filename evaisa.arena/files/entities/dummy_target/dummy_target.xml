@@ -5,6 +5,11 @@
 	<StatusEffectDataComponent/>
 	<SpriteStainsComponent/>
 
+	<!--Debug sprite that tracks position-->
+	<SpriteComponent 
+		z_index="100"
+		image_file="mods/evaisa.arena/files/sprites/ui/pixel.png"/>
+
 	<SpriteComponent 
 		z_index="1"
 		image_file="mods/evaisa.arena/files/entities/dummy_target/dummy_target_sprite.xml"/>
@@ -16,6 +21,7 @@
         y_speed="2.5"
         sprite_id="0" />
 
+	<!--
 	<SpriteOffsetAnimatorComponent
         _tags="enabled_in_world"
         y_amount="2"
@@ -27,7 +33,7 @@
         y_amount="2"
         y_speed="2.5"
         sprite_id="2" />
-
+-->
 
     <SpriteComponent
         _tags="username"
@@ -72,45 +78,39 @@
         can_walk="0"/>
 	
 	<DamageModelComponent
-		wait_for_kill_flag_on_death="1" 
-		air_in_lungs="1"
-		air_in_lungs_max="1" 
-		air_lack_of_damage="1" 
-		air_needed="1" 
-		falling_damage_damage_max="1.2" 
-		falling_damage_damage_min="0.1" 
-		falling_damage_height_max="250" 
-		falling_damage_height_min="70" 
-		falling_damages="0" 
-		fire_damage_amount="1.0" 
-		fire_probability_of_ignition="1.0" 
-		hp="4" 
-		is_on_fire="0" 
-		materials_damage="1" 
-		materials_that_damage="acid,lava,poison,blood_cold,blood_cold_vapour,radioactive_gas,radioactive_gas_static,rock_static_radioactive,rock_static_poison,ice_radioactive_static,ice_radioactive_glass,ice_acid_static,ice_acid_glass,rock_static_cursed" 
-		materials_how_much_damage="0.004,0.004,0.001,0.0008,0.0007,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.005"
-		ragdoll_filenames_file="data/ragdolls/player/filenames.txt"
-		ragdoll_material="meat"
-        blood_multiplier="0"
-		physics_objects_damage="1"
-		ragdoll_offset_y="-6" >
-        <damage_multipliers
-            ice="1.00"
-            electricity="1.00"
-            slice="1.00"
-            projectile="1.00"
-            healing="1.00"
-            physics_hit="1.00"
-            explosion="1.00"
-            melee="1.00"
-            drill="1.00"
-            fire="1.00"/>
-	</DamageModelComponent>
+    air_in_lungs="7" 
+    air_in_lungs_max="7" 
+    air_lack_of_damage="0.6" 
+    air_needed="1" 
+    falling_damage_damage_max="1.2" 
+    falling_damage_damage_min="0.1" 
+    falling_damage_height_max="250" 
+    falling_damage_height_min="70" 
+    falling_damages="0" 
+    fire_damage_amount="0.2" 
+    fire_probability_of_ignition="1" 
+    invincibility_frames="60"
+    hp="4" 
+    is_on_fire="0" 
+    materials_damage="1" 
+    materials_that_damage="acid,lava,blood_cold_vapour,blood_cold,poison,radioactive_gas,radioactive_gas_static,rock_static_radioactive,rock_static_poison,ice_radioactive_static,ice_radioactive_glass,ice_acid_static,ice_acid_glass,rock_static_cursed,magic_gas_hp_regeneration,gold_radioactive,gold_static_radioactive,rock_static_cursed_green,cursed_liquid,poo_gas"  
+    materials_how_much_damage="0.005,0.003,0.0006,0.0009,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.005,-0.005,0.0002,0.0002,0.004,0.0005,0.00001" 
+    ragdoll_filenames_file="data/ragdolls/player/filenames.txt" 
+    ragdoll_offset_y="-5"
+    ragdollify_child_entity_sprites="1"
+    blood_spray_material="blood"
+    physics_objects_damage="0"
+    critical_damage_resistance="1"
+    ><damage_multipliers
+      explosion="0.35" 
+	  holy="1.5"
+	  >
+    </damage_multipliers>
     <HitboxComponent
-		aabb_min_x="-10.5"
-		aabb_max_x="10.5"
-		aabb_min_y="-13"
-		aabb_max_y="13"/>
+		aabb_max_x="3"
+		aabb_max_y="7"
+		aabb_min_x="-3"
+		aabb_min_y="-9" />
     <LuaComponent script_damage_received="mods/evaisa.arena/files/entities/dummy_target/custom_damage_numbers.lua"/>
     <LuaComponent script_damage_received="mods/evaisa.arena/files/entities/dummy_target/dps_tracker.lua"/>
     <LuaComponent script_damage_about_to_be_received="mods/evaisa.arena/files/scripts/dummy_shot.lua"/>
@@ -121,10 +121,14 @@
 	>
 	</LuaComponent>
 	<LuaComponent script_interacting="mods/evaisa.arena/files/entities/dummy_target/switch_target.lua"/>
-
+	<LuaComponent 
+		script_source_file="mods/evaisa.arena/files/entities/dummy_target/hitbox_tracker.lua"
+		execute_on_added="1"
+		execute_every_n_frame="1"
+	/>
 	<InteractableComponent
 		radius = "50"
-		ui_text = "Switch Target"
+		ui_text = "$arena_dummy_switch"
 		name = "target"
 	/>
 

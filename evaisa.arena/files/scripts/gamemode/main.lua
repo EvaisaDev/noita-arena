@@ -1852,7 +1852,7 @@ ArenaMode = {
             end
         end
 
-        if(input:WasKeyPressed("f10"))then
+        --[[if(input:WasKeyPressed("f10"))then
             if(steamutils.IsOwner(lobby))then
                 ArenaGameplay.AddRound(lobby)
                 delay.new(5, function()
@@ -1866,7 +1866,7 @@ ArenaMode = {
             local player_entity = EntityGetWithTag("player_unit")[1]
             local x, y = EntityGetTransform(player_entity)
             EntityInflictDamage(player_entity, 10000, "DAMAGE_SLICE", "player", "BLOOD_EXPLOSION", 0, 0, GameGetWorldStateEntity(), x, y, 0)
-        elseif (input:WasKeyPressed("f5")) then
+        --elseif (input:WasKeyPressed("f5")) then
             
             -- global table snapshot
             -- json stringify global table
@@ -1877,10 +1877,6 @@ ArenaMode = {
 
             --GamePrint(tostring(json_string).."wawa")
 
-            --[[local file = io.open("arena_data.lua", "w")
-            
-            file:write(json_string)
-            file:close()]]
         elseif (input:WasKeyPressed("f3")) then
             if(not dev_log or not dev_log.enabled)then
                 dev_log = logger.init("arena-dev.log")
@@ -1893,7 +1889,7 @@ ArenaMode = {
 
 
             
-        end
+        end]]
 
 
         --print("Did something go wrong?")

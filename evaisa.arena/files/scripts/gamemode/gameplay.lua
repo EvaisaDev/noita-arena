@@ -1223,6 +1223,8 @@ ArenaGameplay = {
             data.current_arena:unload(lobby, data)
         end
 
+        GameAddFlagRun("refresh_dummy")
+
 
         -- get rounds
         local rounds = ArenaGameplay.GetNumRounds(lobby)
@@ -2335,7 +2337,95 @@ ArenaGameplay = {
 
         return true
     end,
+    UpdateDummyData = function(dummy, lobby, data)
+
+
+        if(data.target_dummy_player == nil)then
+            return
+        end
+
+
+        local players = {
+            [tostring(steam.user.getSteamID())] = {
+                perks = data.client.perks or {},
+                health = data.client.hp or 100,
+                max_health = data.client.max_hp or 100,
+            }
+        }
+
+        for k, v in pairs(data.players) do
+            players[tostring(k)] = {
+                perks = v.perks or {},
+                health = v.health or 100,
+                max_health = v.max_health or 100,
+            }
+        end
+
+
+
+        local target_data = nil
+        for k, v in pairs(players) do
+            if (k == tostring(data.target_dummy_player)) then
+                target_data = v
+                break
+            end
+        end
+
+        if target_data == nil then
+            for k, v in pairs(players) do
+                target_data = v
+                break
+            end
+        end
+
+        local new_target_name = steamutils.getTranslatedPersonaName(data.target_dummy_player)
+        local new_target_avatar = steamutils.getUserAvatar(data.target_dummy_player)
+
+        --new_target_name = "this is a test user"
+
+        local usernameSprite = EntityGetFirstComponentIncludingDisabled(dummy, "SpriteComponent", "username")
+        
+        local temp_gui = GuiCreate()
+        --GuiStartFrame(temp_gui)
+
+        ComponentSetValue2(usernameSprite, "text", new_target_name)
+
+        local width = GuiGetTextDimensions(temp_gui, new_target_name, 0.9)
+        ComponentSetValue2(usernameSprite, "offset_x", (width * 0.5))
+
+        GuiDestroy(temp_gui)
+
+        local faceSprite = EntityGetFirstComponentIncludingDisabled(dummy, "SpriteComponent", "face")
+        ComponentSetValue2(faceSprite, "image_file", new_target_avatar)
+
+        --print("User: "..tostring(new_target))
+        --print("Switched dummy to " .. new_target_name .. " (" .. new_target_avatar .. ")")
+        
+        EntityRefreshSprite(dummy, usernameSprite)
+        EntityRefreshSprite(dummy, faceSprite)
+
+        if (target_data and target_data.perks) then
+            for k, v in ipairs(target_data.perks) do
+                local perk = v[1]
+                local count = v[2]
+
+                for i = 1, count do
+                    EntityHelper.GivePerk(dummy, perk, i, true)
+                end
+            end
+        end
+
+        if (target_data and target_data.health) then
+            local hp = target_data.health
+            local max_hp = target_data.max_health
+            local hp_component = EntityGetFirstComponentIncludingDisabled(dummy, "DamageModelComponent")
+            ComponentSetValue2(hp_component, "hp", hp)
+            ComponentSetValue2(hp_component, "max_hp", max_hp)
+        end
+
+    end,
     SwitchDummy = function(dummy, lobby, data)
+
         local dummy_target = data.target_dummy_player or steam.user.getSteamID()
         local new_target = nil
         -- check if target is in lobby
@@ -2361,16 +2451,19 @@ ArenaGameplay = {
                 max_health = v.max_health or 100,
             }
         end
+        --local inspect = dofile("mods/evaisa.arena/lib/inspect.lua")
+        --print(inspect(players))
 
-        local target_data = nil
+        --local target_data = nil
 
         for k, v in pairs(players) do
             if (k == tostring(dummy_target)) then
                 next_is_target = true
-            end
-            if (next_is_target)then
-                new_target = gameplay_handler.FindUser(lobby, dummy_target)
-                target_data = v
+                print("Got current target: " .. tostring(dummy_target))
+            elseif (next_is_target)then
+                new_target = gameplay_handler.FindUser(lobby, k)
+                print("Switched dummy to " .. tostring(new_target))
+                --target_data = v
                 break
             end
         end
@@ -2379,56 +2472,14 @@ ArenaGameplay = {
             -- first player
             for k, v in pairs(players) do
                 new_target = gameplay_handler.FindUser(lobby, k)
-                target_data = v
+                --target_data = v
                 break
             end
         end
 
         data.target_dummy_player = new_target
-        local new_target_name = steamutils.getTranslatedPersonaName(new_target)
-        local new_target_avatar = steamutils.getUserAvatar(new_target)
 
-        new_target_name = "this is a test user"
-
-        local usernameSprite = EntityGetFirstComponentIncludingDisabled(dummy, "SpriteComponent", "username")
-        
-        local temp_gui = GuiCreate()
-        --GuiStartFrame(temp_gui)
-
-        ComponentSetValue2(usernameSprite, "text", new_target_name)
-
-        local width = GuiGetTextDimensions(temp_gui, new_target_name, 0.9)
-        ComponentSetValue2(usernameSprite, "offset_x", (width * 0.5))
-
-        GuiDestroy(temp_gui)
-
-        local faceSprite = EntityGetFirstComponentIncludingDisabled(dummy, "SpriteComponent", "face")
-        ComponentSetValue2(faceSprite, "image_file", new_target_avatar)
-
-        print("User: "..tostring(new_target))
-        print("Switched dummy to " .. new_target_name .. " (" .. new_target_avatar .. ")")
-        
-        EntityRefreshSprite(dummy, usernameSprite)
-        EntityRefreshSprite(dummy, faceSprite)
-
-        if (target_data and target_data.perks) then
-            for k, v in ipairs(target_data.perks) do
-                local perk = v[1]
-                local count = v[2]
-
-                for i = 1, count do
-                    EntityHelper.GivePerk(dummy, perk, i, true)
-                end
-            end
-        end
-
-        if (target_data and target_data.health) then
-            local hp = target_data.health
-            local max_hp = target_data.max_health
-            local hp_component = EntityGetFirstComponentIncludingDisabled(dummy, "DamageModelComponent")
-            ComponentSetValue2(hp_component, "hp", hp)
-            ComponentSetValue2(hp_component, "max_hp", max_hp)
-        end
+        ArenaGameplay.UpdateDummyData(dummy, lobby, data)
 
     end,
     UpdateDummy = function(lobby, data)
@@ -2440,18 +2491,27 @@ ArenaGameplay = {
             return id
         end
 
-        dummy_gui = dummy_gui or GuiCreate()
-        GuiStartFrame(dummy_gui)
-
         if(#dummies > 0)then
         
+            local updated_dummies = false
+            local switched_dummies = false
             for i, v in ipairs(dummies)do
                 if(data.target_dummy_player == nil or GameHasFlagRun( "target_dummy_switch" ))then
                     ArenaGameplay.SwitchDummy(v, lobby, data)
+                    switched_dummies = true
+                elseif(data.target_dummy_player ~= nil and GameHasFlagRun("refresh_dummy"))then
+                    ArenaGameplay.UpdateDummyData(v, lobby, data)
+                    updated_dummies = true
                 end
             end
 
-            GameRemoveFlagRun( "target_dummy_switch" )
+            if(switched_dummies)then
+                GameRemoveFlagRun( "target_dummy_switch" )
+            end
+
+            if(updated_dummies)then
+                GameRemoveFlagRun( "refresh_dummy" )
+            end
 
         end
         
