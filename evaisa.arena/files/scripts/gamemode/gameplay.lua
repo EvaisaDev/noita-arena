@@ -2410,7 +2410,7 @@ ArenaGameplay = {
                 local count = v[2]
 
                 for i = 1, count do
-                    EntityHelper.GivePerk(dummy, perk, i, true)
+                    EntityHelper.GivePerk(dummy, perk, i, false, true)
                 end
             end
         end

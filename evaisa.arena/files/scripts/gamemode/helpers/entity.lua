@@ -147,7 +147,7 @@ entity.PickItem = function(ent, item)
     end  
 end
 
-entity.GivePerk = function( entity_who_picked, perk_id, amount, for_client )
+entity.GivePerk = function( entity_who_picked, perk_id, amount, for_client, for_enemy )
     -- fetch perk info ---------------------------------------------------
 
     local pos_x, pos_y
@@ -160,6 +160,10 @@ entity.GivePerk = function( entity_who_picked, perk_id, amount, for_client )
     end
 
     if (for_client and not (perk_data.run_on_clients or perk_data.usable_by_enemies)) then
+        return
+    end
+
+    if (for_enemy and not perk_data.usable_by_enemies) then
         return
     end
 
