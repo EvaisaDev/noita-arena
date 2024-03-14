@@ -27,6 +27,7 @@ function playerinfo:New(user)
         winstreak = nil,
         id = user,
         perks = {},
+        skin_data = nil,
         controls = {
             kick = false,
             fire = false,

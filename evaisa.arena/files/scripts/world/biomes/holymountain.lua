@@ -282,7 +282,8 @@ end
 
 function spawn_wardrobe(x, y)
 	-- will i ever finish this??
-	--EntityLoad( "mods/evaisa.arena/files/entities/wardrobe.xml", x, y + 1 )
+	-- I finished it :)
+	EntityLoad( "mods/evaisa.arena/files/entities/wardrobe.xml", x, y + 1 )
 end
 
 -- GameHasFlagRun("first_death")

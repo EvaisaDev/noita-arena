@@ -945,7 +945,7 @@ player_helper.Serialize = function(dont_stringify)
 end
 
 
-player_helper.Deserialize = function(data, skip_perk_count)
+player_helper.Deserialize = function(data, skip_perk_count, lobby, lobby_data)
     local player = player_helper.Get()
     if (player == nil) then
         return
@@ -980,6 +980,10 @@ player_helper.Deserialize = function(data, skip_perk_count)
             ComponentSetValue2(healthComponent, "hp", data.health)
             ComponentSetValue2(healthComponent, "max_hp", data.max_health)
         end
+    end
+
+    if(skin_system and lobby)then
+        skin_system.apply_skin_to_entity(lobby, player, nil, lobby_data)
     end
 end
 

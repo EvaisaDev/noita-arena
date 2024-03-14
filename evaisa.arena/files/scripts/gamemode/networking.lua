@@ -1498,6 +1498,16 @@ networking = {
             end
             SetWorldSeed( message )
         end,
+        send_skin = function(lobby, message, user, data)
+            if data.players[tostring(user)] then
+                data.players[tostring(user)].skin_data = message
+            end
+        end,
+        request_skins = function(lobby, message, user, data)
+            if(skin_system.active_skin_data)then
+                networking.send.send_skin(lobby, skin_system.active_skin_data, user)
+            end
+        end,
     },
     send = {
         handshake = function(lobby)
@@ -2144,6 +2154,16 @@ networking = {
         end,
         update_world_seed = function(lobby, seed)
             steamutils.send("update_world_seed", seed, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+        end,
+        send_skin = function(lobby, skin_data, user) 
+            if (user ~= nil) then
+                steamutils.sendToPlayer("send_skin", skin_data, user, true)
+            else
+                steamutils.send("send_skin", skin_data, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+            end
+        end,
+        request_skins = function(lobby)
+            steamutils.send("request_skins", {}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
         end,
     },
 }

@@ -205,7 +205,7 @@
   </SpriteAnimatorComponent>
 
   <SpriteComponent 
-    _tags="character" 
+    _tags="character,skin_root" 
     alpha="1" 
     image_file="mods/evaisa.arena/files/gfx/player.xml" 
     next_rect_animation="" 

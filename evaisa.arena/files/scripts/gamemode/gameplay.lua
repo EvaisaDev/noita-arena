@@ -571,7 +571,7 @@ ArenaGameplay = {
         local inventory = EntityGetFirstComponentIncludingDisabled(current_player, "Inventory2Component")
         ComponentSetValue2(inventory, "mInitialized", true)
 
-        player.Deserialize(data.client.serialized_player, (not data.client.player_loaded_from_data))
+        player.Deserialize(data.client.serialized_player, (not data.client.player_loaded_from_data), lobby, data)
 
         gameplay_handler.UpdateCosmetics(lobby, data, "load", current_player, false)
         
@@ -1219,6 +1219,8 @@ ArenaGameplay = {
     end,
     LoadLobby = function(lobby, data, show_message, first_entry)
 
+        Parallax.push(nil, 30)
+
         if(data.current_arena ~= nil and data.current_arena.unload)then
             data.current_arena:unload(lobby, data)
         end
@@ -1536,6 +1538,8 @@ ArenaGameplay = {
         end
 
         GameRemoveFlagRun("player_is_unlocked")
+        GameRemoveFlagRun("wardrobe_open")
+        GameRemoveFlagRun("chat_bind_disabled")
 
         show_message = show_message or false
 
@@ -2309,6 +2313,10 @@ ArenaGameplay = {
                     EntityHelper.GivePerk(client, perk, i, true)
                 end
             end
+        end
+
+        if(skin_system and lobby)then
+            skin_system.apply_skin_to_entity(lobby, client, user, data)
         end
 
         return client

@@ -26,6 +26,14 @@ networking = dofile("mods/evaisa.arena/files/scripts/gamemode/networking.lua")
 upgrade_system = dofile("mods/evaisa.arena/files/scripts/gamemode/misc/upgrade_system.lua")
 gameplay_handler = dofile("mods/evaisa.arena/files/scripts/gamemode/gameplay.lua")
 spectator_handler = dofile("mods/evaisa.arena/files/scripts/gamemode/spectator.lua")
+
+skin_system = dofile("mods/evaisa.arena/files/scripts/gui/skins.lua").init()
+
+
+Parallax = dofile("mods/evaisa.arena/files/scripts/parallax/parallax.lua")
+
+Parallax.registerLayers(50)
+
 local randomized_seed = true
 
 local playerinfo_menu = dofile("mods/evaisa.arena/files/scripts/utilities/playerinfo_menu.lua")
@@ -39,11 +47,25 @@ for k, perk in pairs(perk_list) do
     perk_sprites[perk.id] = perk.ui_icon
 end
 
+local parallax_textures = {}
+
+for k, arena in pairs(arena_list) do
+    if(arena.parallax_textures)then
+        for _, texture in ipairs(arena.parallax_textures) do
+            table.insert(parallax_textures, texture)
+        end
+    end
+end
+
+Parallax.init()
+
 for k, arena in pairs(arena_list) do
     if(arena.init)then
         arena:init()
     end
 end
+
+Parallax.registerTextures(parallax_textures)
 
 playermenu = nil
 
@@ -306,8 +328,8 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 138,
-    required_online_version = 330,
+    version = 139,
+    required_online_version = 338,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
     end,
@@ -1691,6 +1713,7 @@ ArenaMode = {
 
         -- request ready states
         networking.send.request_ready_states(lobby)
+        networking.send.request_skins(lobby)
 
         --message_handler.send.Handshake(lobby)
     end,
@@ -1768,7 +1791,9 @@ ArenaMode = {
     end,
     update = function(lobby)
 
-
+        if(Parallax)then
+            Parallax.update()
+        end
 
         if (data == nil) then
             return
@@ -1780,6 +1805,9 @@ ArenaMode = {
         if (data == nil) then
             return
         end
+
+        skin_system.editor_open = GameHasFlagRun("wardrobe_open") and not GameHasFlagRun("game_paused") and gui_closed
+        skin_system.draw(lobby, data)
 
         if(GameGetFrameNum() % 10 == 0)then
             local mortals = EntityGetWithTag("mortal")
@@ -1813,23 +1841,18 @@ ArenaMode = {
             networking.send.handshake(lobby)
 
             
-            -- fix daynight cycle
-            local world_state = GameGetWorldStateEntity()
-            local world_state_component = EntityGetFirstComponentIncludingDisabled(world_state, "WorldStateComponent")
-            
-            local time = 0.2
-            if(data.current_arena and data.current_arena.time)then
-                time = data.current_arena.time
-            end
-            
-            ComponentSetValue2(world_state_component, "time", time)
-            ComponentSetValue2(world_state_component, "time_dt", 0)
-            ComponentSetValue2(world_state_component, "fog", 0)
-            ComponentSetValue2(world_state_component, "intro_weather", true)
+
 
             --local unique_seed = data.random.range(100, 10000000)
             --GlobalsSetValue("unique_seed", tostring(unique_seed))
         end
+
+        -- no fog allowed!!
+        local world_state = GameGetWorldStateEntity()
+        local world_state_component = EntityGetFirstComponentIncludingDisabled(world_state, "WorldStateComponent")
+
+        ComponentSetValue2(world_state_component, "fog", 0)
+        ComponentSetValue2(world_state_component, "intro_weather", true)
 
         local update_seed = steam.matchmaking.getLobbyData(lobby, "update_seed")
         if (update_seed == nil) then
