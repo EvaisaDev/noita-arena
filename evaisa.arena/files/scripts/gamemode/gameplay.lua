@@ -1219,8 +1219,9 @@ ArenaGameplay = {
     end,
     LoadLobby = function(lobby, data, show_message, first_entry)
 
-        Parallax.push(nil, 30)
-
+        if(Parallax)then
+            Parallax.push(nil, 30)
+        end
         if(data.current_arena ~= nil and data.current_arena.unload)then
             data.current_arena:unload(lobby, data)
         end

@@ -1,6 +1,6 @@
 <Sprite 
 	filename="%s" 
-	hotspots_filename="data/enemies_gfx/player_hotspots.png" 
+	hotspots_filename="mods/evaisa.arena/files/gfx/player_hotspots.png" 
 	offset_x="6" 
 	offset_y="14" 
 	default_animation="stand"
@@ -1113,5 +1113,9 @@
 		name="cape" >
 	</Hotspot>
 
+	<Hotspot 
+		color="d550f2" 
+		name="hat" >
+	</Hotspot>
 </Sprite>
 

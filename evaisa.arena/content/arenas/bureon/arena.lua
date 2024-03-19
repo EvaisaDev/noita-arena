@@ -81,7 +81,10 @@ function music2( x, y )
 end
 
 function skull( x, y )
-	local entity = EntityLoad( "mods/evaisa.arena/content/arenas/bureon/entities/physics_skull_01.xml", x, y )
+	local entity = EntityLoad( "data/entities/props/physics_skull_01.xml", x, y )
+
+	local base_id = 58 -- some random number
+
 	EntityAddComponent2(entity, "LuaComponent", {
 		_tags = "enabled_in_world,enabled_in_hand,enabled_in_inventory",
 		script_item_picked_up = "mods/evaisa.arena/files/scripts/gamemode/misc/item_pickup.lua",
@@ -91,7 +94,7 @@ function skull( x, y )
 
 	EntityAddComponent2(entity, "VariableStorageComponent", {
 		name = "arena_entity_id",
-		value_float = (58 + x) ^ y,
+		value_float = (base_id + x) ^ y,
 		value_int = 0,
 	})
 end

@@ -14,7 +14,8 @@ local inject = {
     replacement = [[
 
       uniform vec4 parallax_world_state;
-      uniform vec4 parallax_layer_count;
+      uniform vec4 parallax_layer_count_A;
+      uniform vec4 parallax_layer_count_B;
       uniform sampler2D tex_parallax_sky_A;
       uniform sampler2D tex_parallax_sky_B;
     ]]
@@ -181,7 +182,7 @@ local inject = {
     pattern = "\n%s*// PARALLAX_INJECT_LAYERS",
     replacement = [[
 
-      if(parallax_layer_count.%s < %s.0) break;
+      if(parallax_layer_count_%s.x < %s.0) break;
       vec4 layer_%s = get_layer_color(uv, tex_parallax_%s, tex_parallax_sky_%s, parallax_%s_1, parallax_%s_2, parallax_%s_3, parallax_%s_4, parallax_sky_color_%s, parallax_alpha_color_%s);
       color = mix(color, layer_%s.rgb, layer_%s.a);
     ]]

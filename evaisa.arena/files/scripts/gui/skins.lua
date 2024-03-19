@@ -104,7 +104,7 @@ skins.init = function()
                             -- save new file
                             fs.remove(self.last_file_name)
     
-                            self.last_file_name = "data/evaisa.skins/cache/"..uniqueFileName()..".png"
+                            self.last_file_name = "data/evaisa.arena/cache/"..uniqueFileName()..".png"
                             saveImage(player_modified_img, self.last_file_name)
                         end
                     end
@@ -122,7 +122,7 @@ skins.init = function()
     
                         fs.remove(self.last_file_name)
     
-                        self.last_file_name = "data/evaisa.skins/cache/"..uniqueFileName()..".png"
+                        self.last_file_name = "data/evaisa.arena/cache/"..uniqueFileName()..".png"
                         saveImage(player_modified_img, self.last_file_name)
                     end
                 end
@@ -148,7 +148,7 @@ skins.init = function()
     
                         fs.remove(self.last_file_name)
     
-                        self.last_file_name = "data/evaisa.skins/cache/"..uniqueFileName()..".png"
+                        self.last_file_name = "data/evaisa.arena/cache/"..uniqueFileName()..".png"
                         saveImage(player_modified_img, self.last_file_name)
                     end
                 end
@@ -216,7 +216,7 @@ skins.init = function()
                         -- save new file
                         fs.remove(self.last_file_name)
     
-                        self.last_file_name = "data/evaisa.skins/cache/"..uniqueFileName()..".png"
+                        self.last_file_name = "data/evaisa.arena/cache/"..uniqueFileName()..".png"
                         saveImage(player_modified_img, self.last_file_name)
                     end
                 elseif(InputIsMouseButtonDown( 2 ))then
@@ -260,7 +260,7 @@ skins.init = function()
     
                         fs.remove(self.last_file_name)
     
-                        self.last_file_name = "data/evaisa.skins/cache/"..uniqueFileName()..".png"
+                        self.last_file_name = "data/evaisa.arena/cache/"..uniqueFileName()..".png"
                         saveImage(player_modified_img, self.last_file_name)
                     end
                     
@@ -289,7 +289,7 @@ skins.init = function()
                         -- save new file
                         fs.remove(self.last_file_name)
 
-                        self.last_file_name = "data/evaisa.skins/cache/"..uniqueFileName()..".png"
+                        self.last_file_name = "data/evaisa.arena/cache/"..uniqueFileName()..".png"
                         saveImage(player_modified_img, self.last_file_name)
                     end
                 elseif(InputIsMouseButtonDown( 2 ))then
@@ -310,7 +310,7 @@ skins.init = function()
                         -- save new file
                         fs.remove(self.last_file_name)
 
-                        self.last_file_name = "data/evaisa.skins/cache/"..uniqueFileName()..".png"
+                        self.last_file_name = "data/evaisa.arena/cache/"..uniqueFileName()..".png"
                         saveImage(player_modified_img, self.last_file_name)
                     end
                 end
@@ -514,7 +514,7 @@ skins.init = function()
                 player_modified_img = loadImage(skin.path)
 
                 fs.remove(self.last_file_name)
-                self.last_file_name = "data/evaisa.skins/cache/"..uniqueFileName()..".png"
+                self.last_file_name = "data/evaisa.arena/cache/"..uniqueFileName()..".png"
                 saveImage(player_modified_img, self.last_file_name)
                 GamePlaySound("data/audio/Desktop/ui.bank", "ui/button_click", 0, 0)
             end

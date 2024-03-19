@@ -29,11 +29,9 @@ spectator_handler = dofile("mods/evaisa.arena/files/scripts/gamemode/spectator.l
 
 skin_system = dofile("mods/evaisa.arena/files/scripts/gui/skins.lua").init()
 
-
-Parallax = dofile("mods/evaisa.arena/files/scripts/parallax/parallax.lua")
-
-Parallax.registerLayers(50)
-
+if(ModSettingGet("evaisa.arena.custom_parallax"))then
+    Parallax = dofile("mods/evaisa.arena/files/scripts/parallax/parallax.lua")
+end
 local randomized_seed = true
 
 local playerinfo_menu = dofile("mods/evaisa.arena/files/scripts/utilities/playerinfo_menu.lua")
@@ -46,27 +44,33 @@ perk_sprites = {}
 for k, perk in pairs(perk_list) do
     perk_sprites[perk.id] = perk.ui_icon
 end
-
 local parallax_textures = {}
 
-for k, arena in pairs(arena_list) do
-    if(arena.parallax_textures)then
-        for _, texture in ipairs(arena.parallax_textures) do
-            table.insert(parallax_textures, texture)
+if(ModSettingGet("evaisa.arena.custom_parallax"))then
+    local max_layers = 1
+    for k, arena in pairs(arena_list) do
+        if(arena.parallax_layers and arena.parallax_layers > max_layers)then
+            max_layers = arena.parallax_layers
+        end
+        if(arena.parallax_textures)then
+            for _, texture in ipairs(arena.parallax_textures) do
+                table.insert(parallax_textures, texture)
+            end
         end
     end
+
+    Parallax.registerLayers(max_layers)
 end
-
-Parallax.init()
-
 for k, arena in pairs(arena_list) do
     if(arena.init)then
         arena:init()
     end
 end
+if(ModSettingGet("evaisa.arena.custom_parallax"))then
+    Parallax.registerTextures(parallax_textures)
 
-Parallax.registerTextures(parallax_textures)
-
+    Parallax.postInit()
+end
 playermenu = nil
 
 local was_content_mismatched = false
@@ -328,7 +332,7 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 139,
+    version = 142,
     required_online_version = 338,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)

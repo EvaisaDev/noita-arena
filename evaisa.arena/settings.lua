@@ -12,6 +12,13 @@ mod_settings =
         ui_description = "",
         settings = {
             {
+                id = "custom_parallax",
+                ui_name = "Custom Parallax",
+                ui_description = "Enable the custom parallax system for arenas, turn this off if you experience white screen issues.",
+                value_default = true,
+                scope = MOD_SETTING_SCOPE_NEW_GAME,
+            },
+            {
                 id = "predictive_netcode",
                 ui_name = "Predictive Netcode",
                 ui_description = "Predict player movement using latency.",

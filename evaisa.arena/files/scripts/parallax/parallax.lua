@@ -1,28 +1,24 @@
--- Reimplementation of the parallax background system by Alex
--- https://github.com/alex-3141/noita-parallax
-
-Inject = dofile_once("mods/evaisa.arena/files/scripts/parallax/inject.lua")
-
-SetContent = ModTextFileSetContent
-GetContent = ModTextFileGetContent
-
-DEBUG = false
+DEBUG_LOG_LEVEL = 0 -- 0 = none, 1 = events, 2 = everything
 DEBUUG_SHADER = false
 
-local function debugPrint(msg)
-  if DEBUG then
-    print("[DEBUG] " .. msg)
+-- Hack to get mod ID and path
+local orig_do_mod_appends = do_mod_appends
+do_mod_appends = function(filename, ...)
+    _G["PARALLAX_MODID"] = filename:match("mods/([^/]+)/files/")
+    _G["PARALLAX_PATH"] = filename:match("(.+/)[^/]+")
+    do_mod_appends = orig_do_mod_appends
+    do_mod_appends(filename, ...)
+end
+
+local function debugPrint(msg, level)
+  local level = level or 1
+  if level <= DEBUG_LOG_LEVEL then
+    print("[DEBUG] [Parallax:" .. _G["PARALLAX_MODID"].. "] " .. msg)
   end
 end
 
 local function parallaxPrint(msg)
   print("[Parallax] " .. msg)
-end
-
-local function printTable(t)
-  for k, v in pairs(t) do
-    print(k, v)
-  end
 end
 
 local function getLayerById(bank, id)
@@ -98,21 +94,84 @@ local function getSkyColor(bank, index, time)
   return getDynamicColor(colors, time)
 end
 
-local function pushUniforms(time)
+local function setStateUniforms(time, current_bank)
+  local getSetting = Parallax.GetSetting
+  local frame = Parallax.GetFrame()
+  local setUniform = Parallax.SetUniform
+  local tween_target = getSetting("parallax_global.tween_target") or frame
+  local tween_length = getSetting("parallax_global.tween_length") or 0
+
+  local tween = 0
+  local mix
+
+  if tween_target > frame then
+    tween  = (tween_target - frame) / tween_length
+  end
+
+  local bank_A_is_nil = getSetting("parallax_global.bank_A_is_nil")
+  local bank_B_is_nil = getSetting("parallax_global.bank_B_is_nil")
+
+  if bank_A_is_nil and bank_B_is_nil then
+    mix = 0
+    tween = 0
+  else
+    if current_bank == "B" then
+      if bank_A_is_nil then
+        -- from nil to B
+        mix = 1 - tween
+        tween = 1
+      else
+        if bank_B_is_nil then
+          -- from A to nil
+          mix = tween
+          tween = 0
+        else
+          -- from A to B
+          tween = 1 - tween
+          mix = 1
+        end
+      end
+    elseif current_bank == "A" then
+      if bank_B_is_nil then
+        -- from nil to A
+        mix = 1 - tween
+        tween = 0
+      else
+        if bank_A_is_nil then
+          -- from B to nil
+          mix = tween
+          tween = 1
+        else
+          -- from B to A
+          mix = 1
+        end
+      end
+    end
+  end
+
+  debugPrint("Tween: " .. tween .. " Mix: " .. mix .. " Current bank: " .. current_bank, 2)
+
+  setUniform( "parallax_world_state", time % 1, mix, tween, 0.0)
+end
+
+local function pushUniforms(time, current_bank)
   local error_msg = ""
-  local setUniform = GameSetPostFxParameter
+  local setUniform = Parallax.SetUniform
+
+  local frame = Parallax.GetFrame()
+
+  debugPrint("pushUniforms called on frame " .. tostring(frame) .. " for bank " .. current_bank .. " from mod " .. _G["PARALLAX_MODID"], 2)
 
   local function setLayerUniforms(bank, char)
     if bank == nil then return end
     for i, layer in ipairs(bank.layers) do
 
-      -- Use a metatable to supply default values for missing keys
+      -- supply default values for missing keys
       local mt = {
         __index = function(t, key)
           return Parallax.layer_defaults[key]
         end
       }
-  
       setmetatable(layer, mt)
   
       local layer_error = false
@@ -146,7 +205,6 @@ local function pushUniforms(time)
         layer_error = true
       end
   
-  
       local color = getSkyColor(bank, sky_index, time)
       setUniform( "parallax_sky_color_"..char.."_"..i, color[1], color[2], color[3], 1.0)
   
@@ -162,7 +220,7 @@ local function pushUniforms(time)
       setUniform( "parallax_sky_gradient_"..char, bank.sky.gradient_dynamic_enabled, 0.0, bank.sky.gradient_pos[1], bank.sky.gradient_pos[2])
   
       local error_color = 0
-      if layer_error and Parallax.HIGHLIGHT_ERRORS then error_color = math.floor((GameGetFrameNum() % 60) / 30) end
+      if layer_error and Parallax.HIGHLIGHT_ERRORS then error_color = math.floor((Parallax.GetFrame() % 60) / 30) end
   
       setUniform( "parallax_"..char.."_"..i.."_1", layer.scale, layer.alpha, layer.offset_x, layer.offset_y )
       setUniform( "parallax_"..char.."_"..i.."_2", layer.depth, layer.sky_blend, layer.speed_x, layer.speed_y )
@@ -172,137 +230,79 @@ local function pushUniforms(time)
     end
   end
 
-  local tween = 0
-  local mix
-  if Parallax.tween_time > 0 then
-    tween = Parallax.tween_timer / Parallax.tween_time -- from 1 to 0
-  end
-
-  if Parallax.bank.A == nil and Parallax.bank.B == nil then
-    mix = 0
-    tween = 0
-  else
-    if Parallax.current_bank == "B" then
-      local from = Parallax.bank.A
-      local to = Parallax.bank.B
-      if from == nil then
-        -- from nil to B
-        mix = 1 - tween
-        tween = 1
-      else
-        if to == nil then
-          -- from A to nil
-          mix = tween
-          tween = 0
-        else
-          -- from A to B
-          tween = 1 - tween
-          mix = 1
-        end
-      end
-    elseif Parallax.current_bank == "A" then
-      local from = Parallax.bank.B
-      local to = Parallax.bank.A
-      if from == nil then
-        -- from nil to A
-        mix = 1 - tween
-        tween = 0
-      else
-        if to == nil then
-          -- from B to nil
-          mix = tween
-          tween = 1
-        else
-          -- from B to A
-          mix = 1
-        end
-      end
-    end
-  end
-
-  -- Only update what we need to
-  if tween ~= 1 then
-    setLayerUniforms(Parallax.bank.A, "A")
-  end
-  if tween ~= 0 then
-    setLayerUniforms(Parallax.bank.B, "B")
-  end
-
-  setUniform( "parallax_world_state", time % 1, mix, tween, 0.0)
-
-  local layer_count_A = Parallax.bank.A == nil and 0 or #Parallax.bank.A.layers
-  local layer_count_B = Parallax.bank.B == nil and 0 or #Parallax.bank.B.layers
-  setUniform("parallax_layer_count", layer_count_A, layer_count_B, 0.0, 0.0)
+  setLayerUniforms(Parallax.bank[current_bank], current_bank)
 
   return error_msg
 end
 
 local injectShaderCode = function()
+  local injectpath = _G["PARALLAX_PATH"] .. "inject.lua"
+  if not Parallax.FileExists(injectpath) then
+    error("Failed to find inject.lua at " .. injectpath)
+  end
+  local inject = Parallax.DoFileOnce( injectpath )
   local maxLayers = Parallax.MAX_LAYERS
 
-  local post_final = GetContent("data/shaders/post_final.frag")
+  local post_final = Parallax.GetContent("data/shaders/post_final.frag")
 
   -- Update GLSL version
-  post_final = post_final:gsub(Inject.version.pattern, Inject.version.replacement, 1)
+  post_final = post_final:gsub(inject.version.pattern, inject.version.replacement, 1)
 
   -- Patch
-  post_final = post_final:gsub(Inject.patch.pattern, Inject.patch.replacement)
+  post_final = post_final:gsub(inject.patch.pattern, inject.patch.replacement)
 
   -- Global Uniforms
-  post_final = post_final:gsub(Inject.global_uniforms.pattern, Inject.global_uniforms.replacement .. "\n%1", 1)
+  post_final = post_final:gsub(inject.global_uniforms.pattern, inject.global_uniforms.replacement .. "\n%1", 1)
 
   -- Sky Uniforms
-  post_final = post_final:gsub(Inject.sky_uniforms.pattern, function(capture)
+  post_final = post_final:gsub(inject.sky_uniforms.pattern, function(capture)
     local u = ""
     local A = "A"
     local B = "B"
-    u = u .. string.format(Inject.sky_uniforms.replacement, A, A, A, A)
-    u = u .. string.format(Inject.sky_uniforms.replacement, B, B, B, B)
+    u = u .. string.format(inject.sky_uniforms.replacement, A, A, A, A)
+    u = u .. string.format(inject.sky_uniforms.replacement, B, B, B, B)
     u = u .. "\n" .. capture
     return u
   end)
 
   -- Layer Uniforms
-  post_final = post_final:gsub(Inject.layer_uniforms.pattern, function(capture)
+  post_final = post_final:gsub(inject.layer_uniforms.pattern, function(capture)
     local u = ""
     for i = 1, maxLayers do
       local A = "A_" .. tostring(i) 
       local B = "B_" .. tostring(i)
-      u = u .. string.format(Inject.layer_uniforms.replacement, A, A, A, A, A, A, A)
-      u = u .. string.format(Inject.layer_uniforms.replacement, B, B, B, B, B, B, B)
+      u = u .. string.format(inject.layer_uniforms.replacement, A, A, A, A, A, A, A)
+      u = u .. string.format(inject.layer_uniforms.replacement, B, B, B, B, B, B, B)
     end
     u = u .. "\n" .. capture
     return u
   end)
 
   -- Functions
-  post_final = post_final:gsub(Inject.functions.pattern, Inject.functions.replacement .. "\n%1", 1)
-
-  -- User defined shadercode
-  -- TBD
+  post_final = post_final:gsub(inject.functions.pattern, inject.functions.replacement .. "\n%1", 1)
 
   -- Replace background
-  post_final = post_final:gsub(Inject.replace_bg.pattern, Inject.replace_bg.replacement, 1)
+  post_final = post_final:gsub(inject.replace_bg.pattern, inject.replace_bg.replacement, 1)
 
   -- Bank A
-  post_final = post_final:gsub(Inject.bank_A.pattern, Inject.bank_A.replacement  .. "\n%1", 1)
-  post_final = post_final:gsub(Inject.layers.pattern, function()
+  post_final = post_final:gsub(inject.bank_A.pattern, inject.bank_A.replacement  .. "\n%1", 1)
+  post_final = post_final:gsub(inject.layers.pattern, function()
     local l = ""
     for i = 1, maxLayers do
       local A = "A_" .. tostring(i)
-      l = l .. string.format(Inject.layers.replacement, "x", tostring(i), A, A, "A", A, A, A, A, A, A, A, A)
+      l = l .. string.format(inject.layers.replacement, "A", tostring(i), A, A, "A", A, A, A, A, A, A, A, A)
     end
     l = l .. "\n"
     return l
   end)
 
   -- Bank B
-  post_final = post_final:gsub(Inject.bank_B.pattern, Inject.bank_B.replacement  .. "\n%1", 1)
-  post_final = post_final:gsub(Inject.layers.pattern, function()
+  post_final = post_final:gsub(inject.bank_B.pattern, inject.bank_B.replacement  .. "\n%1", 1)
+  post_final = post_final:gsub(inject.layers.pattern, function()
     local l = ""
     for i = 1, maxLayers do
       local B = "B_" .. tostring(i)
-      l = l .. string.format(Inject.layers.replacement, "y", tostring(i), B, B, "B", B, B, B, B, B, B, B, B)
+      l = l .. string.format(inject.layers.replacement, "B", tostring(i), B, B, "B", B, B, B, B, B, B, B, B)
     end
     l = l .. "\n"
     return l
@@ -311,12 +311,11 @@ local injectShaderCode = function()
   if DEBUUG_SHADER then print(post_final) end
 
   -- Apply post_final
-  SetContent("data/shaders/post_final.frag", post_final)
+  Parallax.SetContent("data/shaders/post_final.frag", post_final)
 end
 
-local pushTextures = function(bank)
-  local setTexture = GameSetPostFxTextureParameter
-  local char = Parallax.current_bank
+local pushTextures = function(bank, char)
+  local setTexture = Parallax.SetTexture
 
   if bank == nil then
     setTexture( "tex_parallax_sky_" .. char, "data/parallax_fallback_sky.png", Parallax.FILTER.BILINEAR, Parallax.WRAP.REPEAT, true )
@@ -325,7 +324,7 @@ local pushTextures = function(bank)
 
   for i, layer in ipairs(bank.layers) do
     setTexture( "tex_parallax_" .. char .. "_" .. i, layer.path, Parallax.FILTER.BILINEAR, Parallax.WRAP.CLAMP, true )
-    debugPrint("[Parallax] Pushed texture: " .. layer.path .. " as tex_parallax_" .. char .. "_" .. i)
+    debugPrint("Pushed texture: " .. layer.path .. " as tex_parallax_" .. char .. "_" .. i, 1)
   end
 
   local missing_sky = false
@@ -342,22 +341,45 @@ local pushTextures = function(bank)
   end
 end
 
-local init = function()
+local postInit = function()
+  local removeSetting = Parallax.RemoveSetting
+  local getSetting = Parallax.GetSetting
   if Parallax.initialized then return end
-  injectShaderCode()
+
   parallaxPrint(string.format("Parallax v%s.%s initialized", Parallax.version.major, Parallax.version.minor))
+
   Parallax.initialized = true
+  Parallax.MAX_LAYERS = getSetting("parallax_global.max_layers") or 0
+
+  if getSetting("parallax_global.leader") == _G["PARALLAX_MODID"] then
+    local setSetting = Parallax.SetSetting
+
+    parallaxPrint("Leading mod is " .. _G["PARALLAX_MODID"] .. ". Injecting shader code.")
+
+    injectShaderCode()
+    
+    removeSetting( "parallax_global.max_layers" )
+    removeSetting( "parallax_global.leader" )
+    removeSetting( "parallax_global.current_bank" )
+    removeSetting( "parallax_global.bank_A_owner" )
+    removeSetting( "parallax_global.bank_B_owner" )
+    removeSetting( "parallax_global.tween_target" )
+    removeSetting( "parallax_global.tween_length" )
+
+    setSetting("parallax_global.bank_A_is_nil", true)
+    setSetting("parallax_global.bank_B_is_nil", true)
+  end
 end
 
 local function registerTextures(textures)
-  local makeEditable = ModImageMakeEditable
+  local makeEditable = Parallax.MakeEditable
   for i, path in ipairs(textures) do
     local id, width, height = makeEditable( path, 0, 0 )
     if id == 0 or id == nil then
       error("Failed to load image: " .. path)
     end
     Parallax.tex[path] = {id = id, width = width, height = height}
-    debugPrint("[Parallax] Registered texture: " .. path .. " with id: " .. id .. " and size: " .. width .. "x" .. height)
+    debugPrint("Registered texture: " .. path .. " with id: " .. id .. " and size: " .. width .. "x" .. height, 1)
   end
   -- Create a fallback sky texture
   if Parallax.tex["data/parallax_fallback_sky.png"] == nil then
@@ -370,55 +392,111 @@ local function registerTextures(textures)
 end
 
 local push = function(data, tween)
-  if Parallax.current_bank == "B" then
-    Parallax.bank.A = data
-    Parallax.current_bank = "A"
-  else
-    Parallax.bank.B = data
-    Parallax.current_bank = "B"
+  local getSetting = Parallax.GetSetting
+  local setSetting = Parallax.SetSetting
+  local setUniform = Parallax.SetUniform
+  local getFrame = Parallax.GetFrame
+  local dataIsNil = data == nil
+  
+  local current_bank = getSetting("parallax_global.current_bank") or "B"
+  -- TODO: Consolidate logic
+
+  current_bank = current_bank == "A" and "B" or "A"
+
+  Parallax.bank[current_bank] = data
+  Parallax.bank_owner[current_bank] = true
+  setSetting("parallax_global.bank_"..current_bank.."_owner", _G["PARALLAX_MODID"])
+  setSetting("parallax_global.current_bank", current_bank)
+  setSetting ( "parallax_global.bank_"..current_bank.."_is_nil", dataIsNil )
+
+  if not dataIsNil then
+    debugPrint("Pushing " .. data.id .." to bank " .. current_bank, 1)
+    setUniform("parallax_layer_count_" .. current_bank, data.layers and #data.layers or 0.0, 0.0, 0.0, 0.0)
   end
 
-  if data ~= nil then
-    debugPrint("[Parallax] Pushing " .. data.id .." to bank " .. Parallax.current_bank)
-  end
-
-  pushTextures(data)
+  pushTextures(data, current_bank)
 
   if tween == nil then tween = 0 end
-
-  Parallax.tween_time = tween
-  Parallax.tween_timer = tween
+  setSetting("parallax_global.tween_length", tween)
+  setSetting("parallax_global.tween_target", getFrame() + tween)
 end
 
 local update = function()
-  local frame = GameGetFrameNum()
+  local getSetting = Parallax.GetSetting
+  local getFrame = Parallax.GetFrame
+  local frame = getFrame()
   if Parallax.last_frame == frame then return end
   Parallax.last_frame = frame
 
-  local world_state_entity = GameGetWorldStateEntity()
-  local world_state = EntityGetFirstComponent( world_state_entity, "WorldStateComponent" )
-  local time = ComponentGetValue2( world_state, "time" )
-  local day = ComponentGetValue2( world_state, "day_count" )
+  local world_state_entity = Parallax.GetWorldStateEntity()
+  local world_state = Parallax.EntityGetFirstComponent( world_state_entity, "WorldStateComponent" )
+  local time = Parallax.ComponentGetValue2( world_state, "time" )
+  local day = Parallax.ComponentGetValue2( world_state, "day_count" )
 
+  local error_msg = ""
 
-  local bank = Parallax.bank[Parallax.current_bank]
-
-  if bank ~= nil and bank.update ~= nil and type(bank.update) == "function" then
-    bank.update(bank)
+  local current_owner = {
+    A = nil,
+    B = nil
+  }
+  local other_bank = {
+    A = "B",
+    B = "A"
+  }
+  local tween_target = nil
+  local current_bank = nil
+  
+  local function processBank(char)
+    current_owner[char] = getSetting("parallax_global.bank_" .. char .. "_owner")
+    if current_owner[char] == _G["PARALLAX_MODID"] then
+      -- Still owner
+      local bank = Parallax.bank[char]
+      if bank ~= nil then
+        -- Only do updates if the bank is visible
+        current_bank = current_bank and current_bank or getSetting("parallax_global.current_bank")
+        tween_target = tween_target and tween_target or getSetting("parallax_global.tween_target")
+        if not (current_bank == other_bank[char] and frame > tween_target) then
+          if bank.update ~= nil and type(bank.update) == "function" then
+            bank.update(bank)
+          end
+          error_msg = error_msg .. pushUniforms(time + day, char)
+        end
+      end
+    else
+      -- Lost ownership
+      debugPrint(_G["PARALLAX_MODID"] .. " lost ownership of bank " .. char, 2)
+    end
   end
 
-  if Parallax.tween_timer > 0 then
-    Parallax.tween_timer = Parallax.tween_timer - 1
-  end
+  if Parallax.bank_owner.B then processBank("B") end
+  if Parallax.bank_owner.A then processBank("A") end
 
-  local error_msg = pushUniforms(time + day)
+  -- State uniforms should only be updated by the owner of the active bank
+  if Parallax.bank_owner.A or Parallax.bank_owner.B then
+    current_bank = current_bank and current_bank or getSetting("parallax_global.current_bank")
+    if current_bank ~= nil then
+      local current_bank_owner = nil
+      if current_bank == "A" then current_bank_owner = current_owner.A elseif
+         current_bank == "B" then current_bank_owner = current_owner.B end
+      if current_bank_owner == _G["PARALLAX_MODID"] then
+        setStateUniforms(time + day, current_bank)
+      end
+    end
+  end
+  
   if error_msg ~= "" then
     print(error_msg)
   end
 end
 
 local registerLayers = function(num)
-  Parallax.MAX_LAYERS = math.max(Parallax.MAX_LAYERS, num)
+  local getSetting = Parallax.GetSetting
+  local setSetting = Parallax.SetSetting
+  local current_max = getSetting("parallax_global.max_layers") or 0
+  if num > current_max then
+    setSetting("parallax_global.max_layers", num)
+    setSetting("parallax_global.leader", _G["PARALLAX_MODID"])
+  end
 end
 
 local getBankTemplate = function()
@@ -446,16 +524,16 @@ end
 Parallax = {
   enabled = 1.0,
   initialized = false,
-  version = {major = 0, minor = 2},
+  version = {major = 1, minor = 0},
   last_frame = 0,
-  -- banks are used to minimize texture swaps
   bank = {
     A = nil,
     B = nil
   },
-  current_bank = "B",
-  tween_time = 0,
-  tween_timer = 0,
+  bank_owner = {
+    A = false,
+    B = false
+  },
   tex = {},
   FILTER = {
     UNDEFINED = 0,
@@ -500,7 +578,7 @@ Parallax = {
   registerTextures = registerTextures,
   registerLayers = registerLayers, 
   push = push,
-  init = init,
+  postInit = postInit,
   getBankTemplate = getBankTemplate,
 }
 
@@ -527,5 +605,20 @@ Parallax.layer_defaults = {
   sky_index = Parallax.SKY_DEFAULT.MOUNTAIN_2, sky_source = Parallax.SKY_SOURCE.TEXTURE, alpha_index = Parallax.SKY_DEFAULT.STARS_ALPHA, alpha_source = Parallax.SKY_SOURCE.TEXTURE,
   alpha_blend = 0.0
 }
+-- Stash globals
+Parallax.SetContent = ModTextFileSetContent
+Parallax.GetContent = ModTextFileGetContent
+Parallax.SetUniform = GameSetPostFxParameter
+Parallax.SetTexture = GameSetPostFxTextureParameter
+Parallax.GetFrame = GameGetFrameNum
+Parallax.GetSetting = ModSettingGet
+Parallax.SetSetting = ModSettingSet
+Parallax.RemoveSetting = ModSettingRemove
+Parallax.MakeEditable = ModImageMakeEditable
+Parallax.GetWorldStateEntity = GameGetWorldStateEntity
+Parallax.EntityGetFirstComponent = EntityGetFirstComponent
+Parallax.ComponentGetValue2 = ComponentGetValue2
+Parallax.FileExists = ModDoesFileExist
+Parallax.DoFileOnce = dofile_once
 
 return Parallax
