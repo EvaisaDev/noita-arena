@@ -187,9 +187,6 @@ ArenaGameplay = {
             steam.matchmaking.setLobbyData(lobby, "holyMountainCount", tostring(rounds))
         end
     end,
-    RemoveRound = function()
-
-    end,
     GetSpawnPoints = function()
         local spawns = {}
         local spawn_points = EntityGetWithTag("spawn_point") or {}
@@ -436,6 +433,7 @@ ArenaGameplay = {
         GlobalsSetValue("EXTRA_MONEY_COUNT", "0")
         GlobalsSetValue("RESPAWN_COUNT", "0")
         GlobalsSetValue("holyMountainCount", "0")
+        
         GlobalsSetValue("HEARTS_MORE_EXTRA_HP_MULTIPLIER", "1")
         GlobalsSetValue("PERK_SHIELD_COUNT", "0")
         GlobalsSetValue("PERK_ATTRACT_ITEMS_RANGE", "0")
@@ -467,6 +465,7 @@ ArenaGameplay = {
             steam.matchmaking.deleteLobbyData(lobby, "holyMountainCount")
             steam.matchmaking.deleteLobbyData(lobby, "total_gold")
             steam.matchmaking.deleteLobbyData(lobby, "ready_players")
+            steam.matchmaking.setLobbyData(lobby, "custom_lobby_string", "( round 0 )")
 
             -- loop through all players and remove their data
             local members = steamutils.getLobbyMembers(lobby)
@@ -642,7 +641,7 @@ ArenaGameplay = {
                     local base_health = 4
                     local damage_percentage = (distance - max_distance) / distance_cap
                     local damage = max_health * damage_percentage
-                    EntityInflictDamage(v, damage, "DAMAGE_FALL", "Out of bounds", "BLOOD_EXPLOSION", 0, 0, GameGetWorldStateEntity())
+                    EntityInflictDamage(v, damage, "DAMAGE_HEALING", "Out of bounds", "BLOOD_EXPLOSION", 0, 0, GameGetWorldStateEntity())
                 end
             end
         end
@@ -2264,7 +2263,7 @@ ArenaGameplay = {
             data.countdown:cleanup()
             data.countdown = nil
             --message_handler.send.Unlock(lobby)
-            networking.send.unlock(lobby)
+            networking.send.check_can_unlock(lobby)
 
             local player_entity = player.Get()
             gameplay_handler.UpdateCosmetics(lobby, data, "arena_unlocked", player_entity, false)
@@ -3088,6 +3087,17 @@ ArenaGameplay = {
             -- if we are host
             if (steamutils.IsOwner(lobby)) then
                 ArenaGameplay.SendGameData(lobby, data)
+            end
+        end
+
+        for k, v in pairs(data.players) do
+            if (v.entity ~= nil and EntityGetIsAlive(v.entity)) then
+                local characterData = EntityGetFirstComponentIncludingDisabled(v.entity, "CharacterDataComponent")
+
+                if (characterData and v.last_velocity) then
+                    ComponentSetValue2(characterData, "mVelocity", v.last_velocity.x or 0, v.last_velocity.y or 0)
+                end
+
             end
         end
 

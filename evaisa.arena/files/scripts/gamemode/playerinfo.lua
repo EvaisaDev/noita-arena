@@ -72,7 +72,7 @@ function playerinfo:New(user)
             end
         end
             
-
+        self.last_velocity = nil
         self.entity = nil
         self.held_item = nil
         if(self.hp_bar)then
@@ -95,6 +95,7 @@ function playerinfo:New(user)
         self.entity = nil
         self.held_item = nil
         self.cosmetics = {}
+        self.last_velocity = nil
         if(self.hp_bar)then
             self.hp_bar:destroy()
             self.hp_bar = nil

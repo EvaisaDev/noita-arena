@@ -81,6 +81,7 @@ typedef struct C {
 ffi.cdef([[
 #pragma pack(push, 1)
 typedef struct D {
+    int frames_in_air;
     float x;
     float y;
     float vel_x;
@@ -259,6 +260,29 @@ networking = {
                 data.countdown.image_index = message[2]
             end
         end,
+        check_can_unlock = function(lobby, message, user, data)
+            if (not steamutils.IsOwner(lobby, user))then
+                return
+            end
+            
+            steamutils.sendToPlayer("can_unlock", {}, user, true)
+        end,
+        can_unlock = function(lobby, message, user, data)
+            data.players[tostring(user)].can_unlock = true
+            
+            -- if all players can unlock, unlock them
+            local all_can_unlock = true
+            for k, v in pairs(data.players)do
+                if(not v.can_unlock)then
+                    all_can_unlock = false
+                    break
+                end
+            end
+
+            if(all_can_unlock)then
+                networking.send.unlock(lobby)
+            end
+        end,
         unlock = function(lobby, message, user, data)
             if (not steamutils.IsOwner(lobby, user))then
                 return
@@ -311,8 +335,11 @@ networking = {
                 local entity = data.players[tostring(user)].entity
                 if (entity ~= nil and EntityGetIsAlive(entity)) then
                     local characterData = EntityGetFirstComponentIncludingDisabled(entity, "CharacterDataComponent")
+                    local velocityComp = EntityGetFirstComponentIncludingDisabled(entity, "VelocityComponent")
 
                     ComponentSetValue2(characterData, "mVelocity", message.vel_x, message.vel_y)
+                    
+                    data.players[tostring(user)].last_velocity = {x = message.vel_x, y = message.vel_y}
 
                     if ((ModSettingGet("evaisa.arena.predictive_netcode") or false) == true) then
                         local delay = math.floor(data.players[tostring(user)].delay_frames / 2) or 0
@@ -379,13 +406,18 @@ networking = {
                     else
                         --EntitySetTransform(entity, x, y)
                         EntityApplyTransform(entity, x, y)
-
-                        local characterData = EntityGetFirstComponentIncludingDisabled(entity, "CharacterDataComponent")
-
-                        ComponentSetValue2(characterData, "is_on_ground", message.is_on_ground or false)
-                        ComponentSetValue2(characterData, "is_on_slippery_ground", message.is_on_slippery_ground or false)
-    
                     end
+
+                    
+                    local characterData = EntityGetFirstComponentIncludingDisabled(entity, "CharacterDataComponent")
+                    --local characterPlatformingComp = EntityGetFirstComponentIncludingDisabled(entity, "CharacterPlatformingComponent")
+
+                    --ComponentSetValue2(characterPlatformingComp, "mFramesInAirCounter", message.frames_in_air or 0)
+                    ComponentSetValue2(characterData, "is_on_ground", message.is_on_ground or false)
+                    ComponentSetValue2(characterData, "is_on_slippery_ground", message.is_on_slippery_ground or false)
+                    --data.players[tostring(user)].is_on_ground = message.is_on_ground or false
+                    --data.players[tostring(user)].is_on_slippery_ground = message.is_on_slippery_ground or false
+
                 end
             end
         end,
@@ -1540,12 +1572,16 @@ networking = {
         unlock = function(lobby)
             steamutils.send("unlock", {}, steamutils.messageTypes.OtherPlayers, lobby, true)
         end,
+        check_can_unlock = function(lobby)
+            steamutils.send("check_can_unlock", {}, steamutils.messageTypes.OtherPlayers, lobby, true)
+        end,
         character_position = function(lobby, data, to_spectators)
             local player = player.Get()
             --print("Attempting to send character position")
             if (player) then
                 local x, y = EntityGetTransform(player)
                 local characterData = EntityGetFirstComponentIncludingDisabled(player, "CharacterDataComponent")
+                local characterPlatformingComp = EntityGetFirstComponentIncludingDisabled(player, "CharacterPlatformingComponent")
                 local vel_x, vel_y = ComponentGetValue2(characterData, "mVelocity")
 
                 --[[if(dev_log)then
@@ -1555,6 +1591,7 @@ networking = {
                 --print("Sending character position: " .. tostring(x) .. ", " .. tostring(y) .. " | " .. tostring(vel_x) .. ", " .. tostring(vel_y))
                 
                 local c = CharacterPos{
+                    frames_in_air = ComponentGetValue2(characterPlatformingComp, "mFramesInAirCounter"),
                     x = x,
                     y = y,
                     vx = vel_x,

@@ -300,7 +300,7 @@ skins.init = function()
                             for x = 0, player_modified_img.w - 1 do
                                 local p_r, p_g, p_b, p_a = getPixel(player_modified_img, x, y)
                                 local orig_r, orig_g, orig_b, orig_a = getPixel(player_default_img, x, y)
-                                if(p_a == 255 and (p_r ~= orig_r or p_g ~= orig_g or p_b ~= orig_b))then
+                                if(p_a == 255 and (p_r == pixel_r and p_b == pixel_b and p_g == pixel_g))then
                                     setPixel(player_modified_img, x, y, orig_r, orig_g, orig_b, 255)
                                 end
                             end

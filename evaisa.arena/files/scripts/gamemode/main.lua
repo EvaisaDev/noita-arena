@@ -332,12 +332,15 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 142,
-    required_online_version = 338,
+    version = 143,
+    required_online_version = 341,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
     end,
     version_flavor_text = "$arena_dev",
+    custom_lobby_string = function(lobby)
+        return string.format(GameTextGetTranslatedOrNot("$arena_lobby_string"), tostring(steam.matchmaking.getLobbyData(lobby, "holyMountainCount")) or "0")
+    end,
     spectator_unfinished_warning = true,
     disable_spectator_system = not ModSettingGet("evaisa.arena.spectator_unstable"),
     enable_presets = true,
@@ -1516,6 +1519,7 @@ ArenaMode = {
         
         if(steamutils.IsOwner(lobby))then
             steam.matchmaking.setLobbyData(lobby, "mod_list", player_mods)
+            steam.matchmaking.setLobbyData(lobby, "custom_lobby_string", "( round 0 )")
         end
 
         if(MP_VERSION < ArenaMode.required_online_version)then
