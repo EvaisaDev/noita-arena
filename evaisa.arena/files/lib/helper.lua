@@ -10,18 +10,7 @@ function get_entity_held_or_random_wand( entity, or_random )
         end
     end
     if #wands > 0 then
-        local inventory2 = EntityGetFirstComponent( entity, "Inventory2Component" );
-        local active_item = ComponentGetValue2( inventory2, "mActiveItem" );
-        for _,wand in pairs( wands ) do
-            if wand == active_item then
-                base_wand = wand;
-                break;
-            end
-        end
-        if base_wand == nil and or_random then
-            SetRandomSeed( EntityGetTransform( entity ) );
-            base_wand =  Random( 1, #wands );
-        end
+        return
     end
     return base_wand;
 end

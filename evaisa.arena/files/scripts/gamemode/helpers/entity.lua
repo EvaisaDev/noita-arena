@@ -221,7 +221,7 @@ end
 
 entity.BlockFiring = function(ent, do_block)
     local now = GameGetFrameNum();
-    local inventory2Comp = EntityGetFirstComponentIncludingDisabled(ent, "Inventory2Component")
+    --[[local inventory2Comp = EntityGetFirstComponentIncludingDisabled(ent, "Inventory2Component")
     if(inventory2Comp ~= nil)then
         local held_wand = ComponentGetValue2(inventory2Comp, "mActiveItem")
         if held_wand ~= 0 then
@@ -238,17 +238,11 @@ entity.BlockFiring = function(ent, do_block)
                 end
             end
         end
-    end
+    end]]
 end
 
 entity.GetHeldItem = function(ent)
-    local inventory2Comp = EntityGetFirstComponentIncludingDisabled(ent, "Inventory2Component")
-    if(inventory2Comp ~= nil)then
-        local held_wand = ComponentGetValue2(inventory2Comp, "mActiveItem")
-        if held_wand ~= 0 then
-            return held_wand
-        end
-    end
+
     return nil
 end
 

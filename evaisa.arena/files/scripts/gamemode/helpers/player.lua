@@ -179,27 +179,7 @@ player_helper.GetWandData = function(fresh)
         return nil
     end
 
-    local player = player_helper.Get()
-    local inventory2Comp = EntityGetFirstComponentIncludingDisabled(player, "Inventory2Component")
-    local mActiveItem = ComponentGetValue2(inventory2Comp, "mActiveItem")
-    local wandData = {}
-    for k, v in pairs(wands) do
-        local wand_entity = v.entity_id
-        local item_comp = EntityGetFirstComponentIncludingDisabled(wand_entity, "ItemComponent")
-        local slot_x, slot_y = ComponentGetValue2(item_comp, "inventory_slot")
 
-        GlobalsSetValue(tostring(wand_entity) .. "_wand", tostring(k))
-
-        table.insert(wandData,
-            {
-                data = v:Serialize(not fresh, not fresh),
-                id = k,
-                slot_x = slot_x,
-                slot_y = slot_y,
-                active = (mActiveItem == wand_entity)
-            })
-    end
-    return wandData
 end
 
 local function entity_is_wand(entity_id)
@@ -219,44 +199,8 @@ player_helper.GetItemData = function(fresh)
     local wandData = wand:Serialize()
     return wandData
     ]]
-
-    local player = player_helper.Get()
-    local inventory2Comp = EntityGetFirstComponentIncludingDisabled(player, "Inventory2Component")
-    local mActiveItem = ComponentGetValue2(inventory2Comp, "mActiveItem")
-    local wandData = {}
-    for k, item in ipairs(player_helper.GetInventoryItems("inventory_quick") or {}) do
-        local item_comp = EntityGetFirstComponentIncludingDisabled(item, "ItemComponent")
-        local slot_x, slot_y = ComponentGetValue2(item_comp, "inventory_slot")
-        local item_x, item_y = EntityGetTransform(item)
-
-        SetRandomSeed(item + slot_x + item_x, slot_y + item_y)
-
-        local item_id = entity.GetVariable(item, "arena_entity_id")
-
-        GlobalsSetValue(tostring(item) .. "_item", tostring(k))
-        if(entity_is_wand(item))then
-            local wand = EZWand(item)
-            table.insert(wandData,
-                {
-                    data = wand:Serialize(not fresh, not fresh),
-                    id = item_id or (item + Random(1, 10000000)),
-                    slot_x = slot_x,
-                    slot_y = slot_y,
-                    active = (mActiveItem == item),
-                    is_wand = true
-                })
-        else
-            table.insert(wandData,
-                {
-                    data = np.SerializeEntity(item),
-                    id = item_id or (item + Random(1, 10000000)),
-                    slot_x = slot_x,
-                    slot_y = slot_y,
-                    active = (mActiveItem == item)
-                })
-        end
-    end
-    return wandData
+    
+    return nil
 end
 
 player_helper.GetInventoryItems = function(inventory_name)
@@ -508,9 +452,7 @@ player_helper.GetActiveHeldItem = function()
     if (player == nil) then
         return
     end
-    local inventory2Comp = EntityGetFirstComponentIncludingDisabled(player, "Inventory2Component")
-    local mActiveItem = ComponentGetValue2(inventory2Comp, "mActiveItem")
-    return mActiveItem
+
 end
 
 player_helper.GetAnimationData = function()
@@ -917,8 +859,8 @@ player_helper.Serialize = function(dont_stringify)
     local data = {
         health = 100,
         max_health = 100,
-        item_data = player_helper.GetItemData(),
-        spells = player_helper.GetSpells(),
+        --item_data = player_helper.GetItemData(),
+        --spells = player_helper.GetSpells(),
         perks = player_helper.GetPerks(),
         gold = player_helper.GetGold(),
     }
@@ -931,8 +873,8 @@ player_helper.Serialize = function(dont_stringify)
     local compare_data = {
         health = data.health,
         max_health = data.max_health,
-        item_data = player_helper.GetItemData(true),
-        spells = data.spells,
+        --item_data = player_helper.GetItemData(true),
+        --spells = data.spells,
         perks = data.perks,
         gold = data.gold,
     }
@@ -962,12 +904,12 @@ player_helper.Deserialize = function(data, skip_perk_count, lobby, lobby_data)
         EntityKill(v)
     end
 
-    if (data.item_data ~= nil) then
+    --[[if (data.item_data ~= nil) then
         player_helper.SetItemData(data.item_data)
     end
     if (data.spells ~= nil) then
         player_helper.SetSpells(data.spells)
-    end
+    end]]
     if (data.perks ~= nil) then
         player_helper.SetPerks(data.perks, skip_perk_count)
     end

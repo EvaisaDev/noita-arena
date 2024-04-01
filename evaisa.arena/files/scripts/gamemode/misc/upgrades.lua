@@ -38,7 +38,7 @@ local function get_active_or_random_wand()
         end
     end
     if #wands > 0 then
-        local inventory2 = EntityGetFirstComponent( player_entity, "Inventory2Component" );
+        --[[local inventory2 = EntityGetFirstComponent( player_entity, "Inventory2Component" );
         local active_item = ComponentGetValue2( inventory2, "mActiveItem" );
         for _,wand in pairs( wands ) do
             if wand == active_item then
@@ -49,8 +49,9 @@ local function get_active_or_random_wand()
         if chosen_wand == nil then
             chosen_wand =  wands[Random( 1, #wands )];
         end
-        return chosen_wand;
+        return chosen_wand;]]
     end
+    return nil
 end
 
 upgrades = {

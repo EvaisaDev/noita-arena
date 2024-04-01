@@ -299,7 +299,7 @@ networking = {
 
                     gameplay_handler.AllowFiring(data)
                     --message_handler.send.RequestWandUpdate(lobby, data)
-                    networking.send.request_item_update(lobby)
+                    --networking.send.request_item_update(lobby)
                     if (data.countdown ~= nil) then
                         data.countdown:cleanup()
                         data.countdown = nil
@@ -1540,6 +1540,20 @@ networking = {
                 networking.send.send_skin(lobby, skin_system.active_skin_data, user)
             end
         end,
+        hamis_attack = function(lobby, message, user, data)
+            if (not gameplay_handler.CheckPlayer(lobby, user, data)) then
+                return
+            end
+
+            if (data.spectator_mode or (GameHasFlagRun("player_is_unlocked") and (not GameHasFlagRun("no_shooting"))) and data.players[tostring(user)].entity ~= nil and EntityGetIsAlive(data.players[tostring(user)].entity)) then
+
+                local controlsComp = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity, "ControlsComponent")
+
+                if (controlsComp ~= nil) then
+                    GamePlayAnimation(data.players[tostring(user)].entity, "attack", 100, "idle", 1)
+                end
+            end
+        end,
     },
     send = {
         handshake = function(lobby)
@@ -2201,6 +2215,9 @@ networking = {
         end,
         request_skins = function(lobby)
             steamutils.send("request_skins", {}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+        end,
+        hamis_attack = function(lobby)
+            steamutils.send("hamis_attack", {}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
         end,
     },
 }

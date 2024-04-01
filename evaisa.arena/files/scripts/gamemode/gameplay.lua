@@ -567,12 +567,12 @@ ArenaGameplay = {
 
         -- Mark inventory as initialised, else the game will change the item
         -- after we've set it in the deserialization.
-        local inventory = EntityGetFirstComponentIncludingDisabled(current_player, "Inventory2Component")
-        ComponentSetValue2(inventory, "mInitialized", true)
+        --local inventory = EntityGetFirstComponentIncludingDisabled(current_player, "Inventory2Component")
+        --ComponentSetValue2(inventory, "mInitialized", true)
 
         player.Deserialize(data.client.serialized_player, (not data.client.player_loaded_from_data), lobby, data)
 
-        gameplay_handler.UpdateCosmetics(lobby, data, "load", current_player, false)
+        --gameplay_handler.UpdateCosmetics(lobby, data, "load", current_player, false)
         
         GameRemoveFlagRun("player_unloaded")
     end,
@@ -584,38 +584,7 @@ ArenaGameplay = {
         GameAddFlagRun("no_shooting")
     end,
     CancelFire = function(lobby, data)
-        local player_entity = player.Get()
-        if (player_entity ~= nil) then
-            local items = GameGetAllInventoryItems(player_entity) or {}
-            for k, item in ipairs(items) do
-                local abilityComponent = EntityGetFirstComponentIncludingDisabled(item, "AbilityComponent")
-                if (abilityComponent ~= nil) then
-                    -- set mNextFrameUsable to false
-                    ComponentSetValue2(abilityComponent, "mNextFrameUsable", GameGetFrameNum() + 10)
-                    -- set mReloadFramesLeft
-                    ComponentSetValue2(abilityComponent, "mReloadFramesLeft", 10)
-                    -- set mReloadNextFrameUsable to false
-                    ComponentSetValue2(abilityComponent, "mReloadNextFrameUsable", GameGetFrameNum() + 10)
-                end
-            end
-        end
 
-        for k, v in pairs(data.players) do
-            if (v.entity ~= nil) then
-                local item = v.held_item
-                if (item ~= nil) then
-                    local abilityComponent = EntityGetFirstComponentIncludingDisabled(item, "AbilityComponent")
-                    if (abilityComponent ~= nil) then
-                        -- set mNextFrameUsable to false
-                        ComponentSetValue2(abilityComponent, "mNextFrameUsable", GameGetFrameNum() + 10)
-                        -- set mReloadFramesLeft
-                        ComponentSetValue2(abilityComponent, "mReloadFramesLeft", 10)
-                        -- set mReloadNextFrameUsable to false
-                        ComponentSetValue2(abilityComponent, "mReloadNextFrameUsable", GameGetFrameNum() + 10)
-                    end
-                end
-            end
-        end
     end,
     IsInBounds = function(x, y, max_distance)
         local players = EntityGetWithTag("player_unit") or {}
@@ -1293,11 +1262,6 @@ ArenaGameplay = {
 
             player.Immortal(true)
 
-            RunWhenPlayerExists(function()
-                if (first_entry and player.Get()) then
-                    GameDestroyInventoryItems(player.Get())
-                end
-            end)
         else
             ArenaGameplay.ClearWorld()
         end
@@ -1431,44 +1395,11 @@ ArenaGameplay = {
                     local wand_removal = GlobalsGetValue("wand_removal", "disabled")
                     local who_remove = GlobalsGetValue("wand_removal_who", "everyone")
 
-                    local wand_removal_types = {
-                        random = function()
-                            local wands = EZWand.GetAllWands()
-                            if (wands == nil or #wands == 0) then
-                                return nil
-                            end
-
-                            local player_entity = player.Get()
-
-                            local wand = data.random.range(1, #wands)
-                            GameKillInventoryItem(player_entity, wands[wand].entity_id)
-                        end,
-                        all = function()
-                            local wands = EZWand.GetAllWands()
-                            if (wands == nil or #wands == 0) then
-                                return nil
-                            end
-                            local player_entity = player.Get()
-
-                            for _, wand in ipairs(wands) do
-                                GameKillInventoryItem(player_entity, wand.entity_id)
-                            end
-                        end,
-                    }
-
-                    if(wand_removal ~= "disabled")then
-                        if(who_remove == "everyone" or 
-                        (who_remove == "winner" and was_winner) or 
-                        (who_remove == "losers" and was_loser) or
-                        (who_remove == "first_death" and was_first_death))then
-                            wand_removal_types[wand_removal]()
-                        end
-                    end
                 end
                 
                 -- give starting gear if first entry
                 if (first_entry) then
-                    player.GiveStartingGear()
+                    --player.GiveStartingGear()
                     if (((rounds - 1) > 0)) then
                         player.GiveMaxHealth(0.4 * (rounds - 1))
                     end
@@ -2283,7 +2214,7 @@ ArenaGameplay = {
 
             arena_log:print("Completed countdown.")
 
-            networking.send.request_item_update(lobby)
+           -- networking.send.request_item_update(lobby)
         end, function(frame, index) 
             -- if we are host
             if (steamutils.IsOwner(lobby)) then
@@ -2792,22 +2723,104 @@ ArenaGameplay = {
         
         local player_entity = player.Get()
 
+
+
         if(player_entity ~= nil)then
-            gameplay_handler.UpdateCosmetics(lobby, data, "try_unlock", player_entity, false)
-            gameplay_handler.UpdateCosmetics(lobby, data, "update", player_entity, false)
-            for k, v in pairs(data.players) do
+            --gameplay_handler.UpdateCosmetics(lobby, data, "try_unlock", player_entity, false)
+            --gameplay_handler.UpdateCosmetics(lobby, data, "update", player_entity, false)
+            --[[for k, v in pairs(data.players) do
                 if(v.entity ~= nil)then
                     gameplay_handler.UpdateCosmetics(lobby, data, "update", v.entity, true)
                 end
+            end]]
+
+            local sprite_comp = EntityGetFirstComponentIncludingDisabled(player_entity, "SpriteComponent", "character")
+
+            local animation = ComponentGetValue2(sprite_comp, "rect_animation")
+            local player_x, player_y = EntityGetTransform(player_entity)
+
+            local hearts = EntityGetInRadiusWithTag(player_x, player_y, 10, "heart") or {}
+            local itemPickUpperComp = EntityGetFirstComponentIncludingDisabled(player_entity, "ItemPickUpperComponent")
+
+            for k, v in ipairs(hearts)do
+                ComponentSetValue2(itemPickUpperComp, "only_pick_this_entity", v)
             end
+
+            last_damaged_targets = last_damaged_targets or {}
+
+            if(animation == "attack")then
+                local targets = EntityGetInRadiusWithTag(player_x, player_y, 5, "mortal") or {}
+
+                for k, v in ipairs(targets)do
+                    -- if target is not us
+                    if(v ~= player_entity)then
+                        if(last_damaged_targets[v] == nil or GameGetFrameNum() > last_damaged_targets[v] + 50)then
+                            EntityInflictDamage(v, 0.8, "DAMAGE_BITE", "hämis", "BLOOD_EXPLOSION", 0, 0, player_entity, player_x, player_y, 200)
+                            last_damaged_targets[v] = GameGetFrameNum()
+                        end
+                    end
+                end
+            end
+ 
+            local controlsComp = EntityGetFirstComponentIncludingDisabled(player_entity, "ControlsComponent")
+            local fire = ComponentGetValue2(controlsComp, "mButtonDownFire")
+            local fire2 = ComponentGetValue2(controlsComp, "mButtonDownFire2")
+            local fire2_frame = ComponentGetValue2(controlsComp, "mButtonFrameFire2")
+            local aim_x, aim_y = ComponentGetValue2(controlsComp, "mAimingVectorNormalized")
+            local throw = ComponentGetValue2(controlsComp, "mButtonDownThrow")
+            local throw_frame = ComponentGetValue2(controlsComp, "mButtonFrameThrow")
+            
+            local mouse2 = false
+            local mouse2_frame = 0
+            
+            if(fire2 and fire == false)then
+              GlobalsSetValue("throw_scheme", "1")
+            elseif(throw and fire == false)then
+              GlobalsSetValue("throw_scheme", "2")
+            end
+            
+            if(GlobalsGetValue("throw_scheme", "1") == "1")then
+              mouse2 = fire2
+              mouse2_frame = fire2_frame
+            else
+              mouse2 = throw
+              mouse2_frame = throw_frame
+            end
+
+            
+            local target_x, target_y = aim_x * 550, aim_y * 550
+            
+            local characterDataComponent = EntityGetFirstComponentIncludingDisabled(player_entity, "CharacterDataComponent")
+
+            local on_ground = ComponentGetValue2(characterDataComponent, "is_on_ground")
+
+            if(on_ground)then
+                was_on_ground = 3
+            end
+            --GamePrint(tostring(mouse2_frame) .. " " .. tostring(GameGetFrameNum()) .. " " .. tostring(on_ground))
+
+            if(fire)then
+                GamePlayAnimation(player_entity, "attack", 100, "idle", 1)
+                networking.send.hamis_attack(lobby)
+            elseif(mouse2 and mouse2_frame == GameGetFrameNum() and was_on_ground > 0)then
+                GamePlayAnimation(player_entity, "attack", 100, "idle", 1)
+                
+                ComponentSetValue2(characterDataComponent, "mVelocity", target_x, target_y)
+                networking.send.hamis_attack(lobby)
+                was_on_ground = was_on_ground - 1
+            end
+
         end
+
         SpectatorMode.SpectateUpdate(lobby, data)
 
         if(data.upgrade_system ~= nil and not IsPaused())then
             data.upgrade_system:draw()
         end
     
+        
 
+        --[[
         local spells = EntityGetWithTag("card_action")
         for k, card in ipairs(spells)do
             if(not EntityHasTag(card, "patched_unlimited"))then
@@ -2840,6 +2853,7 @@ ArenaGameplay = {
                 end
             end
         end
+        ]]
 
         --if(GameGetFrameNum() % 60 == 0)then
         --message_handler.send.Handshake(lobby)
@@ -2864,11 +2878,11 @@ ArenaGameplay = {
         end]]
 
         if (data.state == "lobby") then
-            networking.send.sync_wand_stats(lobby, data, true)
+            --networking.send.sync_wand_stats(lobby, data, true)
             ArenaGameplay.LobbyUpdate(lobby, data)
         elseif (data.state == "arena") then
             -- message_handler.send.SyncWandStats(lobby, data)
-            networking.send.sync_wand_stats(lobby, data)
+            --networking.send.sync_wand_stats(lobby, data)
             ArenaGameplay.ArenaUpdate(lobby, data)
             ArenaGameplay.KillCheck(lobby, data)
         end
@@ -2881,6 +2895,41 @@ ArenaGameplay = {
         end
     end,
     LateUpdate = function(lobby, data)
+
+        if (data.state == "arena") then
+            -- loop through other players
+            for k, v in pairs(data.players) do
+                if (v.entity ~= nil and EntityGetIsAlive(v.entity)) then
+                    local sprite_comp = EntityGetFirstComponentIncludingDisabled(v.entity, "SpriteComponent", "character")
+
+                    local animation = ComponentGetValue2(sprite_comp, "rect_animation")
+
+                    local x, y = EntityGetTransform(v.entity)
+
+                    v.last_damaged_targets = v.last_damaged_targets or {}
+
+                    --print(animation)
+
+                    if (animation == "attack") then
+                        local targets = EntityGetInRadiusWithTag(x, y, 5, "mortal") or {}
+
+                        for k, targ in ipairs(targets) do
+                            -- if target is not us
+                            if (targ ~= v.entity) then
+                                --print("Attacking target!")
+                                --print(tostring(v.last_damaged_targets[targ]))
+                                --print(tostring(GameGetFrameNum()))
+                                if (v.last_damaged_targets[targ] == nil or GameGetFrameNum() > v.last_damaged_targets[targ] + 50) then
+                                    EntityInflictDamage(targ, 0.8, "DAMAGE_BITE", "hämis", "BLOOD_EXPLOSION", 0, 0, v.entity, x, y, 200)
+                                    v.last_damaged_targets[targ] = GameGetFrameNum()
+                                end
+                            end
+                        end
+                    end
+                    
+                end
+            end
+        end
 
         --data.controlled_physics_entities
 
@@ -2942,29 +2991,11 @@ ArenaGameplay = {
         end
         GlobalsSetValue("arena_fungal_shift_from", "")
         GlobalsSetValue("arena_fungal_shift_to", "")
+        local player_entity = player.Get()
 
         if (data.state == "arena") then
             ArenaGameplay.KillCheck(lobby, data)
 
-            local player_entity = player.Get()
-
-            if(player_entity)then
-                local inventory_gui_comp = EntityGetFirstComponentIncludingDisabled(player_entity, "InventoryGuiComponent")
-
-                local inventory_open = ComponentGetValue2(inventory_gui_comp, "mActive")
-                if(inventory_open)then
-                    if(not data.client.inventory_was_open)then
-                        --GamePrint("inventory_was_opened")
-                    end
-                    data.client.inventory_was_open = true
-                else
-                    if(data.client.inventory_was_open)then
-                        --GamePrint("inventory_was_closed")
-                        networking.send.item_update(lobby, data, nil, true, false)
-                    end
-                    data.client.inventory_was_open = false
-                end
-            end
             if(GlobalsGetValue("arena_item_pickup", "0") ~= "0")then
                 networking.send.item_picked_up(lobby, tonumber(GlobalsGetValue("arena_item_pickup", "0")))
                 GlobalsSetValue("arena_item_pickup", "0")
@@ -2974,33 +3005,27 @@ ArenaGameplay = {
         --[[else
             data.client.projectile_rng_stack = {}
             data.client.projectiles_fired = 0]]
-        else
-            local player_entity = player.Get()
+        end
+        
+       
+        local function enable_flight(enable)
+            local charplat_comp = EntityGetFirstComponentIncludingDisabled(player_entity, "CharacterPlatformingComponent")
+            ComponentSetValue2(charplat_comp, "fly_speed_change_spd", enable and 0.25 or 0)
+        end
 
-            local inventory_gui_comp = EntityGetFirstComponentIncludingDisabled(player_entity, "InventoryGuiComponent")
+        local damage_comp = EntityGetFirstComponentIncludingDisabled(player_entity, "DamageModelComponent")
 
-            if(inventory_gui_comp ~= nil)then
-                
-
-                local inventory_open = ComponentGetValue2(inventory_gui_comp, "mActive")
-                if(inventory_open)then
-                    data.client.inventory_was_open = true
-                else
-                    if(data.client.inventory_was_open)then
-                        networking.send.item_update(lobby, data, nil, true, true)
-                    end
-                    data.client.inventory_was_open = false
-                end
-
-                if(GlobalsGetValue("arena_item_pickup", "0") ~= "0")then
-                    networking.send.item_picked_up(lobby, tonumber(GlobalsGetValue("arena_item_pickup", "0")), true)
-                    GlobalsSetValue("arena_item_pickup", "0")
-                end
-            end
+        if(damage_comp ~= nil)then
+            local liquid_count = ComponentGetValue2(damage_comp, "mLiquidCount")
+            enable_flight(liquid_count > 10)
         end
 
 
 
+
+
+
+        --[[
         local current_inventory_info = player.GetInventoryInfo()
 
         no_switching = no_switching or 0
@@ -3035,12 +3060,10 @@ ArenaGameplay = {
         end
 
 
-        
-        local current_player = player.Get()
 
         local projectiles_fired = tonumber(GlobalsGetValue( "wand_fire_count", "0" ))
 
-        if (projectiles_fired > 0--[[data.client.projectiles_fired ~= nil and data.client.projectiles_fired > 0]]) then
+        if (projectiles_fired > 0) then
             local special_seed = tonumber(GlobalsGetValue("player_rng", "0"))
             --local cast_state = GlobalsGetValue("player_cast_state") or nil
 
@@ -3059,9 +3082,9 @@ ArenaGameplay = {
 
 
         GlobalsSetValue("wand_fire_count", "0")
+        ]]
 
-
-        if ((not GameHasFlagRun("player_unloaded")) and current_player == nil and not data.preparing) then
+        if ((not GameHasFlagRun("player_unloaded")) and player_entity == nil and not data.preparing) then
             ArenaGameplay.LoadPlayer(lobby, data)
             arena_log:print("Player is missing, spawning player.")
         else
@@ -3071,14 +3094,14 @@ ArenaGameplay = {
         end
 
 
-        if (data.current_player ~= current_player) then
-            data.current_player = current_player
-            if (current_player ~= nil) then
-                np.RegisterPlayerEntityId(current_player)
+        if (data.current_player ~= player_entity) then
+            data.current_player = player_entity
+            if (player_entity ~= nil) then
+                np.RegisterPlayerEntityId(player_entity)
             end
         end
 
-        if (GameHasFlagRun("in_hm") and current_player) then
+        if (GameHasFlagRun("in_hm") and player_entity) then
             player.Move(0, 0)
             GameRemoveFlagRun("in_hm")
         end
@@ -3166,9 +3189,7 @@ ArenaGameplay = {
         end
         ]]
 
-        local current_player = player.Get()
-
-        if ((not GameHasFlagRun("player_unloaded")) and current_player ~= nil and EntityGetIsAlive(current_player)) then
+        if ((not GameHasFlagRun("player_unloaded")) and player_entity ~= nil and EntityGetIsAlive(player_entity)) then
             --print("Running player function queue")
             -- run playerRunQueue
             for i = 1, #playerRunQueue do

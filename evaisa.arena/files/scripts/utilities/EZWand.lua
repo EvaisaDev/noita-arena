@@ -527,11 +527,11 @@ local function refresh_wand_if_in_inventory(wand_id)
   -- Refresh the wand if it's being held by the player
   local parent = EntityGetRootEntity(wand_id)
   if EntityHasTag(parent, "player_unit") then
-    local inventory2_comp = EntityGetFirstComponentIncludingDisabled(parent, "Inventory2Component")
+    --[[local inventory2_comp = EntityGetFirstComponentIncludingDisabled(parent, "Inventory2Component")
     if inventory2_comp then
       ComponentSetValue2(inventory2_comp, "mForceRefresh", true)
       ComponentSetValue2(inventory2_comp, "mActualActiveItem", 0)
-    end
+    end]]
   end
 end
 
@@ -1249,13 +1249,7 @@ end
 local function get_held_wand()
 	local player = EntityGetWithTag("player_unit")
   if player and player[1] then
-    local inventory2_comp = EntityGetFirstComponentIncludingDisabled(player[1], "Inventory2Component")
-    local active_item = ComponentGetValue2(inventory2_comp, "mActiveItem")
-    if(entity_is_wand(active_item))then
-      return wand:new(active_item)
-    else
-      return nil
-    end
+    return nil
   end
 end
 

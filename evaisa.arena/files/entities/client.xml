@@ -1,8 +1,4 @@
 <Entity name="client" tags="client,mortal,human,hittable,peasant,prey,polymorphable_NOT,enemy">
-  <HotspotComponent
-    _tags="hat"
-    sprite_hotspot_name="hat"
-  />
 
   <VelocityComponent
     updates_velocity="0"
@@ -58,7 +54,7 @@
   </Entity>
 
   <CharacterDataComponent 
-    platforming_type="0"
+    platforming_type="2"
     check_collision_max_size_x="4" 
     check_collision_max_size_y="4" 
     climb_over_y="4" 
@@ -67,7 +63,7 @@
     collision_aabb_min_y="-4.5" 
     collision_aabb_max_y="2.1"
     eff_hg_offset_y="1.28572" 
-    eff_hg_position_x="0" 
+    eff_hg_position_x="0"  
     eff_hg_position_y="5" 
     eff_hg_size_x="6.42857" 
     eff_hg_size_y="5.14286" 
@@ -101,7 +97,7 @@
     fly_speed_max_up="95"
     fly_speed_max_down="85"
     fly_speed_mult="20"
-    fly_speed_change_spd="0.25"
+    fly_speed_change_spd="0"
     mouse_look="1" 
     keyboard_look="0"
     mouse_look_buffer="1" 
@@ -144,18 +140,6 @@
   </KickComponent>
 
 
-	<Base file="data/entities/base_jetpack_nosound.xml">
-
-    <ParticleEmitterComponent
-        offset.x="-2"
-        offset.y="5"
-        lifetime_min="0.0" 
-    ></ParticleEmitterComponent>
-  
-  </Base>
-
-
-
     <GenomeDataComponent 
     herd_id="pvp_client"
     food_chain_rank="20"
@@ -189,10 +173,12 @@
     materials_damage="1" 
     materials_that_damage="acid,lava,blood_cold_vapour,blood_cold,poison,radioactive_gas,radioactive_gas_static,rock_static_radioactive,rock_static_poison,ice_radioactive_static,ice_radioactive_glass,ice_acid_static,ice_acid_glass,rock_static_cursed,magic_gas_hp_regeneration,gold_radioactive,gold_static_radioactive,rock_static_cursed_green,cursed_liquid,poo_gas"  
     materials_how_much_damage="0.005,0.003,0.0006,0.0009,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.005,-0.005,0.0002,0.0002,0.004,0.0005,0.00001" 
-    ragdoll_filenames_file="data/ragdolls/player/filenames.txt" 
-    ragdoll_offset_y="-5"
-    ragdollify_child_entity_sprites="1"
+    ragdoll_filenames_file="data/ragdolls/longleg/filenames.txt"
+    ragdoll_offset_y="-6"
+    blood_sprite_directional="data/particles/bloodsplatters/bloodsplatter_directional_purple_$[1-3].xml"
+    blood_sprite_large="data/particles/bloodsplatters/bloodsplatter_purple_$[1-3].xml"
     blood_spray_material="blood"
+    blood_spray_create_some_cosmetic="1"
     physics_objects_damage="0"
     drop_items_on_death="0"
     critical_damage_resistance="0"
@@ -207,10 +193,10 @@
   <SpriteComponent 
     _tags="character,skin_root" 
     alpha="1" 
-    image_file="mods/evaisa.arena/files/gfx/player.xml" 
+    image_file="data/enemies_gfx/longleg.xml" 
     next_rect_animation="" 
     offset_x="6" 
-    offset_y="14" 
+    offset_y="12"
     rect_animation="walk" 
     z_index="0.6"
   ></SpriteComponent>
@@ -226,57 +212,8 @@
       >
   </LuaComponent>
 
-  <HotspotComponent
-    _tags="right_arm_root"
-    sprite_hotspot_name="right_arm_start"
-    transform_with_scale="1"
-  ></HotspotComponent>
 
-  <Entity name="arm_r" tags="player_arm_r">
 
-    <SpriteComponent 
-      _tags="with_item" 
-      alpha="1" 
-      image_file="data/enemies_gfx/player_arm.xml" 
-      next_rect_animation="" 
-      rect_animation="default" 
-      z_index="0.59"
-    ></SpriteComponent>
-
-    <InheritTransformComponent
-      parent_hotspot_tag="right_arm_root"
-      only_position="1"
-    ></InheritTransformComponent>  
-
-    <HotspotComponent
-      _tags="hand"
-      sprite_hotspot_name="hand"
-      transform_with_scale="1"
-    ></HotspotComponent>
-
-  </Entity>
-
-  <HotspotComponent
-      _tags="cape_root"
-      sprite_hotspot_name="cape" >
-  </HotspotComponent>
-
-  <Entity name="cape">  
-      <Base file="data/entities/verlet_chains/cape/cape.xml">
-      </Base>  
-  </Entity>
-
-  <Inventory2Component 
-    _enabled="1" 
-    full_inventory_slots_x="0" 
-    full_inventory_slots_y="0" 
-    mSavedActiveItemIndex="0" 
-    quick_inventory_slots="4" >
-
-  </Inventory2Component>
-
-   <Entity name="inventory_quick">
-  </Entity>
   <!--<Entity name="inventory_full"/>-->
 
     <SpriteComponent
@@ -297,10 +234,6 @@
         z_index = "-5000"
     ></SpriteComponent>
     <StreamingKeepAliveComponent/>
-
-  
-  <GunComponent>
-  </GunComponent>
 
   <ItemPickUpperComponent
     drop_items_on_death="0"
@@ -331,26 +264,8 @@
     moving_up_before_getting_crushed_threshold="6"
   ></PlayerCollisionComponent >
 
-  <AudioComponent
-    file="data/audio/Desktop/player.bank"
-    event_root="player"
-    audio_physics_material="character_player"
-    set_latest_event_position="1"
-  ></AudioComponent>
-
-  <AudioLoopComponent
-    _tags="sound_jetpack"
-    file="data/audio/Desktop/player.bank"
-    event_name="player/jetpack"
-    volume_autofade_speed="0.25"
-  ></AudioLoopComponent>
-
-  <AudioLoopComponent
-    _tags="sound_pick_gold_sand"
-    file="data/audio/Desktop/player.bank"
-    event_name="player/pick_gold_sand"
-    volume_autofade_speed="0.05"
-  ></AudioLoopComponent>
-
-
+	<AudioComponent
+		file="data/audio/Desktop/animals.bank"
+		event_root="animals/longleg" >
+	</AudioComponent>
 </Entity>
