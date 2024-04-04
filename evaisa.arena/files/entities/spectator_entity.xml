@@ -1,4 +1,4 @@
-<Entity name="spectator" tags="spectator">
+<Entity name="spectator" tags="spectator,spectator_no_clear">
     <StreamingKeepAliveComponent/>
     <HitboxComponent
         aabb_min_x="-500"
@@ -24,9 +24,49 @@
         fade_out_time="5.0"
     ></LightComponent>
 -->
+    <Inventory2Component
+        quick_inventory_slots="10"
+        full_inventory_slots_x="16"
+        full_inventory_slots_y="1"
+    ></Inventory2Component>
+
+    <InventoryGuiComponent />
+
+    <ControlsComponent 
+        enabled="1" 
+        gamepad_fire_on_thumbstick_extend="0" 
+        gamepad_fire_on_thumbstick_extend_threshold="0.7" 
+        gamepad_indirect_aiming_enabled="0" 
+        polymorph_hax="0" 
+        polymorph_next_attack_frame="0" >
+
+    </ControlsComponent>
+
     <AudioListenerComponent
         z="-60"
     ></AudioListenerComponent>
+
+
+    <SpriteAnimatorComponent/>
+
+
+
+
+    <Entity
+        name="inventory_quick" >
+    </Entity>
+
+    <Entity
+        name="inventory_full" >
+    </Entity>
+
+    <ItemPickUpperComponent
+        drop_items_on_death="0"
+        is_immune_to_kicks="1"
+        only_pick_this_entity="52395832806"
+    ></ItemPickUpperComponent>
+
+
     <!--
     <SpriteComponent 
         alpha="1" 

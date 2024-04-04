@@ -1,4 +1,4 @@
-<Entity>
+<Entity tags = "spectator_no_clear">
     <InteractableComponent
         _enabled="1"
         _tags="ready"

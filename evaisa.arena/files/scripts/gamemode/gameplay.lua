@@ -542,7 +542,7 @@ ArenaGameplay = {
         return steamutils.getPlayerCount(lobby, false)
     end,
     ReadyCounter = function(lobby, data)
-        data.ready_counter = counter.create(GameTextGetTranslatedOrNot("$arena_players_ready"), function()
+        data.ready_counter = counter.create("$arena_players_ready", function()
             local playersReady = ArenaGameplay.ReadyAmount(data, lobby)
             local totalPlayers = ArenaGameplay.TotalPlayers(lobby)
 
@@ -799,7 +799,7 @@ ArenaGameplay = {
                                 zone_shrink_time = math.ceil((zone_step_interval - (GameGetFrameNum() - data.last_step_frame)) /
                                     60)
 
-                                local text = string.format("$arena_zone_shrink_countdown", tostring( zone_shrink_time))
+                                local text = string.format(GameTextGetTranslatedOrNot("$arena_zone_shrink_countdown"), tostring( zone_shrink_time))
 
 
                                 local text_width, text_height = GuiGetTextDimensions(data.zone_gui, text)
@@ -871,7 +871,7 @@ ArenaGameplay = {
                         else
                             local screen_width, screen_height = GuiGetScreenDimensions(data.zone_gui)
 
-                            local text = string.format("$arena_zone_shrink_countdown", tostring(data.shrink_time))--"Zone will shrink in " .. tostring(data.shrink_time) .. " seconds"
+                            local text = string.format(GameTextGetTranslatedOrNot("$arena_zone_shrink_countdown"), tostring(data.shrink_time))
 
                             --GamePrint(text)
 
@@ -933,8 +933,8 @@ ArenaGameplay = {
 
         -- print("WinnerCheck (gameplay)")
 
-        local alive = data.client.alive and 1 or 0
-        local winner = steam.user.getSteamID()
+        local alive = (not data.spectator_mode and data.client.alive) and 1 or 0
+        local winner = data.spectator_mode and nil or steam.user.getSteamID() 
         for k, v in pairs(data.players) do
             if (v.alive) then
                 alive = alive + 1
@@ -1002,7 +1002,7 @@ ArenaGameplay = {
             
 
             -- check if winner is us!!!
-            if(winner == steam.user.getSteamID())then
+            if(not data.spectator_mode and winner == steam.user.getSteamID())then
                 GameAddFlagRun("arena_winner")
                 local catchup_mechanic = GlobalsGetValue("perk_catchup", "losers")
                 if(catchup_mechanic == "winner")then
@@ -1028,14 +1028,14 @@ ArenaGameplay = {
             end, function() 
 
                 wait.new(function()  
-                    print("winstreak updated: "..tostring(lobby_data_updated_this_frame[tostring(winner) .. "_winstreak"]))
-                    print("wins updated: "..tostring(lobby_data_updated_this_frame[tostring(winner) .. "_wins"]))
-                    print("updated_was_wins: "..tostring(updated_was_wins))
+                    --print("winstreak updated: "..tostring(lobby_data_updated_this_frame[tostring(winner) .. "_winstreak"]))
+                    --print("wins updated: "..tostring(lobby_data_updated_this_frame[tostring(winner) .. "_wins"]))
+                    --print("updated_was_wins: "..tostring(updated_was_wins))
 
                     return updated_was_wins and lobby_data_updated_this_frame[tostring(winner) .. "_winstreak"] or lobby_data_updated_this_frame[tostring(winner) .. "_wins"]
                 end, function() 
-                    print("user wins: "..tostring(ArenaGameplay.GetWins(lobby, winner, data)))
-                    print("user winstreak: "..tostring(ArenaGameplay.GetWinstreak(lobby, winner, data)))
+                    --print("user wins: "..tostring(ArenaGameplay.GetWins(lobby, winner, data)))
+                    --print("user winstreak: "..tostring(ArenaGameplay.GetWinstreak(lobby, winner, data)))
                     GameAddFlagRun("round_finished")
                     local win_condition_user = ArenaGameplay.CheckWinCondition(lobby, data)
 
@@ -1225,13 +1225,16 @@ ArenaGameplay = {
             data.current_arena:unload(lobby, data)
         end
 
+        GameSetCameraPos(0, 0)
+
         GameAddFlagRun("refresh_dummy")
 
+        data.lobby_spectated_player = nil
 
         -- get rounds
         local rounds = ArenaGameplay.GetNumRounds(lobby)
 
-        if(not steamutils.IsSpectator(lobby))then
+        if(not data.spectator_mode)then
             local catchup_mechanic = GlobalsGetValue("perk_catchup", "losers")
             if(catchup_mechanic == "everyone")then
                 GameAddFlagRun("first_death")
@@ -1281,7 +1284,7 @@ ArenaGameplay = {
             end
         end
 
-        if(not steamutils.IsSpectator(lobby))then
+        if(not data.spectator_mode)then
             if (not first_entry) then
                 ArenaGameplay.SavePlayerData(lobby, data, true)
                 ArenaGameplay.ClearWorld()
@@ -1314,7 +1317,7 @@ ArenaGameplay = {
         data.tweens = {}
 
         -- clean local data
-        if(not steamutils.IsSpectator(lobby))then
+        if(not data.spectator_mode)then
             ArenaGameplay.SetReady(lobby, data, false, true)
         end
 
@@ -1329,7 +1332,7 @@ ArenaGameplay = {
         -- set state
         data.state = "lobby"
 
-        if(not steamutils.IsSpectator(lobby))then
+        if(not data.spectator_mode)then
             player.Immortal(true)
 
             RunWhenPlayerExists(function()
@@ -1375,7 +1378,7 @@ ArenaGameplay = {
 
         --print("First spawn gold = "..tostring(data.client.first_spawn_gold))
 
-        if(not steamutils.IsSpectator(lobby))then
+        if(not data.spectator_mode)then
             arena_log:print("First entry = " .. tostring(first_entry))
 
             if (first_entry and data.client.first_spawn_gold > 0) then
@@ -1386,7 +1389,7 @@ ArenaGameplay = {
         --GamePrint("You were granted " ..tostring(extra_gold) .. " gold for this round. (Rounds: " .. tostring(rounds) .. ")")
         GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_round_gold"), tostring(extra_gold), tostring(rounds)))
 
-        if(not steamutils.IsSpectator(lobby))then
+        if(not data.spectator_mode)then
             arena_log:print("Loaded from data: " .. tostring(data.client.player_loaded_from_data))
 
             RunWhenPlayerExists(function()
@@ -1420,7 +1423,7 @@ ArenaGameplay = {
         end
 
 
-        if(not steamutils.IsSpectator(lobby))then
+        if(not data.spectator_mode)then
             RunWhenPlayerExists(function()
                 local player_entity = player.Get()
                 if(not first_entry)then
@@ -1484,7 +1487,7 @@ ArenaGameplay = {
             np.RegisterPlayerEntityId(data.spectator_entity)
         end
         --message_handler.send.Unready(lobby, true)
-        if(not steamutils.IsSpectator(lobby))then
+        if(not data.spectator_mode)then
             -- load map
             if(GameHasFlagRun("item_shop"))then
                 BiomeMapLoad_KeepPlayer("mods/evaisa.arena/files/scripts/world/map_lobby.lua",
@@ -1531,7 +1534,7 @@ ArenaGameplay = {
         return math.floor(num * mult + 0.5) / mult
     end,
     LoadArena = function(lobby, data, show_message, map)
-        if(not steamutils.IsSpectator(lobby))then
+        if(not data.spectator_mode)then
             ArenaGameplay.SavePlayerData(lobby, data, true)
 
             GameRemoveFlagRun("can_save_player")
@@ -1585,7 +1588,7 @@ ArenaGameplay = {
         end
 
         --message_handler.send.SendPerks(lobby)
-        if(not steamutils.IsSpectator(lobby))then
+        if(not data.spectator_mode)then
             networking.send.perk_update(lobby, data)
         end
 
@@ -1668,7 +1671,7 @@ ArenaGameplay = {
         end
 
         
-        if(not steamutils.IsSpectator(lobby))then
+        if(not data.spectator_mode)then
             RunWhenPlayerExists(function()
                 player.Lock()
 
@@ -2186,42 +2189,65 @@ ArenaGameplay = {
 
         ArenaGameplay.UpdateDummy(lobby, data)
 
-        networking.send.character_position(lobby, data, true)
+        if(data.spectator_mode)then
+            SpectatorMode.SpectatorText(lobby, data)
+            SpectatorMode.LobbySpectateUpdate(lobby, data)
 
-       -- networking.send.wand_update(lobby, data, nil, nil, true)
-        networking.send.input(lobby, data, true)
-        --networking.send.animation_update(lobby, data, true)
-        if(GameGetFrameNum() % 15 == 0)then
-            networking.send.player_data_update(lobby, data, true)
-            ArenaGameplay.RunReadyCheck(lobby, data)
-        end
-        networking.send.spectate_data(lobby, data, nil, false)
+            if(#(EntityGetWithTag("workshop") or {}) > 0 and not data.spectator_lobby_loaded)then
+                data.spectator_lobby_loaded = true
+                SpectatorMode.SpawnSpectatedPlayer(lobby, data)
+            end
+            if(GameGetFrameNum() % 15 == 0)then
+                ArenaGameplay.RunReadyCheck(lobby, data)
+            end
 
-        GameAddFlagRun("Immortal")
+            local inventory2Comp = EntityGetFirstComponentIncludingDisabled(data.spectator_entity, "Inventory2Component")
+
+            if(inventory2Comp ~= nil)then
+                ComponentSetValue2(inventory2Comp, "mItemHolstered", true)
+                ComponentSetValue2(inventory2Comp, "mActiveItem", -1)
+                ComponentSetValue2(inventory2Comp, "mActualActiveItem", -1)
+                ComponentSetValue2(inventory2Comp, "mForceRefresh", true)
+            end
+        else
+            networking.send.character_position(lobby, data, true)
+
+        -- networking.send.wand_update(lobby, data, nil, nil, true)
+            networking.send.input(lobby, data, true)
+            --networking.send.animation_update(lobby, data, true)
+            if(GameGetFrameNum() % 15 == 0)then
+                networking.send.player_data_update(lobby, data, true)
+                ArenaGameplay.RunReadyCheck(lobby, data)
+            end
+            networking.send.spectate_data(lobby, data, nil, false)
+
+            GameAddFlagRun("Immortal")
 
 
 
-        if (GameHasFlagRun("player_ready")) then
-            GameRemoveFlagRun("player_ready")
+            if (GameHasFlagRun("player_ready")) then
+                GameRemoveFlagRun("player_ready")
 
-            ArenaGameplay.SetReady(lobby, data, true)
-        end
+                ArenaGameplay.SetReady(lobby, data, true)
+            end
 
-        if (GameHasFlagRun("player_unready")) then
-            GameRemoveFlagRun("player_unready")
+            if (GameHasFlagRun("player_unready")) then
+                GameRemoveFlagRun("player_unready")
 
-            ArenaGameplay.SetReady(lobby, data, false)
-        end
+                ArenaGameplay.SetReady(lobby, data, false)
+            end
 
-        if (GameGetFrameNum() % 5 == 0) then
-            -- message_handler.send.UpdateHp(lobby, data)
-            networking.send.health_update(lobby, data)
-            --message_handler.send.SendPerks(lobby)
-            networking.send.perk_update(lobby, data)
-        end
+            if (GameGetFrameNum() % 5 == 0) then
+                -- message_handler.send.UpdateHp(lobby, data)
+                networking.send.health_update(lobby, data)
+                --message_handler.send.SendPerks(lobby)
+                networking.send.perk_update(lobby, data)
+            end
 
-        if(GameGetFrameNum() % 60 == 0)then
-            networking.send.request_perk_update(lobby)
+            if(GameGetFrameNum() % 60 == 0)then
+                networking.send.request_perk_update(lobby)
+            end
+                        
         end
     end,
     UpdateHealthbars = function(data)
@@ -2275,7 +2301,7 @@ ArenaGameplay = {
             end
 
             GameAddFlagRun("countdown_completed")
-            if(not steamutils.IsSpectator(lobby))then
+            if(not data.spectator_mode)then
                 player.Immortal(false)
             end
             ArenaGameplay.AllowFiring(data)
@@ -2322,6 +2348,10 @@ ArenaGameplay = {
         return client
     end,
     CheckPlayer = function(lobby, user, data)
+        if(not data.players[tostring(user)])then
+            return false
+        end
+
         if (not data.players[tostring(user)].entity and data.players[tostring(user)].alive) then
 
             -- find entity by name
@@ -2445,14 +2475,21 @@ ArenaGameplay = {
         dummy = EntityLoad("mods/evaisa.arena/files/entities/dummy_target/dummy_target.xml", x, y)
 
         local players = {
-            [tostring(steam.user.getSteamID())] = {
+        }
+
+        local player_count = 0
+
+        if(not data.spectator_mode)then
+            player_count = player_count + 1
+            players[tostring(steam.user.getSteamID())] = {
                 perks = data.client.perks or {},
                 health = data.client.hp or 100,
                 max_health = data.client.max_hp or 100,
             }
-        }
+        end
 
-        for k, v in pairs(data.players) do
+        for k, v in pairs(data.players or {}) do
+            player_count = player_count + 1
             players[tostring(k)] = {
                 perks = v.perks or {},
                 health = v.health or 100,
@@ -2464,13 +2501,17 @@ ArenaGameplay = {
 
         --local target_data = nil
 
+        if(player_count <= 0)then
+            return
+        end
+
         for k, v in pairs(players) do
             if (k == tostring(dummy_target)) then
                 next_is_target = true
-                print("Got current target: " .. tostring(dummy_target))
+                --print("Got current target: " .. tostring(dummy_target))
             elseif (next_is_target)then
                 new_target = gameplay_handler.FindUser(lobby, k)
-                print("Switched dummy to " .. tostring(new_target))
+                --print("Switched dummy to " .. tostring(new_target))
                 --target_data = v
                 break
             end
@@ -2623,23 +2664,25 @@ ArenaGameplay = {
                             EntityKill(data.spawn_loader)
                         end
 
-
-
                         data.load_frames = 0
                         --GamePrint("Spawned!!")
     
-                        ArenaGameplay.LoadPlayer(lobby, data, x, y)
+                        if(not data.spectator_mode)then
+                            ArenaGameplay.LoadPlayer(lobby, data, x, y)
 
-                        if (not steamutils.IsOwner(lobby)) then
-                            RunWhenPlayerExists(function()
-                                networking.send.arena_loaded(lobby)
-                            end)
-                            
-                            --message_handler.send.Loaded(lobby)
+                            if (not steamutils.IsOwner(lobby)) then
+                                RunWhenPlayerExists(function()
+                                    networking.send.arena_loaded(lobby)
+                                end)
+                                
+                                --message_handler.send.Loaded(lobby)
+                            end
+        
+                            --message_handler.send.Health(lobby)
+                            networking.send.health_update(lobby, data, true)
+                        else
+                            data.arena_spectator = true
                         end
-    
-                        --message_handler.send.Health(lobby)
-                        networking.send.health_update(lobby, data, true)
                     end
 
                  --   player.Move(data.spawn_point.x, data.spawn_point.y)
@@ -2651,6 +2694,7 @@ ArenaGameplay = {
                 EntityKill(v)
             end
         end
+        
         local player_entities = {}
         for k, v in pairs(data.players) do
             if (v.entity ~= nil and EntityGetIsAlive(v.entity)) then
@@ -2663,17 +2707,19 @@ ArenaGameplay = {
             game_funcs.RenderAboveHeadMarkers(player_entities, 0, 27)
             ArenaGameplay.UpdateHealthbars(data)
         end
+        
+        local player_entity = nil
+        if(not data.spectator_mode)then
+            if (GameHasFlagRun("player_is_unlocked") and (not GameHasFlagRun("no_shooting"))) then
+                ArenaGameplay.DamageZoneHandler(lobby, data, true)
+            else
+                ArenaGameplay.DamageZoneHandler(lobby, data, false)
+            end
 
-        if (GameHasFlagRun("player_is_unlocked") and (not GameHasFlagRun("no_shooting"))) then
-            ArenaGameplay.DamageZoneHandler(lobby, data, true)
-        else
-            ArenaGameplay.DamageZoneHandler(lobby, data, false)
+            player_entity = player.Get()
         end
-
-        local player_entity = player.Get()
-
         if (steamutils.IsOwner(lobby)) then
-            if (player_entity ~= nil and (not data.players_loaded and ArenaGameplay.CheckAllPlayersLoaded(lobby, data))) then
+            if ((data.spectator_mode or player_entity ~= nil) and (not data.players_loaded and ArenaGameplay.CheckAllPlayersLoaded(lobby, data))) then
                 data.players_loaded = true
                 arena_log:print("All players loaded")
                 --message_handler.send.StartCountdown(lobby)
@@ -2688,54 +2734,35 @@ ArenaGameplay = {
         if(data.current_arena.update)then
             data.current_arena:update(lobby, data)
         end
-        --[[if(dev_log)then
-            dev_log:print("unlocked? " .. tostring(GameHasFlagRun("player_is_unlocked")))
-            dev_log:print("no_shooting? " .. tostring(GameHasFlagRun("no_shooting")))
-        end]]
 
-        --print("Arena update!")
-
-        --if(GameHasFlagRun("player_is_unlocked") and (not GameHasFlagRun("no_shooting")))then
+        if(not data.spectator_mode)then
             networking.send.character_position(lobby, data)
-        --end
 
-        if (GameHasFlagRun("took_damage")) then
-            GameRemoveFlagRun("took_damage")
-            --message_handler.send.Health(lobby)
-            networking.send.health_update(lobby, data, true)
-        end
-        if (data.players_loaded) then
-            --message_handler.send.WandUpdate(lobby, data)
-            --networking.send.item_update(lobby, data)
-
-            --[[if(GameGetFrameNum() % 60 == 0)then
-                networking.send.wand_update(lobby, data, nil, true)
-                networking.send.switch_item(lobby, data, nil, true)
-            end]]
-
-
-
-            --message_handler.send.SwitchItem(lobby, data)
-            --message_handler.send.Kick(lobby, data)
-            --message_handler.send.AnimationUpdate(lobby, data)
-            --networking.send.animation_update(lobby, data)
-            if(GameGetFrameNum() % 15 == 0)then
-                networking.send.player_data_update(lobby, data)
+            if (GameHasFlagRun("took_damage")) then
+                GameRemoveFlagRun("took_damage")
+                networking.send.health_update(lobby, data, true)
             end
-            --message_handler.send.AimUpdate(lobby)
-            --message_handler.send.SyncControls(lobby, data)
-            networking.send.input(lobby, data)
+            if (data.players_loaded) then
 
-            ArenaGameplay.CheckFiringBlock(lobby, data)
+                if(GameGetFrameNum() % 15 == 0)then
+                    networking.send.player_data_update(lobby, data)
+                end
+
+                networking.send.input(lobby, data)
+
+                --ArenaGameplay.CheckFiringBlock(lobby, data)
+            end
         end
     end,
     ValidatePlayers = function(lobby, data)
+        local to_remove = {}
         for k, v in pairs(data.players) do
             local playerid = ArenaGameplay.FindUser(lobby, k)
 
             if (playerid == nil) then
                 v:Clean(lobby)
                 data.players[k] = nil
+                table.insert(to_remove, k)
                 --local name = steamutils.getTranslatedPersonaName(playerid)
                 GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_player_left") ,tostring(lobby_member_names[k])))
 
@@ -2756,13 +2783,12 @@ ArenaGameplay = {
                 ]]
                 lobby_member_names[k] = nil
                 if (data.state == "arena") then
-                    if(not data.spectator_mode)then
-                        ArenaGameplay.WinnerCheck(lobby, data) 
-                    else
-                        spectator_handler.WinnerCheck(lobby, data)
-                    end
+                    ArenaGameplay.WinnerCheck(lobby, data) 
                 end
             end
+        end
+        for k, v in ipairs(to_remove) do
+            table.remove(to_remove, k)
         end
     end,
     GetAlivePlayers = function(lobby, data)
@@ -2801,11 +2827,16 @@ ArenaGameplay = {
                 end
             end
         end
+        if(data.spectator_mode)then
+            SpectatorMode.UpdateSpectatorEntity(lobby, data)
+        end
         SpectatorMode.SpectateUpdate(lobby, data)
 
         if(data.upgrade_system ~= nil and not IsPaused())then
             data.upgrade_system:draw()
         end
+
+
     
 
         local spells = EntityGetWithTag("card_action")
@@ -2864,6 +2895,14 @@ ArenaGameplay = {
         end]]
 
         if (data.state == "lobby") then
+            if(not data.spectator_mode)then
+                local pickup = GlobalsGetValue("hm_item_pickup", "")
+                if(pickup ~= "")then
+                    networking.send.pick_hm_entity(lobby, pickup)
+                    GlobalsSetValue("hm_item_pickup", "")
+                end
+            end
+
             networking.send.sync_wand_stats(lobby, data, true)
             ArenaGameplay.LobbyUpdate(lobby, data)
         elseif (data.state == "arena") then
@@ -2883,204 +2922,209 @@ ArenaGameplay = {
     LateUpdate = function(lobby, data)
 
         --data.controlled_physics_entities
-
-        local first_update = {}
-        local kicked_item_string = GlobalsGetValue("arena_items_controlled", "") or ""
-        for item in string.gmatch(kicked_item_string, "([^;]+)") do
-            local item_entity = tonumber(item) or 0
-            local has_control = false
-            for k, v in ipairs(data.controlled_physics_entities)do
-                if(v == item_entity)then
-                    has_control = true
-                    break
+        if(not data.spectator_mode)then
+            local first_update = {}
+            local kicked_item_string = GlobalsGetValue("arena_items_controlled", "") or ""
+            for item in string.gmatch(kicked_item_string, "([^;]+)") do
+                local item_entity = tonumber(item) or 0
+                local has_control = false
+                for k, v in ipairs(data.controlled_physics_entities)do
+                    if(v == item_entity)then
+                        has_control = true
+                        break
+                    end
                 end
-            end
-            if(EntityGetIsAlive(item_entity) and not first_update[item_entity] and not has_control)then
-                table.insert(data.controlled_physics_entities, item_entity)
-                first_update[item_entity] = true
-                local arena_entity_id = EntityHelper.GetVariable(item_entity, "arena_entity_id")
+                if(EntityGetIsAlive(item_entity) and not first_update[item_entity] and not has_control)then
+                    table.insert(data.controlled_physics_entities, item_entity)
+                    first_update[item_entity] = true
+                    local arena_entity_id = EntityHelper.GetVariable(item_entity, "arena_entity_id")
 
-                if(arena_entity_id ~= nil)then
-                    --GamePrint("We took controls of item: "..tostring(item_entity))
-                end
-            end
-        end
-        if(kicked_item_string ~= "")then
-            GlobalsSetValue("arena_items_controlled", "")
-        end
-
-        for i = #data.controlled_physics_entities, 1, -1 do
-            local entity = data.controlled_physics_entities[i]
-            if(not EntityGetIsAlive(entity))then
-                table.remove(data.controlled_physics_entities, i)
-            else
-                local arena_entity_id = EntityHelper.GetVariable(entity, "arena_entity_id")
-
-                if(arena_entity_id ~= nil)then
-                    local body_ids = PhysicsBodyIDGetFromEntity( entity )
-                    if(body_ids ~= nil and #body_ids > 0)then
-                        local body_id = body_ids[1]
-                        local x, y, r, vel_x, vel_y, vel_a =  PhysicsBodyIDGetTransform( body_id )
-                        
-                        networking.send.physics_update(lobby, arena_entity_id, gameplay_handler.round_to_decimal(x, 2), gameplay_handler.round_to_decimal(y, 2), gameplay_handler.round_to_decimal(r, 2), gameplay_handler.round_to_decimal(vel_x, 2), gameplay_handler.round_to_decimal(vel_y, 2), gameplay_handler.round_to_decimal(vel_a, 2), first_update[entity])
+                    if(arena_entity_id ~= nil)then
+                        --GamePrint("We took controls of item: "..tostring(item_entity))
                     end
                 end
             end
-        end
-
-        local fungal_shift_from = GlobalsGetValue("arena_fungal_shift_from", "")
-        local fungal_shift_to = GlobalsGetValue("arena_fungal_shift_to", "")
-        if(fungal_shift_from ~= "" and fungal_shift_to ~= "")then
-            local from_table = {}
-            local to = fungal_shift_to
-
-            for material in string.gmatch(fungal_shift_from, "([^;]+)") do
-                table.insert(from_table, material)
+            if(kicked_item_string ~= "")then
+                GlobalsSetValue("arena_items_controlled", "")
             end
 
-            networking.send.fungal_shift(lobby, from_table, to)
-        end
-        GlobalsSetValue("arena_fungal_shift_from", "")
-        GlobalsSetValue("arena_fungal_shift_to", "")
-
-        if (data.state == "arena") then
-            ArenaGameplay.KillCheck(lobby, data)
-
-            local player_entity = player.Get()
-
-            if(player_entity)then
-                local inventory_gui_comp = EntityGetFirstComponentIncludingDisabled(player_entity, "InventoryGuiComponent")
-
-                local inventory_open = ComponentGetValue2(inventory_gui_comp, "mActive")
-                if(inventory_open)then
-                    if(not data.client.inventory_was_open)then
-                        --GamePrint("inventory_was_opened")
-                    end
-                    data.client.inventory_was_open = true
+            for i = #data.controlled_physics_entities, 1, -1 do
+                local entity = data.controlled_physics_entities[i]
+                if(not EntityGetIsAlive(entity))then
+                    table.remove(data.controlled_physics_entities, i)
                 else
-                    if(data.client.inventory_was_open)then
-                        --GamePrint("inventory_was_closed")
-                        networking.send.item_update(lobby, data, nil, true, false)
+                    local arena_entity_id = EntityHelper.GetVariable(entity, "arena_entity_id")
+
+                    if(arena_entity_id ~= nil)then
+                        local body_ids = PhysicsBodyIDGetFromEntity( entity )
+                        if(body_ids ~= nil and #body_ids > 0)then
+                            local body_id = body_ids[1]
+                            local x, y, r, vel_x, vel_y, vel_a =  PhysicsBodyIDGetTransform( body_id )
+                            
+                            networking.send.physics_update(lobby, arena_entity_id, gameplay_handler.round_to_decimal(x, 2), gameplay_handler.round_to_decimal(y, 2), gameplay_handler.round_to_decimal(r, 2), gameplay_handler.round_to_decimal(vel_x, 2), gameplay_handler.round_to_decimal(vel_y, 2), gameplay_handler.round_to_decimal(vel_a, 2), first_update[entity])
+                        end
                     end
-                    data.client.inventory_was_open = false
                 end
             end
-            if(GlobalsGetValue("arena_item_pickup", "0") ~= "0")then
-                networking.send.item_picked_up(lobby, tonumber(GlobalsGetValue("arena_item_pickup", "0")))
-                GlobalsSetValue("arena_item_pickup", "0")
-            end
-            
-            --
-        --[[else
-            data.client.projectile_rng_stack = {}
-            data.client.projectiles_fired = 0]]
-        else
-            local player_entity = player.Get()
 
-            local inventory_gui_comp = EntityGetFirstComponentIncludingDisabled(player_entity, "InventoryGuiComponent")
+            local fungal_shift_from = GlobalsGetValue("arena_fungal_shift_from", "")
+            local fungal_shift_to = GlobalsGetValue("arena_fungal_shift_to", "")
+            if(fungal_shift_from ~= "" and fungal_shift_to ~= "")then
+                local from_table = {}
+                local to = fungal_shift_to
 
-            if(inventory_gui_comp ~= nil)then
-                
-
-                local inventory_open = ComponentGetValue2(inventory_gui_comp, "mActive")
-                if(inventory_open)then
-                    data.client.inventory_was_open = true
-                else
-                    if(data.client.inventory_was_open)then
-                        networking.send.item_update(lobby, data, nil, true, true)
-                    end
-                    data.client.inventory_was_open = false
+                for material in string.gmatch(fungal_shift_from, "([^;]+)") do
+                    table.insert(from_table, material)
                 end
 
-                if(GlobalsGetValue("arena_item_pickup", "0") ~= "0")then
-                    networking.send.item_picked_up(lobby, tonumber(GlobalsGetValue("arena_item_pickup", "0")), true)
-                    GlobalsSetValue("arena_item_pickup", "0")
-                end
+                networking.send.fungal_shift(lobby, from_table, to)
             end
-        end
+            GlobalsSetValue("arena_fungal_shift_from", "")
+            GlobalsSetValue("arena_fungal_shift_to", "")
 
-
-
-        local current_inventory_info = player.GetInventoryInfo()
-
-        no_switching = no_switching or 0
-
-        if(data.client.last_inventory == nil or player.DidInventoryChange(data.client.last_inventory, current_inventory_info))then
-           -- GamePrint("Inventory has changed!")
-            GameAddFlagRun("ForceUpdateInventory")
-            no_switching = 10
-            data.client.last_inventory = current_inventory_info
-        end
-
-        if(no_switching > 0)then
-            --GamePrint("No switching: "..tostring(no_switching))
-            no_switching = no_switching - 1
-        else
-            
-            if(GameHasFlagRun("ForceUpdateInventory"))then
-                --GamePrint("Updating inventory!")
-                GameRemoveFlagRun("ForceUpdateInventory")
-                if (data.state == "arena") then
-                    networking.send.item_update(lobby, data, nil, true, false)
-                else
-                    networking.send.item_update(lobby, data, nil, true, true)
-                end
-            end
+            --[[if(GameGetFrameNum() % 10 == 0)then
+                networking.send.item_update(lobby, data, nil, true, true)
+            end]]
 
             if (data.state == "arena") then
-                networking.send.switch_item(lobby, data)
+                ArenaGameplay.KillCheck(lobby, data)
+
+                local player_entity = player.Get()
+
+                if(player_entity)then
+                    local inventory_gui_comp = EntityGetFirstComponentIncludingDisabled(player_entity, "InventoryGuiComponent")
+
+                    local inventory_open = ComponentGetValue2(inventory_gui_comp, "mActive")
+                    if(inventory_open)then
+                        if(not data.client.inventory_was_open)then
+                            --GamePrint("inventory_was_opened")
+                        end
+                        data.client.inventory_was_open = true
+                    else
+                        if(data.client.inventory_was_open)then
+                            --GamePrint("inventory_was_closed")
+                            networking.send.item_update(lobby, data, nil, true, false)
+                        end
+                        data.client.inventory_was_open = false
+                    end
+                end
+                if(GlobalsGetValue("arena_item_pickup", "0") ~= "0")then
+                    networking.send.item_picked_up(lobby, tonumber(GlobalsGetValue("arena_item_pickup", "0")))
+                    GlobalsSetValue("arena_item_pickup", "0")
+                end
+                
+                --
+            --[[else
+                data.client.projectile_rng_stack = {}
+                data.client.projectiles_fired = 0]]
             else
-                networking.send.switch_item(lobby, data, nil, nil, true)
+                local player_entity = player.Get()
+
+                local inventory_gui_comp = EntityGetFirstComponentIncludingDisabled(player_entity, "InventoryGuiComponent")
+
+                if(inventory_gui_comp ~= nil)then
+                    
+
+                    local inventory_open = ComponentGetValue2(inventory_gui_comp, "mActive")
+                    if(inventory_open)then
+                        data.client.inventory_was_open = true
+                    else
+                        if(data.client.inventory_was_open)then
+                            networking.send.item_update(lobby, data, nil, true, true)
+                        end
+                        data.client.inventory_was_open = false
+                    end
+
+                    if(GlobalsGetValue("arena_item_pickup", "0") ~= "0")then
+                        networking.send.item_picked_up(lobby, tonumber(GlobalsGetValue("arena_item_pickup", "0")), true)
+                        GlobalsSetValue("arena_item_pickup", "0")
+                    end
+                end
             end
-        end
 
 
         
-        local current_player = player.Get()
+            local current_inventory_info = player.GetInventoryInfo()
 
-        local projectiles_fired = tonumber(GlobalsGetValue( "wand_fire_count", "0" ))
+            no_switching = no_switching or 0
 
-        if (projectiles_fired > 0--[[data.client.projectiles_fired ~= nil and data.client.projectiles_fired > 0]]) then
-            local special_seed = tonumber(GlobalsGetValue("player_rng", "0"))
-            --local cast_state = GlobalsGetValue("player_cast_state") or nil
+            if(data.client.last_inventory == nil or player.DidInventoryChange(data.client.last_inventory, current_inventory_info))then
+            -- GamePrint("Inventory has changed!")
+                GameAddFlagRun("ForceUpdateInventory")
+                no_switching = 10
+                data.client.last_inventory = current_inventory_info
+            end
 
-            --print(tostring(cast_state))
-
-            --GamePrint("Sending special seed:"..tostring(special_seed))
-            --message_handler.send.WandFired(lobby, data.client.projectile_rng_stack, special_seed, cast_state)
-            if(data.state == "arena")then
-                networking.send.fire_wand(lobby, data.client.projectile_rng_stack, special_seed)
+            if(no_switching > 0)then
+                --GamePrint("No switching: "..tostring(no_switching))
+                no_switching = no_switching - 1
             else
-                networking.send.fire_wand(lobby, data.client.projectile_rng_stack, special_seed, true)
+                
+                if(GameHasFlagRun("ForceUpdateInventory"))then
+                    --GamePrint("Updating inventory!")
+                    GameRemoveFlagRun("ForceUpdateInventory")
+                    if (data.state == "arena") then
+                        networking.send.item_update(lobby, data, nil, true, false)
+                    else
+                        networking.send.item_update(lobby, data, nil, true, true)
+                    end
+                end
+
+                if (data.state == "arena") then
+                    networking.send.switch_item(lobby, data)
+                else
+                    networking.send.switch_item(lobby, data, nil, nil, true)
+                end
             end
+
+
+            
+            local current_player = player.Get()
+
+            local projectiles_fired = tonumber(GlobalsGetValue( "wand_fire_count", "0" ))
+
+            if (projectiles_fired > 0--[[data.client.projectiles_fired ~= nil and data.client.projectiles_fired > 0]]) then
+                local special_seed = tonumber(GlobalsGetValue("player_rng", "0"))
+                --local cast_state = GlobalsGetValue("player_cast_state") or nil
+
+                --print(tostring(cast_state))
+
+                --GamePrint("Sending special seed:"..tostring(special_seed))
+                --message_handler.send.WandFired(lobby, data.client.projectile_rng_stack, special_seed, cast_state)
+                if(data.state == "arena")then
+                    networking.send.fire_wand(lobby, data.client.projectile_rng_stack, special_seed)
+                else
+                    networking.send.fire_wand(lobby, data.client.projectile_rng_stack, special_seed, true)
+                end
+                GlobalsSetValue("wand_fire_count", "0")
+                data.client.projectile_rng_stack = {}
+            end
+
+
             GlobalsSetValue("wand_fire_count", "0")
-            data.client.projectile_rng_stack = {}
-        end
 
 
-        GlobalsSetValue("wand_fire_count", "0")
-
-
-        if ((not GameHasFlagRun("player_unloaded")) and current_player == nil and not data.preparing) then
-            ArenaGameplay.LoadPlayer(lobby, data)
-            arena_log:print("Player is missing, spawning player.")
-        else
-            if (GameGetFrameNum() % 40 == 0 and GameHasFlagRun("can_save_player")) then
-                ArenaGameplay.SavePlayerData(lobby, data)
+            if ((not GameHasFlagRun("player_unloaded")) and current_player == nil and not data.preparing) then
+                ArenaGameplay.LoadPlayer(lobby, data)
+                arena_log:print("Player is missing, spawning player.")
+            else
+                if (GameGetFrameNum() % 40 == 0 and GameHasFlagRun("can_save_player")) then
+                    ArenaGameplay.SavePlayerData(lobby, data)
+                end
             end
-        end
 
 
-        if (data.current_player ~= current_player) then
-            data.current_player = current_player
-            if (current_player ~= nil) then
-                np.RegisterPlayerEntityId(current_player)
+            if (data.current_player ~= current_player) then
+                data.current_player = current_player
+                if (current_player ~= nil) then
+                    np.RegisterPlayerEntityId(current_player)
+                end
             end
-        end
 
-        if (GameHasFlagRun("in_hm") and current_player) then
-            player.Move(0, 0)
-            GameRemoveFlagRun("in_hm")
+            if (GameHasFlagRun("in_hm") and current_player) then
+                player.Move(0, 0)
+                GameRemoveFlagRun("in_hm")
+            end
         end
 
         if (GameGetFrameNum() % 5 == 0) then
@@ -3090,7 +3134,7 @@ ArenaGameplay = {
             end
         end
 
-        for k, v in pairs(data.players) do
+        --[[for k, v in pairs(data.players) do
             if (v.entity ~= nil and EntityGetIsAlive(v.entity)) then
                 local characterData = EntityGetFirstComponentIncludingDisabled(v.entity, "CharacterDataComponent")
 
@@ -3099,7 +3143,7 @@ ArenaGameplay = {
                 end
 
             end
-        end
+        end]]
 
         --[[
         for k, v in pairs(data.players) do
@@ -3168,7 +3212,7 @@ ArenaGameplay = {
 
         local current_player = player.Get()
 
-        if ((not GameHasFlagRun("player_unloaded")) and current_player ~= nil and EntityGetIsAlive(current_player)) then
+        if (data.spectator_mode or ((not GameHasFlagRun("player_unloaded")) and current_player ~= nil and EntityGetIsAlive(current_player))) then
             --print("Running player function queue")
             -- run playerRunQueue
             for i = 1, #playerRunQueue do

@@ -6,6 +6,7 @@ mp_helpers = dofile("mods/evaisa.mp/files/scripts/helpers.lua")
 local steamutils = dofile_once("mods/evaisa.mp/lib/steamutils.lua")
 game_funcs = dofile("mods/evaisa.mp/files/scripts/game_functions.lua")
 EZWand = dofile("mods/evaisa.arena/files/scripts/utilities/EZWand.lua")
+smallfolk = dofile("mods/evaisa.arena/lib/smallfolk.lua")
 
 wait = dofile("mods/evaisa.arena/files/scripts/utilities/wait.lua")
 local inspect = dofile("mods/evaisa.arena/lib/inspect.lua")
@@ -332,17 +333,17 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 143,
+    version = 145,
     required_online_version = 341,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
     end,
     version_flavor_text = "$arena_dev",
     custom_lobby_string = function(lobby)
-        return string.format(GameTextGetTranslatedOrNot("$arena_lobby_string"), tostring(steam.matchmaking.getLobbyData(lobby, "holyMountainCount")) or "0")
+        return string.format(GameTextGetTranslatedOrNot("$arena_lobby_string"), tostring(tonumber(steam.matchmaking.getLobbyData(lobby, "holyMountainCount")) or "0") + 1)
     end,
-    spectator_unfinished_warning = true,
-    disable_spectator_system = not ModSettingGet("evaisa.arena.spectator_unstable"),
+    spectator_unfinished_warning = false,
+    enable_spectator = true,--not ModSettingGet("evaisa.arena.spectator_unstable"),
     enable_presets = true,
     binding_register = function(bindings)
         print("Registering bindings for Noita Arena")
@@ -1707,7 +1708,7 @@ ArenaMode = {
             steam.matchmaking.setLobbyData(lobby, "unique_game_id", tostring(unique_game_id))
         end
 
-        if (player_entity == nil) then
+        if (not data.spectator_mode and player_entity == nil) then
             gameplay_handler.LoadPlayer(lobby, data)
         end
 
@@ -1725,6 +1726,7 @@ ArenaMode = {
 
         --message_handler.send.Handshake(lobby)
     end,
+    --[[
     spectate = function(lobby, was_in_progress)
         arena_log:print("Spectate called!!!")
 
@@ -1797,6 +1799,7 @@ ArenaMode = {
         playermenu = playerinfo_menu:New()
 
     end,
+    ]]
     update = function(lobby)
 
         if(Parallax)then
@@ -1870,11 +1873,9 @@ ArenaMode = {
         GlobalsSetValue("update_seed", update_seed)
 
         if (data ~= nil) then
-            if(not data.spectator_mode)then
-                gameplay_handler.Update(lobby, data)
-            else
-                spectator_handler.Update(lobby, data)
-            end
+
+            gameplay_handler.Update(lobby, data)
+   
 
             if (not IsPaused()) then
                 if (playermenu ~= nil) then
@@ -1930,11 +1931,8 @@ ArenaMode = {
             return
         end
 
-        if(not data.spectator_mode)then
-            gameplay_handler.LateUpdate(lobby, data)
-        else
-            spectator_handler.LateUpdate(lobby, data)
-        end
+        gameplay_handler.LateUpdate(lobby, data)
+
 
         
 
@@ -1979,36 +1977,22 @@ ArenaMode = {
             data:DefinePlayer(lobby, user)
         end
 
+        local simulated_latency = math.floor(ModSettingGet("evaisa.arena.simulated_latency") or 0)
+        if (data ~= nil) then
+            if (simulated_latency > 0) then
+                delay.new(simulated_latency, function()
+                    if (networking.receive[event]) then
+                        networking.receive[event](lobby, message, user, data)
+                    end
+                end)
+            else
+                if (networking.receive[event]) then
+                    networking.receive[event](lobby, message, user, data)
+                end
+            end
+        end
         --print("Received event: " .. event)
 
-        if (data ~= nil) then
-            --[[if(dev_log)then
-                dev_log:print("Received event: " .. event)
-            end]]
-
-            
-
-            --if (not data.spectator_mode) then
-                if (networking.receive[event]) then
-                    --[[if(event == "death")then
-                        print("Received death event [regular]")
-                    end]]
-
-                    --print("wawa: " .. event)
-
-                    networking.receive[event](lobby, message, user, data)
-                   -- print("Received event [regular networking]: " .. event)
-                end
-           --[[ else
-                if (spectator_networking.receive[event]) then
-                    if(event == "death")then
-                        print("Received death event [spectator]")
-                    end
-                    spectator_networking.receive[event](lobby, message, user, data)
-                  --  print("Received event [spectator networking]: " .. event)
-                end
-            end]]
-        end
     end,
     on_projectile_fired = function(lobby, shooter_id, projectile_id, rng, position_x, position_y, target_x, target_y,
                                    send_message, unknown1, multicast_index, unknown3)

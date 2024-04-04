@@ -1,4 +1,4 @@
-<Entity tags="free_camera_light" serialize="0">
+<Entity tags="free_camera_light,spectator_no_clear" serialize="0">
   
   <LightComponent 
       r="255"

@@ -465,83 +465,9 @@ SpectatorMode = {
                 end
             end
 
-            --[[
-            local pressed, shift_held = hack_update_keys()
-
-            for _, key in ipairs(pressed) do
-                if(data.selected_player ~= nil)then
-                    if(key == "w" or key == "a" or key == "s" or key == "d")then
-
-                        data.selected_player = nil
-
-                    elseif(key == "q")then
-
-
-
-                    elseif(key == "e")then
-
-                    end
-                end
-            end
-            ]]
         end
     end,
-    WinnerCheck = function(lobby, data)
-        --[[
-        if(true)then
-            return
-        end
-        ]]
-
-        if(GameHasFlagRun("round_finished"))then
-            return
-        end
-
-        print("WinnerCheck (spectator)")
-
-        local alive = 0
-        local winner = nil
-        for k, v in pairs(data.players) do
-            if (v.alive) then
-                print("Player " .. steamutils.getTranslatedPersonaName(v.id) .. " is alive")
-                alive = alive + 1
-                winner = v.id
-            end
-        end
-        if (alive == 1) then
-            GamePrintImportant(string.format(GameTextGetTranslatedOrNot("$arena_winner_text"), steamutils.getTranslatedPersonaName(winner)), GameTextGetTranslatedOrNot("$arena_round_end_text"))
-
-            -- if we are owner, add win to tally
-            if (steamutils.IsOwner(lobby)) then
-                local winner_key = tostring(winner) .. "_wins"
-                local current_wins = tonumber(tonumber(steam.matchmaking.getLobbyData(lobby, winner_key)) or "0")
-                steam.matchmaking.setLobbyData(lobby, winner_key, tostring(current_wins + 1))
-            end
-            
-            GameAddFlagRun("round_finished")
-
-            delay.new(5 * 60, function()
-                gameplay_handler.LoadLobby(lobby, data, false)
-            end, function(frames)
-                if (frames % 60 == 0) then
-                    GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_returning_to_lobby_text"), tostring(math.floor(frames / 60))))
-                end
-            end)
-
-        elseif (alive == 0) then
-            GamePrintImportant(GameTextGetTranslatedOrNot("$arena_tie_text"), GameTextGetTranslatedOrNot("$arena_round_end_text"))
-
-            GameAddFlagRun("round_finished")
-
-            delay.new(5 * 60, function()
-                gameplay_handler.LoadLobby(lobby, data, false)
-            end, function(frames)
-                if (frames % 60 == 0) then
-                    GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_returning_to_lobby_text"), tostring(math.floor(frames / 60))))
-                end
-            end)
-        end
-    end,
+    --[[
     ArenaUpdate = function(lobby, data)
         if (data.preparing) then
             local spawn_points = EntityGetWithTag("spawn_point") or {}
@@ -595,7 +521,7 @@ SpectatorMode = {
         if (data.countdown ~= nil) then
             data.countdown:update()
         end
-    end,
+    end,]]
     SpawnSpectatedPlayer = function(lobby, data)
         if(data.lobby_spectated_player ~= nil)then
             if (data.lobby_spectated_player ~= steam.user.getSteamID() and data.players[tostring(data.lobby_spectated_player)].entity) then
@@ -606,10 +532,49 @@ SpectatorMode = {
                 for k, v in ipairs(EntityGetWithTag("client") or {})do
                     EntityKill(v)
                 end
+
+     
+                local entities = EntityGetInRadius(0, 0, 1000000)
+
+                local illegal_clear_tags = {
+                    "spectator_no_clear",
+                    "workshop_spell_visualizer",
+                    "workshop_aabb",
+                    "world_state",
+                    "coop_respawn"
+                }
+
+                for k, v in ipairs(entities)do
+                    local valid = true
+                    for k2, v2 in ipairs(illegal_clear_tags)do
+                        if(EntityHasTag(v, v2))then
+                            valid = false
+                            break
+                        end
+                    end
+
+                    if(valid and v == EntityGetRootEntity(v))then
+                        local comps = EntityGetAllComponents(v)
+
+                        for k2, v2 in ipairs(comps)do
+                            EntitySetComponentIsEnabled(v, v2, false)
+                        end
+
+                        local material_storage = EntityGetFirstComponentIncludingDisabled(v, "MaterialInventoryComponent")
+                        if(material_storage ~= nil)then
+                            EntityRemoveComponent(v, material_storage)
+                        end
+                        EntityKill(v)
+                    end
+                end
+                
+
                 --GamePrint("Loading player " .. tostring(member.id))
                 data.selected_player = ArenaGameplay.SpawnClientPlayer(lobby, data.lobby_spectated_player, data, 0, 0)
                 networking.send.request_item_update(lobby, data.lobby_spectated_player)
                 networking.send.request_spectate_data(lobby, data.lobby_spectated_player)
+                networking.send.request_sync_hm(lobby, data.lobby_spectated_player)
+                networking.send.request_second_row(lobby, data.lobby_spectated_player)
             end
         end
     end,
@@ -772,7 +737,7 @@ SpectatorMode = {
             end
         end
     end,
-    LobbyUpdate = function(lobby, data)
+    --[[LobbyUpdate = function(lobby, data)
         SpectatorMode.SpectatorText(lobby, data)
 
         SpectatorMode.LobbySpectateUpdate(lobby, data)
@@ -797,7 +762,7 @@ SpectatorMode = {
             ArenaGameplay.ValidatePlayers(lobby, data)
         end
         ArenaGameplay.CheckFiringBlock(lobby, data)
-    end,
+    end,]]
     LateUpdate = function(lobby, data)
 
     end,

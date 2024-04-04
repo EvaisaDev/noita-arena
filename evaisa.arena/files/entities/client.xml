@@ -58,7 +58,7 @@
   </Entity>
 
   <CharacterDataComponent 
-    platforming_type="0"
+    platforming_type="2"
     check_collision_max_size_x="4" 
     check_collision_max_size_y="4" 
     climb_over_y="4" 

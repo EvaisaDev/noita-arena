@@ -1,4 +1,4 @@
-<Entity>
+<Entity tags="spectator_no_clear">
     <SpriteComponent
         is_text_sprite = "1"
         image_file = "mods/evaisa.mp/files/fonts/noto_sans_regular_20.xml"

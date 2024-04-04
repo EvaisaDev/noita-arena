@@ -8,6 +8,10 @@ if(players == nil)then
 end
 local player = players[1]
 
+if(player == nil)then
+    return
+end
+
 local max_distance = 50
 local x, y = EntityGetTransform(entity)
 local px, py = EntityGetTransform(player)
