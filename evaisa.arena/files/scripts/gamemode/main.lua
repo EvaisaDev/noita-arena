@@ -19,7 +19,7 @@ last_player_entity = nil
 local player = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/player.lua")
 local entity = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/entity.lua")
 
-font_helper = dofile("mods/evaisa.arena/lib/font_helper.lua")
+--font_helper = dofile("mods/evaisa.arena/lib/font_helper.lua")
 --message_handler = dofile("mods/evaisa.arena/files/scripts/gamemode/message_handler_stub.lua")
 networking = dofile("mods/evaisa.arena/files/scripts/gamemode/networking.lua")
 --spectator_networking = dofile("mods/evaisa.arena/files/scripts/gamemode/spectator_networking.lua")
@@ -333,8 +333,8 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 145,
-    required_online_version = 341,
+    version = 147,
+    required_online_version = 343,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
     end,
@@ -706,6 +706,13 @@ ArenaMode = {
             id = "dunce",
             name = "$arena_cosmetics_dunce_hat_name",
             description = "$arena_cosmetics_dunce_hat_description",
+            type = "bool",
+            default = false
+        }, 
+        {
+            id = "refresh",
+            name = "$arena_settings_refresh_name",
+            description = "$arena_settings_refresh_description",
             type = "bool",
             default = false
         }, 
@@ -1502,6 +1509,16 @@ ArenaMode = {
             GameAddFlagRun("dunce")
         else
             GameRemoveFlagRun("dunce")
+        end
+
+        local refresh = steam.matchmaking.getLobbyData(lobby, "setting_refresh")
+        if (refresh == nil) then
+            refresh = "false"
+        end
+        if(refresh == "true")then
+            GameAddFlagRun("refresh_all_charges")
+        else
+            GameRemoveFlagRun("refresh_all_charges")
         end
 
         arena_log:print("Lobby data refreshed")

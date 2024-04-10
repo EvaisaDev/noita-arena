@@ -1,164 +1,4 @@
 SpectatorMode = {
-    LoadLobby = function(lobby, data, show_message)
-
-        print("Loading lobby through spectator system.")
-
-        ArenaGameplay.GracefulReset(lobby, data)
-
-        data.arena_spectator = false
-        data.selected_player = nil
-        data.selected_player_name = nil
-        data.lobby_spectated_player = nil
-        data.spectator_lobby_loaded = false
-
-        GameRemoveFlagRun("countdown_completed")
-        GameRemoveFlagRun("round_finished")
-        
-        show_message = show_message or false
-
-        np.ComponentUpdatesSetEnabled("CellEaterSystem", false)
-        np.ComponentUpdatesSetEnabled("LooseGroundSystem", false)
-        np.ComponentUpdatesSetEnabled("BlackHoleSystem", false)
-        np.ComponentUpdatesSetEnabled("MagicConvertMaterialSystem", false)
-
-        ArenaGameplay.ClearWorld()
-
-        -- clean other player's data
-        ArenaGameplay.CleanMembers(lobby, data)
-
-        -- manage flags
-        GameRemoveFlagRun("player_ready")
-        GameRemoveFlagRun("ready_check")
-        GameRemoveFlagRun("player_unloaded")
-
-        -- destroy active tweens
-        data.tweens = {}
-
-        -- clean local data
-
-        --ArenaGameplay.SetReady(lobby, data, false, true)
-
-        data.client.alive = true
-        data.client.previous_wand = nil
-        data.client.previous_anim = nil
-        data.projectile_seeds = {}
-
-        ArenaGameplay.ResetDamageZone(lobby, data)
-        --data.client.projectile_homing = {}
-
-        -- set state
-        data.state = "lobby"
-
-        --[[player.Immortal(true)
-
-        RunWhenPlayerExists(function()
-            -- clean and unlock player entity
-            player.Clean(first_entry)
-            player.Unlock(data)
-
-            GameRemoveFlagRun("player_is_unlocked")
-
-            -- move player to correct position
-            player.Move(0, 0)
-        end)
-        ]]
-
-        --local rounds = ArenaGameplay.GetNumRounds()
-
-        -- Give gold
-        local rounds_limited = ArenaGameplay.GetRoundTier(lobby)
-        local extra_gold = 400 + (70 * (rounds_limited * rounds_limited))
-
-        if (steamutils.IsOwner(lobby)) then
-            -- get the gold count from the lobby
-            local gold = tonumber(steam.matchmaking.getLobbyData(lobby, "total_gold")) or 0
-            -- add the new gold
-            gold = gold + extra_gold
-            -- set the new gold count
-            steam.matchmaking.setLobbyData(lobby, "total_gold", tostring(gold))
-        end
-
-        if (not data.rejoined) then
-            ArenaGameplay.AddRound()
-        end
-
-        networking.send.request_perk_update(lobby)
-
-        data.spectator_entity = EntityLoad("mods/evaisa.arena/files/entities/spectator_entity.xml", 0, 0)
-        np.RegisterPlayerEntityId(data.spectator_entity)
-
-        if(GameHasFlagRun("item_shop"))then
-            BiomeMapLoad_KeepPlayer("mods/evaisa.arena/files/scripts/world/map_lobby_spectator.lua",
-            "mods/evaisa.arena/files/biome/holymountain_itemshop_scenes.xml")
-        else
-            BiomeMapLoad_KeepPlayer("mods/evaisa.arena/files/scripts/world/map_lobby_spectator.lua",
-            "mods/evaisa.arena/files/biome/holymountain_scenes.xml")
-            
-        end
-
-        -- clean other player's data again because it might have failed for some cursed reason
-        ArenaGameplay.CleanMembers(lobby, data)
-
-        -- set ready counter
-        ArenaGameplay.ReadyCounter(lobby, data)
-
-        GameSetCameraFree(true)
-
-    end,
-    LoadArena = function(lobby, data, show_message)
-        show_message = show_message or false
-
-        np.ComponentUpdatesSetEnabled("CellEaterSystem", true)
-        np.ComponentUpdatesSetEnabled("LooseGroundSystem", true)
-        np.ComponentUpdatesSetEnabled("BlackHoleSystem", true)
-
-        ArenaGameplay.ClearWorld()
-
-        playermenu:Close()
-
-        --[[
-        local current_player = player.Get()
-
-        if(current_player == nil)then
-            ArenaGameplay.LoadPlayer(lobby, data)
-        end
-        ]]
-        -- manage flags
-        GameRemoveFlagRun("ready_check")
-        GameRemoveFlagRun("first_death")
-        GameRemoveFlagRun("skip_perks")
-        GameRemoveFlagRun("in_hm")
-        GameRemoveFlagRun("arena_winner")
-        GameRemoveFlagRun("arena_loser")
-        GameRemoveFlagRun("arena_first_death")
-
-        data.state = "arena"
-        data.preparing = true
-        data.players_loaded = false
-        data.deaths = 0
-        data.lobby_loaded = false
-        data.client.player_loaded_from_data = false
-        data.arena_spectator = true
-
-        local members = steamutils.getLobbyMembers(lobby)
-
-        for _, member in pairs(members) do
-            if (member.id ~= steam.user.getSteamID() and data.players[tostring(member.id)] ~= nil) then
-                data.players[tostring(member.id)].alive = true
-            end
-        end
-
-        ArenaGameplay.PreventFiring()
-
-        -- load map
-        local arena = arena_list[data.random.range(1, #arena_list)]
-
-        data.current_arena = arena
-
-        BiomeMapLoad_KeepPlayer(arena.biome_map, arena.pixel_scenes)
-
-
-    end,
     UpdateSpectatorEntity = function(lobby, data)
         if(data.spectator_entity == nil or not EntityGetIsAlive(data.spectator_entity))then
             data.spectator_entity = EntityLoad("mods/evaisa.arena/files/entities/spectator_entity.xml", 0, 0)
@@ -173,17 +13,16 @@ SpectatorMode = {
     end,
     SpectatorText = function(lobby, data)
 
-        if (data.spectator_gui_entity == nil or not EntityGetIsAlive(data.spectator_gui_entity)) then
+        --[[if (data.spectator_gui_entity == nil or not EntityGetIsAlive(data.spectator_gui_entity)) then
             data.spectator_gui_entity = EntityLoad("mods/evaisa.arena/files/entities/misc/spectator_text.xml")
 
             EntitySetTransform(data.spectator_gui_entity, 0, 0, 0, 0.25, 0.25)
-        end
+        end]]
 
         if (data.spectator_text_gui == nil) then
             data.spectator_text_gui = GuiCreate()
         end
 
-        local screen_text_width, screen_text_height = GuiGetScreenDimensions(data.spectator_text_gui)
 
         local text = GameTextGetTranslatedOrNot("$arena_spectating_text")
 
@@ -203,23 +42,20 @@ SpectatorMode = {
 
         --print(text)
 
-        local font_width, font_height = font.font:GetTextDimensions(text, font.size, font.size)
+        local font_width, font_height = GuiGetTextDimensions(data.spectator_text_gui, text, font.size, nil, font.font, not font.smooth)
 
-        local text_sprite_component = EntityGetFirstComponentIncludingDisabled(data.spectator_gui_entity,
-            "SpriteComponent")
-
-        ComponentSetValue2(text_sprite_component, "text", text)
-        ComponentSetValue2(text_sprite_component, "transform_offset", screen_text_width / 2 - font_width / 2, font.size)
+        GuiStartFrame(data.spectator_text_gui)
         
-        ComponentSetValue2(text_sprite_component, "image_file", font.font.font)
-        ComponentSetValue2(text_sprite_component, "special_scale_x", font.size)
-        ComponentSetValue2(text_sprite_component, "special_scale_y", font.size)
-        ComponentSetValue2(text_sprite_component, "smooth_filtering", font.smooth or false)
+        local screen_text_width, screen_text_height = GuiGetScreenDimensions(data.spectator_text_gui)
 
-        EntityRefreshSprite(data.spectator_gui_entity, text_sprite_component)
+        local text_x = screen_text_width / 2 - font_width / 2
+        local text_y = 2
+
+        GuiText(data.spectator_text_gui, text_x, text_y, text, font.size, font.font, not font.smooth)
+
     end,
     SpectateUpdate = function(lobby, data)
-        if (data.arena_spectator) then
+        if (data.is_spectating) then
 
             SpectatorMode.SpectatorText(lobby, data)
 
@@ -350,6 +186,7 @@ SpectatorMode = {
                         data.selected_player_name = "Unknown Player"
                         if (player ~= nil) then
                             data.selected_player_name = steamutils.getTranslatedPersonaName(player)
+                            data.spectator_active_player = player
                         end
                     end
                 end
@@ -380,6 +217,7 @@ SpectatorMode = {
                         data.selected_player_name = "Unknown Player"
                         if (player ~= nil) then
                             data.selected_player_name = steamutils.getTranslatedPersonaName(player)
+                            data.spectator_active_player = player
                         end
                     end
                 end
@@ -457,6 +295,7 @@ SpectatorMode = {
                                 data.selected_player_name = "Unknown Player"
                                 if (player ~= nil) then
                                     data.selected_player_name = steamutils.getTranslatedPersonaName(player)
+                                    data.spectator_active_player = player
                                 end
                             end
                         end
@@ -493,7 +332,7 @@ SpectatorMode = {
                 if (spawn_loaded and in_bounds) then
                     data.preparing = false
 
-                    data.arena_spectator = true
+                    data.is_spectating = true
                     ArenaGameplay.LoadClientPlayers(lobby, data)
                     --GamePrint("Spawned!!")
 
@@ -529,45 +368,7 @@ SpectatorMode = {
             end
 
             if (data.lobby_spectated_player ~= steam.user.getSteamID() and data.players[tostring(data.lobby_spectated_player)].entity == nil) then
-                for k, v in ipairs(EntityGetWithTag("client") or {})do
-                    EntityKill(v)
-                end
 
-     
-                local entities = EntityGetInRadius(0, 0, 1000000)
-
-                local illegal_clear_tags = {
-                    "spectator_no_clear",
-                    "workshop_spell_visualizer",
-                    "workshop_aabb",
-                    "world_state",
-                    "coop_respawn"
-                }
-
-                for k, v in ipairs(entities)do
-                    local valid = true
-                    for k2, v2 in ipairs(illegal_clear_tags)do
-                        if(EntityHasTag(v, v2))then
-                            valid = false
-                            break
-                        end
-                    end
-
-                    if(valid and v == EntityGetRootEntity(v))then
-                        local comps = EntityGetAllComponents(v)
-
-                        for k2, v2 in ipairs(comps)do
-                            EntitySetComponentIsEnabled(v, v2, false)
-                        end
-
-                        local material_storage = EntityGetFirstComponentIncludingDisabled(v, "MaterialInventoryComponent")
-                        if(material_storage ~= nil)then
-                            EntityRemoveComponent(v, material_storage)
-                        end
-                        EntityKill(v)
-                    end
-                end
-                
 
                 --GamePrint("Loading player " .. tostring(member.id))
                 data.selected_player = ArenaGameplay.SpawnClientPlayer(lobby, data.lobby_spectated_player, data, 0, 0)
@@ -575,6 +376,7 @@ SpectatorMode = {
                 networking.send.request_spectate_data(lobby, data.lobby_spectated_player)
                 networking.send.request_sync_hm(lobby, data.lobby_spectated_player)
                 networking.send.request_second_row(lobby, data.lobby_spectated_player)
+                networking.send.request_skin(lobby, data.lobby_spectated_player)
             end
         end
     end,
@@ -586,7 +388,12 @@ SpectatorMode = {
             data.lobby_spectated_player = members[1].id
             data.selected_player_name = steamutils.getTranslatedPersonaName(data.lobby_spectated_player)
             data.spectator_lobby_loaded = false
-            
+        end
+
+        for k, v in pairs(data.players)do
+            if(k ~= tostring(data.lobby_spectated_player))then
+                v:Clean(lobby)
+            end
         end
 
         local camera_x, camera_y = GameGetCameraPos()
@@ -609,11 +416,13 @@ SpectatorMode = {
                     data.selected_player = nil
                     data.selected_player_name = nil
                     data.lobby_spectated_player = nil
+                    data.spectator_active_player = nil
                 end
             else
                 data.selected_player = nil
                 data.selected_player_name = nil
                 data.lobby_spectated_player = nil
+                data.spectator_active_player = nil
             end
         end
 
@@ -688,6 +497,7 @@ SpectatorMode = {
                     data.selected_player_name = 
                 ]]
                 local lobby_spectated_player = data.lobby_spectated_player
+                data.last_hm_sync = nil
 
                 if(lobby_spectated_player ~= nil and members ~= nil and #members > 0)then
                     local index = 1
@@ -704,7 +514,47 @@ SpectatorMode = {
                         index = #members
                     end
 
+                    for k, v in ipairs(EntityGetWithTag("client") or {})do
+                        EntityKill(v)
+                    end
+    
+         
+                    local entities = EntityGetInRadius(0, 0, 1000000)
+    
+                    local illegal_clear_tags = {
+                        "spectator_no_clear",
+                        "workshop_spell_visualizer",
+                        "workshop_aabb",
+                        "world_state",
+                        "coop_respawn"
+                    }
+    
+                    for k, v in ipairs(entities)do
+                        local valid = true
+                        for k2, v2 in ipairs(illegal_clear_tags)do
+                            if(EntityHasTag(v, v2))then
+                                valid = false
+                                break
+                            end
+                        end
+    
+                        if(valid and v == EntityGetRootEntity(v))then
+                            local comps = EntityGetAllComponents(v)
+    
+                            for k2, v2 in ipairs(comps)do
+                                EntitySetComponentIsEnabled(v, v2, false)
+                            end
+    
+                            local material_storage = EntityGetFirstComponentIncludingDisabled(v, "MaterialInventoryComponent")
+                            if(material_storage ~= nil)then
+                                EntityRemoveComponent(v, material_storage)
+                            end
+                            EntityKill(v)
+                        end
+                    end
+
                     data.lobby_spectated_player = members[index].id
+                    data.spectator_active_player = members[index].id
                     data.selected_player_name = steamutils.getTranslatedPersonaName(data.lobby_spectated_player)
                     data.spectator_lobby_loaded = false
                     data.selected_player = nil
@@ -713,6 +563,8 @@ SpectatorMode = {
 
             if (keys_pressed.e or right_bumper) then
                 local lobby_spectated_player = data.lobby_spectated_player
+
+                data.last_hm_sync = nil
 
                 if(lobby_spectated_player ~= nil and members ~= nil and #members > 0)then
                     local index = 1
@@ -729,7 +581,46 @@ SpectatorMode = {
                         index = 1
                     end
 
+                    for k, v in ipairs(EntityGetWithTag("client") or {})do
+                        EntityKill(v)
+                    end
+
+                    local entities = EntityGetInRadius(0, 0, 1000000)
+    
+                    local illegal_clear_tags = {
+                        "spectator_no_clear",
+                        "workshop_spell_visualizer",
+                        "workshop_aabb",
+                        "world_state",
+                        "coop_respawn"
+                    }
+    
+                    for k, v in ipairs(entities)do
+                        local valid = true
+                        for k2, v2 in ipairs(illegal_clear_tags)do
+                            if(EntityHasTag(v, v2))then
+                                valid = false
+                                break
+                            end
+                        end
+    
+                        if(valid and v == EntityGetRootEntity(v))then
+                            local comps = EntityGetAllComponents(v)
+    
+                            for k2, v2 in ipairs(comps)do
+                                EntitySetComponentIsEnabled(v, v2, false)
+                            end
+    
+                            local material_storage = EntityGetFirstComponentIncludingDisabled(v, "MaterialInventoryComponent")
+                            if(material_storage ~= nil)then
+                                EntityRemoveComponent(v, material_storage)
+                            end
+                            EntityKill(v)
+                        end
+                    end
+
                     data.lobby_spectated_player = members[index].id
+                    data.spectator_active_player = members[index].id
                     data.selected_player_name = steamutils.getTranslatedPersonaName(data.lobby_spectated_player)
                     data.spectator_lobby_loaded = false
                     data.selected_player = nil

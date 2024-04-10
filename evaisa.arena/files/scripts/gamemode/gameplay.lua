@@ -387,9 +387,9 @@ ArenaGameplay = {
                 data.spectator_text_gui = nil
             end
 
-            if (data.spectator_gui_entity and EntityGetIsAlive(data.spectator_gui_entity)) then
+            --[[if (data.spectator_gui_entity and EntityGetIsAlive(data.spectator_gui_entity)) then
                 EntityKill(data.spectator_gui_entity)
-            end
+            end]]
         end
         if(data.upgrade_system)then
             data.upgrade_system:clean()
@@ -1161,8 +1161,9 @@ ArenaGameplay = {
 
             GameSetCameraFree(true)
 
-            data.arena_spectator = true
-
+            if(not data.spectator_mode)then
+                data.is_spectating = true
+            end
             --player.Lock()
             --player.Immortal(true)
             --player.Move(-3000, -3000)
@@ -2192,6 +2193,7 @@ ArenaGameplay = {
         if(data.spectator_mode)then
             SpectatorMode.SpectatorText(lobby, data)
             SpectatorMode.LobbySpectateUpdate(lobby, data)
+            data.is_spectating = true
 
             if(#(EntityGetWithTag("workshop") or {}) > 0 and not data.spectator_lobby_loaded)then
                 data.spectator_lobby_loaded = true
@@ -2199,15 +2201,6 @@ ArenaGameplay = {
             end
             if(GameGetFrameNum() % 15 == 0)then
                 ArenaGameplay.RunReadyCheck(lobby, data)
-            end
-
-            local inventory2Comp = EntityGetFirstComponentIncludingDisabled(data.spectator_entity, "Inventory2Component")
-
-            if(inventory2Comp ~= nil)then
-                ComponentSetValue2(inventory2Comp, "mItemHolstered", true)
-                ComponentSetValue2(inventory2Comp, "mActiveItem", -1)
-                ComponentSetValue2(inventory2Comp, "mActualActiveItem", -1)
-                ComponentSetValue2(inventory2Comp, "mForceRefresh", true)
             end
         else
             networking.send.character_position(lobby, data, true)
@@ -2223,6 +2216,7 @@ ArenaGameplay = {
 
             GameAddFlagRun("Immortal")
 
+            data.is_spectating = false
 
 
             if (GameHasFlagRun("player_ready")) then
@@ -2681,7 +2675,7 @@ ArenaGameplay = {
                             --message_handler.send.Health(lobby)
                             networking.send.health_update(lobby, data, true)
                         else
-                            data.arena_spectator = true
+                            data.is_spectating = true
                         end
                     end
 
@@ -2827,8 +2821,47 @@ ArenaGameplay = {
                 end
             end
         end
+
+        if(data.force_open_inventory_next_frame)then
+            if(data.spectator_entity)then
+                local inventoryGuiComp = EntityGetFirstComponentIncludingDisabled(data.spectator_entity, "InventoryGuiComponent")
+                if (inventoryGuiComp ~= nil) then
+                    ComponentSetValue2(inventoryGuiComp, "mActive", true)
+                end
+            end
+
+            data.force_open_inventory_next_frame = false
+        end
+
+        if(data.force_open_inventory)then
+            data.force_open_inventory = false
+            data.force_open_inventory_next_frame = true
+        end
+
         if(data.spectator_mode)then
             SpectatorMode.UpdateSpectatorEntity(lobby, data)
+
+
+
+            local inventory2Comp = EntityGetFirstComponentIncludingDisabled(data.spectator_entity, "Inventory2Component")
+
+            if(inventory2Comp ~= nil)then
+                ComponentSetValue2(inventory2Comp, "mItemHolstered", true)
+                ComponentSetValue2(inventory2Comp, "mActiveItem", -1)
+                ComponentSetValue2(inventory2Comp, "mActualActiveItem", -1)
+                --ComponentSetValue2(inventory2Comp, "mForceRefresh", true)
+
+                local inventory_items = GameGetAllInventoryItems(data.spectator_entity)
+
+                for k, v in ipairs(inventory_items or {})do
+                    local potionComp = EntityGetFirstComponentIncludingDisabled(v, "PotionComponent")
+                    if(potionComp ~= nil)then
+                        EntitySetComponentIsEnabled(v, potionComp, false)
+                    end
+                end
+            end
+
+
         end
         SpectatorMode.SpectateUpdate(lobby, data)
 
@@ -2836,6 +2869,57 @@ ArenaGameplay = {
             data.upgrade_system:draw()
         end
 
+        np.SetInventoryCursorEnabled(not data.is_spectating)
+        if(data.is_spectating)then
+            
+            
+            -- handle hover tooltips for world wands
+            local mouse_x, mouse_y = DEBUG_GetMouseWorld()
+
+            local wands = EntityGetInRadiusWithTag(mouse_x, mouse_y, 15, "wand")
+
+            local closest_wand = nil
+            local closest_distance = 9999
+            for k, v in ipairs(wands)do
+                if(EntityGetRootEntity(v) ~= v)then
+                    goto continue
+                end
+
+                local ability_comp = EntityGetFirstComponentIncludingDisabled(v, "AbilityComponent")
+
+                if(ability_comp == nil)then
+                    goto continue
+                end
+
+                if(not ComponentGetValue2(ability_comp, "use_gun_script"))then
+                    goto continue
+                end
+
+                local x, y = EntityGetTransform(v)
+                local distance = math.sqrt((x - mouse_x) ^ 2 + (y - mouse_y) ^ 2)
+                if(distance < closest_distance)then
+                    closest_distance = distance
+                    closest_wand = v
+                end
+                ::continue::
+            end
+
+            if(closest_wand ~= nil)then
+                if(data.last_inspected_wand_id ~= closest_wand)then
+                    data.last_inspected_wand_id = closest_wand
+                    data.last_inspected_wand = EZWand(closest_wand)
+                else
+                    local gui = GuiCreate()
+                    GuiStartFrame(gui)
+                    local x, y = EntityGetTransform(closest_wand)
+                    local w_x, w_y = WorldToScreenPos(gui, x, y)
+                    data.last_inspected_wand:RenderTooltip(w_x, w_y)
+                    GuiDestroy(gui)
+                end
+            end
+
+
+        end
 
     
 

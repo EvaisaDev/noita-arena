@@ -7,5 +7,10 @@
   DEBUG_FREE_CAMERA_SPEED = "0"
   STREAMING_AUTOSAVE_PERIOD_SECONDS="268435456"
   DEBUG_ENABLE_AUTOSAVE="0"
-  > <!--  STREAMING_CHUNK_TARGET = "12"-->
+  
+  VIRTUAL_RESOLUTION_X="427" 
+  VIRTUAL_RESOLUTION_Y="242" 
+  VIRTUAL_RESOLUTION_OFFSET_X="-1" 
+  VIRTUAL_RESOLUTION_OFFSET_Y="-1" 
+  > <!-- Overwriting virtual resolution as changes to this can break stuff. -->
 </MagicNumbers>

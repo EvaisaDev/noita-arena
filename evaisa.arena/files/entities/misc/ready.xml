@@ -1,4 +1,4 @@
-<Entity tags = "spectator_no_clear">
+<Entity tags = "spectator_no_clear,workshop">
     <InteractableComponent
         _enabled="1"
         _tags="ready"

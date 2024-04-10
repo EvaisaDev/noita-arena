@@ -74,7 +74,9 @@ player_helper.Unlock = function(data)
         return
     end
     GameSetCameraFree(false)
-    data.arena_spectator = false
+    if(not data.spectator_mode)then
+        data.is_spectating = false
+    end
     local controls = EntityGetFirstComponentIncludingDisabled(player, "ControlsComponent")
     if (controls ~= nil) then
         ComponentSetValue2(controls, "enabled", true)
@@ -386,7 +388,7 @@ player_helper.SetItemData = function(item_data)
 
             local item = nil
             if(itemInfo.is_wand)then
-                item = EZWand(itemInfo.data, x, y, true)
+                item = EZWand(itemInfo.data, x, y, GameHasFlagRun("refresh_all_charges"))
                 
             else
                 item = EntityCreateNew()

@@ -379,7 +379,7 @@ networking = {
                 local force = message[2]
                 local unlimited_spells = message[3]
 
-                print("Received item update")
+                --print("Received item update")
 
                 if(unlimited_spells)then
                     EntityAddTag(data.players[tostring(user)].entity, "unlimited_spells")
@@ -394,19 +394,15 @@ networking = {
                 local has_spectator = false
                 local spectator_pickupper = nil
 
-                print("Spectator entity: " .. tostring(data.spectator_entity))
-                print("Spectated player: " .. tostring(data.lobby_spectated_player))
-                print("Spectated player is user: " .. tostring(data.lobby_spectated_player == user))
-
                 -- if we are in spectator mode
-                if (data.spectator_entity ~= nil and EntityGetIsAlive(data.spectator_entity) and data.lobby_spectated_player == user) then
+                if (data.spectator_entity ~= nil and EntityGetIsAlive(data.spectator_entity) and data.spectator_active_player == user) then
                     local items = GameGetAllInventoryItems(data.spectator_entity) or {}
                     for i, item_id in ipairs(items) do
                         GameKillInventoryItem(data.spectator_entity, item_id)
                         EntityKill(item_id)
                     end
 
-                    print("Syncing spectator items.")
+                    --print("Syncing spectator items.")
 
                     spectator_pickupper = EntityGetFirstComponentIncludingDisabled(data.spectator_entity, "ItemPickUpperComponent")
 
@@ -422,6 +418,7 @@ networking = {
                         local spectator_item = nil
                         if(itemInfo.is_wand)then
                             item = EZWand(itemInfo.data, x, y)
+
 
                             if(has_spectator)then
                                 spectator_item = EZWand(itemInfo.data, x, y)
@@ -453,7 +450,7 @@ networking = {
                                 spectator_item:PickUp(data.spectator_entity)
                                 spectator_item_entity = spectator_item.entity_id
 
-                                print("Adding spectator item to spectator.")
+                                --print("Adding spectator item to spectator.")
                             end
                         else
                             EntityHelper.PickItem(data.players[tostring(user)].entity, item)
@@ -465,6 +462,16 @@ networking = {
 
                                 EntityHelper.PickItem(data.spectator_entity, spectator_item)
                                 spectator_item_entity = spectator_item
+                            end
+                        end
+
+                        if(has_spectator)then
+                            local inventoryGuiComp = EntityGetFirstComponentIncludingDisabled(data.spectator_entity, "InventoryGuiComponent")
+                            if (inventoryGuiComp ~= nil) then
+                                if(ComponentGetValue2(inventoryGuiComp, "mActive"))then
+                                    ComponentSetValue2(inventoryGuiComp, "mActive", false)
+                                    data.force_open_inventory = true
+                                end
                             end
                         end
                         
@@ -939,6 +946,14 @@ networking = {
            -- arena_log:print("Received perk update!!")
             --arena_log:print(json.stringify(message[1]))
             data.players[tostring(user)].perks = message[1]
+
+            if(data.spectator_mode and data.state == "lobby" and data.lobby_spectated_player == user)then
+                print("Requesting holymountain sync")
+                delay.new(5, function() 
+                    networking.send.request_sync_hm(lobby, user)
+                end)
+
+            end
         end,
         fire_wand = function(lobby, message, user, data)
             if (not gameplay_handler.CheckPlayer(lobby, user, data)) then
@@ -1174,13 +1189,17 @@ networking = {
                                 })
                                 EntityAddChild(player, data.players[tostring(user)].status_effect_entities[id])
                             end
-                            EntityAddComponent2(data.players[tostring(user)].status_effect_entities[id], "UIIconComponent", {
-                                name = effect.ui_name,
-                                icon_sprite_file = effect.ui_icon,
-                                display_above_head = true,
-                                display_in_hud = false,
-                                is_perk = false,
-                            })
+
+                            if(data.players[tostring(user)].status_effect_entities[id] ~= 0 and data.players[tostring(user)].status_effect_entities[id] ~= nil)then
+
+                                EntityAddComponent2(data.players[tostring(user)].status_effect_entities[id], "UIIconComponent", {
+                                    name = effect.ui_name,
+                                    icon_sprite_file = effect.ui_icon,
+                                    display_above_head = true,
+                                    display_in_hud = false,
+                                    is_perk = false,
+                                })
+                            end
                         end
 
                         valid_ids[id] = true
@@ -1476,6 +1495,12 @@ networking = {
         send_skin = function(lobby, message, user, data)
             if data.players[tostring(user)] then
                 data.players[tostring(user)].skin_data = message
+
+                if(data.players[tostring(user)].entity)then
+                    if(skin_system and lobby)then
+                        skin_system.apply_skin_to_entity(lobby, data.players[tostring(user)].entity, user, data)
+                    end
+                end
             end
         end,
         request_skins = function(lobby, message, user, data)
@@ -1536,6 +1561,21 @@ networking = {
             steamutils.sendToPlayer("sync_hm", to_sync, user, true, true)
         end,
         sync_hm = function(lobby, message, user, data)
+
+            if(user ~= data.lobby_spectated_player)then
+                return
+            end
+
+            data.last_hm_sync = data.last_hm_sync or 0
+
+            if(data.last_hm_sync and GameGetFrameNum() - data.last_hm_sync < 15)then
+                return
+            end
+
+            data.last_hm_sync = GameGetFrameNum()
+
+
+
             for k, v in ipairs(message)do
                 local ent = EntityCreateNew()
                 local x, y, entity_data, uid = unpack(v)
@@ -1563,12 +1603,15 @@ networking = {
                     end
                     ]]
                     if(EntityGetIsAlive(entity))then
+                        local was_refresh = false
+
                         local entity_x, entity_y = EntityGetTransform(entity)
                         if(EntityHasTag(entity, "perk"))then
 
                             EntityLoad( "data/entities/particles/image_emitters/perk_effect.xml", entity_x, entity_y - 8 )
                             networking.send.request_sync_hm(lobby, user)
                         elseif(EntityGetFilename(entity) == "data/entities/items/pickup/spell_refresh.xml")then
+                            was_refresh = true
                             EntityLoad("data/entities/particles/image_emitters/spell_refresh_effect.xml", entity_x, entity_y-12)
                         elseif(EntityHasTag(entity, "heart"))then
                             EntityLoad("data/entities/particles/image_emitters/heart_fullhp_effect.xml", entity_x, entity_y-12)
@@ -1577,19 +1620,20 @@ networking = {
                             EntityLoad("data/entities/particles/image_emitters/shop_effect.xml", entity_x, entity_y - 8)
                         end
 
+                        if(not was_refresh)then
+                            local comps = EntityGetAllComponents(entity)
+        
+                            for k2, v2 in ipairs(comps)do
+                                EntitySetComponentIsEnabled(entity, v2, false)
+                            end
 
-                        local comps = EntityGetAllComponents(entity)
-    
-                        for k2, v2 in ipairs(comps)do
-                            EntitySetComponentIsEnabled(entity, v2, false)
+                            local material_storage = EntityGetFirstComponentIncludingDisabled(entity, "MaterialInventoryComponent")
+                            if(material_storage ~= nil)then
+                                EntityRemoveComponent(entity, material_storage)
+                            end
+
+                            EntityKill(entity)
                         end
-
-                        local material_storage = EntityGetFirstComponentIncludingDisabled(entity, "MaterialInventoryComponent")
-                        if(material_storage ~= nil)then
-                            EntityRemoveComponent(entity, material_storage)
-                        end
-
-                        EntityKill(entity)
 
                         networking.send.request_item_update(lobby, user)
                         networking.send.request_spectate_data(lobby, user)
@@ -2225,6 +2269,9 @@ networking = {
         end,
         request_skins = function(lobby)
             steamutils.send("request_skins", {}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+        end,
+        request_skin = function(lobby, user)
+            steamutils.sendToPlayer("request_skins", {}, user, true)
         end,
         request_sync_hm = function(lobby, player)
             steamutils.sendToPlayer("request_sync_hm", {}, player, true)
