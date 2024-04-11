@@ -333,8 +333,8 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 147,
-    required_online_version = 343,
+    version = 148,
+    required_online_version = 345,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
     end,
@@ -345,6 +345,15 @@ ArenaMode = {
     spectator_unfinished_warning = false,
     enable_spectator = true,--not ModSettingGet("evaisa.arena.spectator_unstable"),
     enable_presets = true,
+    custom_enter_check = function(lobby)
+        local lobby_state = steam.matchmaking.getLobbyData(lobby, "arena_state") or "lobby"
+
+        if(lobby_state == "lobby")then
+            return true, "Preparing in Holy Mountain"
+        else
+            return false, "Game is in progress, please wait"
+        end
+    end,
     binding_register = function(bindings)
         print("Registering bindings for Noita Arena")
         -- Arena Spectator keyboard bindings
@@ -1832,6 +1841,11 @@ ArenaMode = {
 
         if (data == nil) then
             return
+        end
+
+        if(data.last_state ~= data.state)then
+            data.last_state = data.state
+            steam.matchmaking.setLobbyData(lobby, "arena_state", data.state)
         end
 
         skin_system.editor_open = GameHasFlagRun("wardrobe_open") and not GameHasFlagRun("game_paused") and gui_closed

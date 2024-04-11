@@ -1184,15 +1184,17 @@ end
 
 function wand:PickUp(entity)
     local item_component = EntityGetFirstComponentIncludingDisabled(self.entity_id, "ItemComponent")
+    local preferred_inv = "QUICK"
     if item_component then
       ComponentSetValue2(item_component, "has_been_picked_by_player", true)
+      preferred_inv = ComponentGetValue2(item_component, "preferred_inventory")
     end
-    --GamePickUpInventoryItem(entity, self.entity_id, false)
+
     local entity_children = EntityGetAllChildren(entity) or {}
-    -- 
+
     for key, child in pairs( entity_children ) do
-      if EntityGetName( child ) == "inventory_quick" then
-        EntityAddChild( child, self.entity_id )
+      if EntityGetName( child ) == "inventory_"..string.lower(preferred_inv) then
+        EntityAddChild( child, self.entity_id)
       end
     end
   

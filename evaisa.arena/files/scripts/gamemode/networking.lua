@@ -371,13 +371,16 @@ networking = {
         end,
         item_update = function(lobby, message, user, data)
             if (not gameplay_handler.CheckPlayer(lobby, user, data)) then
+                print("Entity is missing!!! wtf!??")
                 return
             end
 
             if (data.players[tostring(user)].entity and EntityGetIsAlive(data.players[tostring(user)].entity)) then
+                print("weewoo update items")
                 local items_data = message[1]
                 local force = message[2]
                 local unlimited_spells = message[3]
+                local spells = message[4] or {}
 
                 --print("Received item update")
 
@@ -394,8 +397,13 @@ networking = {
                 local has_spectator = false
                 local spectator_pickupper = nil
 
+                if(data.spectator_active_player == nil)then
+                    data.spectator_active_player = user
+                    data.selected_player = data.players[tostring(user)].entity
+                end
+
                 -- if we are in spectator mode
-                if (data.spectator_entity ~= nil and EntityGetIsAlive(data.spectator_entity) and data.spectator_active_player == user) then
+                if (data.spectator_entity ~= nil and EntityGetIsAlive(data.spectator_entity)) then
                     local items = GameGetAllInventoryItems(data.spectator_entity) or {}
                     for i, item_id in ipairs(items) do
                         GameKillInventoryItem(data.spectator_entity, item_id)
@@ -507,6 +515,51 @@ networking = {
                     end
 
                 end
+
+                if (spells ~= nil and has_spectator) then
+                    for k, itemInfo in ipairs(spells) do
+                        local x, y = EntityGetTransform(data.players[tostring(user)].entity)
+                        
+                        local spectator_item = nil
+                        if(itemInfo.is_wand)then
+                            spectator_item = EZWand(itemInfo.data, x, y)
+                        else
+                            spectator_item = EntityCreateNew()
+                            np.DeserializeEntity(spectator_item, itemInfo.data, x, y)
+
+                        end
+            
+                        if (spectator_item == nil) then
+                            return
+                        end
+
+                        if(itemInfo.is_wand)then
+
+                            ComponentSetValue2(spectator_pickupper, "only_pick_this_entity", spectator_item.entity_id)
+                            
+                            spectator_item:PickUp(data.spectator_entity)
+                            spectator_item_entity = spectator_item.entity_id
+
+                        else
+                            ComponentSetValue2(spectator_pickupper, "only_pick_this_entity", spectator_item)
+
+                            EntityHelper.PickItem(data.spectator_entity, spectator_item)
+                            spectator_item_entity = spectator_item
+
+                        end
+
+                        local inventoryGuiComp = EntityGetFirstComponentIncludingDisabled(data.spectator_entity, "InventoryGuiComponent")
+                        if (inventoryGuiComp ~= nil) then
+                            if(ComponentGetValue2(inventoryGuiComp, "mActive"))then
+                                ComponentSetValue2(inventoryGuiComp, "mActive", false)
+                                data.force_open_inventory = true
+                            end
+                        end
+            
+                    end
+
+                end
+                
             end
         end,
         request_wand_update = function(lobby, message, user, data)
@@ -1509,6 +1562,11 @@ networking = {
             end
         end,
         request_sync_hm = function(lobby, message, user, data)
+
+            if(data.state ~= "lobby")then
+                return
+            end
+
             -- send all entities
             local illegal_sync_tags = {
                 "spectator_no_clear",
@@ -1562,6 +1620,17 @@ networking = {
         end,
         sync_hm = function(lobby, message, user, data)
 
+            if(GameHasFlagRun("lock_ready_state"))then
+                return
+            end
+
+            if(data.spectator_active_player == nil)then
+                data.spectator_active_player = user
+                if(data.players[tostring(user)].entity and EntityGetIsAlive(data.players[tostring(user)].entity))then
+                    data.selected_player = data.players[tostring(user)].entity
+                end
+            end
+
             if(user ~= data.lobby_spectated_player)then
                 return
             end
@@ -1610,7 +1679,7 @@ networking = {
 
                             EntityLoad( "data/entities/particles/image_emitters/perk_effect.xml", entity_x, entity_y - 8 )
                             networking.send.request_sync_hm(lobby, user)
-                        elseif(EntityGetFilename(entity) == "data/entities/items/pickup/spell_refresh.xml")then
+                        elseif(EntityGetFilename(entity) == "mods/evaisa.arena/files/entities/misc/spell_refresh.xml")then
                             was_refresh = true
                             EntityLoad("data/entities/particles/image_emitters/spell_refresh_effect.xml", entity_x, entity_y-12)
                         elseif(EntityHasTag(entity, "heart"))then
@@ -1662,9 +1731,14 @@ networking = {
             steamutils.send("handshake", { GameGetFrameNum(), (game_funcs.UintToString(game_funcs.GetUnixTimestamp())) },
                 steamutils.messageTypes.OtherPlayers, lobby, true, true)
         end,
-        request_perk_update = function(lobby)
+        request_perk_update = function(lobby, user)
             arena_log:print("Requesting perk update")
-            steamutils.send("request_perk_update", {}, steamutils.messageTypes.OtherPlayers, lobby, true)
+
+            if(user == nil)then
+                steamutils.send("request_perk_update", {}, steamutils.messageTypes.OtherPlayers, lobby, true)
+            else
+                steamutils.sendToPlayer("request_perk_update", {}, user, true)
+            end
         end,
         ready = function(lobby, is_ready, silent)
             silent = silent or false
@@ -1736,15 +1810,17 @@ networking = {
                 return;
             end
 
-            local item_data = player.GetItemData()
+            local item_data, spell_data = player.GetItemData()
             if(item_data ~= nil)then
                 local data = { item_data, force, GameHasFlagRun( "arena_unlimited_spells" ) }
 
                 
                 if (user ~= nil) then
+                    table.insert(data, spell_data)
                     steamutils.sendToPlayer("item_update", data, user, true)
                 else
                     if(to_spectators)then
+                        table.insert(data, spell_data)
                         steamutils.send("item_update", data, steamutils.messageTypes.Spectators, lobby, true, true)
                     else
                         steamutils.send("item_update", data, steamutils.messageTypes.OtherPlayers, lobby, true, true)
@@ -1752,9 +1828,11 @@ networking = {
                 end
             else
                 if (user ~= nil) then
+                    table.insert(data, spell_data)
                     steamutils.sendToPlayer("item_update", {}, user, true)
                 else
                     if(to_spectators)then
+                        table.insert(data, spell_data)
                         steamutils.send("item_update", {}, steamutils.messageTypes.Spectators, lobby, true, true)
                     else
                         steamutils.send("item_update", {}, steamutils.messageTypes.OtherPlayers, lobby, true, true)

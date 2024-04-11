@@ -1541,6 +1541,12 @@ ArenaGameplay = {
             GameRemoveFlagRun("can_save_player")
         end
 
+        data.last_selected_player = data.lobby_spectated_player
+        data.lobby_spectated_player = nil
+        data.selected_player_name = nil
+        data.selected_player = nil
+        
+
         GameRemoveFlagRun("player_is_unlocked")
         GameRemoveFlagRun("wardrobe_open")
         GameRemoveFlagRun("chat_bind_disabled")
@@ -2179,13 +2185,14 @@ ArenaGameplay = {
         -- update ready counter
         if (data.ready_counter ~= nil) then
             if (not IsPaused()) then
-                data.ready_counter:appy_offset(9, 28)
+                data.ready_counter:apply_offset(9, 28)
             else
-                data.ready_counter:appy_offset(9, 9)
+                data.ready_counter:apply_offset(9, 9)
             end
 
 
-            data.ready_counter:update()
+
+            data.ready_counter:update(lobby, data)
         end
 
         ArenaGameplay.UpdateDummy(lobby, data)
@@ -2313,6 +2320,12 @@ ArenaGameplay = {
 
     end,
     SpawnClientPlayer = function(lobby, user, data, x, y)
+
+        if((not data.state == "arena" and not data.spectator_mode) or (data.state == "lobby" and data.spectator_mode and (data.spectator_entity == nil or not EntityGetIsAlive(data.spectator_entity))))then
+            print("skipped spawn!!")
+            return
+        end
+
         local client = EntityLoad("mods/evaisa.arena/files/entities/client.xml", x or -1000, y or -1000)
         EntitySetName(client, tostring(user))
         local usernameSprite = EntityGetFirstComponentIncludingDisabled(client, "SpriteComponent", "username")
@@ -2339,10 +2352,28 @@ ArenaGameplay = {
             skin_system.apply_skin_to_entity(lobby, client, user, data)
         end
 
+        networking.send.request_item_update(lobby, user)
+        networking.send.request_spectate_data(lobby, user)
+        networking.send.request_sync_hm(lobby, user)
+        networking.send.request_second_row(lobby, user)
+        networking.send.request_skin(lobby, user)
+        networking.send.request_perk_update(lobby, user)
+        
+        --print(debug.traceback())
+
+        if(data.spectator_mode and data.state == "lobby" and data.lobby_spectated_player == user)then
+            data.selected_player = client
+        end
+
         return client
     end,
     CheckPlayer = function(lobby, user, data)
         if(not data.players[tostring(user)])then
+            return false
+        end
+
+        -- if we are in lobby and player is not being spectated
+        if(data.spectator_mode and data.state == "lobby" and data.lobby_spectated_player ~= user)then
             return false
         end
 
@@ -2689,6 +2720,9 @@ ArenaGameplay = {
             end
         end
         
+        SpectatorMode.SpectateUpdate(lobby, data)
+
+
         local player_entities = {}
         for k, v in pairs(data.players) do
             if (v.entity ~= nil and EntityGetIsAlive(v.entity)) then
@@ -2863,7 +2897,6 @@ ArenaGameplay = {
 
 
         end
-        SpectatorMode.SpectateUpdate(lobby, data)
 
         if(data.upgrade_system ~= nil and not IsPaused())then
             data.upgrade_system:draw()

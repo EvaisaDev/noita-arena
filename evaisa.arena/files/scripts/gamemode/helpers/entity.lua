@@ -124,14 +124,16 @@ end
 
 entity.PickItem = function(ent, item)
     local item_component = EntityGetFirstComponentIncludingDisabled(item, "ItemComponent")
+    local preferred_inv = "QUICK"
     if item_component then
       ComponentSetValue2(item_component, "has_been_picked_by_player", true)
+      preferred_inv = ComponentGetValue2(item_component, "preferred_inventory")
     end
-    --GamePickUpInventoryItem(entity, self.entity_id, false)
+
     local entity_children = EntityGetAllChildren(ent) or {}
-    -- 
+
     for key, child in pairs( entity_children ) do
-      if EntityGetName( child ) == "inventory_quick" then
+      if EntityGetName( child ) == "inventory_"..string.lower(preferred_inv) then
         EntityAddChild( child, item)
       end
     end
@@ -149,6 +151,10 @@ end
 
 entity.GivePerk = function( entity_who_picked, perk_id, amount, for_client, for_enemy )
     -- fetch perk info ---------------------------------------------------
+
+    if(entity_who_picked == nil or entity_who_picked == 0 or not EntityGetIsAlive(entity_who_picked))then
+        return
+    end
 
     local pos_x, pos_y
 

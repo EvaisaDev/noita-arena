@@ -226,6 +226,7 @@ player_helper.GetItemData = function(fresh)
     local inventory2Comp = EntityGetFirstComponentIncludingDisabled(player, "Inventory2Component")
     local mActiveItem = ComponentGetValue2(inventory2Comp, "mActiveItem")
     local wandData = {}
+    local spellData = {}
     for k, item in ipairs(player_helper.GetInventoryItems("inventory_quick") or {}) do
         local item_comp = EntityGetFirstComponentIncludingDisabled(item, "ItemComponent")
         local slot_x, slot_y = ComponentGetValue2(item_comp, "inventory_slot")
@@ -258,7 +259,41 @@ player_helper.GetItemData = function(fresh)
                 })
         end
     end
-    return wandData
+
+    for k, item in ipairs(player_helper.GetInventoryItems("inventory_full") or {}) do
+        local item_comp = EntityGetFirstComponentIncludingDisabled(item, "ItemComponent")
+        local slot_x, slot_y = ComponentGetValue2(item_comp, "inventory_slot")
+        local item_x, item_y = EntityGetTransform(item)
+
+        SetRandomSeed(item + slot_x + item_x, slot_y + item_y)
+
+        local item_id = entity.GetVariable(item, "arena_entity_id")
+
+        GlobalsSetValue(tostring(item) .. "_item", tostring(k))
+        if(entity_is_wand(item))then
+            local wand = EZWand(item)
+            table.insert(spellData,
+                {
+                    data = wand:Serialize(not fresh, not fresh),
+                    id = item_id or (item + Random(1, 10000000)),
+                    slot_x = slot_x,
+                    slot_y = slot_y,
+                    active = (mActiveItem == item),
+                    is_wand = true
+                })
+        else
+            table.insert(spellData,
+                {
+                    data = np.SerializeEntity(item),
+                    id = item_id or (item + Random(1, 10000000)),
+                    slot_x = slot_x,
+                    slot_y = slot_y,
+                    active = (mActiveItem == item)
+                })
+        end
+    end
+
+    return wandData, spellData
 end
 
 player_helper.GetInventoryItems = function(inventory_name)
@@ -638,7 +673,7 @@ player_helper.GivePerk = function(perk_id, amount, skip_count)
 
     local entity_who_picked = player_helper.Get()
 
-    if (entity_who_picked == nil) then
+    if(entity_who_picked == nil or entity_who_picked == 0 or not EntityGetIsAlive(entity_who_picked))then
         return
     end
 
