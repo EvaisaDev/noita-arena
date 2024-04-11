@@ -124,14 +124,16 @@ end
 
 entity.PickItem = function(ent, item)
     local item_component = EntityGetFirstComponentIncludingDisabled(item, "ItemComponent")
+    local preferred_inv = "QUICK"
     if item_component then
       ComponentSetValue2(item_component, "has_been_picked_by_player", true)
+      preferred_inv = ComponentGetValue2(item_component, "preferred_inventory")
     end
-    --GamePickUpInventoryItem(entity, self.entity_id, false)
+
     local entity_children = EntityGetAllChildren(ent) or {}
-    -- 
+
     for key, child in pairs( entity_children ) do
-      if EntityGetName( child ) == "inventory_quick" then
+      if EntityGetName( child ) == "inventory_"..string.lower(preferred_inv) then
         EntityAddChild( child, item)
       end
     end
@@ -149,6 +151,10 @@ end
 
 entity.GivePerk = function( entity_who_picked, perk_id, amount, for_client, for_enemy )
     -- fetch perk info ---------------------------------------------------
+
+    if(entity_who_picked == nil or entity_who_picked == 0 or not EntityGetIsAlive(entity_who_picked))then
+        return
+    end
 
     local pos_x, pos_y
 
@@ -223,6 +229,7 @@ entity.BlockFiring = function(ent, do_block)
     local now = GameGetFrameNum();
     local inventory2Comp = EntityGetFirstComponentIncludingDisabled(ent, "Inventory2Component")
     if(inventory2Comp ~= nil)then
+        --[[
         local held_wand = ComponentGetValue2(inventory2Comp, "mActiveItem")
         if held_wand ~= 0 then
             local ability = EntityGetFirstComponentIncludingDisabled( held_wand, "AbilityComponent" );
@@ -231,6 +238,23 @@ entity.BlockFiring = function(ent, do_block)
                     ComponentSetValue2( ability, "mReloadFramesLeft", 2 );
                     ComponentSetValue2( ability, "mNextFrameUsable", now + 2 );
                     ComponentSetValue2( ability, "mReloadNextFrameUsable", now + 2 );
+
+                else
+                    ComponentSetValue2( ability, "mReloadFramesLeft", 0 );
+                    ComponentSetValue2( ability, "mNextFrameUsable", now );
+                    ComponentSetValue2( ability, "mReloadNextFrameUsable", now );
+                end
+            end
+        end]]
+        local items = GameGetAllInventoryItems(ent)
+        for i, item in ipairs(items or {}) do
+            local ability = EntityGetFirstComponentIncludingDisabled( item, "AbilityComponent" );
+            if ability then
+                if(do_block)then
+                    ComponentSetValue2( ability, "mReloadFramesLeft", 2000000 );
+                    ComponentSetValue2( ability, "mNextFrameUsable", now + 2000000 );
+                    ComponentSetValue2( ability, "mReloadNextFrameUsable", now + 2000000 );
+
                 else
                     ComponentSetValue2( ability, "mReloadFramesLeft", 0 );
                     ComponentSetValue2( ability, "mNextFrameUsable", now );

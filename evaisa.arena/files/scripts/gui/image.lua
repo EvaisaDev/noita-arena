@@ -21,12 +21,14 @@ function loadImage(file)
 	local img = assert(spng.open{read = f:buffered_read()})
 	local bmp = assert(img:load{accept = {rgba8 = true}})
 	assert(f:close())
+    img:free()
 	return bmp
 end
 
 function loadImageFromString(png_string)
     local img = assert(spng.open(png_string))
     local bmp = assert(img:load{accept = {rgba8 = true}})
+    img:free()
     return bmp
 end
 

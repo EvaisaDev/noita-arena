@@ -8,7 +8,7 @@ dofile( "data/scripts/perks/perk.lua" )
 dofile_once("data/scripts/biomes/temple_altar_top_shared.lua")
 dofile("mods/evaisa.arena/files/scripts/gamemode/misc/seed_gen.lua")
 
-
+local smallfolk = dofile("mods/evaisa.arena/lib/smallfolk.lua")
 
 RegisterSpawnFunction( 0xff6d934c, "spawn_hp" )
 
@@ -47,7 +47,7 @@ function spawn_hp( x, y )
 		GameRemoveFlagRun("skip_health")
 	end
 	EntityLoad( "data/entities/buildings/music_trigger_temple.xml", x-16, y )
-	EntityLoad( "data/entities/items/pickup/spell_refresh.xml", x+16, y )
+	EntityLoad( "mods/evaisa.arena/files/entities/misc/spell_refresh.xml", x+16, y )
 	EntityLoad( "data/entities/buildings/coop_respawn.xml", x, y )
 	local chunk_loader = EntityLoad("mods/evaisa.arena/files/entities/chunk_loader.xml", 0, 0)
 	EntitySetTransform(chunk_loader, 1500, 0)
@@ -116,6 +116,7 @@ function spawn_all_shopitems( x, y )
 
 	-- Get the shop type from the settings
 	local shop_type = GlobalsGetValue("shop_type", "mixed")
+	local second_row_spots = {}
 	-- "Alternating" shop type switches between spells and wands every round.
 	if (shop_type == "alternating") then
 		-- Alternate which shop is presented
@@ -129,6 +130,7 @@ function spawn_all_shopitems( x, y )
 				
 				generate_shop_item( x + (i-1)*item_width, y - 30, false, round_scaled, false )
 				LoadPixelScene( "data/biome_impl/temple/shop_second_row.png", "data/biome_impl/temple/shop_second_row_visual.png", x + (i-1)*item_width - 8, y-22, "", true )
+				table.insert(second_row_spots, {x + (i-1)*item_width - 8, y-22})
 			end
 		else
 			for i=1,count do
@@ -153,6 +155,7 @@ function spawn_all_shopitems( x, y )
 		end
 		for i=wand_count+1, count do
 			LoadPixelScene("data/biome_impl/temple/shop_second_row.png", "data/biome_impl/temple/shop_second_row_visual.png", x + (i-1)*item_width - 8, y-22, "", true)
+			table.insert(second_row_spots, {x + (i-1)*item_width - 8, y-22})
 			if (i == sale_item_i) then
 				generate_shop_item( x + (i-1)*item_width, y, true, round_scaled, false )
 				generate_shop_item( x + (i-1)*item_width, y - 30, false, round_scaled, false )
@@ -172,6 +175,7 @@ function spawn_all_shopitems( x, y )
 			
 			generate_shop_item( x + (i-1)*item_width, y - 30, false, round_scaled, false )
 			LoadPixelScene( "data/biome_impl/temple/shop_second_row.png", "data/biome_impl/temple/shop_second_row_visual.png", x + (i-1)*item_width - 8, y-22, "", true )
+			table.insert(second_row_spots, {x + (i-1)*item_width - 8, y-22})
 		end
 	-- "Wand Only" shop type is.. uh..
 	elseif (shop_type == "wand_only") then
@@ -198,6 +202,7 @@ function spawn_all_shopitems( x, y )
 				
 				generate_shop_item( x + (i-1)*item_width, y - 30, false, round_scaled, false )
 				LoadPixelScene( "data/biome_impl/temple/shop_second_row.png", "data/biome_impl/temple/shop_second_row_visual.png", x + (i-1)*item_width - 8, y-22, "", true )
+				table.insert(second_row_spots, {x + (i-1)*item_width - 8, y-22})
 			end
 		else
 			for i=1,count do
@@ -209,6 +214,9 @@ function spawn_all_shopitems( x, y )
 			end
 		end
 	end
+
+	GlobalsSetValue("temple_second_row_spots", smallfolk.dumps(second_row_spots))
+	
 end
 
 function spawn_all_perks( x, y )

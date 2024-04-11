@@ -116,7 +116,14 @@ function playerinfo_menu:New()
 
         local spectator = data.spectator_mode
 
-        local scrollbar_offset = player_count > 2 and -8 or 0
+        local offset_count = player_count
+
+        if(spectator)then
+            offset_count = offset_count - 1
+        end
+
+        local scrollbar_offset = offset_count > 2 and -8 or 0
+        
         local index = spectator and 0 or 1
 
         local player_perk_sprites = {}

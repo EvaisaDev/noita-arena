@@ -1,5 +1,5 @@
 -- #########################################
--- #######   EZWand version v1.5.0   #######
+-- #######   EZWand version v2.0.0   #######
 -- #########################################
 
 dofile_once("data/scripts/gun/procedural/gun_action_utils.lua")
@@ -14,16 +14,16 @@ dofile_once("data/scripts/gun/procedural/wands.lua")
 -- Removes spells from a table whose ID is not found in the gun_actions table
 local function filter_spells(spells, uses_remaining)
   dofile_once("data/scripts/gun/gun_actions.lua")
-  if not spell_lookup then
-    spell_lookup = {}
+  if not spell_exist_lookup then
+    spell_exist_lookup = {}
     for i, v in ipairs(actions) do
-      spell_lookup[v.id] = true
+      spell_exist_lookup[v.id] = true
     end
   end
   local out = {}
   local out_uses = {}
   for i, spell in ipairs(spells) do
-    if spell == "" or spell_lookup[spell] then
+    if spell == "" or spell_exist_lookup[spell] then
       table.insert(out, spell)
       if uses_remaining then
         table.insert(out_uses, uses_remaining[i])
@@ -231,13 +231,49 @@ local function ends_with(str, ending)
 end
 
 -- Parses a serialized wand string into a table with it's properties
-local function deserialize(str)
-  if not starts_with(str, "EZW") then
-    return "Wrong wand import string format"
-  end
+--[[local function deserialize_v1(str)
   local values = string_split(str, ";")
-  if #values < 19 then
-    return "Wrong wand import string format"
+  if #values ~= 18 then
+    error("Wrong wand import string format")
+  end
+
+  local out = {
+    props = {
+      shuffle = values[2] == "1",
+      spellsPerCast = tonumber(values[3]),
+      castDelay = tonumber(values[4]),
+      rechargeTime = tonumber(values[5]),
+      manaMax = tonumber(values[6]),
+      mana = tonumber(values[7]),
+      manaChargeSpeed = tonumber(values[8]),
+      capacity = tonumber(values[9]),
+      spread = tonumber(values[10]),
+      speedMultiplier = tonumber(values[11])
+    },
+    spells = string_split(values[12] == "-" and "" or values[12], ","),
+    always_cast_spells = string_split(values[13] == "-" and "" or values[13], ","),
+    sprite_image_file = values[14],
+    offset_x = tonumber(values[15]),
+    offset_y = tonumber(values[16]),
+    tip_x = tonumber(values[17]),
+    tip_y = tonumber(values[18])
+  }
+
+  if #out.spells == 1 and out.spells[1] == "" then
+    out.spells = {}
+  end
+  if #out.always_cast_spells == 1 and out.always_cast_spells[1] == "" then
+    out.always_cast_spells = {}
+  end
+
+  return out
+end]]
+
+-- Parses a serialized wand string into a table with it's properties
+local function deserialize(str)
+  local values = string_split(str, ";")
+  if #values ~= 21 then
+    error("Wrong wand import string format")
   end
 
   local out = {
@@ -260,7 +296,9 @@ local function deserialize(str)
     offset_x = tonumber(values[16]),
     offset_y = tonumber(values[17]),
     tip_x = tonumber(values[18]),
-    tip_y = tonumber(values[19])
+    tip_y = tonumber(values[19]),
+    name = values[20],
+    show_name_in_ui = (tonumber(values[21]) == 1) or false,
   }
 
   if #out.spells == 1 and out.spells[1] == "" then
@@ -277,6 +315,22 @@ local function deserialize(str)
 
   return out
 end
+
+-- Parses a serialized wand string into a table with it's properties
+local function deserialize_wand(str)
+    if not starts_with(str, "EZW") then
+        error("Wrong wand import string format")
+    end
+    local this_version = 2
+    local serialized_version = tonumber(str:match("EZWv(%d+)"))
+    if serialized_version > this_version then
+        return "Serialized wand was made with newer version of EZWand"
+    end
+
+    return deserialize(str)
+
+end
+
 
 local spell_type_bgs = {
 	[ACTION_TYPE_PROJECTILE] = "data/ui_gfx/inventory/item_bg_projectile.png",
@@ -314,7 +368,9 @@ end
 --   offset_x = 0,
 --   offset_y = 0,
 --   tip_x = 0,
---   tip_y = 0
+--   tip_y = 0,
+--   name = "Shootblaster",
+--   show_name_in_ui = true
 -- }
 -- To get this easily you can use EZWand.Deserialize(EZWand(wand):Serialize())
 -- Better cache it though, it's not super expensive but...
@@ -338,7 +394,7 @@ local function render_tooltip(origin_x, origin_y, wand, gui_)
     spell_lookup = {}
     dofile_once("data/scripts/gun/gun_actions.lua")
     for i, action in ipairs(actions) do
-      spell_lookup[action.id] = { 
+      spell_lookup[action.id] = {
         icon = action.sprite,
         type = action.type
       }
@@ -410,14 +466,21 @@ local function render_tooltip(origin_x, origin_y, wand, gui_)
     local _, _, _, x, y, w, h = GuiGetPreviousWidgetInfo(gui)
     most_right_text_x = math.max(most_right_text_x, x + w)
   end
+  local function format_cast_delay_and_recharge_time(input)
+    local pattern = "%.2f"
+    if input % 1 == 0 then
+      return input .. ".0 s"
+    end
+    return (pattern):format(input) .. " s"
+  end
   gui_text_with_shadow(gui, 0, 5, GameTextGetTranslatedOrNot(wand.props.shuffle and "$menu_yes" or "$menu_no"), 1)
   local _, _, _, _, no_text_y = GuiGetPreviousWidgetInfo(gui)
   update_most_right_text_x()
   gui_text_with_shadow(gui, 0, margin, ("%.0f"):format(wand.props.spellsPerCast), 1)
   update_most_right_text_x()
-  gui_text_with_shadow(gui, 0, margin, ("%.2f s"):format(wand.props.castDelay / 60), 1)
+  gui_text_with_shadow(gui, 0, margin, format_cast_delay_and_recharge_time(wand.props.castDelay / 60), 1)
   update_most_right_text_x()
-  gui_text_with_shadow(gui, 0, margin, ("%.2f s"):format(wand.props.rechargeTime / 60), 1)
+  gui_text_with_shadow(gui, 0, margin, format_cast_delay_and_recharge_time(wand.props.rechargeTime / 60), 1)
   update_most_right_text_x()
   gui_text_with_shadow(gui, 0, margin, ("%.0f"):format(wand.props.manaMax), 1)
   update_most_right_text_x()
@@ -449,7 +512,7 @@ local function render_tooltip(origin_x, origin_y, wand, gui_)
       end
       local item_bg_icon = get_spell_bg(spell)
       local w, h = GuiGetImageDimensions(gui, item_bg_icon, background_scale)
-      local x, y 
+      local x, y
       if i == 1 then
         x, y = ac_icon_x + ac_icon_width + 3, math.floor(ac_icon_y - ac_icon_height / 2 + 2)
       else
@@ -469,8 +532,8 @@ local function render_tooltip(origin_x, origin_y, wand, gui_)
   end
   -- /Always casts
   -- Spells
-  local spell_icon_scale = 0.711
-  local background_scale = 0.7685
+  local spell_icon_scale = 0.70066976733398
+  local background_scale = 0.76863774490356
   GuiLayoutBeginHorizontal(gui, last_icon_x, last_icon_y + last_icon_height + 7 + add_some + 0.05, true)
   local row = 0
   for i=1, wand.props.capacity do
@@ -478,27 +541,27 @@ local function render_tooltip(origin_x, origin_y, wand, gui_)
     GuiImage(gui, new_id(), -0.3, -0.4, "data/ui_gfx/inventory/inventory_box.png", 0.95, background_scale, background_scale)
     update_bounds()
     local _, _, _, x, y = GuiGetPreviousWidgetInfo(gui)
-    x = x + 0.3
+    x = x + 0.32479339599609
     y = y + 0.4
     local item_bg_icon = get_spell_bg(wand.spells[i])
     GuiZSetForNextWidget(gui, 8.5)
     GuiOptionsAddForNextWidget(gui, GUI_OPTION.Layout_NoLayouting)
     if not wand.spells[i] or wand.spells[i] == "" then
       -- Render an invisible (alpha = 0.0001) item just so it counts for the auto-layout
-      GuiImage(gui, new_id(), x - 2, y - 2, item_bg_icon, 0.0001, background_scale + 0.01, background_scale + 0.01)
+      GuiImage(gui, new_id(), x - 2, y - 2, item_bg_icon, 0.0001, background_scale, background_scale)
     else
       -- Background / Spell type border
-      GuiImage(gui, new_id(), x - 2, y - 2, item_bg_icon, 0.8, background_scale + 0.01, background_scale + 0.01)
+      GuiImage(gui, new_id(), x - 2, y - 2, item_bg_icon, 0.75, background_scale, background_scale)
       GuiZSetForNextWidget(gui, 8)
       GuiOptionsAddForNextWidget(gui, GUI_OPTION.Layout_NoLayouting)
-      GuiImage(gui, new_id(), x, y, (spell_lookup[wand.spells[i]] and spell_lookup[wand.spells[i]].icon) or "data/ui_gfx/gun_actions/unidentified.png", 1, spell_icon_scale, spell_icon_scale)
+      GuiImage(gui, new_id(), x + 0.11, y, (spell_lookup[wand.spells[i]] and spell_lookup[wand.spells[i]].icon) or "data/ui_gfx/gun_actions/unidentified.png", 0.8, spell_icon_scale, spell_icon_scale)
     end
     -- Start a new row after 10 spells
     if i % 10 == 0 then
       row = row + 1
       GuiLayoutEnd(gui)
       _, _, _, _, last_icon_y, last_icon_width, last_icon_height = GuiGetPreviousWidgetInfo(gui)
-      GuiLayoutBeginHorizontal(gui, last_icon_x, last_icon_y + 22.5 * spell_icon_scale, true)
+      GuiLayoutBeginHorizontal(gui, last_icon_x, y + 14.00, true)
     end
   end
   GuiLayoutEnd(gui)
@@ -552,12 +615,14 @@ local function add_spell_at_pos(wand, action_id, pos, uses_remaining)
   EntitySetComponentsWithTagEnabled(action_entity_id, "enabled_in_world", false)
   local item_component = EntityGetFirstComponentIncludingDisabled(action_entity_id, "ItemComponent")
   ComponentSetValue2(item_component, "inventory_slot", pos-1, 0)
+
   if(uses_remaining) then
     ComponentSetValue2(item_component, "uses_remaining", tonumber(uses_remaining))
   end
 
   return true
 end
+
 -- ##########################
 -- ####    UTILS END     ####
 -- ##########################
@@ -582,72 +647,71 @@ wand.__index = function(table, key)
 end
 
 function wand:new(from, rng_seed_x, rng_seed_y, refresh)
-  refresh = refresh or false
+    refresh = refresh or false
 
-  --print("refresh? " .. tostring(refresh))
-
-  -- 'protected' should not be accessed by end users!
-  local protected = {}
-  local o = {
-    _protected = protected
-  }
-  setmetatable(o, self)
-  if type(from) == "table" or from == nil then
-    -- Just load some existing wand that we alter later instead of creating one from scratch
-    protected.entity_id = EntityLoad("data/entities/items/wand_level_04.xml", rng_seed_x or 0, rng_seed_y or 0)
-    protected.ability_component = EntityGetFirstComponentIncludingDisabled(protected.entity_id, "AbilityComponent")
-    -- Copy all validated props over or initialize with defaults
-    local props = from or {}
-    validate_wand_properties(props)
-    o:SetProperties(props)
-    o:RemoveSpells()
-    o:DetachSpells()
-  elseif tonumber(from) or type(from) == "number" then
-    -- Wrap an existing wand
-    protected.entity_id = from
-    protected.ability_component = EntityGetFirstComponentIncludingDisabled(protected.entity_id, "AbilityComponent")
-  else
-    if starts_with(from, "EZW") then
-      local values = deserialize(from)
-      protected.entity_id = EntityLoad("data/entities/items/wand_level_04.xml", rng_seed_x or 0, rng_seed_y or 0)
-      protected.ability_component = EntityGetFirstComponentIncludingDisabled(protected.entity_id, "AbilityComponent")
-      validate_wand_properties(values.props)
-      o:SetProperties(values.props)
-      o:RemoveSpells()
-      o:DetachSpells()
-      -- Filter spells whose ID no longer exist (for instance when a modded spellpack was disabled)
-      values.spells, values.spells_uses_remaining = filter_spells(values.spells, values.spells_uses_remaining)
-      values.always_cast_spells = filter_spells(values.always_cast_spells)
-
-      
-
-      for i, action_id in ipairs(values.spells) do
-        if action_id ~= "" then
-          local remaining = nil
-          if(not refresh)then
-            remaining = values.spells_uses_remaining[i]
-          end
-          add_spell_at_pos(o, action_id, i, remaining)
-        end
-      end      
-      o:AttachSpells(values.always_cast_spells)
-      o:SetSprite(values.sprite_image_file, values.offset_x, values.offset_y, values.tip_x, values.tip_y)
-      o:HideWorldStuff()
-    -- Load a wand by xml
-    elseif ends_with(from, ".xml") then
-      local x, y = GameGetCameraPos()
-      protected.entity_id = EntityLoad(from, rng_seed_x or x, rng_seed_y or y)
-      protected.ability_component = EntityGetFirstComponentIncludingDisabled(protected.entity_id, "AbilityComponent")
+    -- 'protected' should not be accessed by end users!
+    local protected = {}
+    local o = {
+        _protected = protected
+    }
+    setmetatable(o, self)
+    if type(from) == "table" or from == nil then
+        -- Just load some existing wand that we alter later instead of creating one from scratch
+        protected.entity_id = EntityLoad("data/entities/items/wand_level_04.xml", rng_seed_x or 0, rng_seed_y or 0)
+        protected.ability_component = EntityGetFirstComponentIncludingDisabled(protected.entity_id, "AbilityComponent")
+        protected.item_component = EntityGetFirstComponentIncludingDisabled(protected.entity_id, "ItemComponent")
+        -- Copy all validated props over or initialize with defaults
+        local props = from or {}
+        validate_wand_properties(props)
+        o:SetProperties(props)
+        o:RemoveSpells()
+        o:DetachSpells()
+    elseif tonumber(from) or type(from) == "number" then
+        -- Wrap an existing wand
+        protected.entity_id = from
+        protected.ability_component = EntityGetFirstComponentIncludingDisabled(protected.entity_id, "AbilityComponent")
+        protected.item_component = EntityGetFirstComponentIncludingDisabled(protected.entity_id, "ItemComponent")
     else
-      error("Wrong format for wand creation.", 2)
+        if starts_with(from, "EZW") then
+        local values = deserialize_wand(from)
+        protected.entity_id = EntityLoad("data/entities/items/wand_level_04.xml", rng_seed_x or 0, rng_seed_y or 0)
+        protected.ability_component = EntityGetFirstComponentIncludingDisabled(protected.entity_id, "AbilityComponent")
+        protected.item_component = EntityGetFirstComponentIncludingDisabled(protected.entity_id, "ItemComponent")
+        validate_wand_properties(values.props)
+        o:SetProperties(values.props)
+        o:RemoveSpells()
+        o:DetachSpells()
+        -- Filter spells whose ID no longer exist (for instance when a modded spellpack was disabled)
+        values.spells, values.spells_uses_remaining = filter_spells(values.spells, values.spells_uses_remaining)
+        values.always_cast_spells = filter_spells(values.always_cast_spells)
+        for i, action_id in ipairs(values.spells) do
+            if action_id ~= "" then
+                local remaining = nil
+                if(not refresh)then
+                  remaining = values.spells_uses_remaining[i]
+                end
+                add_spell_at_pos(o, action_id, i, remaining)
+            end
+        end
+        o:AttachSpells(values.always_cast_spells)
+        o:SetSprite(values.sprite_image_file, values.offset_x, values.offset_y, values.tip_x, values.tip_y)
+        o:SetName(values.name, values.show_name_in_ui)
+        -- Load a wand by xml
+        elseif ends_with(from, ".xml") then
+        local x, y = GameGetCameraPos()
+        protected.entity_id = EntityLoad(from, rng_seed_x or x, rng_seed_y or y)
+        protected.ability_component = EntityGetFirstComponentIncludingDisabled(protected.entity_id, "AbilityComponent")
+        protected.item_component = EntityGetFirstComponentIncludingDisabled(protected.entity_id, "ItemComponent")
+        else
+        error("Wrong format for wand creation.", 2)
+        end
     end
-  end
 
-  if not entity_is_wand(protected.entity_id) then
-    error("Loaded entity is not a wand.", 2)
-  end
+    if not entity_is_wand(protected.entity_id) then
+        error("Loaded entity is not a wand.", 2)
+    end
 
-  return o
+    return o
 end
 
 local variable_mappings = {
@@ -707,7 +771,7 @@ end
 function wand:_GetProperty(key)
   if not variable_mappings[key] then
     error(("EZWand has no property '%s'"):format(key), 4)
-  end  
+  end
   local mapped_key = variable_mappings[key].name
   local target_getters = {
     ability_component = function(key)
@@ -873,8 +937,7 @@ function wand:GetSpells()
     local uses_remaining = -1
     local item_action_component = EntityGetFirstComponentIncludingDisabled(spell, "ItemActionComponent")
     if item_action_component then
-      local val = ComponentGetValue2(item_action_component, "action_id")
-      action_id = val
+      action_id = ComponentGetValue2(item_action_component, "action_id")
     end
     local inventory_x, inventory_y = -1, -1
     local item_component = EntityGetFirstComponentIncludingDisabled(spell, "ItemComponent")
@@ -891,6 +954,34 @@ function wand:GetSpells()
 			end
 		end
   end
+
+  local function assign_inventory_x(t)
+    local a = {}
+    for i, v in ipairs(t) do
+      if v.inventory_x > 0 then
+        a[v.inventory_x+1] = v
+      end
+    end
+    local inventory_x = 1
+    for i, v in ipairs(t) do
+      if v.inventory_x == 0 then
+        while a[inventory_x] do
+          inventory_x = inventory_x + 1
+        end
+        v.inventory_x = inventory_x-1
+        a[inventory_x] = v
+      end
+    end
+    for i = #t, 1, -1 do
+      if not t[i].inventory_x then
+        table.remove(t, i)
+      end
+    end
+  end
+  -- When a wand is spawned its spell's inventory_x is always set to 0, only once the inventory is opened
+  -- is inventory_x assigned correctly to all spells, so to fake that we go through all the spells manually
+  -- and assign inventory_x to either what it was set as or by the order the entities appear on the wand
+  assign_inventory_x(spells)
   table.sort(spells, function(a, b) return a.inventory_x < b.inventory_x end)
 	return spells, always_cast_spells
 end
@@ -975,14 +1066,6 @@ function wand:SetSprite(item_file, offset_x, offset_y, tip_x, tip_y)
 	end
 end
 
---[[
-wand_data = {}
-
-for k, v in ipairs(wands)do
-  wand_data[v.file] = v
-end
-]]
-
 function wand:GetSprite()
   local sprite_file, offset_x, offset_y, tip_x, tip_y = "", 0, 0, 0, 0
 	if self.ability_component then
@@ -993,26 +1076,13 @@ function wand:GetSprite()
     if sprite_file == "" then
       sprite_file = ComponentGetValue2(sprite_comp, "image_file")
     end
-
     offset_x = ComponentGetValue2(sprite_comp, "offset_x")
     offset_y = ComponentGetValue2(sprite_comp, "offset_y")
 	end
-
 	local hotspot_comp = EntityGetFirstComponentIncludingDisabled(self.entity_id, "HotspotComponent", "shoot_pos")
   if hotspot_comp then
     tip_x, tip_y = ComponentGetValue2(hotspot_comp, "offset")
   end
-
-  --[[
-  if(wand_data[sprite_file] ~= nil)then
-    local data_wand = wand_data[sprite_file]
-    offset_x = data_wand.grip_x
-    offset_y = data_wand.grip_y
-    tip_x = data_wand.tip_x
-    tip_y = data_wand.tip_y
-  end
-  ]]
-
   return sprite_file, offset_x, offset_y, tip_x, tip_y
 end
 
@@ -1089,6 +1159,62 @@ function wand:UpdateSprite()
     (sprite_data.tip_y - sprite_data.grip_y))
 end
 
+function wand:SetName(name, show_in_ui)
+  if show_in_ui == nil then
+    show_in_ui = true
+  end
+  show_in_ui = not not show_in_ui
+  local item_comp = self.item_component
+  if item_comp then
+    ComponentSetValue2(item_comp, "item_name", tostring(name))
+    ComponentSetValue2(item_comp, "always_use_item_name_in_ui", show_in_ui)
+  end
+end
+
+-- returns name, show_in_ui
+function wand:GetName()
+  local item_comp = self.item_component
+  if item_comp then
+    local name = ComponentGetValue2(item_comp, "item_name")
+    local show_in_ui = ComponentGetValue2(item_comp, "always_use_item_name_in_ui")
+    return name, show_in_ui
+  end
+  error("No item component found", 2)
+end
+
+function wand:PickUp(entity)
+    local item_component = EntityGetFirstComponentIncludingDisabled(self.entity_id, "ItemComponent")
+    local preferred_inv = "QUICK"
+    if item_component then
+      ComponentSetValue2(item_component, "has_been_picked_by_player", true)
+      preferred_inv = ComponentGetValue2(item_component, "preferred_inventory")
+    end
+
+    local entity_children = EntityGetAllChildren(entity) or {}
+
+    for key, child in pairs( entity_children ) do
+      if EntityGetName( child ) == "inventory_"..string.lower(preferred_inv) then
+        EntityAddChild( child, self.entity_id)
+      end
+    end
+  
+    EntitySetComponentsWithTagEnabled( self.entity_id, "enabled_in_world", false )
+    EntitySetComponentsWithTagEnabled( self.entity_id, "enabled_in_hand", false )
+    EntitySetComponentsWithTagEnabled( self.entity_id, "enabled_in_inventory", true )
+  
+    local wand_children = EntityGetAllChildren(self.entity_id) or {}
+  
+    for k, v in ipairs(wand_children)do
+      EntitySetComponentsWithTagEnabled( self.entity_id, "enabled_in_world", false )
+    end
+
+    local sprite_particle_emitter_comp = EntityGetFirstComponentIncludingDisabled(self.entity_id, "SpriteParticleEmitterComponent")
+    if sprite_particle_emitter_comp ~= nil then
+        EntitySetComponentIsEnabled(self.entity_id, sprite_particle_emitter_comp, false)
+    end
+  
+end
+
 function wand:PlaceAt(x, y)
 	EntitySetComponentIsEnabled(self.entity_id, self.ability_component, true)
 	local hotspot_comp = EntityGetFirstComponentIncludingDisabled(self.entity_id, "HotspotComponent")
@@ -1099,7 +1225,7 @@ function wand:PlaceAt(x, y)
 	EntitySetComponentIsEnabled(self.entity_id, sprite_component, true)
   local light_component = EntityGetFirstComponentIncludingDisabled(self.entity_id, "LightComponent")
   EntitySetComponentIsEnabled(self.entity_id, light_component, true)
-  
+
   ComponentSetValue(item_component, "has_been_picked_by_player", "0")
   ComponentSetValue(item_component, "play_hover_animation", "1")
   ComponentSetValueVector2(item_component, "spawn_pos", x, y)
@@ -1115,14 +1241,6 @@ function wand:PlaceAt(x, y)
 	else
 		-- TODO: As soon as there's some way to clone Components or Transplant/Remove+Add to another Entity, copy
 		-- the SpriteParticleEmitterComponent of entities/base_wand.xml
-  end
-end
-
-function wand:HideWorldStuff()
-	-- Does this wand have a ray particle effect? Most do, except the starter wands
-	local sprite_particle_emitter_comp = EntityGetFirstComponentIncludingDisabled(self.entity_id, "SpriteParticleEmitterComponent")
-	if sprite_particle_emitter_comp ~= nil then
-		EntitySetComponentIsEnabled(self.entity_id, sprite_particle_emitter_comp, false)
   end
 end
 
@@ -1150,134 +1268,102 @@ function wand:PutInPlayersInventory()
   end
 end
 
-function wand:PickUp(entity)
-  local item_component = EntityGetFirstComponentIncludingDisabled(self.entity_id, "ItemComponent")
-  if item_component then
-    ComponentSetValue2(item_component, "has_been_picked_by_player", true)
-  end
-  --GamePickUpInventoryItem(entity, self.entity_id, false)
-  local entity_children = EntityGetAllChildren(entity) or {}
-  -- 
-  for key, child in pairs( entity_children ) do
-    if EntityGetName( child ) == "inventory_quick" then
-      EntityAddChild( child, self.entity_id )
-    end
-  end
-
-  EntitySetComponentsWithTagEnabled( self.entity_id, "enabled_in_world", false )
-  EntitySetComponentsWithTagEnabled( self.entity_id, "enabled_in_hand", false )
-  EntitySetComponentsWithTagEnabled( self.entity_id, "enabled_in_inventory", true )
-
-  local wand_children = EntityGetAllChildren(self.entity_id) or {}
-
-  for k, v in ipairs(wand_children)do
-    EntitySetComponentsWithTagEnabled( self.entity_id, "enabled_in_world", false )
-  end
-
-end
-
 -- Turns the wand properties etc into a string
 -- Output string looks like:
 -- EZWv(version);shuffle[1|0];spellsPerCast;castDelay;rechargeTime;manaMax;mana;manaChargeSpeed;capacity;spread;speedMultiplier;
--- SPELL_ONE,SPELL_TWO;ALWAYS_CAST_ONE,ALWAYS_CAST_TWO;sprite.png;offset_x;offset_y;tip_x;tip_y
+-- SPELL_ONE,SPELL_TWO;ALWAYS_CAST_ONE,ALWAYS_CAST_TWO;sprite.png;offset_x;offset_y;tip_x;tip_y;name;show_name
 function wand:Serialize(include_mana, include_offsets)
-  include_mana = include_mana or false
-  include_offsets = include_offsets or false
-  local spells_string = ""
-  local spells_uses_string = ""
-  local always_casts_string = ""
-  local spells, always_casts = self:GetSpells()
-  local slots = {}
-  for i, spell in ipairs(spells) do
-    slots[spell.inventory_x+1] = spell
-  end
-  for i=1, self.capacity do
-    spells_string = spells_string .. (i == 1 and "" or ",") .. (slots[i] and slots[i].action_id or "")
-    -- create spell uses string
-    
-    if(slots[i])then
-      local uses_remaining = slots[i].uses_remaining
-      if uses_remaining == nil then
-        uses_remaining = -1
-      end
-      spells_uses_string = spells_uses_string .. (i == 1 and "" or ",") .. tostring(uses_remaining)
-    else
-      spells_uses_string = spells_uses_string .. (i == 1 and "" or ",") .. "0"
+    include_mana = include_mana or false
+    include_offsets = include_offsets or false
+    local spells_string = ""
+    local spells_uses_string = ""
+    local always_casts_string = ""
+    local spells, always_casts = self:GetSpells()
+    local slots = {}
+    for i, spell in ipairs(spells) do
+        slots[spell.inventory_x+1] = spell
     end
-  end
-  for i, spell in ipairs(always_casts) do
-    always_casts_string = always_casts_string .. (i == 1 and "" or ",") .. spell.action_id
-  end
+    for i=1, self.capacity do
+        spells_string = spells_string .. (i == 1 and "" or ",") .. (slots[i] and slots[i].action_id or "")
 
-  local sprite_image_file, offset_x, offset_y, tip_x, tip_y = self:GetSprite()
+        if(slots[i])then
+            local uses_remaining = slots[i].uses_remaining
+            if uses_remaining == nil then
+                uses_remaining = -1
+            end
+            spells_uses_string = spells_uses_string .. (i == 1 and "" or ",") .. tostring(uses_remaining)
+        else
+            spells_uses_string = spells_uses_string .. (i == 1 and "" or ",") .. "0"
+        end
+    end
+    for i, spell in ipairs(always_casts) do
+        always_casts_string = always_casts_string .. (i == 1 and "" or ",") .. spell.action_id
+    end
 
-  -- Add a workaround for the starter wands which are the only ones with an xml sprite
-  -- Modded wands which use xmls won't work sadly
-  if sprite_image_file == "data/items_gfx/handgun.xml" then
-    sprite_image_file = "data/items_gfx/handgun.png"
-    offset_x = 4
-    offset_y = 3.5
-  end
-  if sprite_image_file == "data/items_gfx/bomb_wand.xml" then
-    sprite_image_file = "data/items_gfx/bomb_wand.png"
-    offset_x = 4
-    offset_y = 3.5
-  end
+    local sprite_image_file, offset_x, offset_y, tip_x, tip_y = self:GetSprite()
 
-  local serialize_version = "1"
+    -- Add a workaround for the starter wands which are the only ones with an xml sprite
+    -- Modded wands which use xmls won't work sadly
+    if sprite_image_file == "data/items_gfx/handgun.xml" then
+        sprite_image_file = "data/items_gfx/handgun.png"
+        offset_x = 4
+        offset_y = 3.5
+    end
+    if sprite_image_file == "data/items_gfx/bomb_wand.xml" then
+        sprite_image_file = "data/items_gfx/bomb_wand.png"
+        offset_x = 4
+        offset_y = 3.5
+    end
 
-  return ("EZWv%s;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%s;%s;%s;%s;%d;%d;%d;%d"):format(
-    serialize_version,
-    self.shuffle and 1 or 0,
-    self.spellsPerCast,
-    self.castDelay,
-    self.rechargeTime,
-    self.manaMax,
-    include_mana and self.mana or self.manaMax,
-    self.manaChargeSpeed,
-    self.capacity,
-    self.spread,
-    self.speedMultiplier,
-    spells_string == "" and "-" or spells_string,
-    spells_uses_string == "" and "-" or spells_uses_string,
-    always_casts_string == "" and "-" or always_casts_string,
-    sprite_image_file, include_offsets and offset_x or 0, include_offsets and offset_y or 0, include_offsets and tip_x or 0, include_offsets and tip_y or 0
-  )
-
+    local name, show_name = self:GetName()
+    local serialize_version = "2"
+    return ("EZWv%s;%d;%d;%d;%d;%d;%d;%d;%d;%d;%d;%s;%s;%s;%s;%d;%d;%d;%d;%s;%d"):format(
+        serialize_version,
+        self.shuffle and 1 or 0,
+        self.spellsPerCast,
+        self.castDelay,
+        self.rechargeTime,
+        self.manaMax,
+        include_mana and self.mana or self.manaMax,
+        self.manaChargeSpeed,
+        self.capacity,
+        self.spread,
+        self.speedMultiplier,
+        spells_string == "" and "-" or spells_string,
+        spells_uses_string == "" and "-" or spells_uses_string,
+        always_casts_string == "" and "-" or always_casts_string,
+        sprite_image_file, include_offsets and offset_x or 0, include_offsets and offset_y or 0, include_offsets and tip_x or 0, include_offsets and tip_y or 0, name, show_name and 1 or 0
+    )
 end
 
 local function get_held_wand()
-	local player = EntityGetWithTag("player_unit")
-  if player and player[1] then
-    local inventory2_comp = EntityGetFirstComponentIncludingDisabled(player[1], "Inventory2Component")
+	local player = EntityGetWithTag("player_unit")[1]
+  if player then
+    local inventory2_comp = EntityGetFirstComponentIncludingDisabled(player, "Inventory2Component")
     local active_item = ComponentGetValue2(inventory2_comp, "mActiveItem")
-    if(entity_is_wand(active_item))then
-      return wand:new(active_item)
-    else
-      return nil
-    end
+    return entity_is_wand(active_item) and wand:new(active_item)
   end
 end
 
 function wand:RenderTooltip(origin_x, origin_y, gui_)
-  local success, error_msg = pcall(render_tooltip, origin_x, origin_y, deserialize(self:Serialize()), gui_)
+  local success, error_msg = pcall(render_tooltip, origin_x, origin_y, deserialize_wand(self:Serialize()), gui_)
   if not success then
     error(error_msg, 2)
   end
 end
 
 local function get_all_wands()
-  local wands = {}
-	local player = EntityGetWithTag("player_unit")
-  if player and player[1] then
-    local items = GameGetAllInventoryItems(player[1]) or {}
-    for i, item in ipairs(items) do
-      if(entity_is_wand(item))then
-        table.insert(wands, wand:new(item))
+    local wands = {}
+      local player = EntityGetWithTag("player_unit")
+    if player and player[1] then
+      local items = GameGetAllInventoryItems(player[1]) or {}
+      for i, item in ipairs(items) do
+        if(entity_is_wand(item))then
+          table.insert(wands, wand:new(item))
+        end
       end
     end
-  end
-  return wands
+    return wands
 end
 
 return setmetatable({}, {
@@ -1289,7 +1375,7 @@ return setmetatable({}, {
   end,
   __index = function(self, key)
     return ({
-      Deserialize = deserialize,
+      Deserialize = deserialize_wand,
       RenderTooltip = render_tooltip,
       IsWand = entity_is_wand,
       GetHeldWand = get_held_wand,

@@ -1,4 +1,4 @@
-<Entity  tags="prop,hittable,mortal,homing_target,enemy,touchmagic_immunity,teleportable_NOT,polymorphable_NOT" >
+<Entity  tags="spectator_no_clear,prop,hittable,mortal,homing_target,enemy,touchmagic_immunity,teleportable_NOT,polymorphable_NOT" >
 	<VelocityComponent gravity_y="0"/>
     <SimplePhysicsComponent/>
 	<SpriteComponent 

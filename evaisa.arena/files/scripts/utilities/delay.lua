@@ -8,11 +8,15 @@ end
 delay.update = function()
     for i = #delay_queue, 1, -1 do
         local v = delay_queue[i]
-        v.frames = v.frames - 1
+
+        if(type(v.frames) == "number")then
+            v.frames = v.frames - 1
+        end
+
         if(v.tick_callback)then
             v.tick_callback(v.frames)
         end
-        if(v.frames <= 0)then
+        if((type(v.frames) == "number" and v.frames <= 0) or v.frames())then
             if(v.finish_callback)then
                 v.finish_callback()
             end

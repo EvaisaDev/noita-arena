@@ -18,13 +18,13 @@ mod_settings =
                 value_default = true,
                 scope = MOD_SETTING_SCOPE_NEW_GAME,
             },
-            {
+            --[[{
                 id = "predictive_netcode",
                 ui_name = "Predictive Netcode",
                 ui_description = "Predict player movement using latency.",
                 value_default = false,
                 scope = MOD_SETTING_SCOPE_RUNTIME,
-            },
+            },]]
             {
                 id = "ready_count_left",
                 ui_name = "Ready Count Alt Position",
@@ -32,13 +32,24 @@ mod_settings =
                 value_default = false,
                 scope = MOD_SETTING_SCOPE_RUNTIME,
             },
-            {
+            --[[{
                 id = "spectator_unstable",
                 ui_name = "Enable Spectator System",
                 ui_description = "Enable unfinished spectator system. (Extremely unstable)",
                 value_default = false,
                 scope = MOD_SETTING_SCOPE_RUNTIME,
-            },
+            },]]
+			{
+				id = "simulated_latency",
+				ui_name = "Simulated Latency",
+                ui_description = "Simulate latency for testing purposes. (frames)",
+				value_default = 0,
+				value_min = 0,
+				value_max = 300,
+				value_display_multiplier = 1,
+				value_display_formatting = " $0 frames",
+				scope = MOD_SETTING_SCOPE_RUNTIME,
+			},
         },
     },
 }

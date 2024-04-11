@@ -114,6 +114,20 @@ function playerinfo:New(user)
             steam.matchmaking.setLobbyData(lobby, tostring(self.id).."_ready", "false")
         end]]
     end
+    obj.Destroy = function(self)
+        if(self.entity ~= nil and EntityGetIsAlive(self.entity))then
+            EntityKill(self.entity)
+        end
+        if(self.held_item ~= nil and EntityGetIsAlive(self.held_item))then
+            EntityKill(self.held_item)
+        end
+        self.entity = nil
+        self.held_item = nil
+        if(self.hp_bar)then
+            self.hp_bar:destroy()
+            self.hp_bar = nil
+        end
+    end
 
     setmetatable(obj, self)
     self.__index = self
