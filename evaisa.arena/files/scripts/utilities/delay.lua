@@ -16,7 +16,14 @@ delay.update = function()
         if(v.tick_callback)then
             v.tick_callback(v.frames)
         end
-        if((type(v.frames) == "number" and v.frames <= 0) or v.frames())then
+
+        --[[print("type: "..type(v.frames))
+
+        if(type(v.frames) == "function")then
+            print("waw: "..v.frames())
+        end]]
+
+        if((type(v.frames) == "number" and v.frames <= 0) or (type(v.frames) == "function" and v.frames()))then
             if(v.finish_callback)then
                 v.finish_callback()
             end

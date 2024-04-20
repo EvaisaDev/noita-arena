@@ -35,7 +35,7 @@
         sprite_id="2" />
 -->
 
-    <SpriteComponent
+    <!--<SpriteComponent
         _tags="username"
         image_file = "data/fonts/font_pixel_white.xml"
         emissive = "1"
@@ -51,7 +51,7 @@
         special_scale_x = "0.7"
         special_scale_y = "0.7"
         z_index = "-5000"
-    ></SpriteComponent>
+    ></SpriteComponent>-->
 
     <SpriteComponent
         _tags="face"

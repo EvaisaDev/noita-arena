@@ -183,6 +183,11 @@ networking = {
                 data:DefinePlayer(lobby, user)
             end
 
+            if((data.players[tostring(user)].ready and message[1]) or (not data.players[tostring(user)].ready and not message[1]))then
+                return
+            end
+            
+
             if(GameHasFlagRun("lock_ready_state"))then
                 data.players[tostring(user)].ready = true
                 if (steamutils.IsOwner(lobby)) then
@@ -371,12 +376,12 @@ networking = {
         end,
         item_update = function(lobby, message, user, data)
             if (not gameplay_handler.CheckPlayer(lobby, user, data)) then
-                print("Entity is missing!!! wtf!??")
+                --print("Entity is missing!!! wtf!??")
                 return
             end
 
             if (data.players[tostring(user)].entity and EntityGetIsAlive(data.players[tostring(user)].entity)) then
-                print("weewoo update items")
+                --print("weewoo update items")
                 local items_data = message[1]
                 local force = message[2]
                 local unlimited_spells = message[3]
@@ -399,11 +404,12 @@ networking = {
 
                 if(data.spectator_active_player == nil)then
                     data.spectator_active_player = user
+                    data.selected_client = user
                     data.selected_player = data.players[tostring(user)].entity
                 end
 
                 -- if we are in spectator mode
-                if (data.spectator_entity ~= nil and EntityGetIsAlive(data.spectator_entity)) then
+                if (data.selected_client == user and data.spectator_entity ~= nil and EntityGetIsAlive(data.spectator_entity)) then
                     local items = GameGetAllInventoryItems(data.spectator_entity) or {}
                     for i, item_id in ipairs(items) do
                         GameKillInventoryItem(data.spectator_entity, item_id)
@@ -475,12 +481,12 @@ networking = {
 
                         if(has_spectator)then
                             local inventoryGuiComp = EntityGetFirstComponentIncludingDisabled(data.spectator_entity, "InventoryGuiComponent")
-                            if (inventoryGuiComp ~= nil) then
+                            --[[if (inventoryGuiComp ~= nil) then
                                 if(ComponentGetValue2(inventoryGuiComp, "mActive"))then
                                     ComponentSetValue2(inventoryGuiComp, "mActive", false)
                                     data.force_open_inventory = true
                                 end
-                            end
+                            end]]
                         end
                         
                         local itemComp = EntityGetFirstComponentIncludingDisabled(item_entity, "ItemComponent")
@@ -548,16 +554,53 @@ networking = {
 
                         end
 
-                        local inventoryGuiComp = EntityGetFirstComponentIncludingDisabled(data.spectator_entity, "InventoryGuiComponent")
+                        --[[local inventoryGuiComp = EntityGetFirstComponentIncludingDisabled(data.spectator_entity, "InventoryGuiComponent")
                         if (inventoryGuiComp ~= nil) then
                             if(ComponentGetValue2(inventoryGuiComp, "mActive"))then
                                 ComponentSetValue2(inventoryGuiComp, "mActive", false)
                                 data.force_open_inventory = true
                             end
-                        end
+                        end]]
             
+
                     end
 
+
+
+                end
+
+                if(has_spectator)then
+                    --[[local controls_comp = EntityGetFirstComponentIncludingDisabled(data.spectator_entity, "ControlsComponent")
+
+                    if (controls_comp ~= nil) then
+                        print("Refresh??")
+                        ComponentSetValue2(controls_comp, "enabled", false)
+                        delay.new(2, function()
+                            print("allow inputs!!")
+                            ComponentSetValue2(controls_comp, "enabled", true)
+                        end)
+                        delay.new(1, function()
+                            ComponentSetValue2(controls_comp, "mButtonDownChangeItemR", true)
+                            ComponentSetValue2(controls_comp, "mButtonFrameChangeItemR", GameGetFrameNum() + 1)
+                            ComponentSetValue2(controls_comp, "mButtonCountChangeItemR", 3)
+    
+                        end)
+
+                    end]]
+
+                    local inventory2_comp = EntityGetFirstComponent( data.spectator_entity, "Inventory2Component" )
+                    if( inventory2_comp ) then
+                        delay.new(0, function()
+                            if(EntityGetIsAlive(data.spectator_entity))then
+                                local inventory2_comp = EntityGetFirstComponent( data.spectator_entity, "Inventory2Component" )
+                                if( inventory2_comp ) then
+                                    ComponentSetValue2( inventory2_comp, "mForceRefresh", true )
+                                end
+                            end
+                        end)
+                        ComponentSetValue2( inventory2_comp, "mActualActiveItem", 0 )
+                        --print("attempting refresh??")
+                    end
                 end
                 
             end
@@ -999,14 +1042,6 @@ networking = {
            -- arena_log:print("Received perk update!!")
             --arena_log:print(json.stringify(message[1]))
             data.players[tostring(user)].perks = message[1]
-
-            if(data.spectator_mode and data.state == "lobby" and data.lobby_spectated_player == user)then
-                print("Requesting holymountain sync")
-                delay.new(5, function() 
-                    networking.send.request_sync_hm(lobby, user)
-                end)
-
-            end
         end,
         fire_wand = function(lobby, message, user, data)
             if (not gameplay_handler.CheckPlayer(lobby, user, data)) then
@@ -1562,70 +1597,37 @@ networking = {
             end
         end,
         request_sync_hm = function(lobby, message, user, data)
-
             if(data.state ~= "lobby")then
                 return
             end
 
-            -- send all entities
-            local illegal_sync_tags = {
-                "spectator_no_clear",
-                "workshop_spell_visualizer",
-                "workshop_aabb",
-                "world_state",
-                "coop_respawn"
-            }
-
-            local to_sync = {}
-
-            local entities = EntityGetInRadius(0, 0, 1000000)
-            for k, v in ipairs(entities)do
-                if(EntityGetRootEntity(v) ~= v)then
-                    goto continue
-                end
-                for _, tag in ipairs(illegal_sync_tags)do
-                    if(EntityHasTag(v, tag))then
-                        goto continue
-                        break
-                    end
-                end
-
-
-
-                if(not EntityHasTag(v, "synced_once"))then
-                    EntitySetName(v, EntityGetName(v).."_"..tostring((GameGetFrameNum() % 100000) + v))
-                    EntityAddComponent2(v, "LuaComponent", {
-                        _tags = "enabled_in_world,enabled_in_hand,enabled_in_inventory",
-                        script_item_picked_up = "mods/evaisa.arena/files/scripts/gamemode/misc/hm_pickup.lua",
-                    })
-                end
-
-                EntityAddTag(v, "synced_once")
-
-
-             
-
-                local x, y = EntityGetTransform(v)
-                table.insert(to_sync, {
-                    x,
-                    y,
-                    np.SerializeEntity(v)
-                })
-
-
-                ::continue::
+            --print("received HM sync request.")
+            networking.send.sync_hm(lobby, data, user, message[1] or nil)
+        end,
+        picked_heart = function (lobby, message, user, data)
+            if(message)then
+                steamutils.AddLobbyFlag(lobby, tostring(user).."picked_heart")
+            else
+                steamutils.RemoveLobbyFlag(lobby, tostring(user).."picked_heart")
             end
-
-            steamutils.sendToPlayer("sync_hm", to_sync, user, true, true)
         end,
         sync_hm = function(lobby, message, user, data)
+            if(data.state ~= "lobby")then
+                return
+            end
 
-            if(GameHasFlagRun("lock_ready_state"))then
+            if(GameHasFlagRun("lock_ready_state") or not data.spectator_mode)then
+                return
+            end
+
+            -- if user is not spectated player, return
+            if(user ~= data.lobby_spectated_player)then
                 return
             end
 
             if(data.spectator_active_player == nil)then
                 data.spectator_active_player = user
+                data.selected_client = user
                 if(data.players[tostring(user)].entity and EntityGetIsAlive(data.players[tostring(user)].entity))then
                     data.selected_player = data.players[tostring(user)].entity
                 end
@@ -1643,16 +1645,28 @@ networking = {
 
             data.last_hm_sync = GameGetFrameNum()
 
+            -- destroy all applicable entities
+            SpectatorMode.ClearHM()
 
+            data.last_synced_entity_count = #message
+            
+            networking.send.request_second_row(lobby, user)
 
-            for k, v in ipairs(message)do
-                local ent = EntityCreateNew()
-                local x, y, entity_data, uid = unpack(v)
-                np.DeserializeEntity(ent, entity_data, x, y)
-                
-            end
+            delay.new(2, function()
+
+                for k, v in ipairs(message)do
+                    local ent = EntityCreateNew()
+                    local x, y, entity_data, uid = unpack(v)
+                    np.DeserializeEntity(ent, entity_data, x, y)
+                    
+                end
+            end)
+            
         end,
         pick_hm_entity = function(lobby, message, user, data)
+            if(data.state ~= "lobby")then
+                return
+            end
             local uid = message
 
             local entity = EntityGetWithName(uid)
@@ -1678,7 +1692,7 @@ networking = {
                         if(EntityHasTag(entity, "perk"))then
 
                             EntityLoad( "data/entities/particles/image_emitters/perk_effect.xml", entity_x, entity_y - 8 )
-                            networking.send.request_sync_hm(lobby, user)
+
                         elseif(EntityGetFilename(entity) == "mods/evaisa.arena/files/entities/misc/spell_refresh.xml")then
                             was_refresh = true
                             EntityLoad("data/entities/particles/image_emitters/spell_refresh_effect.xml", entity_x, entity_y-12)
@@ -1711,17 +1725,27 @@ networking = {
             end
         end,
         request_second_row = function(lobby, message, user, data)
+            if(data.state ~= "lobby")then
+                return
+            end
             --print(GlobalsGetValue("temple_second_row_spots", "{}"))
             local second_row_spots = smallfolk.loads(GlobalsGetValue("temple_second_row_spots", "{}"))
 
             steamutils.sendToPlayer("second_row_spots", second_row_spots, user, true, true)
         end,
         second_row_spots = function(lobby, message, user, data)
+
+            if(user ~= data.lobby_spectated_player or data.state ~= "lobby")then
+                return
+            end
+
             local second_row_spots = message
             
             for k, v in ipairs(second_row_spots)do
                 local x, y = unpack(v)
-                LoadPixelScene( "data/biome_impl/temple/shop_second_row.png", "data/biome_impl/temple/shop_second_row_visual.png", x, y, "", true )
+                print("Spawning second row at: " .. tostring(x) .. ", " .. tostring(y))
+                --LoadPixelScene( "data/biome_impl/temple/shop_second_row.png", "data/biome_impl/temple/shop_second_row_visual.png", x, y, "", true )
+                EntityLoad("mods/evaisa.arena/files/entities/misc/hm_shop_platform.xml", x, y)
             end
         end,
 
@@ -2351,14 +2375,102 @@ networking = {
         request_skin = function(lobby, user)
             steamutils.sendToPlayer("request_skins", {}, user, true)
         end,
-        request_sync_hm = function(lobby, player)
-            steamutils.sendToPlayer("request_sync_hm", {}, player, true)
+        request_sync_hm = function(lobby, user, count)
+            steamutils.sendToPlayer("request_sync_hm", {count}, user, true)
+        end,
+        sync_hm = function(lobby, data, user, count)
+
+            --print("sending HM")
+
+            if(data.state ~= "lobby")then
+                return
+            end
+
+            
+
+            delay.new(function()
+                local valid = #(EntityGetWithTag("workshop") or {}) > 0
+                --print("Valid: "..tostring(valid))
+                return valid
+            end, function()
+                -- send all entities
+                local illegal_sync_tags = {
+                    "spectator_no_clear",
+                    "workshop_spell_visualizer",
+                    "workshop_aabb",
+                    "world_state",
+                    "coop_respawn",
+                    "player_projectile",
+                    "projectile",
+                }
+
+                local to_sync = {}
+                local filtered = {}
+
+                local entities = EntityGetInRadius(0, 0, 1000000)
+                for k, v in ipairs(entities)do
+                    if(EntityGetRootEntity(v) ~= v)then
+                        goto continue
+                    end
+                    for _, tag in ipairs(illegal_sync_tags)do
+                        if(EntityHasTag(v, tag))then
+                            goto continue
+                            break
+                        end
+                    end
+
+                    table.insert(filtered, v)
+
+                    ::continue::
+                end
+
+                --print("count: "..tostring(count).." #filtered: "..tostring(#filtered))
+                if(count ~= nil and math.abs(#filtered - count) < 5)then
+                    return
+                end
+
+                for k, v in ipairs(filtered)do
+                    if(not EntityHasTag(v, "synced_once"))then
+                        EntitySetName(v, EntityGetName(v).."_"..tostring((GameGetFrameNum() % 100000) + v))
+                        EntityAddComponent2(v, "LuaComponent", {
+                            _tags = "enabled_in_world,enabled_in_hand,enabled_in_inventory",
+                            script_item_picked_up = "mods/evaisa.arena/files/scripts/gamemode/misc/hm_pickup.lua",
+                        })
+                    end
+
+                    EntityAddTag(v, "synced_once")
+
+
+                
+
+                    local x, y = EntityGetTransform(v)
+                    table.insert(to_sync, {
+                        x,
+                        y,
+                        np.SerializeEntity(v)
+                    }) 
+                end
+
+
+                --print("Sending "..tostring(#to_sync).." entities")
+
+                
+                if(user)then
+                    steamutils.sendToPlayer("sync_hm", to_sync, user, true, true)
+                else
+                    steamutils.send("sync_hm", to_sync, steamutils.messageTypes.Spectators, lobby, true, true)
+                end
+            end)
+          
         end,
         pick_hm_entity = function(lobby, uid)
             steamutils.send("pick_hm_entity", uid, steamutils.messageTypes.Spectators, lobby, true, true)
         end,
         request_second_row = function(lobby, player)
             steamutils.sendToPlayer("request_second_row", {}, player, true)
+        end,
+        picked_heart = function(lobby, picked)
+            steamutils.send("picked_heart", picked, steamutils.messageTypes.OtherPlayers, lobby, true, true)
         end,
     },
 }

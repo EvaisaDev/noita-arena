@@ -81,6 +81,7 @@ SpectatorMode = {
             if(data.last_selected_player ~= nil and data.players[tostring(data.last_selected_player)] ~= nil)then
                 if(data.players[tostring(data.last_selected_player)].entity ~= nil and EntityGetIsAlive(data.players[tostring(data.last_selected_player)].entity))then
                     data.selected_player = data.players[tostring(data.last_selected_player)].entity
+                    data.selected_client = data.last_selected_player
                     data.selected_player_name = steamutils.getTranslatedPersonaName(data.last_selected_player)
                     data.last_selected_player = nil
                 end
@@ -105,11 +106,13 @@ SpectatorMode = {
                         GameSetCameraPos(camera_x_new, camera_y_new)
                     else
                         data.selected_player = nil
+                        data.selected_client = nil
                         data.selected_player_name = nil
                         print("Cleared selected player 1")
                     end
                 else
                     data.selected_player = nil
+                    data.selected_client = nil
                     data.selected_player_name = nil
                     print("Cleared selected player 2")
                 end
@@ -169,7 +172,10 @@ SpectatorMode = {
 
                 if (keys_pressed.w or keys_pressed.a or keys_pressed.s or keys_pressed.d or stick_average >= 0.1 or stick_average <= -0.1) then
                     data.selected_player = nil
+                    data.selected_client = nil
                     data.selected_player_name = nil
+                    
+                    GameDestroyInventoryItems(data.spectator_entity)
                 end
 
                 if (keys_pressed.q or left_bumper) then
@@ -198,7 +204,10 @@ SpectatorMode = {
                         data.selected_player_name = "Unknown Player"
                         if (player ~= nil) then
                             data.selected_player_name = steamutils.getTranslatedPersonaName(player)
+                            data.selected_client = player
                             data.spectator_active_player = player
+
+                            networking.send.request_item_update(lobby, player)
                         end
                     end
                 end
@@ -229,7 +238,10 @@ SpectatorMode = {
                         data.selected_player_name = "Unknown Player"
                         if (player ~= nil) then
                             data.selected_player_name = steamutils.getTranslatedPersonaName(player)
+                            data.selected_client = player
                             data.spectator_active_player = player
+
+                            networking.send.request_item_update(lobby, player)
                         end
                     end
                 end
@@ -307,7 +319,10 @@ SpectatorMode = {
                                 data.selected_player_name = "Unknown Player"
                                 if (player ~= nil) then
                                     data.selected_player_name = steamutils.getTranslatedPersonaName(player)
+                                    data.selected_client = player
                                     data.spectator_active_player = player
+
+                                    networking.send.request_item_update(lobby, player)
                                 end
                             end
                         end
@@ -336,6 +351,47 @@ SpectatorMode = {
                     networking.send.request_skin(lobby, data.lobby_spectated_player)
                     networking.send.request_perk_update(lobby)
                 end)]]
+            end
+        end
+    end,
+    ClearHM = function()
+         
+        local entities = EntityGetInRadius(0, 0, 1000000)
+    
+        local illegal_clear_tags = {
+            "spectator_no_clear",
+            "workshop_spell_visualizer",
+            "workshop_aabb",
+            "world_state",
+            "coop_respawn"
+        }
+
+        for k, v in ipairs(entities)do
+            local valid = true
+            for k2, v2 in ipairs(illegal_clear_tags)do
+                if(EntityHasTag(v, v2))then
+                    valid = false
+                    break
+                end
+            end
+
+            if(valid and v == EntityGetRootEntity(v))then
+                local comps = EntityGetAllComponents(v)
+
+                for k2, v2 in ipairs(comps)do
+                    local type = ComponentGetTypeName(v2)
+                    if(type ~= "GameEffectComponent")then
+                        EntitySetComponentIsEnabled(v, v2, false)
+                    else
+                        ComponentSetValue2(v2, "mIsExtension", true)
+                    end
+                end
+
+                local material_storage = EntityGetFirstComponentIncludingDisabled(v, "MaterialInventoryComponent")
+                if(material_storage ~= nil)then
+                    EntityRemoveComponent(v, material_storage)
+                end
+                EntityKill(v)
             end
         end
     end,
@@ -483,45 +539,7 @@ SpectatorMode = {
                         EntityKill(v)
                     end
     
-         
-                    local entities = EntityGetInRadius(0, 0, 1000000)
-    
-                    local illegal_clear_tags = {
-                        "spectator_no_clear",
-                        "workshop_spell_visualizer",
-                        "workshop_aabb",
-                        "world_state",
-                        "coop_respawn"
-                    }
-    
-                    for k, v in ipairs(entities)do
-                        local valid = true
-                        for k2, v2 in ipairs(illegal_clear_tags)do
-                            if(EntityHasTag(v, v2))then
-                                valid = false
-                                break
-                            end
-                        end
-    
-                        if(valid and v == EntityGetRootEntity(v))then
-                            local comps = EntityGetAllComponents(v)
-    
-                            for k2, v2 in ipairs(comps)do
-                                local type = ComponentGetTypeName(v2)
-                                if(type ~= "GameEffectComponent")then
-                                    EntitySetComponentIsEnabled(v, v2, false)
-                                else
-                                    ComponentSetValue2(v2, "mIsExtension", true)
-                                end
-                            end
-    
-                            local material_storage = EntityGetFirstComponentIncludingDisabled(v, "MaterialInventoryComponent")
-                            if(material_storage ~= nil)then
-                                EntityRemoveComponent(v, material_storage)
-                            end
-                            EntityKill(v)
-                        end
-                    end
+                    SpectatorMode.ClearHM()
 
                     data.lobby_spectated_player = members[index].id
                     data.spectator_active_player = members[index].id

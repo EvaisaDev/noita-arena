@@ -93,7 +93,76 @@ function data:New()
             unknown = {
                 size = 1,
                 smooth = true,
-                font = "data/fonts/font_pixel.xml",
+                font = "data/fonts/font_pixel_huge.xml",
+            },
+        },
+        username_fonts = {
+            ["English"] = {
+                size = 0.7,
+                smooth = false,
+                upper = true,
+                font = "data/fonts/font_pixel_white.xml"
+            },
+            ["русский"] = {
+                size = 0.7,
+                smooth = false,
+                upper = true,
+                font = "data/fonts/font_pixel_white.xml"
+            },
+            ["Português (Brasil)"] = {
+                size = 0.7,
+                smooth = false,
+                upper = true,
+                font = "data/fonts/font_pixel_white.xml"
+            },
+            ["Español"] = {
+                size = 0.7,
+                smooth = false,
+                upper = true,
+                font = "data/fonts/font_pixel_white.xml"
+            },
+            ["Deutsch"] = {
+                size = 0.7,
+                upper = true,
+                font = "data/fonts/font_pixel_white.xml"
+            },
+            ["Francais"] = {
+                size = 0.7,
+                smooth = false,
+                upper = true,
+                font = "data/fonts/font_pixel_white.xml"
+            },
+            ["Italiano"] = {
+                size = 0.7,
+                smooth = false,
+                upper = true,
+                font = "data/fonts/font_pixel_white.xml"
+            },
+            ["Polska"] = {
+                size = 0.7,
+                smooth = false,
+                upper = true,
+                font = "data/fonts/font_pixel_white.xml"
+            },
+            ["简体中文"] = {
+                size = 0.7,
+                smooth = true,
+                font = "data/fonts/generated/notosans_zhcn_48.bin",
+            },
+            ["日本語"] = {
+                size = 0.7,
+                smooth = true,
+                font = "data/fonts/generated/notosans_jp_48.bin",
+            },
+            ["한국어"] = {
+                size = 0.7,
+                smooth = true,
+                font = "data/fonts/generated/notosans_ko_48.bin",
+            },
+            unknown = {
+                size = 0.7,
+                smooth = true,
+                font = "data/fonts/font_pixel_white.xml",
             },
         },
         client = {

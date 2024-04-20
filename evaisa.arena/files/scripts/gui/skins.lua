@@ -23,6 +23,10 @@ for file in lfs.dir(cache_folder)do
     end
 end
 
+function make_verlet_color(r, g, b)
+    return bit.bor(bit.bor(bit.bor(bit.lshift(0xFF, 24), bit.lshift(b, 16)), bit.lshift(g, 8)), r)
+end
+
 -- create skins folder
 fs.mkdir(skins_folder, true)
 
@@ -52,6 +56,28 @@ skins.init = function()
 
     self.refresh_skins = function()
         self.loaded_skins = {}
+
+        -- add default skin
+        local skin_name = "Default"
+        local temp_path = cache_folder..uniqueFileName()..".png"
+        local status, img = pcall(loadImage, "mods/evaisa.arena/files/gfx/skins/player_default.png")
+        if status then
+            -- if top left pixel is transparent, set it to 9a6f9b
+            local r, g, b, a = getPixel(img, 0, 0)
+            if(a < 1)then
+                setPixel(img, 0, 0, 154, 111, 155, 255)
+            end
+            -- if pixel below that is transparent, set it to 76547f
+            local r, g, b, a = getPixel(img, 0, 1)
+            if(a < 1)then
+                setPixel(img, 0, 1, 118, 84, 127, 255)
+            end
+
+            saveImage(img, temp_path)
+
+            table.insert(self.loaded_skins, {is_default = true, name = skin_name, path = "mods/evaisa.arena/files/gfx/skins/player_default.png", temp_path = temp_path, img = img})
+        end
+
         for file in lfs.dir(skins_folder)do
             if file ~= "." and file ~= ".." then
                 local file_path = skins_folder..file
@@ -61,6 +87,25 @@ skins.init = function()
                     if(img.w == player_default_img.w and img.h == player_default_img.h)then
                         local skin_name = file:match("(.+)%..+")
                         local temp_path = cache_folder..uniqueFileName()..".png"
+
+                        local was_missing_cape = false
+                        -- if top left pixel is transparent, set it to 9a6f9b
+                        local r, g, b, a = getPixel(img, 0, 0)
+                        if(a < 1)then
+                            setPixel(img, 0, 0, 154, 111, 155, 255)
+                            was_missing_cape = true
+                        end
+                        -- if pixel below that is transparent, set it to 76547f
+                        local r, g, b, a = getPixel(img, 0, 1)
+                        if(a < 1)then
+                            setPixel(img, 0, 1, 118, 84, 127, 255)
+                            was_missing_cape = true
+                        end
+
+                        if was_missing_cape then
+                            saveImage(img, file_path)
+                        end
+
                         saveImage(img, temp_path)
                         table.insert(self.loaded_skins, {name = skin_name, path = file_path, temp_path = temp_path, img = img})
                     end
@@ -446,7 +491,13 @@ skins.init = function()
         GuiLayoutBeginHorizontal(self.gui, 0, 5, true, 1)
         GuiText(self.gui, 0, 0, GameTextGetTranslatedOrNot("$arena_skins_skin_name"))
         GuiZSetForNextWidget(self.gui, -3950)
+        local previous_name = self.selected_skin.name
         self.selected_skin.name = GuiTextInput(self.gui, new_id(), 0, 0, self.selected_skin.name, 80, 16)
+
+        if(previous_name ~= self.selected_skin.name)then
+            self.selected_skin.path = nil
+        end
+
 
         local illegal_chars = {
             "/",
@@ -478,14 +529,18 @@ skins.init = function()
         
         if(GuiButton(self.gui, new_id(), 0, 3, GameTextGetTranslatedOrNot("$arena_skins_save_skin")))then
             -- save skin
-            if(self.selected_skin.path)then
+            if(not self.selected_skin.is_default and self.selected_skin.path)then
                 fs.remove(self.selected_skin.path)
             end
 
             if(self.selected_skin.temp_path)then
                 fs.remove(self.selected_skin.temp_path)
             end
-            saveImage(player_modified_img, skins_folder..self.selected_skin.name..".png")
+
+            if(string.lower(self.selected_skin.name) ~= "default")then
+                saveImage(player_modified_img, skins_folder..self.selected_skin.name..".png")
+            end
+
             self.refresh_skins()
         end
         GuiTooltip(self.gui, GameTextGetTranslatedOrNot("$arena_skins_save_skin"), GameTextGetTranslatedOrNot("$arena_skins_save_skin_description"))
@@ -503,14 +558,26 @@ skins.init = function()
         GuiEndScrollContainer(self.gui)
 
 
+        local scroll_offset = 0
+        if(#self.loaded_skins > 6)then
+            scroll_offset = -8
+        end
+
         GuiZSetForNextWidget(self.gui, -3900)
-        GuiBeginScrollContainer(self.gui, 53252534, x - 138, y + saved_skins_control_height + 7, 130, 200 - saved_skins_control_height - 7, false, 1, 1)
+        GuiBeginScrollContainer(self.gui, 53252534, x - 138, y + saved_skins_control_height + 7, 130 + scroll_offset, 200 - saved_skins_control_height - 7, false, 1, 1)
         GuiLayoutBeginVertical(self.gui, 0, 0, true)
 
         local any_hovered = false
         for i, skin in ipairs(self.loaded_skins)do
             if(GuiImageButton(self.gui, new_id(), 0, 0, "", skin.temp_path))then
-                self.selected_skin = skin
+                --duplicate skin
+                self.selected_skin = {
+                    name = skin.name,
+                    path = skin.path,
+                    img = skin.img,
+                    is_default = skin.is_default
+                }
+
                 player_modified_img = loadImage(skin.path)
 
                 fs.remove(self.last_file_name)
@@ -528,18 +595,23 @@ skins.init = function()
             end
 
             GuiText(self.gui, skin.img.w + 2, -skin.img.h, skin.name)
-            if(GuiButton(self.gui, new_id(), skin.img.w + 2, -1, GameTextGetTranslatedOrNot("$arena_skins_overwrite")))then
-                -- overwrite skin
-                fs.remove(skin.temp_path)
-                saveImage(player_modified_img, skin.path)
-                self.refresh_skins()
-            end
-            local width, height = GuiGetTextDimensions(self.gui, GameTextGetTranslatedOrNot("$arena_skins_overwrite"))
-            if (GuiButton(self.gui, new_id(), skin.img.w + 2 + width + 4, -height, GameTextGetTranslatedOrNot("$arena_skins_remove_skin"))) then
-                -- delete skin
-                fs.remove(skin.path)
-                fs.remove(skin.temp_path)
-                self.refresh_skins()
+            
+            if(not skin.is_default)then
+                if(GuiButton(self.gui, new_id(), skin.img.w + 2, -1, GameTextGetTranslatedOrNot("$arena_skins_overwrite")))then
+                    -- overwrite skin
+                    fs.remove(skin.temp_path)
+                    saveImage(player_modified_img, skin.path)
+                    self.refresh_skins()
+                end
+                local width, height = GuiGetTextDimensions(self.gui, GameTextGetTranslatedOrNot("$arena_skins_overwrite"))
+                if (GuiButton(self.gui, new_id(), skin.img.w + 2 + width + 4, -height, GameTextGetTranslatedOrNot("$arena_skins_remove_skin"))) then
+                    -- delete skin
+                    fs.remove(skin.path)
+                    fs.remove(skin.temp_path)
+                    self.refresh_skins()
+                end
+            else
+                GuiText(self.gui, skin.img.w + 2, -1, " ")
             end
         end
 
@@ -708,6 +780,23 @@ skins.init = function()
             end
         end
 
+        local cape = 0xFF9a6f9b
+        local cape_edge = 0xFF76547f
+
+
+
+        -- get cape pixels, top left and pixel below that
+        local cape_r, cape_g, cape_b, cape_a = getPixel(skin_texture_img, 0, 0)
+        local cape_edge_r, cape_edge_g, cape_edge_b, cape_edge_a = getPixel(skin_texture_img, 0, 1)
+
+        if(cape_a > 0)then
+            cape = make_verlet_color(cape_r, cape_g, cape_b)
+        end
+
+        if(cape_edge_a > 0)then
+            cape_edge = make_verlet_color(cape_edge_r, cape_edge_g, cape_edge_b)
+        end
+
         -- save uv_map_img to cache
         local file_name = uniqueFileName()
         local temp_path = cache_folder..file_name.."_base.png"
@@ -715,7 +804,7 @@ skins.init = function()
         saveImage(uv_map_img, temp_path)
         saveImage(arm_uv_map_img, temp_path_arm)
 
-        return temp_path, temp_path_arm, file_name
+        return temp_path, temp_path_arm, file_name, cape, cape_edge
 
     end
 
@@ -739,7 +828,7 @@ skins.init = function()
             end
 
             -- generate skin
-            local temp_path, arm_path, path_name = self.generate_skin(data, true)
+            local temp_path, arm_path, path_name, cape, cape_edge = self.generate_skin(data, true)
             if(temp_path == nil)then
                 return
             end
@@ -765,9 +854,17 @@ skins.init = function()
                         ComponentSetValue2(comp, "image_file", texture_file_name_arm)
                     end
                 end
+                if(EntityGetName(child) == "cape")then
+                    local verlet_comp = EntityGetFirstComponent(child, "VerletPhysicsComponent")
+
+                    if(verlet_comp)then
+                        ComponentSetValue2(verlet_comp, "cloth_color", cape)
+                        ComponentSetValue2(verlet_comp, "cloth_color_edge", cape_edge)
+                    end
+                end
             end
 
-            self.last_player_skins[tostring(user)] = {path = temp_path, xml_path = texture_file_name, arm_path = arm_path, arm_xml_path = texture_file_name_arm}
+            self.last_player_skins[tostring(user)] = {path = temp_path, xml_path = texture_file_name, arm_path = arm_path, arm_xml_path = texture_file_name_arm, cape = cape, cape_edge = cape_edge}
             
         elseif(self.last_player_skins["self"])then
             local comp = EntityGetFirstComponentIncludingDisabled(entity, "SpriteComponent", "skin_root")
@@ -781,6 +878,14 @@ skins.init = function()
                     local comp = EntityGetFirstComponent(child, "SpriteComponent")
                     if(comp)then
                         ComponentSetValue2(comp, "image_file", self.last_player_skins["self"].arm_xml_path)
+                    end
+                end
+                if(EntityGetName(child) == "cape")then
+                    local verlet_comp = EntityGetFirstComponent(child, "VerletPhysicsComponent")
+
+                    if(verlet_comp)then
+                        ComponentSetValue2(verlet_comp, "cloth_color", self.last_player_skins["self"].cape)
+                        ComponentSetValue2(verlet_comp, "cloth_color_edge", self.last_player_skins["self"].cape_edge)
                     end
                 end
             end
@@ -802,7 +907,7 @@ skins.init = function()
         print("Applying skin to self")
 
         -- generate skin
-        local temp_path, arm_path, file_name = self.generate_skin(self.last_file_name)
+        local temp_path, arm_path, file_name, cape, cape_edge = self.generate_skin(self.last_file_name)
 
         if(temp_path == nil)then
             print("Invalid skin detected.")
@@ -843,8 +948,18 @@ skins.init = function()
                         ComponentSetValue2(comp, "image_file", texture_file_name_arm)
                     end
                 end
+                if(EntityGetName(child) == "cape")then
+                    local verlet_comp = EntityGetFirstComponent(child, "VerletPhysicsComponent")
+
+                    if(verlet_comp)then
+                        ComponentSetValue2(verlet_comp, "cloth_color", cape)
+                        ComponentSetValue2(verlet_comp, "cloth_color_edge", cape_edge)
+                    end
+                end
             end
         end
+
+        
 
         self.last_player_skins["self"] = {path = temp_path, xml_path = texture_file_name, arm_path = arm_path, arm_xml_path = texture_file_name_arm}
 

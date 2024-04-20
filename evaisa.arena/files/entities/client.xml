@@ -1,4 +1,4 @@
-<Entity name="client" tags="client,mortal,human,hittable,peasant,prey,polymorphable_NOT,enemy">
+<Entity name="client" tags="client,mortal,human,hittable,peasant,prey,polymorphable_NOT,enemy,spectator_no_clear">
   <HotspotComponent
     _tags="hat"
     sprite_hotspot_name="hat"
@@ -279,7 +279,7 @@
   </Entity>
   <!--<Entity name="inventory_full"/>-->
 
-    <SpriteComponent
+    <!--<SpriteComponent
         _tags="username"
         image_file = "data/fonts/font_pixel_white.xml"
         emissive = "1"
@@ -295,7 +295,7 @@
         special_scale_x = "0.7"
         special_scale_y = "0.7"
         z_index = "-5000"
-    ></SpriteComponent>
+    ></SpriteComponent>-->
     <StreamingKeepAliveComponent/>
 
   

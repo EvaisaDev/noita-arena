@@ -41,10 +41,19 @@ end
 
 function spawn_hp( x, y )
 	GameAddFlagRun("in_hm")
-    if(not GameHasFlagRun("skip_health"))then
-		EntityLoad( "mods/evaisa.arena/files/entities/misc/heart_fullhp.xml", x-16, y )
-	else
-		GameRemoveFlagRun("skip_health")
+    if(not GameHasFlagRun("picked_health"))then
+		local hp = EntityLoad( "mods/evaisa.arena/files/entities/misc/heart_fullhp.xml", x-16, y )
+
+		if(not EntityHasTag(hp, "synced_once"))then
+			EntitySetName(hp, EntityGetName(hp).."_"..tostring((GameGetFrameNum() % 100000) + hp))
+			EntityAddComponent2(hp, "LuaComponent", {
+				_tags = "enabled_in_world,enabled_in_hand,enabled_in_inventory",
+				script_item_picked_up = "mods/evaisa.arena/files/scripts/gamemode/misc/hm_pickup.lua",
+			})
+			
+			EntityAddTag(hp, "synced_once")
+		end
+
 	end
 	EntityLoad( "data/entities/buildings/music_trigger_temple.xml", x-16, y )
 	EntityLoad( "mods/evaisa.arena/files/entities/misc/spell_refresh.xml", x+16, y )

@@ -333,7 +333,7 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 148,
+    version = 150,
     required_online_version = 345,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
@@ -1647,6 +1647,11 @@ ArenaMode = {
     end,
     start = function(lobby, was_in_progress)
 
+        for i, v in ipairs(EntityGetWithTag("player_unit"))do
+            EntityKill(v)
+        end
+        
+        print("Start called.")
         arena_log:print("Start called!!!")
 
         if(was_content_mismatched)then
@@ -1984,6 +1989,9 @@ ArenaMode = {
     end,
     leave = function(lobby)
         GameAddFlagRun("player_unloaded")
+        if(gameplay_handler == nil)then
+            return
+        end
         gameplay_handler.ResetEverything(lobby)
 
         local keybinds_global = GlobalsGetValue("evaisa.mp.keybinds", "{}")

@@ -114,7 +114,7 @@ function ready_counter.create( text, callback, finish_callback )
                 GuiZSetForNextWidget(gui_ready_counter, 1001)
                 GuiEndAutoBoxNinePiece(gui_ready_counter, 1, 0, 0, false, 0, ready_9piece, ready_9piece)
 
-                local clicked, right_clicked, hovered = GuiGetPreviousWidgetInfo(gui_ready_counter)
+                local clicked, right_clicked, hovered, draw_x, draw_y = GuiGetPreviousWidgetInfo(gui_ready_counter)
                 if(clicked)then
                     GamePlaySound("data/audio/Desktop/ui.bank", "ui/button_click", 0, 0)
         
@@ -138,10 +138,21 @@ function ready_counter.create( text, callback, finish_callback )
                     if(not data.client.ready_button_hovered)then
                         GamePlaySound("data/audio/Desktop/ui.bank", "ui/button_select", 0, 0)
                     end
+
+                    local cursor_x, cursor_y = input:GetUIMousePos(gui_ready_counter)
+
+
+
+                    GuiImage(gui_ready_counter, 2412, cursor_x - 16, cursor_y - 16, "mods/evaisa.arena/files/sprites/ui/no_avatar.png", 0, 1, 1)
+                    
+
                     data.client.ready_button_hovered = true
                 else
                     data.client.ready_button_hovered = false
                 end
+
+
+     
             end
 
             return false

@@ -1,0 +1,20 @@
+<Entity tags="hm_platform">
+	<PhysicsBody2Component 
+		is_static="1"
+		allow_sleep="1"
+		angular_damping="0.01"
+		linear_damping="0.3" 
+		fixed_rotation="0"
+		is_bullet="0"
+		>
+	</PhysicsBody2Component>
+
+	<PhysicsImageShapeComponent 
+		body_id="1"
+		is_root="1"
+		centered="0"
+		image_file="data/biome_impl/temple/shop_second_row_visual.png"
+        destroy_body_if_entity_destroyed = "1"
+		material="rock_static_mountain" >
+	</PhysicsImageShapeComponent>
+</Entity>  

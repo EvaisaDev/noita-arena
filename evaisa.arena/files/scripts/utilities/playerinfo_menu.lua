@@ -432,9 +432,10 @@ function playerinfo_menu:New()
                                 end
                             end
                             draw_perks = true
+                            perk_draw_y = draw_y
                         end
                         perk_draw_x = draw_x
-                        perk_draw_y = draw_y
+                        
                         GuiLayoutEnd(self.gui)
         
                         if(index ~= player_count)then
@@ -491,11 +492,13 @@ function playerinfo_menu:New()
                     local pos_x = i % width
                     local pos_y = math.floor(i / width)
                     GuiZSetForNextWidget(self.gui, 800)
-                    GuiImage(self.gui, new_id(), perk_draw_x + (pos_x * pdg_x), 1 + (draw_pos + (pos_y * pdg_y)), player_perk_sprites[i+1], 1, 1, 1)
+                    --GuiImage(self.gui, new_id(), perk_draw_x + (pos_x * pdg_x), 1 + (draw_pos + (pos_y * pdg_y)), player_perk_sprites[i+1], 1, 1, 1)
+                    GuiImage(self.gui, new_id(), perk_draw_x + (pos_x * pdg_x), 10 + (perk_draw_y + (pos_y * pdg_y)), player_perk_sprites[i+1], 1, 1, 1)
                 end
             else
                 GuiZSetForNextWidget(self.gui, 800)
-                GuiText(self.gui, perk_draw_x, draw_pos + 1, GameTextGetTranslatedOrNot("$arena_playerinfo_no_perks"))
+                --GuiText(self.gui, perk_draw_x, draw_pos + 1, GameTextGetTranslatedOrNot("$arena_playerinfo_no_perks"))
+                GuiText(self.gui, perk_draw_x, 10 + perk_draw_y, GameTextGetTranslatedOrNot("$arena_playerinfo_no_perks"))
             end
             GuiZSetForNextWidget(self.gui, 850)
 
