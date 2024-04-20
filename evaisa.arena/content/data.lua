@@ -468,6 +468,11 @@ cosmetics = {
             if(GameHasFlagRun("dunce"))then
                 local ready_count = ArenaGameplay.ReadyAmount(data, lobby)
                 local total_count = ArenaGameplay.TotalPlayers(lobby)
+
+                if(GameGetFrameNum() % 10 == 0)then
+                    print("total_count: " .. total_count .. " ready_count: " .. ready_count .. " GameHasFlagRun(ready_check): " .. tostring(GameHasFlagRun("ready_check")) .. " GameHasFlagRun(was_last_ready): " .. tostring(GameHasFlagRun("was_last_ready")))
+                end
+
                 if((total_count > 1 and ready_count == (total_count - 1) and not GameHasFlagRun("ready_check")) or GameHasFlagRun("was_last_ready"))then
                     return true
                 end
