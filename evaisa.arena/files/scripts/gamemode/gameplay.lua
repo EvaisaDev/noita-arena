@@ -497,6 +497,11 @@ ArenaGameplay = {
     end,
     ReadyAmount = function(data, lobby)
         local amount = data.client.ready and 1 or 0
+
+        if(data.state ~= "lobby")then
+            return amount
+        end
+
         local members = steamutils.getLobbyMembers(lobby)
         for k, member in pairs(members) do
             if (member.id ~= steam.user.getSteamID()) then
