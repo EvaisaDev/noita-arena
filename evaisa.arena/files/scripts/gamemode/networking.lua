@@ -1748,7 +1748,73 @@ networking = {
                 EntityLoad("mods/evaisa.arena/files/entities/misc/hm_shop_platform.xml", x, y)
             end
         end,
+        hm_timer_update = function(lobby, message, user, data)
+            if(data.state ~= "lobby")then
+                if(data.hm_timer ~= nil)then
+                    data.hm_timer.clear()
+                    data.hm_timer = nil
+                end
+                return
+            end
+            if(not steamutils.IsOwner(lobby, user))then
+                return
+            end
 
+            local frames = message
+
+            if(data.hm_timer == nil)then
+                local hm_timer_time = GlobalsGetValue("hm_timer_time", "60")
+                
+                local timer_frames = tonumber(hm_timer_time) * 60
+                data.hm_timer = delay.new(timer_frames, function()
+                    if(steamutils.IsOwner(lobby))then
+                        ArenaGameplay.ForceReady(lobby, data)
+                    end
+                end, function(frame)
+                    --print("HM Tick: "..tostring(frame))
+                    local seconds_left = math.floor((frame) / 60)
+                    
+                    -- format as seconds more minutes
+                    local time_string = "0s"
+                    if(seconds_left >= 60)then
+                        local minutes = math.floor(seconds_left / 60)
+                        local seconds = seconds_left % 60
+                        time_string = tostring(minutes).."m "..tostring(seconds).."s"
+                    else
+                        time_string = tostring(seconds_left).."s"
+                    end
+
+                    local message = string.format(GameTextGetTranslatedOrNot("$arena_hm_timer_string"), time_string)
+  
+                    networking.send.hm_timer_update(lobby, frame)
+
+                    data.hm_timer_gui = data.hm_timer_gui or GuiCreate()
+                    GuiStartFrame(data.hm_timer_gui)
+
+                    local screen_w, screen_h = GuiGetScreenDimensions(data.hm_timer_gui)
+
+                    -- draw text at bottom center of screen
+                    local text_width, text_height = GuiGetTextDimensions(data.hm_timer_gui, message)
+
+                    GuiZSetForNextWidget(data.hm_timer_gui, -11)
+                    GuiText(data.hm_timer_gui, (screen_w / 2) - (text_width / 2), screen_h - text_height - 10, message)
+                end)
+            else
+                data.hm_timer.frames = frames
+            end
+        end,
+        hm_timer_clear = function(lobby, message, user, data)
+            if(data.state ~= "lobby")then
+                return
+            end
+            if(not steamutils.IsOwner(lobby, user))then
+                return
+            end
+            if(data.hm_timer)then
+                data.hm_timer.clear()
+                data.hm_timer = nil
+            end
+        end,
     },
     send = {
         handshake = function(lobby)
@@ -2471,6 +2537,12 @@ networking = {
         end,
         picked_heart = function(lobby, picked)
             steamutils.send("picked_heart", picked, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+        end,
+        hm_timer_update = function(lobby, frames)
+            steamutils.send("hm_timer_update", frames, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+        end,
+        hm_timer_clear = function(lobby)
+            steamutils.send("hm_timer_clear", {}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
         end,
     },
 }

@@ -348,6 +348,11 @@ ArenaMode = {
     custom_enter_check = function(lobby)
         local lobby_state = steam.matchmaking.getLobbyData(lobby, "arena_state") or "lobby"
 
+        -- if we are the only player in the lobby and arena state is not lobby, allow entry
+        if(steam.matchmaking.getNumLobbyMembers(lobby) == 1 and lobby_state ~= "lobby")then
+            return true, "Preparing in Holy Mountain"
+        end
+
         if(lobby_state == "lobby")then
             return true, "Preparing in Holy Mountain"
         else
@@ -725,6 +730,42 @@ ArenaMode = {
             type = "bool",
             default = false
         }, 
+        {
+            id = "hm_timer_count",
+			name = "$arena_settings_hm_timer_count_name",
+			description = "$arena_settings_hm_timer_count_description",
+			type = "slider",
+			min = 0,
+			max = 100,
+			default = 80;
+			display_multiplier = 1,
+			formatting_string = " $0%",
+			width = 100
+        },
+        {
+			id = "hm_timer_time",
+			require = function(setting_self)
+                return tonumber(GlobalsGetValue("setting_next_hm_timer_count", "80")) < 100
+            end,
+			name = "$arena_settings_hm_timer_time_name",
+			description = "$arena_settings_hm_timer_time_description",
+			type = "slider",
+			min = 1,
+			max = 5 * 60,
+			default = 60;
+			display_multiplier = 1,
+			formatting_func = function(value)
+                value = math.floor(value)
+                -- show seconds or minutes, if minutes, round to 1 decimal
+                if(value < 60)then
+                    return " "..tostring(value) .. "s"
+                else
+                    -- round to 1 decimal
+                    return " "..tostring(math.floor((value / 60) * 100) / 100) .. "m"
+                end
+            end,
+			width = 100
+		},
     },
     lobby_menus = {
 
@@ -1530,6 +1571,19 @@ ArenaMode = {
             GameRemoveFlagRun("refresh_all_charges")
         end
 
+        local hm_timer_count = tonumber(steam.matchmaking.getLobbyData(lobby, "setting_hm_timer_count"))
+        if (hm_timer_count == nil) then
+            hm_timer_count = 0
+        end
+        GlobalsSetValue("hm_timer_count", tostring(math.floor(hm_timer_count)))
+
+        local hm_timer_time = tonumber(steam.matchmaking.getLobbyData(lobby, "setting_hm_timer_time"))
+        if (hm_timer_time == nil) then
+            hm_timer_time = 60
+        end
+        GlobalsSetValue("hm_timer_time", tostring(math.floor(hm_timer_time)))
+        
+
         arena_log:print("Lobby data refreshed")
     end,
     enter = function(lobby)
@@ -1671,6 +1725,7 @@ ArenaMode = {
             ArenaGameplay.GracefulReset(lobby, data)
         end
 
+        GameRemoveFlagRun("DeserializedHolyMountain")
         
         ArenaMode.refresh(lobby)
 
@@ -1679,7 +1734,7 @@ ArenaMode = {
         data.spectator_mode = steamutils.IsSpectator(lobby)
         data:DefinePlayers(lobby)
 
-
+        
         gameplay_handler.ResetEverything(lobby)
 
         if (not was_in_progress) then

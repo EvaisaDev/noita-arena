@@ -314,16 +314,66 @@ ArenaGameplay = {
                 data.client.match_data = serialized
             end
         ]]
-
-        if(steamutils.GetLocalLobbyData(lobby, "match_data") ~= nil)then
-            local match_data = bitser.loads(steamutils.GetLocalLobbyData(lobby, "match_data"))
+        local match_data_serialized = steamutils.GetLocalLobbyData(lobby, "match_data")
+        if(match_data_serialized ~= nil)then
+            local match_data = bitser.loads(match_data_serialized)
 
             if(match_data ~= nil)then
+
                 data.client.reroll_count = tonumber(match_data.reroll_count)
                 GlobalsSetValue("TEMPLE_PERK_REROLL_COUNT", tostring(data.client.reroll_count))
                 print("Reroll count overwritten: "..tostring(data.client.reroll_count))
-                GameAddFlagRun("picked_health")
-                GameAddFlagRun("picked_perk")
+
+                local round = tonumber(match_data.round)
+
+                -- make sure this is the same round
+                if(round == ArenaGameplay.GetNumRounds(lobby))then
+                    if(match_data.picked_health)then
+                        GameAddFlagRun("picked_health")
+                    end
+                    if(match_data.picked_perk)then
+                        GameAddFlagRun("picked_perk")
+                    end
+                    local floor_items = match_data.floor_items or {}
+                    local shop_platforms = match_data.shop_platforms or {}
+                    delay.new(function()
+                        local valid = #(EntityGetWithTag("workshop") or {}) > 0
+                        --print("Valid: "..tostring(valid))
+                        return valid
+                    end, function()
+
+                        for i, v in ipairs(shop_platforms)do
+                            local x = v[1]
+                            local y = v[2]
+                            
+                            delay.new(function()
+                                local valid = DoesWorldExistAt(x - 2, y - 2, x + 2, y + 2)
+                                return valid
+                            end, function()
+                                print("Deserializing shop platform: "..i)
+                                LoadPixelScene( "data/biome_impl/temple/shop_second_row.png", "data/biome_impl/temple/shop_second_row_visual.png", x, y, "", true )
+                            end)
+                        end
+
+                        for k, v in ipairs(floor_items)do
+                            local item = v.data
+                            local x = v.x
+                            local y = v.y
+
+                            if(item ~= nil)then
+                                delay.new(function()
+                                    local valid = DoesWorldExistAt(x - 2, y - 2, x + 2, y + 2)
+                                    return valid
+                                end, function()
+                                    print("Deserializing item: "..k)
+                                    local new_entity = EntityCreateNew()
+                                    np.DeserializeEntity(new_entity, item)
+                                end)
+                            end
+                        end
+                    end)
+                    GameAddFlagRun("DeserializedHolyMountain")
+                end
             end
         end
 
@@ -496,11 +546,11 @@ ArenaGameplay = {
         GameRemoveFlagRun("player_ready")
     end,
     ReadyAmount = function(data, lobby)
-        local amount = data.client.ready and 1 or 0
-
         if(data.state ~= "lobby")then
-            return amount
+            return 0
         end
+        
+        local amount = data.client.ready and 1 or 0
 
         local members = steamutils.getLobbyMembers(lobby)
         for k, member in pairs(members) do
@@ -511,6 +561,21 @@ ArenaGameplay = {
             end
         end
         return amount
+    end,
+    ForceReady = function(lobby, data)
+        data.client.ready = true
+
+        local members = steamutils.getLobbyMembers(lobby)
+        for k, member in pairs(members) do
+            if (member.id ~= steam.user.getSteamID()) then
+                if (data.players[tostring(member.id)] ~= nil) then
+                    data.players[tostring(member.id)].ready = true
+                end
+            end
+        end
+
+        GameAddFlagRun("lock_ready_state")
+        networking.send.lock_ready_state(lobby)
     end,
     CheckFiringBlock = function(lobby, data)
         local members = steamutils.getLobbyMembers(lobby)
@@ -1237,11 +1302,40 @@ ArenaGameplay = {
 
             print("Profiler result: "..tostring(profile:time()) .. "ms")]]
 
+
             local match_data = {
+                round = ArenaGameplay.GetNumRounds(lobby),
                 reroll_count = GlobalsGetValue("TEMPLE_PERK_REROLL_COUNT", "0"),
                 picked_health = GameHasFlagRun("picked_health"),
                 picked_perk = GameHasFlagRun("picked_perk"),
+                shop_platforms = {},
+                floor_items = {},
             }
+
+            
+            if(data.state == "lobby")then
+
+                match_data.shop_platforms = smallfolk.loads(GlobalsGetValue("temple_second_row_spots", "{}"))
+
+                local entities = EntityGetInRadius(0, 0, 10000000)
+                for i, v in pairs(entities) do
+                    if(EntityGetRootEntity(v) == v)then
+                        -- find wands
+                        local item_comp = EntityGetFirstComponentIncludingDisabled(v, "ItemComponent")
+                        if(item_comp ~= nil)then
+                            --print("Saved item: "..tostring(v))
+                            local x, y = EntityGetTransform(v)
+                            local item_data = {
+                                x = x,
+                                y = y,
+                                data = np.SerializeEntity(v)
+                            }
+                            table.insert(match_data.floor_items, item_data)
+                        end
+                    end
+                end
+            end
+            
 
             local serialized = bitser.dumps(match_data)
 
@@ -1253,7 +1347,10 @@ ArenaGameplay = {
         end
     end,
     LoadLobby = function(lobby, data, show_message, first_entry)
-
+        if(data.hm_timer ~= nil)then
+            data.hm_timer.clear()
+            data.hm_timer = nil
+        end
         local has_picked_heart = steamutils.HasLobbyFlag(lobby, tostring(steam.user.getSteamID()).."picked_heart")
 
         if(has_picked_heart)then
@@ -1588,6 +1685,10 @@ ArenaGameplay = {
         return math.floor(num * mult + 0.5) / mult
     end,
     LoadArena = function(lobby, data, show_message, map)
+        if(data.hm_timer ~= nil)then
+            data.hm_timer.clear()
+            data.hm_timer = nil
+        end
         if(not steamutils.IsOwner(lobby))then
             networking.send.picked_heart(lobby, false)
         else
@@ -1604,7 +1705,7 @@ ArenaGameplay = {
         data.selected_player_name = nil
         data.selected_player = nil
         
-
+        GameRemoveFlagRun("DeserializedHolyMountain")
         GameRemoveFlagRun("player_is_unlocked")
         GameRemoveFlagRun("wardrobe_open")
         GameRemoveFlagRun("chat_bind_disabled")
@@ -2253,6 +2354,62 @@ ArenaGameplay = {
             data.ready_counter:update(lobby, data)
         end
 
+        -- get ready percentage
+        local ready_percentage = math.floor((ArenaGameplay.ReadyAmount(data, lobby) / ArenaGameplay.TotalPlayers(lobby)) * 100)
+
+        local hm_timer_percentage = GlobalsGetValue("hm_timer_count", "80")
+        local hm_timer_time = GlobalsGetValue("hm_timer_time", "60")
+        if(hm_timer_percentage < 100 and not ArenaGameplay.ReadyCheck(lobby, data) and ready_percentage >= tonumber(hm_timer_percentage))then
+            if(data.hm_timer == nil)then
+            
+                local timer_frames = tonumber(hm_timer_time) * 60
+                data.hm_timer = delay.new(timer_frames, function()
+                    if(steamutils.IsOwner(lobby))then
+                        ArenaGameplay.ForceReady(lobby, data)
+                    end
+                end, function(frame)
+                    --print("HM Tick: "..tostring(frame))
+                    local seconds_left = math.floor((frame) / 60)
+                    
+                    -- format as seconds more minutes
+                    local time_string = "0s"
+                    if(seconds_left >= 60)then
+                        local minutes = math.floor(seconds_left / 60)
+                        local seconds = seconds_left % 60
+                        time_string = tostring(minutes).."m "..tostring(seconds).."s"
+                    else
+                        time_string = tostring(seconds_left).."s"
+                    end
+
+                    local message = string.format(GameTextGetTranslatedOrNot("$arena_hm_timer_string"), time_string)
+  
+                    if(steamutils.IsOwner(lobby))then
+                        networking.send.hm_timer_update(lobby, frame)
+                    end
+
+                    data.hm_timer_gui = data.hm_timer_gui or GuiCreate()
+                    GuiStartFrame(data.hm_timer_gui)
+
+                    local screen_w, screen_h = GuiGetScreenDimensions(data.hm_timer_gui)
+
+                    -- draw text at bottom center of screen
+                    local text_width, text_height = GuiGetTextDimensions(data.hm_timer_gui, message)
+
+                    GuiZSetForNextWidget(data.hm_timer_gui, -11)
+                    GuiText(data.hm_timer_gui, (screen_w / 2) - (text_width / 2), screen_h - text_height - 10, message)
+                end)
+            end
+        else
+            if(steamutils.IsOwner(lobby))then
+                networking.send.hm_timer_clear(lobby)
+            end
+            if(data.hm_timer ~= nil)then
+                data.hm_timer.clear()
+                data.hm_timer = nil
+            end
+        end
+
+
         if(not IsPaused())then
             ArenaGameplay.UpdateDummy(lobby, data, true)
         end
@@ -2554,28 +2711,9 @@ ArenaGameplay = {
         
         local new_target_avatar = steamutils.getUserAvatar(data.target_dummy_player)
 
-        --new_target_name = "this is a test user"
-
-        --local usernameSprite = EntityGetFirstComponentIncludingDisabled(dummy, "SpriteComponent", "username")
-        
-        --local temp_gui = GuiCreate()
-        --GuiStartFrame(temp_gui)
-
-        --[[ComponentSetValue2(usernameSprite, "text", new_target_name)
-
-        local width = GuiGetTextDimensions(temp_gui, new_target_name, 0.9)
-        ComponentSetValue2(usernameSprite, "offset_x", (width * 0.5))]]
-
-        --ArenaGameplay.UpdateNametag(lobby, data, usernameSprite, new_target_name)
-
-
-        --GuiDestroy(temp_gui)
-
         local faceSprite = EntityGetFirstComponentIncludingDisabled(dummy, "SpriteComponent", "face")
         ComponentSetValue2(faceSprite, "image_file", new_target_avatar)
 
-        --print("User: "..tostring(new_target))
-        --print("Switched dummy to " .. new_target_name .. " (" .. new_target_avatar .. ")")
         
         EntityRefreshSprite(dummy, usernameSprite)
         EntityRefreshSprite(dummy, faceSprite)
@@ -3389,6 +3527,7 @@ ArenaGameplay = {
                 arena_log:print("Player is missing, spawning player.")
             else
                 if (GameGetFrameNum() % 40 == 0 and GameHasFlagRun("can_save_player")) then
+                    --print("Saving player data")
                     ArenaGameplay.SavePlayerData(lobby, data)
                 end
             end

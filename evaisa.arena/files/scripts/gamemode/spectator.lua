@@ -175,7 +175,9 @@ SpectatorMode = {
                     data.selected_client = nil
                     data.selected_player_name = nil
                     
-                    GameDestroyInventoryItems(data.spectator_entity)
+                    if(data.spectator_entity ~= nil)then
+                        GameDestroyInventoryItems(data.spectator_entity)
+                    end
                 end
 
                 if (keys_pressed.q or left_bumper) then

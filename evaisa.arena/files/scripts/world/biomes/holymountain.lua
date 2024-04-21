@@ -40,8 +40,9 @@ function spawn_spell_visualizer( x, y )
 end
 
 function spawn_hp( x, y )
+
 	GameAddFlagRun("in_hm")
-    if(not GameHasFlagRun("picked_health"))then
+    if(not GameHasFlagRun("DeserializedHolyMountain"))then
 		local hp = EntityLoad( "mods/evaisa.arena/files/entities/misc/heart_fullhp.xml", x-16, y )
 
 		if(not EntityHasTag(hp, "synced_once"))then
@@ -55,6 +56,7 @@ function spawn_hp( x, y )
 		end
 
 	end
+	
 	EntityLoad( "data/entities/buildings/music_trigger_temple.xml", x-16, y )
 	EntityLoad( "mods/evaisa.arena/files/entities/misc/spell_refresh.xml", x+16, y )
 	EntityLoad( "data/entities/buildings/coop_respawn.xml", x, y )
@@ -67,6 +69,10 @@ function spawn_hp( x, y )
 end
 
 function spawn_all_shopitems( x, y )
+
+	if(GameHasFlagRun("DeserializedHolyMountain"))then
+		return
+	end
 
 	local rng = dofile_once("mods/evaisa.arena/lib/rng.lua")
 
@@ -229,7 +235,10 @@ function spawn_all_shopitems( x, y )
 end
 
 function spawn_all_perks( x, y )
-	if(GameHasFlagRun("first_death") and not GameHasFlagRun("skip_perks"))then
+	if(GameHasFlagRun("DeserializedHolyMountain"))then
+		return
+	end
+	if(GameHasFlagRun("first_death"))then
 		local rounds = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0
 		local seed_x, seed_y = (x * 3256) + rounds * 765 + (GameGetFrameNum() / 30), (y * 5326) + rounds * 123 + (GameGetFrameNum() / 20)
 		if(GameHasFlagRun("shop_sync"))then
@@ -241,7 +250,10 @@ function spawn_all_perks( x, y )
 end
 
 function spawn_perk_reroll( x, y )
-	if(GameHasFlagRun("first_death") and not GameHasFlagRun("skip_perks"))then
+	if(GameHasFlagRun("DeserializedHolyMountain"))then
+		return
+	end
+	if(GameHasFlagRun("first_death"))then
 		EntityLoad( "data/entities/items/pickup/perk_reroll.xml", x, y )
 	end
 end
@@ -251,6 +263,9 @@ function spawn_target_dummy( x, y )
 end
 
 function spawn_item_shop_item( x, y )
+	if(GameHasFlagRun("DeserializedHolyMountain"))then
+		return
+	end
 	local rng = dofile_once("mods/evaisa.arena/lib/rng.lua")
 
 	a, b, c, d, e, f = GameGetDateAndTimeLocal()
