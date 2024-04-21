@@ -1063,7 +1063,7 @@ ArenaGameplay = {
 
                 for k, v in pairs(winner_keys) do
                     if (tostring(v) ~= tostring(winner_key)) then
-                        print(v .. "treak")
+                        --print(v .. "treak")
                         steam.matchmaking.setLobbyData(lobby, v .. "treak", "0")
                     end
                 end
