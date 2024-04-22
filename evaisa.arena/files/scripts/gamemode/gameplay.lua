@@ -2357,8 +2357,8 @@ ArenaGameplay = {
         -- get ready percentage
         local ready_percentage = math.floor((ArenaGameplay.ReadyAmount(data, lobby) / ArenaGameplay.TotalPlayers(lobby)) * 100)
 
-        local hm_timer_percentage = GlobalsGetValue("hm_timer_count", "80")
-        local hm_timer_time = GlobalsGetValue("hm_timer_time", "60")
+        local hm_timer_percentage = tonumber(GlobalsGetValue("hm_timer_count", "80"))
+        local hm_timer_time = tonumber(GlobalsGetValue("hm_timer_time", "60"))
         if(hm_timer_percentage < 100 and not ArenaGameplay.ReadyCheck(lobby, data) and ready_percentage >= tonumber(hm_timer_percentage))then
             if(data.hm_timer == nil)then
             

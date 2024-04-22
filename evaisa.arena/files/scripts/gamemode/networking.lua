@@ -1763,7 +1763,7 @@ networking = {
             local frames = message
 
             if(data.hm_timer == nil)then
-                local hm_timer_time = GlobalsGetValue("hm_timer_time", "60")
+                local hm_timer_time = tonumber(GlobalsGetValue("hm_timer_time", "60"))
                 
                 local timer_frames = tonumber(hm_timer_time) * 60
                 data.hm_timer = delay.new(timer_frames, function()

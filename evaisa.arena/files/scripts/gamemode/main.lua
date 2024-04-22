@@ -333,8 +333,8 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 150,
-    required_online_version = 345,
+    version = 151,
+    required_online_version = 347,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
     end,
@@ -1602,6 +1602,8 @@ ArenaMode = {
             steam.matchmaking.setLobbyData(lobby, "mod_list", player_mods)
             steam.matchmaking.setLobbyData(lobby, "custom_lobby_string", "( round 0 )")
         end
+
+        print("MP Version: " .. MP_VERSION .." < " .. ArenaMode.required_online_version)
 
         if(MP_VERSION < ArenaMode.required_online_version)then
             invalid_version_popup_active = invalid_version_popup_active or false
