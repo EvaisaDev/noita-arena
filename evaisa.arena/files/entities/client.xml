@@ -267,6 +267,8 @@
       </Base>  
   </Entity>
 
+  <InventoryGuiComponent _enabled="0" />
+
   <Inventory2Component 
     _enabled="1" 
     full_inventory_slots_x="0" 

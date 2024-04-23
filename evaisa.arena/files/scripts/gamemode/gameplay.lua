@@ -3121,6 +3121,7 @@ ArenaGameplay = {
 
         if(data.spectator_mode)then
             SpectatorMode.UpdateSpectatorEntity(lobby, data)
+            SpectatorMode.HandleSpectatorSync(lobby, data)
 
             if(GameGetFrameNum() % 60 == 0)then
                 local InventoryGuiComponent = EntityGetFirstComponentIncludingDisabled(data.spectator_entity, "InventoryGuiComponent")
@@ -3441,6 +3442,7 @@ ArenaGameplay = {
                     if(data.client.inventory_was_open)then
                         --GamePrint("inventory_was_closed")
                         networking.send.item_update(lobby, data, nil, true, false)
+                        networking.send.switch_item(lobby, data, nil, true, false)
                     end
                     data.client.inventory_was_open = false
                 end
@@ -3457,6 +3459,7 @@ ArenaGameplay = {
 
                         if(last_edited_times[v] ~= edited_times)then
                             networking.send.item_update(lobby, data, nil, true, false)
+                            networking.send.switch_item(lobby, data, nil, true, false)
                         end
 
                         was_wand[v] = true
@@ -3510,7 +3513,7 @@ ArenaGameplay = {
                 if (data.state == "arena") then
                     networking.send.switch_item(lobby, data)
                 else
-                    networking.send.switch_item(lobby, data, nil, nil, true)
+                    networking.send.switch_item(lobby, data, nil, true, true)
                 end
             end
 

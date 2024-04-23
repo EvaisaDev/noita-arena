@@ -139,8 +139,30 @@ typedef struct F {
     float max_hp_cap;
     float max_hp_old;
     int money;
-    bool air_needed;
 } PlayerStats;
+#pragma pack(pop)
+]])
+
+-- wand stats
+--[[
+local msg_data = {
+    mana,
+    GameGetFrameNum() - cast_delay_start_frame,
+    reload_frames_left,
+    reload_next_frame_usable - GameGetFrameNum(),
+    next_charge_frame - GameGetFrameNum(),
+    --spell_uses_table,
+}
+]]
+ffi.cdef([[
+#pragma pack(push, 1)
+typedef struct G {
+    float mana;
+    int cast_delay_start_frame;
+    int reload_frames_left;
+    int reload_next_frame_usable;
+    int next_charge_frame;
+} WandStats;
 #pragma pack(pop)
 ]])
 
@@ -151,6 +173,7 @@ local PhysicsUpdate = ffi.typeof("PhysicsUpdate")
 local CharacterPos = ffi.typeof("CharacterPos")
 local FireWand = ffi.typeof("FireWand")
 local PlayerStats = ffi.typeof("PlayerStats")
+local WandStats = ffi.typeof("WandStats")
 
 
 
@@ -438,6 +461,8 @@ networking = {
                     data.spectator_active_player = user
                     data.selected_client = user
                     data.selected_player = data.players[tostring(user)].entity
+                    data.lobby_spectated_player = user
+                    print("updated spectated player??")
                 end
 
                 -- if we are in spectator mode
@@ -877,56 +902,19 @@ networking = {
             end
         end,
         switch_item = function(lobby, message, user, data)
-            if (not gameplay_handler.CheckPlayer(lobby, user, data)) then
-                return
-            end
 
-            --GlobalsSetValue(tostring(wand.entity_id).."_wand", wandInfo.id)
-            local is_wand, slot_x, slot_y = message[1], message[2], message[3]
-           -- GamePrint("Switching item to slot: " .. tostring(slot_x) .. ", " .. tostring(slot_y))
-            if (data.players[tostring(user)].entity and EntityGetIsAlive(data.players[tostring(user)].entity)) then
-                local items = GameGetAllInventoryItems(data.players[tostring(user)].entity) or {}
-                for i, item in ipairs(items) do
-                    -- check id
-                    --local item_id = tonumber(GlobalsGetValue(tostring(item) .. "_item")) or -1
-                    local itemComp = EntityGetFirstComponentIncludingDisabled(item, "ItemComponent")
-                    local item_slot_x, item_slot_y = ComponentGetValue2(itemComp, "inventory_slot")
-
-                    local ability_comp = EntityGetFirstComponentIncludingDisabled(item, "AbilityComponent")
-                    
-                    local item_is_wand = false
-                    if(ability_comp and ComponentGetValue2(ability_comp, "use_gun_script"))then
-                        item_is_wand = true
-                    end
-
-                    if (item_slot_x == slot_x and item_slot_y == slot_y and item_is_wand == is_wand) then
-                        local inventory2Comp = EntityGetFirstComponentIncludingDisabled(
-                            data.players[tostring(user)].entity, "Inventory2Component")
-                        local mActiveItem = ComponentGetValue2(inventory2Comp, "mActiveItem")
-
-                        if (mActiveItem ~= item) then
-                            game_funcs.SetActiveHeldEntity(data.players[tostring(user)].entity, item, false, false)
-                        end
-                        break
-                    end
-                end
-                local has_spectator = false
-
-                if(data.spectator_active_player == nil)then
-                    data.spectator_active_player = user
-                    data.selected_client = user
-                    data.selected_player = data.players[tostring(user)].entity
+            
+            delay.new(5, function()
+                if (not gameplay_handler.CheckPlayer(lobby, user, data)) then
+                    return
                 end
 
-                -- if we are in spectator mode
-                if (data.selected_client == user and data.spectator_entity ~= nil and EntityGetIsAlive(data.spectator_entity)) then
-                    has_spectator = true
-                end
-
-
-                if(has_spectator)then
-                    local spectator_items = GameGetAllInventoryItems(data.spectator_entity) or {}
-                    for i, item in ipairs(spectator_items) do
+                --GlobalsSetValue(tostring(wand.entity_id).."_wand", wandInfo.id)
+                local is_wand, slot_x, slot_y = message[1], message[2], message[3]
+                -- GamePrint("Switching item to slot: " .. tostring(slot_x) .. ", " .. tostring(slot_y))
+                if (data.players[tostring(user)].entity and EntityGetIsAlive(data.players[tostring(user)].entity)) then
+                    local items = GameGetAllInventoryItems(data.players[tostring(user)].entity) or {}
+                    for i, item in ipairs(items) do
                         -- check id
                         --local item_id = tonumber(GlobalsGetValue(tostring(item) .. "_item")) or -1
                         local itemComp = EntityGetFirstComponentIncludingDisabled(item, "ItemComponent")
@@ -940,19 +928,62 @@ networking = {
                         end
     
                         if (item_slot_x == slot_x and item_slot_y == slot_y and item_is_wand == is_wand) then
-                            local inventory2Comp = EntityGetFirstComponentIncludingDisabled(data.spectator_entity, "Inventory2Component")
+                            local inventory2Comp = EntityGetFirstComponentIncludingDisabled(
+                                data.players[tostring(user)].entity, "Inventory2Component")
                             local mActiveItem = ComponentGetValue2(inventory2Comp, "mActiveItem")
     
                             if (mActiveItem ~= item) then
-                                game_funcs.SetActiveHeldEntity(data.spectator_entity, item, false, false)
-                                data.spectator_selected_item = item
-                                print("Switching spectator item to slot: " .. tostring(slot_x) .. ", " .. tostring(slot_y))
+                                game_funcs.SetActiveHeldEntity(data.players[tostring(user)].entity, item, false, false)
                             end
                             break
                         end
                     end
+                    local has_spectator = false
+    
+                    if(data.spectator_active_player == nil)then
+                        data.spectator_active_player = user
+                        data.selected_client = user
+                        data.selected_player = data.players[tostring(user)].entity
+                    end
+    
+                    -- if we are in spectator mode
+                    if (data.selected_client == user and data.spectator_entity ~= nil and EntityGetIsAlive(data.spectator_entity)) then
+                        has_spectator = true
+                    end
+    
+    
+                    if(has_spectator)then
+                        local spectator_items = GameGetAllInventoryItems(data.spectator_entity) or {}
+                        for i, item in ipairs(spectator_items) do
+                            -- check id
+                            --local item_id = tonumber(GlobalsGetValue(tostring(item) .. "_item")) or -1
+                            local itemComp = EntityGetFirstComponentIncludingDisabled(item, "ItemComponent")
+                            local item_slot_x, item_slot_y = ComponentGetValue2(itemComp, "inventory_slot")
+        
+                            local ability_comp = EntityGetFirstComponentIncludingDisabled(item, "AbilityComponent")
+                            
+                            local item_is_wand = false
+                            if(ability_comp and ComponentGetValue2(ability_comp, "use_gun_script"))then
+                                item_is_wand = true
+                            end
+        
+                            if (item_slot_x == slot_x and item_slot_y == slot_y and item_is_wand == is_wand) then
+                                local inventory2Comp = EntityGetFirstComponentIncludingDisabled(data.spectator_entity, "Inventory2Component")
+                                local mActiveItem = ComponentGetValue2(inventory2Comp, "mActiveItem")
+        
+                                if (mActiveItem ~= item) then
+                                    game_funcs.SetActiveHeldEntity(data.spectator_entity, item, false, false)
+                                    data.spectator_selected_item = item
+                                    --print("Switching spectator item to slot: " .. tostring(slot_x) .. ", " .. tostring(slot_y))
+                                end
+                                break
+                            end
+                        end
+                    end
                 end
-            end
+            end)
+
+        
         end,
         sync_wand_stats = function(lobby, message, user, data)
             if (not gameplay_handler.CheckPlayer(lobby, user, data)) then
@@ -960,6 +991,10 @@ networking = {
             end
             if (data.spectator_mode or (GameHasFlagRun("player_is_unlocked") and (not GameHasFlagRun("no_shooting")))) then
                 if (data.players[tostring(user)].entity and EntityGetIsAlive(data.players[tostring(user)].entity)) then
+
+                    --print("Syncing wand stats!!")
+                    local player = data.players[tostring(user)].entity
+
                     local inventory2Comp = EntityGetFirstComponentIncludingDisabled(player, "Inventory2Component")
 
                     -- if no inventory2Comp, return
@@ -980,7 +1015,7 @@ networking = {
                             }
                         ]]
 
-                        local children = EntityGetAllChildren(mActiveItem) or {}
+                        --[[local children = EntityGetAllChildren(mActiveItem) or {}
                         for k, v in ipairs(children)do
                             if(EntityHasTag(v, "card_action"))then
                                 --GamePrint("found card action")
@@ -991,18 +1026,29 @@ networking = {
                                     --GamePrint("card in slot: " .. tostring(slot))
                                     --print("card in slot: " .. tostring(slot))
                                     if(message[6][tostring(slot)] ~= nil)then
-                                        ComponentSetValue2(item_comp, "uses_remaining", message[6][tostring(slot)])
+                                        print(json.stringify(message[6][tostring(slot)]))
+                                        --ComponentSetValue2(item_comp, "uses_remaining", message[6][tostring(slot)])
                                         --print("wand uses updated!")
                                     end
                                 end
                             end
-                        end
+                        end]]
 
-                        local mana = message[1]
-                        local mCastDelayStartFrame = GameGetFrameNum() - message[2]
-                        local mReloadFramesLeft = message[3]
-                        local mReloadNextFrameUsable = message[4] + GameGetFrameNum()
-                        local mNextChargeFrame = message[5] + GameGetFrameNum()
+                        --[[
+                        WandStats{
+                            mana = mana,
+                            cast_delay_start_frame = GameGetFrameNum() - cast_delay_start_frame,
+                            reload_frames_left = reload_frames_left,
+                            reload_next_frame_usable = reload_next_frame_usable - GameGetFrameNum(),
+                            next_charge_frame = next_charge_frame - GameGetFrameNum(),
+                        }
+                        ]]
+                        
+                        local mana = message.mana
+                        local mCastDelayStartFrame = GameGetFrameNum() - message.cast_delay_start_frame
+                        local mReloadFramesLeft = message.reload_frames_left
+                        local mReloadNextFrameUsable = message.reload_next_frame_usable + GameGetFrameNum()
+                        local mNextChargeFrame = message.next_charge_frame + GameGetFrameNum()
 
                         local abilityComp = EntityGetFirstComponentIncludingDisabled(mActiveItem, "AbilityComponent")
                         if (abilityComp ~= nil) then
@@ -1012,6 +1058,62 @@ networking = {
                             ComponentSetValue2(abilityComp, "mReloadNextFrameUsable", mReloadNextFrameUsable)
                             ComponentSetValue2(abilityComp, "mNextChargeFrame", mNextChargeFrame)
                         end
+
+                        -- This was removed because really spectator UI should be handled locally.
+                        --[[
+                        local has_spectator = false
+
+                        if(data.spectator_active_player == nil)then
+                            data.spectator_active_player = user
+                            data.selected_client = user
+                            data.selected_player = data.players[tostring(user)].entity
+                        end
+        
+                        -- if we are in spectator mode
+                        if (data.selected_client == user and data.spectator_entity ~= nil and EntityGetIsAlive(data.spectator_entity)) then
+                            has_spectator = true
+                        end
+    
+    
+                        if(has_spectator)then
+                            local spectator_inventory2Comp = EntityGetFirstComponentIncludingDisabled(data.spectator_entity, "Inventory2Component")
+
+                            -- if no inventory2Comp, return
+                            if (spectator_inventory2Comp == nil) then
+                                return
+                            end
+
+                            print("syncing spectator wand stats")
+
+                            mActiveItem = ComponentGetValue2(spectator_inventory2Comp, "mActiveItem")
+
+                            if (mActiveItem ~= nil) then
+
+    
+                                local mana = message[1]
+                                local mCastDelayStartFrame = GameGetFrameNum() - message[2]
+                                local mReloadFramesLeft = message[3]
+                                local mReloadNextFrameUsable = message[4] + GameGetFrameNum()
+                                local mNextChargeFrame = message[5] + GameGetFrameNum()
+        
+                                local abilityComp = EntityGetFirstComponentIncludingDisabled(mActiveItem, "AbilityComponent")
+                                if (abilityComp ~= nil) then
+                                    ComponentSetValue2(abilityComp, "mana", mana)
+                                    ComponentSetValue2(abilityComp, "mCastDelayStartFrame", mCastDelayStartFrame)
+                                    ComponentSetValue2(abilityComp, "mReloadFramesLeft", mReloadFramesLeft)
+                                    ComponentSetValue2(abilityComp, "mReloadNextFrameUsable", mReloadNextFrameUsable)
+                                    ComponentSetValue2(abilityComp, "mNextChargeFrame", mNextChargeFrame)
+
+                                    print("SO SYNCED!!!!")
+                                end
+
+                                
+                            end
+
+                        end
+                        ]]
+
+
                     end
                 end
             end
@@ -1432,7 +1534,6 @@ networking = {
                         if(spectator_character_data_comp ~= nil and spectator_damage_model_comp ~= nil)then
                             ComponentSetValue2(spectator_character_data_comp, "mFlyingTimeLeft", player_data.mFlyingTimeLeft)
                             ComponentSetValue2(spectator_character_data_comp, "fly_time_max", player_data.fly_time_max)
-                            ComponentSetValue2(spectator_damage_model_comp, "air_needed", player_data.air_needed)
                             ComponentSetValue2(spectator_damage_model_comp, "air_in_lungs", player_data.air_in_lungs)
                             ComponentSetValue2(spectator_damage_model_comp, "air_in_lungs_max", player_data.air_in_lungs_max)
                             ComponentSetValue2(spectator_damage_model_comp, "hp", player_data.hp)
@@ -2258,7 +2359,6 @@ networking = {
                         max_hp = ComponentGetValue2(damage_model_comp, "max_hp"),
                         max_hp_cap = ComponentGetValue2(damage_model_comp, "max_hp_cap"),
                         max_hp_old = ComponentGetValue2(damage_model_comp, "max_hp_old"),
-                        air_needed = ComponentGetValue2(damage_model_comp, "air_needed"),
                         money = ComponentGetValue2(wallet_comp, "money"),
                     }
 
@@ -2332,10 +2432,6 @@ networking = {
                         is_wand = true
                     end
 
-
-
-                    --GamePrint("Switching to item in slot " .. tostring(slot_x) .. ", " .. tostring(slot_y))
-
                     if (user == nil) then
                         if(to_spectators)then
                             steamutils.send("switch_item", { is_wand, slot_x, slot_y }, steamutils.messageTypes.Spectators, lobby, true, true)
@@ -2357,6 +2453,7 @@ networking = {
                 local abilityComp = EntityGetFirstComponentIncludingDisabled(held_item, "AbilityComponent")
                 if (abilityComp) then
 
+                    --[[
                     local spell_uses_table = {}
 
                     local spell_table_changed = false
@@ -2368,10 +2465,10 @@ networking = {
                             if(item_comp ~= nil)then
                                 local inventory_slot = ComponentGetValue2(item_comp, "inventory_slot")
                                 local uses_remaining = ComponentGetValue2(item_comp, "uses_remaining")
-                                spell_uses_table[tostring(inventory_slot)] = {uses_remaining = uses_remaining}
+                                spell_uses_table[tostring(inventory_slot)] = uses_remaining
                                 if(data.client.previous_wand_stats.spell_uses_table ~= nil)then
                                     if(data.client.previous_wand_stats.spell_uses_table[tostring(inventory_slot)] ~= nil)then
-                                        if(data.client.previous_wand_stats.spell_uses_table[tostring(inventory_slot)].uses_remaining ~= uses_remaining)then
+                                        if(data.client.previous_wand_stats.spell_uses_table[tostring(inventory_slot)] ~= uses_remaining)then
                                             spell_table_changed = true
                                         end
                                     else
@@ -2383,6 +2480,7 @@ networking = {
                             end
                         end
                     end
+                    ]]
                     
 
                     -- get current mana
@@ -2400,22 +2498,31 @@ networking = {
                             data.client.previous_wand_stats.mCastDelayStartFrame ~= cast_delay_start_frame or
                             data.client.previous_wand_stats.mReloadFramesLeft ~= reload_frames_left or
                             data.client.previous_wand_stats.mReloadNextFrameUsable ~= reload_next_frame_usable or
-                            data.client.previous_wand_stats.mNextChargeFrame ~= next_charge_frame or
-                            spell_table_changed) then
+                            data.client.previous_wand_stats.mNextChargeFrame ~= next_charge_frame--[[ or
+                            spell_table_changed]]) then
                         data.client.previous_wand_stats.mana = mana
                         data.client.previous_wand_stats.mCastDelayStartFrame = cast_delay_start_frame
                         data.client.previous_wand_stats.mReloadFramesLeft = reload_frames_left
                         data.client.previous_wand_stats.mReloadNextFrameUsable = reload_next_frame_usable
                         data.client.previous_wand_stats.mNextChargeFrame = next_charge_frame
-                        data.client.previous_wand_stats.spell_uses_table = spell_uses_table
+                        --data.client.previous_wand_stats.spell_uses_table = spell_uses_table
                         
-                        local msg_data = {
+                        --[[local msg_data = {
                             mana,
                             GameGetFrameNum() - cast_delay_start_frame,
                             reload_frames_left,
                             reload_next_frame_usable - GameGetFrameNum(),
                             next_charge_frame - GameGetFrameNum(),
-                            spell_uses_table,
+                            --spell_uses_table,
+                        }]]
+                        
+
+                        local msg_data = WandStats{
+                            mana = mana,
+                            cast_delay_start_frame = GameGetFrameNum() - cast_delay_start_frame,
+                            reload_frames_left = reload_frames_left,
+                            reload_next_frame_usable = reload_next_frame_usable - GameGetFrameNum(),
+                            next_charge_frame = next_charge_frame - GameGetFrameNum(),
                         }
 
                         if(to_spectators)then

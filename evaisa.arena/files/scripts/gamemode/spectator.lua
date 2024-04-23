@@ -54,6 +54,71 @@ SpectatorMode = {
         GuiText(data.spectator_text_gui, text_x, text_y, text, font.size, font.font, not font.smooth)
 
     end,
+    HandleSpectatorSync = function(lobby, data)
+        if(data.selected_client == nil)then
+            return
+        end
+        local player = data.players[tostring(data.selected_client)]
+        if(player == nil)then
+            return
+        end
+        if(player.entity and EntityGetIsAlive(player.entity) and data.spectator_entity and EntityGetIsAlive(data.spectator_entity))then
+            -- We will sync wand stats and stuff.
+            local inventory2_comp = EntityGetFirstComponentIncludingDisabled(player.entity, "Inventory2Component")
+            local spectator_inventory2_comp = EntityGetFirstComponentIncludingDisabled(data.spectator_entity, "Inventory2Component")
+            local inventory_gui_comp = EntityGetFirstComponentIncludingDisabled(player.entity, "InventoryGuiComponent")
+            local spectator_inventory_gui_comp = EntityGetFirstComponentIncludingDisabled(data.spectator_entity, "InventoryGuiComponent")
+
+            local active_item = ComponentGetValue2(inventory2_comp, "mActiveItem")
+            local active_item2 = ComponentGetValue2(spectator_inventory2_comp, "mActiveItem")
+
+            local mFrameShake_reloadBar = ComponentGetValue2(inventory_gui_comp, "mFrameShake_reloadBar")
+            local mFrameShake_ManaBar = ComponentGetValue2(inventory_gui_comp, "mFrameShake_ManaBar")
+            local mFrameShake_FlyBar = ComponentGetValue2(inventory_gui_comp, "mFrameShake_FlyBar")
+            local mFrameShake_FireRateWaitBar = ComponentGetValue2(inventory_gui_comp, "mFrameShake_FireRateWaitBar")
+
+            -- set values
+            ComponentSetValue2(spectator_inventory_gui_comp, "mFrameShake_reloadBar", mFrameShake_reloadBar)
+            ComponentSetValue2(spectator_inventory_gui_comp, "mFrameShake_ManaBar", mFrameShake_ManaBar)
+            ComponentSetValue2(spectator_inventory_gui_comp, "mFrameShake_FlyBar", mFrameShake_FlyBar)
+            ComponentSetValue2(spectator_inventory_gui_comp, "mFrameShake_FireRateWaitBar", mFrameShake_FireRateWaitBar)
+
+            if(active_item and active_item2)then
+
+                -- if has ability component
+                local abilityComp = EntityGetFirstComponentIncludingDisabled(active_item, "AbilityComponent")
+                local abilityComp2 = EntityGetFirstComponentIncludingDisabled(active_item2, "AbilityComponent")
+                if (abilityComp and abilityComp2) then
+                    -- get current mana
+                    local mana = ComponentGetValue2(abilityComp, "mana")
+                    -- mCastDelayStartFrame
+                    local cast_delay_start_frame = ComponentGetValue2(abilityComp, "mCastDelayStartFrame")
+                    -- mReloadFramesLeft
+                    local reload_frames_left = ComponentGetValue2(abilityComp, "mReloadFramesLeft")
+                    -- mReloadNextFrameUsable
+                    local reload_next_frame_usable = ComponentGetValue2(abilityComp, "mReloadNextFrameUsable")
+                    -- mNextChargeFramemNextChargeFrame
+                    local next_charge_frame = ComponentGetValue2(abilityComp, "mNextChargeFrame")
+                    -- cooldown_frames
+                    local cooldown_frames = ComponentGetValue2(abilityComp, "cooldown_frames")
+                    -- charge_wait_frames
+                    local charge_wait_frames = ComponentGetValue2(abilityComp, "charge_wait_frames")
+
+                    -- set values
+                    ComponentSetValue2(abilityComp2, "mana", mana)
+                    ComponentSetValue2(abilityComp2, "mCastDelayStartFrame", cast_delay_start_frame)
+                    ComponentSetValue2(abilityComp2, "mReloadFramesLeft", reload_frames_left)
+                    ComponentSetValue2(abilityComp2, "mReloadNextFrameUsable", reload_next_frame_usable)
+                    ComponentSetValue2(abilityComp2, "mNextChargeFrame", next_charge_frame)
+                    ComponentSetValue2(abilityComp2, "cooldown_frames", cooldown_frames)
+                    ComponentSetValue2(abilityComp2, "charge_wait_frames", charge_wait_frames)
+
+                    
+                end
+            end
+            
+        end
+    end,
     SpectateUpdate = function(lobby, data)
         if (data.is_spectating) then
 
