@@ -2410,7 +2410,7 @@ ArenaGameplay = {
         end
 
 
-        if(not IsPaused())then
+        if(not IsPaused() and not (data.spectator_mode and data.lobby_spectated_player == nil))then
             ArenaGameplay.UpdateDummy(lobby, data, true)
         end
 
@@ -2443,6 +2443,7 @@ ArenaGameplay = {
 
                 networking.send.ready(lobby, data.client.ready or false, false)
             end
+            networking.send.player_stats_update(lobby, data, true)
             networking.send.spectate_data(lobby, data, nil, false)
 
             GameAddFlagRun("Immortal")
@@ -3023,6 +3024,7 @@ ArenaGameplay = {
                 if(GameGetFrameNum() % 15 == 0)then
                     networking.send.player_data_update(lobby, data)
                 end
+                networking.send.player_stats_update(lobby, data)
 
                 networking.send.input(lobby, data)
 
@@ -3120,15 +3122,32 @@ ArenaGameplay = {
         if(data.spectator_mode)then
             SpectatorMode.UpdateSpectatorEntity(lobby, data)
 
+            if(GameGetFrameNum() % 60 == 0)then
+                local InventoryGuiComponent = EntityGetFirstComponentIncludingDisabled(data.spectator_entity, "InventoryGuiComponent")
+                if(InventoryGuiComponent ~= nil)then
+                    EntitySetComponentIsEnabled(data.spectator_entity, InventoryGuiComponent, data.selected_client ~= nil)
+                end
+            end
 
 
             local inventory2Comp = EntityGetFirstComponentIncludingDisabled(data.spectator_entity, "Inventory2Component")
 
             if(inventory2Comp ~= nil)then
-                ComponentSetValue2(inventory2Comp, "mItemHolstered", true)
-                ComponentSetValue2(inventory2Comp, "mActiveItem", -1)
-                ComponentSetValue2(inventory2Comp, "mActualActiveItem", -1)
+                --ComponentSetValue2(inventory2Comp, "mItemHolstered", true)
+                --ComponentSetValue2(inventory2Comp, "mActiveItem", -1)
+                --ComponentSetValue2(inventory2Comp, "mActualActiveItem", -1)
                 --ComponentSetValue2(inventory2Comp, "mForceRefresh", true)
+
+                if(data.spectator_selected_item ~= nil and EntityGetIsAlive(data.spectator_selected_item ))then
+                    game_funcs.SetActiveHeldEntity(data.spectator_entity, data.spectator_selected_item, false, false)
+                    ComponentSetValue2(inventory2Comp, "mItemHolstered", true)
+                else
+                    data.spectator_selected_item = nil
+                    ComponentSetValue2(inventory2Comp, "mItemHolstered", true)
+                    ComponentSetValue2(inventory2Comp, "mActiveItem", -1)
+                    ComponentSetValue2(inventory2Comp, "mActualActiveItem", -1)
+                end
+                
 
                 local inventory_items = GameGetAllInventoryItems(data.spectator_entity)
 
@@ -3309,7 +3328,7 @@ ArenaGameplay = {
         end
 
         if(data.state == "lobby")then
-            if(not IsPaused())then
+            if(not IsPaused() and not (data.spectator_mode and data.lobby_spectated_player == nil))then
                 ArenaGameplay.UpdateDummy(lobby, data)
                 for k, v in pairs(data.players) do
                     if (v.entity ~= nil and EntityGetIsAlive(v.entity)) then

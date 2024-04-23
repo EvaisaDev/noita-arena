@@ -113,12 +113,44 @@ typedef struct E {
 #pragma pack(pop)
 ]])
 
+-- player stats
+--[[
+    local player_data = {
+        mFlyingTimeLeft = message[1],
+        fly_time_max = message[2],
+        air_needed = message[3],
+        air_in_lungs = message[4],
+        air_in_lungs_max = message[5],
+        hp = message[6],
+        max_hp = message[7],
+        max_hp_cap = message[8],
+        max_hp_old = message[9],
+    }
+]]
+ffi.cdef([[
+#pragma pack(push, 1)
+typedef struct F {
+    float mFlyingTimeLeft;
+    float fly_time_max;
+    float air_in_lungs;
+    float air_in_lungs_max;
+    float hp;
+    float max_hp;
+    float max_hp_cap;
+    float max_hp_old;
+    int money;
+    bool air_needed;
+} PlayerStats;
+#pragma pack(pop)
+]])
+
 
 local Controls = ffi.typeof("Controls")
 local ZoneUpdate = ffi.typeof("ZoneUpdate")
 local PhysicsUpdate = ffi.typeof("PhysicsUpdate")
 local CharacterPos = ffi.typeof("CharacterPos")
 local FireWand = ffi.typeof("FireWand")
+local PlayerStats = ffi.typeof("PlayerStats")
 
 
 
@@ -875,7 +907,49 @@ networking = {
                         if (mActiveItem ~= item) then
                             game_funcs.SetActiveHeldEntity(data.players[tostring(user)].entity, item, false, false)
                         end
-                        return
+                        break
+                    end
+                end
+                local has_spectator = false
+
+                if(data.spectator_active_player == nil)then
+                    data.spectator_active_player = user
+                    data.selected_client = user
+                    data.selected_player = data.players[tostring(user)].entity
+                end
+
+                -- if we are in spectator mode
+                if (data.selected_client == user and data.spectator_entity ~= nil and EntityGetIsAlive(data.spectator_entity)) then
+                    has_spectator = true
+                end
+
+
+                if(has_spectator)then
+                    local spectator_items = GameGetAllInventoryItems(data.spectator_entity) or {}
+                    for i, item in ipairs(spectator_items) do
+                        -- check id
+                        --local item_id = tonumber(GlobalsGetValue(tostring(item) .. "_item")) or -1
+                        local itemComp = EntityGetFirstComponentIncludingDisabled(item, "ItemComponent")
+                        local item_slot_x, item_slot_y = ComponentGetValue2(itemComp, "inventory_slot")
+    
+                        local ability_comp = EntityGetFirstComponentIncludingDisabled(item, "AbilityComponent")
+                        
+                        local item_is_wand = false
+                        if(ability_comp and ComponentGetValue2(ability_comp, "use_gun_script"))then
+                            item_is_wand = true
+                        end
+    
+                        if (item_slot_x == slot_x and item_slot_y == slot_y and item_is_wand == is_wand) then
+                            local inventory2Comp = EntityGetFirstComponentIncludingDisabled(data.spectator_entity, "Inventory2Component")
+                            local mActiveItem = ComponentGetValue2(inventory2Comp, "mActiveItem")
+    
+                            if (mActiveItem ~= item) then
+                                game_funcs.SetActiveHeldEntity(data.spectator_entity, item, false, false)
+                                data.spectator_selected_item = item
+                                print("Switching spectator item to slot: " .. tostring(slot_x) .. ", " .. tostring(slot_y))
+                            end
+                            break
+                        end
                     end
                 end
             end
@@ -1201,9 +1275,8 @@ networking = {
                 local character_data_comp = EntityGetFirstComponentIncludingDisabled(player, "CharacterDataComponent")
                 if (character_data_comp ~= nil) then
                     local player_data = {
-                        mFlyingTimeLeft = message[1],
-                        status_list = message[2],
-                        cosmetics = message[3],
+                        status_list = message[1],
+                        cosmetics = message[2],
                     }
 
                     local loaded_cosmetics = {}
@@ -1299,8 +1372,78 @@ networking = {
                             data.players[tostring(user)].status_effect_entities[k] = nil
                         end
                     end
+                end
+            end
+        end,
+        player_stats_update = function(lobby, message, user, data)
+            --[[
+                template:
+                local message = {
+                    mFlyingTimeLeft = ComponentGetValue2(character_data_comp, "mFlyingTimeLeft"),
+                }
+
+            ]]
+            if (not gameplay_handler.CheckPlayer(lobby, user, data)) then
+                return
+            end
+
+            if (data.spectator_mode or (GameHasFlagRun("player_is_unlocked")) and data.players[tostring(user)].entity ~= nil and EntityGetIsAlive(data.players[tostring(user)].entity)) then
+                local player = data.players[tostring(user)].entity
+                local character_data_comp = EntityGetFirstComponentIncludingDisabled(player, "CharacterDataComponent")
+                local damage_model_comp = EntityGetFirstComponentIncludingDisabled(player, "DamageModelComponent")
+                if (character_data_comp ~= nil and damage_model_comp ~= nil) then
+                    --[[
+                        ComponentGetValue2(character_data_comp, "mFlyingTimeLeft"),
+                        ComponentGetValue2(character_data_comp, "fly_time_max"),
+                        ComponentGetValue2(damage_model_comp, "air_needed"),
+                        ComponentGetValue2(damage_model_comp, "air_in_lungs"),
+                        ComponentGetValue2(damage_model_comp, "air_in_lungs_max"),
+                        ComponentGetValue2(damage_model_comp, "hp"),
+                        ComponentGetValue2(damage_model_comp, "max_hp"),
+                        ComponentGetValue2(damage_model_comp, "max_hp_cap"),
+                        ComponentGetValue2(damage_model_comp, "max_hp_old"),
+                    ]]
+                    local player_data = message
 
                     ComponentSetValue2(character_data_comp, "mFlyingTimeLeft", player_data.mFlyingTimeLeft)
+                    ComponentSetValue2(character_data_comp, "fly_time_max", player_data.fly_time_max)
+                    ComponentSetValue2(damage_model_comp, "air_in_lungs", player_data.air_in_lungs)
+                    ComponentSetValue2(damage_model_comp, "air_in_lungs_max", player_data.air_in_lungs_max)
+
+                    local has_spectator = false
+
+                    if(data.spectator_active_player == nil)then
+                        data.spectator_active_player = user
+                        data.selected_client = user
+                        data.selected_player = data.players[tostring(user)].entity
+                    end
+    
+                    -- if we are in spectator mode
+                    if (data.selected_client == user and data.spectator_entity ~= nil and EntityGetIsAlive(data.spectator_entity)) then
+                        has_spectator = true
+                    end
+
+
+                    if(has_spectator)then
+                        local spectator_character_data_comp = EntityGetFirstComponentIncludingDisabled(data.spectator_entity, "CharacterDataComponent")
+                        local spectator_damage_model_comp = EntityGetFirstComponentIncludingDisabled(data.spectator_entity, "DamageModelComponent")
+                        local spectator_wallet_comp = EntityGetFirstComponentIncludingDisabled(data.spectator_entity, "WalletComponent")
+
+                        if(spectator_character_data_comp ~= nil and spectator_damage_model_comp ~= nil)then
+                            ComponentSetValue2(spectator_character_data_comp, "mFlyingTimeLeft", player_data.mFlyingTimeLeft)
+                            ComponentSetValue2(spectator_character_data_comp, "fly_time_max", player_data.fly_time_max)
+                            ComponentSetValue2(spectator_damage_model_comp, "air_needed", player_data.air_needed)
+                            ComponentSetValue2(spectator_damage_model_comp, "air_in_lungs", player_data.air_in_lungs)
+                            ComponentSetValue2(spectator_damage_model_comp, "air_in_lungs_max", player_data.air_in_lungs_max)
+                            ComponentSetValue2(spectator_damage_model_comp, "hp", player_data.hp)
+                            ComponentSetValue2(spectator_damage_model_comp, "max_hp", player_data.max_hp)
+                            ComponentSetValue2(spectator_damage_model_comp, "max_hp_cap", player_data.max_hp_cap)
+                            ComponentSetValue2(spectator_damage_model_comp, "max_hp_old", player_data.max_hp_old)
+                            ComponentSetValue2(spectator_wallet_comp, "money", player_data.money)
+                        end
+                    end
+
+
                 end
             end
         end,
@@ -2098,6 +2241,35 @@ networking = {
                 data.client.previous_input = inputs]]
             end
         end,
+        player_stats_update = function(lobby, data, to_spectators)
+
+            local player = player.Get()
+            if(player ~= nil and EntityGetIsAlive(player))then
+                local character_data_comp = EntityGetFirstComponentIncludingDisabled(player, "CharacterDataComponent")
+                local damage_model_comp = EntityGetFirstComponentIncludingDisabled(player, "DamageModelComponent")
+                local wallet_comp = EntityGetFirstComponentIncludingDisabled(player, "WalletComponent")
+                if(character_data_comp ~= nil and damage_model_comp ~= nil)then
+                    local message = PlayerStats{
+                        mFlyingTimeLeft = ComponentGetValue2(character_data_comp, "mFlyingTimeLeft"),
+                        fly_time_max = ComponentGetValue2(character_data_comp, "fly_time_max"),
+                        air_in_lungs = ComponentGetValue2(damage_model_comp, "air_in_lungs"),
+                        air_in_lungs_max = ComponentGetValue2(damage_model_comp, "air_in_lungs_max"),
+                        hp = ComponentGetValue2(damage_model_comp, "hp"),
+                        max_hp = ComponentGetValue2(damage_model_comp, "max_hp"),
+                        max_hp_cap = ComponentGetValue2(damage_model_comp, "max_hp_cap"),
+                        max_hp_old = ComponentGetValue2(damage_model_comp, "max_hp_old"),
+                        air_needed = ComponentGetValue2(damage_model_comp, "air_needed"),
+                        money = ComponentGetValue2(wallet_comp, "money"),
+                    }
+
+                    if(to_spectators)then
+                        steamutils.send("player_stats_update", message, steamutils.messageTypes.Spectators, lobby, true, true)
+                    else
+                        steamutils.send("player_stats_update", message, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+                    end
+                end
+            end
+        end,
         player_data_update = function(lobby, data, to_spectators)
             local player = player.Get()
             if(player ~= nil and EntityGetIsAlive(player))then
@@ -2112,7 +2284,6 @@ networking = {
                     local status_list = GetActiveStatusEffects(player, true)
 
                     local message = {
-                        ComponentGetValue2(character_data_comp, "mFlyingTimeLeft"),
                         status_list,
                         cosmetics
                     }
