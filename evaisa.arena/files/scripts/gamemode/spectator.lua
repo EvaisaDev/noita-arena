@@ -62,6 +62,7 @@ SpectatorMode = {
         if(player == nil)then
             return
         end
+
         if(player.entity and EntityGetIsAlive(player.entity) and data.spectator_entity and EntityGetIsAlive(data.spectator_entity))then
             -- We will sync wand stats and stuff.
             local inventory2_comp = EntityGetFirstComponentIncludingDisabled(player.entity, "Inventory2Component")
@@ -116,7 +117,53 @@ SpectatorMode = {
                     
                 end
             end
-            
+
+            local perk_data = player.perks
+            local perk_string = bitser.dumps(player.perks)
+
+   
+            if(data.last_selected_perk_string == perk_string)then
+                return
+            end
+
+            data.last_selected_perk_string = perk_string
+
+            local children = EntityGetChildrenWithTag(data.spectator_entity, "perk") or {}
+
+            for i, child in ipairs(children) do
+                EntityRemoveFromParent(child)
+                EntityKill(child)
+            end
+
+            for i, perk in ipairs(perk_data) do
+                local perk_id = perk[1]
+                local perk_stack = perk[2]
+
+                local perk_info = all_perks[perk_id]
+
+                
+
+                if(perk_info ~= nil)then
+                    
+                    for i = 1, perk_stack do
+                        local child = EntityCreateNew()
+                        EntityAddTag(child, "perk")
+                        EntityAddChild(data.spectator_entity, child)
+
+                        --print("Adding perk: " .. tostring(perk_info.ui_name))
+                        local perk_comp = EntityAddComponent2(child, "UIIconComponent", {
+                            icon_sprite_file = perk_info.ui_icon,
+                            name = perk_info.ui_name,
+                            description = perk_info.ui_description,
+                            display_in_hud = true,
+                            is_perk = true
+                        })
+
+                        ComponentAddTag(perk_comp, "perk")
+                    end
+                end
+            end
+
         end
     end,
     SpectateUpdate = function(lobby, data)
@@ -143,7 +190,7 @@ SpectatorMode = {
 
             local screen_width, screen_height = GuiGetScreenDimensions(data.spectator_gui)
 
-            if(data.last_selected_player ~= nil and data.players[tostring(data.last_selected_player)] ~= nil)then
+            if(data.last_selected_player ~= nil and data.players[tostring(data.last_selected_player)] ~= nil and data.selected_client == nil)then
                 if(data.players[tostring(data.last_selected_player)].entity ~= nil and EntityGetIsAlive(data.players[tostring(data.last_selected_player)].entity))then
                     data.selected_player = data.players[tostring(data.last_selected_player)].entity
                     data.selected_client = data.last_selected_player
@@ -472,6 +519,52 @@ SpectatorMode = {
             data.lobby_spectated_player = members[1].id
             data.selected_player_name = steamutils.getTranslatedPersonaName(data.lobby_spectated_player)
             data.spectator_lobby_loaded = false
+
+            delay.new(5, function()
+                data.last_hm_switch = data.last_hm_switch or 1
+                if(GameGetFrameNum() - data.last_hm_switch < 30)then
+                    return
+                end
+
+                data.last_hm_switch = GameGetFrameNum()
+
+                --[[
+                    data.lobby_spectated_player = 
+                    data.selected_player_name = 
+                ]]
+                local lobby_spectated_player = data.lobby_spectated_player
+                data.last_hm_sync = nil
+
+                if(lobby_spectated_player ~= nil and members ~= nil and #members > 0)then
+                    local index = 1
+                    for k, v in ipairs(members)do
+                        if(v.id == lobby_spectated_player)then
+                            index = k
+                            break
+                        end
+                    end
+
+                    index = index - 1
+
+                    if(index < 1)then
+                        index = #members
+                    end
+
+                    for k, v in ipairs(EntityGetWithTag("client") or {})do
+                        EntityKill(v)
+                    end
+    
+                    SpectatorMode.ClearHM()
+
+                    data.lobby_spectated_player = members[index].id
+                    data.spectator_active_player = members[index].id
+                    data.selected_client = members[index].id
+                    data.selected_player_name = steamutils.getTranslatedPersonaName(data.lobby_spectated_player)
+                    data.spectator_lobby_loaded = false
+                    data.selected_player = nil
+                end
+            end)
+            
         end
 
         for k, v in pairs(data.players)do
@@ -498,12 +591,14 @@ SpectatorMode = {
                     GameSetCameraPos(camera_x_new, camera_y_new)
                 else
                     data.selected_player = nil
+                    data.selected_client = nil
                     data.selected_player_name = nil
                     data.lobby_spectated_player = nil
                     data.spectator_active_player = nil
                 end
             else
                 data.selected_player = nil
+                data.selected_client = nil
                 data.selected_player_name = nil
                 data.lobby_spectated_player = nil
                 data.spectator_active_player = nil
@@ -612,6 +707,7 @@ SpectatorMode = {
 
                     data.lobby_spectated_player = members[index].id
                     data.spectator_active_player = members[index].id
+                    data.selected_client = members[index].id
                     data.selected_player_name = steamutils.getTranslatedPersonaName(data.lobby_spectated_player)
                     data.spectator_lobby_loaded = false
                     data.selected_player = nil
@@ -695,6 +791,7 @@ SpectatorMode = {
 
                     data.lobby_spectated_player = members[index].id
                     data.spectator_active_player = members[index].id
+                    data.selected_client = members[index].id
                     data.selected_player_name = steamutils.getTranslatedPersonaName(data.lobby_spectated_player)
                     data.spectator_lobby_loaded = false
                     data.selected_player = nil

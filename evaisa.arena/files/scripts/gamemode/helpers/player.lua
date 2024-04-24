@@ -652,16 +652,36 @@ player_helper.SetSpells = function(spells)
 end
 
 player_helper.GetPerks = function()
+    local player = player_helper.Get()
     local perk_info = {}
-    for i, perk_data in ipairs(perk_list) do
-        local perk_id = perk_data.id
-        local flag_name = get_perk_picked_flag_name(perk_id)
+    if(player)then
+        local children = EntityGetAllChildren(player) or {}
+        local added_perks = {}
+        for k, v in ipairs(children)do
+            local ui_icon_comp = EntityGetFirstComponentIncludingDisabled(v, "UIIconComponent")
+            if(EntityHasTag(v, "perk_entity") and ui_icon_comp)then
+                local name = ComponentGetValue2(ui_icon_comp, "name")
+                local perk = all_perks_by_name[name]
+                
+                if(not added_perks[perk.id])then
+                    local perk_id = perk.id
+                    local flag_name = get_perk_picked_flag_name(perk_id)
+                    local pickup_count = tonumber(GlobalsGetValue(flag_name .. "_PICKUP_COUNT", "0"))
+                    table.insert(perk_info, { id = perk_id, count = pickup_count })
+                    added_perks[perk_id] = true
+                end
 
-        local pickup_count = tonumber(GlobalsGetValue(flag_name .. "_PICKUP_COUNT", "0"))
+            end
+        end
+    else
+        for i, perk_data in ipairs(perk_list) do
+            local perk_id = perk_data.id
+            local flag_name = get_perk_picked_flag_name(perk_id)
+            local pickup_count = tonumber(GlobalsGetValue(flag_name .. "_PICKUP_COUNT", "0"))
 
-
-        if GameHasFlagRun(flag_name) and (pickup_count > 0) then
-            table.insert(perk_info, { id = perk_id, count = pickup_count })
+            if GameHasFlagRun(flag_name) and (pickup_count > 0) then
+                table.insert(perk_info, { id = perk_id, count = pickup_count })
+            end
         end
     end
 

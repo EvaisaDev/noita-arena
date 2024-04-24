@@ -41,10 +41,25 @@ dofile_once("data/scripts/perks/perk_list.lua")
 dofile_once("mods/evaisa.arena/content/data.lua")
 
 
+perks_sorted = {}
+perk_enum = {}
+all_perks = {}
+all_perks_by_name = {}
 perk_sprites = {}
 for k, perk in pairs(perk_list) do
     perk_sprites[perk.id] = perk.ui_icon
+    table.insert(perks_sorted, perk.id)
+    all_perks[perk.id] = perk
+    all_perks_by_name[perk.ui_name] = perk
 end
+
+table.sort(perks_sorted)
+
+for i, perk_id in ipairs(perks_sorted) do
+    perk_enum[perk_id] = i
+end
+
+
 local parallax_textures = {}
 
 if(ModSettingGet("evaisa.arena.custom_parallax"))then

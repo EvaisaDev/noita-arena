@@ -13,20 +13,7 @@ local player_helper = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/p
 -- whatever ill just leave it
 dofile("mods/evaisa.arena/lib/status_helper.lua")
 
-local perks_sorted = {}
-local perk_enum = {}
-local all_perks = {}
 
-for i, perk_data in ipairs(perk_list) do
-    table.insert(perks_sorted, perk_data.id)
-    all_perks[perk_data.id] = perk_data
-end
-
-table.sort(perks_sorted)
-
-for i, perk_id in ipairs(perks_sorted) do
-    perk_enum[perk_id] = i
-end
 
 
 function EntityGetChildrenWithTag( entity_id, tag )
@@ -484,14 +471,6 @@ networking = {
 
                 local has_spectator = false
                 local spectator_pickupper = nil
-
-                if(data.spectator_active_player == nil)then
-                    data.spectator_active_player = user
-                    data.selected_client = user
-                    data.selected_player = data.players[tostring(user)].entity
-                    data.lobby_spectated_player = user
-                    print("updated spectated player??")
-                end
 
                 -- if we are in spectator mode
                 if (data.selected_client == user and data.spectator_entity ~= nil and EntityGetIsAlive(data.spectator_entity)) then
@@ -968,12 +947,7 @@ networking = {
                     end
                     local has_spectator = false
     
-                    if(data.spectator_active_player == nil)then
-                        data.spectator_active_player = user
-                        data.selected_client = user
-                        data.selected_player = data.players[tostring(user)].entity
-                    end
-    
+ 
                     -- if we are in spectator mode
                     if (data.selected_client == user and data.spectator_entity ~= nil and EntityGetIsAlive(data.spectator_entity)) then
                         has_spectator = true
@@ -1256,70 +1230,7 @@ networking = {
                 table.insert(perk_data, {perk_id, perk_stack})
             end
 
-            local perk_string = bitser.dumps(message)
-
-            if(data.players[tostring(user)].last_perk_string == perk_string)then
-                return
-            end
-
             data.players[tostring(user)].perks = perk_data
-            data.players[tostring(user)].last_perk_string = perk_string
-            
-            local has_spectator = false
-
-            if(data.spectator_active_player == nil)then
-                data.spectator_active_player = user
-                data.selected_client = user
-                data.selected_player = data.players[tostring(user)].entity
-            end
-
-            -- if we are in spectator mode
-            if (data.selected_client == user and data.spectator_entity ~= nil and EntityGetIsAlive(data.spectator_entity)) then
-                has_spectator = true
-            end
-
-
-            if(has_spectator)then
-
-                local children = EntityGetChildrenWithTag(data.spectator_entity, "perk") or {}
-
-                for i, child in ipairs(children) do
-                    EntityRemoveFromParent(child)
-                    EntityKill(child)
-                end
-
-                for i, perk in ipairs(perk_data) do
-                    local perk_id = perk[1]
-                    local perk_stack = perk[2]
-
-                    local perk_info = all_perks[perk_id]
-
-                    
-
-                    if(perk_info ~= nil)then
-                        
-                        for i = 1, perk_stack do
-                            local child = EntityCreateNew()
-                            EntityAddTag(child, "perk")
-                            EntityAddChild(data.spectator_entity, child)
-
-                            --print("Adding perk: " .. tostring(perk_info.ui_name))
-                            local perk_comp = EntityAddComponent2(child, "UIIconComponent", {
-                                icon_sprite_file = perk_info.ui_icon,
-                                name = perk_info.ui_name,
-                                description = perk_info.ui_description,
-                                display_in_hud = true,
-                                is_perk = true
-                            })
-
-                            ComponentAddTag(perk_comp, "perk")
-                        end
-                    end
-                end
-
-
-            end
-
 
         end,
         fire_wand = function(lobby, message, user, data)
@@ -1598,12 +1509,6 @@ networking = {
 
                     local has_spectator = false
 
-                    if(data.spectator_active_player == nil)then
-                        data.spectator_active_player = user
-                        data.selected_client = user
-                        data.selected_player = data.players[tostring(user)].entity
-                    end
-    
                     -- if we are in spectator mode
                     if (data.selected_client == user and data.spectator_entity ~= nil and EntityGetIsAlive(data.spectator_entity)) then
                         has_spectator = true
@@ -1762,7 +1667,7 @@ networking = {
                     ConvertMaterialEverywhere( from_material, to_material )
                     converted_any = true
         
-                    local player_entity = player.Get()
+                    local player_entity = player_helper.Get()
                     if (player_entity) then
                         local x, y = EntityGetTransform(player_entity)
                         -- shoot particles of new material
@@ -1949,19 +1854,7 @@ networking = {
             end
 
             -- if user is not spectated player, return
-            if(user ~= data.lobby_spectated_player)then
-                return
-            end
-
-            if(data.spectator_active_player == nil)then
-                data.spectator_active_player = user
-                data.selected_client = user
-                if(data.players[tostring(user)].entity and EntityGetIsAlive(data.players[tostring(user)].entity))then
-                    data.selected_player = data.players[tostring(user)].entity
-                end
-            end
-
-            if(user ~= data.lobby_spectated_player)then
+            if(user ~= data.selected_client)then
                 return
             end
 
@@ -2190,7 +2083,7 @@ networking = {
             local last_update_frame = 0 -- Track the last frame when an update was sent
         
             local current_frame = GameGetFrameNum()
-            local player = player.Get()
+            local player = player_helper.Get()
         
             if player then
                 local x, y = EntityGetTransform(player)
@@ -2223,12 +2116,12 @@ networking = {
         end,
         item_update = function(lobby, data, user, force, to_spectators)
 
-            local playerEnt = player.Get()
+            local playerEnt = player_helper.Get()
             if (playerEnt == nil) then
                 return;
             end
 
-            local item_data, spell_data = player.GetItemData()
+            local item_data, spell_data = player_helper.GetItemData()
             if(item_data ~= nil)then
                 local data = { item_data, force, GameHasFlagRun( "arena_unlimited_spells" ) }
 
@@ -2428,7 +2321,7 @@ networking = {
         end,
         player_stats_update = function(lobby, data, to_spectators)
 
-            local player = player.Get()
+            local player = player_helper.Get()
             if(player ~= nil and EntityGetIsAlive(player))then
                 local character_data_comp = EntityGetFirstComponentIncludingDisabled(player, "CharacterDataComponent")
                 local damage_model_comp = EntityGetFirstComponentIncludingDisabled(player, "DamageModelComponent")
@@ -2455,7 +2348,7 @@ networking = {
             end
         end,
         player_data_update = function(lobby, data, to_spectators)
-            local player = player.Get()
+            local player = player_helper.Get()
             if(player ~= nil and EntityGetIsAlive(player))then
                 local character_data_comp = EntityGetFirstComponentIncludingDisabled(player, "CharacterDataComponent")
                 if(character_data_comp ~= nil)then
@@ -2483,7 +2376,7 @@ networking = {
             end
         end,
         animation_update = function(lobby, data, to_spectators)
-            local rectAnim = player.GetAnimationData()
+            local rectAnim = player_helper.GetAnimationData()
             if (rectAnim ~= nil) then
                 if (rectAnim ~= data.client.previous_anim) then
                     if(to_spectators)then
@@ -2496,7 +2389,7 @@ networking = {
             end
         end,
         switch_item = function(lobby, data, user, force, to_spectators)
-            local held_item = player.GetActiveHeldItem()
+            local held_item = player_helper.GetActiveHeldItem()
             if (held_item ~= nil and held_item ~= 0) then
                 if (force or user ~= nil or held_item ~= data.client.previous_selected_item) then
                     --local wand_id = tonumber(GlobalsGetValue(tostring(held_item) .. "_item")) or -1
@@ -2531,7 +2424,7 @@ networking = {
             end
         end,
         sync_wand_stats = function(lobby, data, to_spectators)
-            local held_item = player.GetActiveHeldItem()
+            local held_item = player_helper.GetActiveHeldItem()
             if (held_item ~= nil) then
                 -- if has ability component
                 local abilityComp = EntityGetFirstComponentIncludingDisabled(held_item, "AbilityComponent")
@@ -2619,7 +2512,7 @@ networking = {
             end
         end,
         health_update = function(lobby, data, force)
-            local health, max_health = player.GetHealthInfo()
+            local health, max_health = player_helper.GetHealthInfo()
 
             if (health ~= nil and max_health ~= nil) then
                 if ((data.client.max_hp ~= max_health or data.client.hp ~= health) or force) then
@@ -2639,9 +2532,13 @@ networking = {
             end
         end,
         perk_update = function(lobby, data, user)
+
+            local player_perks = player_helper.GetPerks()
+            
+
             local perk_info = {}
             local perk_info_self = {}
-            for i, perk_data in ipairs(perk_list) do
+            --[[for i, perk_data in ipairs(perk_list) do
                 local perk_id = perk_data.id
                 local flag_name = get_perk_picked_flag_name(perk_id)
 
@@ -2652,6 +2549,11 @@ networking = {
                     table.insert(perk_info, { perk_enum[perk_id], pickup_count })
                     table.insert(perk_info_self, { perk_id, pickup_count })
                 end
+            end]]
+
+            for i, perk_data in ipairs(player_perks) do
+                table.insert(perk_info, { perk_enum[perk_data.id], perk_data.count })
+                table.insert(perk_info_self, { perk_data.id, perk_data.count })
             end
 
             local perk_string = bitser.dumps(perk_info)
@@ -2668,7 +2570,7 @@ networking = {
             end
         end,
         fire_wand = function(lobby, rng, special_seed, to_spectators)
-            local player = player.Get()
+            local player = player_helper.Get()
             if (player) then
                 local wand = EntityHelper.GetHeldItem(player)
 

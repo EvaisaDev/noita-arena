@@ -2472,7 +2472,7 @@ ArenaGameplay = {
                         
         end
 
-        if(GameGetFrameNum() % 60 == 0)then
+        if(GameGetFrameNum() % 120 == 0)then
             networking.send.request_perk_update(lobby)
         end
 
