@@ -2469,12 +2469,13 @@ ArenaGameplay = {
                 --message_handler.send.SendPerks(lobby)
                 networking.send.perk_update(lobby, data)
             end
-
-            if(GameGetFrameNum() % 60 == 0)then
-                networking.send.request_perk_update(lobby)
-            end
                         
         end
+
+        if(GameGetFrameNum() % 60 == 0)then
+            networking.send.request_perk_update(lobby)
+        end
+
     end,
     UpdateHealthbars = function(data)
         for k, v in pairs(data.players) do

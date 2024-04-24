@@ -29,6 +29,16 @@ for i, perk_id in ipairs(perks_sorted) do
 end
 
 
+function EntityGetChildrenWithTag( entity_id, tag )
+    local valid_children = {};
+    local children = EntityGetAllChildren( entity_id ) or {};
+    for index, child in pairs( children ) do
+        if EntityHasTag( child, tag ) then
+            table.insert( valid_children, child );
+        end
+    end
+    return valid_children;
+end
 
 
 local ffi = require("ffi")
@@ -1239,15 +1249,21 @@ networking = {
 
             local perk_data = {}
 
-            for i, perk in ipairs(message[1]) do
+            for i, perk in ipairs(message) do
                 local perk_id = perks_sorted[perk[1]]
                 local perk_stack = perk[2]
 
                 table.insert(perk_data, {perk_id, perk_stack})
             end
 
-            data.players[tostring(user)].perks = perk_data
+            local perk_string = bitser.dumps(message)
 
+            if(data.players[tostring(user)].last_perk_string == perk_string)then
+                return
+            end
+
+            data.players[tostring(user)].perks = perk_data
+            data.players[tostring(user)].last_perk_string = perk_string
             
             local has_spectator = false
 
@@ -1264,10 +1280,12 @@ networking = {
 
 
             if(has_spectator)then
-                local perk_comps = EntityGetComponent(data.spectator_entity, "UIIconComponent", "perk") or {}
 
-                for i, perk_comp in ipairs(perk_comps) do
-                    EntityRemoveComponent(data.spectator_entity, perk_comp)
+                local children = EntityGetChildrenWithTag(data.spectator_entity, "perk") or {}
+
+                for i, child in ipairs(children) do
+                    EntityRemoveFromParent(child)
+                    EntityKill(child)
                 end
 
                 for i, perk in ipairs(perk_data) do
@@ -1276,17 +1294,26 @@ networking = {
 
                     local perk_info = all_perks[perk_id]
 
+                    
+
                     if(perk_info ~= nil)then
+                        
+                        for i = 1, perk_stack do
+                            local child = EntityCreateNew()
+                            EntityAddTag(child, "perk")
+                            EntityAddChild(data.spectator_entity, child)
 
-                        local perk_comp = EntityAddComponent2(data.spectator_entity, "UIIconComponent", {
-                            icon_sprite_file = perk_info.ui_icon,
-                            name = perk_info.ui_name,
-                            description = perk_info.ui_description,
-                            display_in_hud = true,
-                            is_perk = true
-                        })
+                            --print("Adding perk: " .. tostring(perk_info.ui_name))
+                            local perk_comp = EntityAddComponent2(child, "UIIconComponent", {
+                                icon_sprite_file = perk_info.ui_icon,
+                                name = perk_info.ui_name,
+                                description = perk_info.ui_description,
+                                display_in_hud = true,
+                                is_perk = true
+                            })
 
-                        ComponentAddTag(perk_comp, "perk")
+                            ComponentAddTag(perk_comp, "perk")
+                        end
                     end
                 end
 
@@ -2613,6 +2640,7 @@ networking = {
         end,
         perk_update = function(lobby, data, user)
             local perk_info = {}
+            local perk_info_self = {}
             for i, perk_data in ipairs(perk_list) do
                 local perk_id = perk_data.id
                 local flag_name = get_perk_picked_flag_name(perk_id)
@@ -2622,11 +2650,12 @@ networking = {
                 if GameHasFlagRun(flag_name) and (pickup_count > 0) then
                     --print("Has flag: " .. perk_id)
                     table.insert(perk_info, { perk_enum[perk_id], pickup_count })
+                    table.insert(perk_info_self, { perk_id, pickup_count })
                 end
             end
 
             local perk_string = bitser.dumps(perk_info)
-            if (perk_string ~= data.client.previous_perk_string) then
+            if (user ~= nil or perk_string ~= data.client.previous_perk_string) then
                 arena_log:print("Sent perk update!!")
                 if(user)then
                     steamutils.sendToPlayer("perk_update", perk_info, user, true, true)
@@ -2635,7 +2664,7 @@ networking = {
                 end
 
                 data.client.previous_perk_string = perk_string
-                data.client.perks = perk_info
+                data.client.perks = perk_info_self
             end
         end,
         fire_wand = function(lobby, rng, special_seed, to_spectators)
