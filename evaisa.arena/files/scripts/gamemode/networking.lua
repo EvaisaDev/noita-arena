@@ -13,6 +13,24 @@ local player_helper = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/p
 -- whatever ill just leave it
 dofile("mods/evaisa.arena/lib/status_helper.lua")
 
+local perks_sorted = {}
+local perk_enum = {}
+local all_perks = {}
+
+for i, perk_data in ipairs(perk_list) do
+    table.insert(perks_sorted, perk_data.id)
+    all_perks[perk_data.id] = perk_data
+end
+
+table.sort(perks_sorted)
+
+for i, perk_id in ipairs(perks_sorted) do
+    perk_enum[perk_id] = i
+end
+
+
+
+
 local ffi = require("ffi")
 
 -- Controls struct
@@ -1217,7 +1235,65 @@ networking = {
         perk_update = function(lobby, message, user, data)
            -- arena_log:print("Received perk update!!")
             --arena_log:print(json.stringify(message[1]))
-            data.players[tostring(user)].perks = message[1]
+
+
+            local perk_data = {}
+
+            for i, perk in ipairs(message[1]) do
+                local perk_id = perks_sorted[perk[1]]
+                local perk_stack = perk[2]
+
+                table.insert(perk_data, {perk_id, perk_stack})
+            end
+
+            data.players[tostring(user)].perks = perk_data
+
+            
+            local has_spectator = false
+
+            if(data.spectator_active_player == nil)then
+                data.spectator_active_player = user
+                data.selected_client = user
+                data.selected_player = data.players[tostring(user)].entity
+            end
+
+            -- if we are in spectator mode
+            if (data.selected_client == user and data.spectator_entity ~= nil and EntityGetIsAlive(data.spectator_entity)) then
+                has_spectator = true
+            end
+
+
+            if(has_spectator)then
+                local perk_comps = EntityGetComponent(data.spectator_entity, "UIIconComponent", "perk") or {}
+
+                for i, perk_comp in ipairs(perk_comps) do
+                    EntityRemoveComponent(data.spectator_entity, perk_comp)
+                end
+
+                for i, perk in ipairs(perk_data) do
+                    local perk_id = perk[1]
+                    local perk_stack = perk[2]
+
+                    local perk_info = all_perks[perk_id]
+
+                    if(perk_info ~= nil)then
+
+                        local perk_comp = EntityAddComponent2(data.spectator_entity, "UIIconComponent", {
+                            icon_sprite_file = perk_info.ui_icon,
+                            name = perk_info.ui_name,
+                            description = perk_info.ui_description,
+                            display_in_hud = true,
+                            is_perk = true
+                        })
+
+                        ComponentAddTag(perk_comp, "perk")
+                    end
+                end
+
+
+            end
+
+
         end,
         fire_wand = function(lobby, message, user, data)
             if (not gameplay_handler.CheckPlayer(lobby, user, data)) then
@@ -1339,26 +1415,7 @@ networking = {
             if(data.spectator_mode)then
                 return
             end
-            arena_log:print("Attempting to send perk update")
-            local perk_info = {}
-            for i, perk_data in ipairs(perk_list) do
-                local perk_id = perk_data.id
-                local flag_name = get_perk_picked_flag_name(perk_id)
-
-                local pickup_count = tonumber(GlobalsGetValue(flag_name .. "_PICKUP_COUNT", "0"))
-
-                if GameHasFlagRun(flag_name) and (pickup_count > 0) then
-                    --print("Has flag: " .. perk_id)
-                    table.insert(perk_info, { perk_id, pickup_count })
-                end
-            end
-
-            --if (#perk_info > 0) then
-                local message_data = { perk_info }
-
-                arena_log:print("Replied to perk requests!")
-                steamutils.sendToPlayer("perk_update", message_data, user, true)
-            --end
+            networking.send.perk_update(lobby, data, user)
         end,
         player_data_update = function(lobby, message, user, data)
             --[[
@@ -2554,7 +2611,7 @@ networking = {
                 end
             end
         end,
-        perk_update = function(lobby, data)
+        perk_update = function(lobby, data, user)
             local perk_info = {}
             for i, perk_data in ipairs(perk_list) do
                 local perk_id = perk_data.id
@@ -2564,20 +2621,22 @@ networking = {
 
                 if GameHasFlagRun(flag_name) and (pickup_count > 0) then
                     --print("Has flag: " .. perk_id)
-                    table.insert(perk_info, { perk_id, pickup_count })
+                    table.insert(perk_info, { perk_enum[perk_id], pickup_count })
                 end
             end
 
-            --if (#perk_info > 0) then
-                local message_data = { perk_info }
-                local perk_string = bitser.dumps(message_data)
-                if (perk_string ~= data.client.previous_perk_string) then
-                    arena_log:print("Sent perk update!!")
-                    steamutils.send("perk_update", message_data, steamutils.messageTypes.OtherPlayers, lobby, true, true)
-                    data.client.previous_perk_string = perk_string
-                    data.client.perks = perk_info
+            local perk_string = bitser.dumps(perk_info)
+            if (perk_string ~= data.client.previous_perk_string) then
+                arena_log:print("Sent perk update!!")
+                if(user)then
+                    steamutils.sendToPlayer("perk_update", perk_info, user, true, true)
+                else
+                    steamutils.send("perk_update", perk_info, steamutils.messageTypes.OtherPlayers, lobby, true, true)
                 end
-            --end
+
+                data.client.previous_perk_string = perk_string
+                data.client.perks = perk_info
+            end
         end,
         fire_wand = function(lobby, rng, special_seed, to_spectators)
             local player = player.Get()
