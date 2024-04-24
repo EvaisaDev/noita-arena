@@ -1960,11 +1960,17 @@ networking = {
                 return
             end
 
+            -- kill all old second row entities
+            local second_row_entities = EntityGetWithTag("hm_platform")
+            for k, v in ipairs(second_row_entities)do
+                EntityKill(v)
+            end
+
             local second_row_spots = message
             
             for k, v in ipairs(second_row_spots)do
                 local x, y = unpack(v)
-                print("Spawning second row at: " .. tostring(x) .. ", " .. tostring(y))
+                --print("Spawning second row at: " .. tostring(x) .. ", " .. tostring(y))
                 --LoadPixelScene( "data/biome_impl/temple/shop_second_row.png", "data/biome_impl/temple/shop_second_row_visual.png", x, y, "", true )
                 EntityLoad("mods/evaisa.arena/files/entities/misc/hm_shop_platform.xml", x, y)
             end
