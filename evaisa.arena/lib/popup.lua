@@ -12,6 +12,7 @@ popups.create = function(id, name, description, options, z_index)
     popup.gui = GuiCreate()
     popup.current_id = 124
     popup.z_index = z_index or 0
+    popup.marked_for_destruction = false
     popup.start = function(self)
         GuiStartFrame(popup.gui)
         self.current_id = 124
@@ -19,6 +20,9 @@ popups.create = function(id, name, description, options, z_index)
     popup.new_id = function(self)
         self.current_id = self.current_id + 1
         return self.current_id
+    end
+    popup.destroy = function(self)
+        self.marked_for_destruction = true
     end
 
     -- if active popups already contains popup with same id, remove it and GuiDestroy
@@ -31,6 +35,8 @@ popups.create = function(id, name, description, options, z_index)
     end
 
     table.insert(active_popups, popup)
+
+    return popup
 end
 
 popups.update = function()
@@ -41,6 +47,13 @@ popups.update = function()
         local popup = active_popups[i]
 
         popup:start()
+
+        -- if marked for destruction, remove from active_popups and GuiDestroy
+        if (popup.marked_for_destruction) then
+            table.remove(active_popups, i)
+            table.insert(to_destroy, popup.gui)
+            goto continue
+        end
 
         local screen_width, screen_height = GuiGetScreenDimensions(popup.gui)
 
@@ -126,6 +139,8 @@ popups.update = function()
 
         GuiZSetForNextWidget(popup.gui, z_index)
         GuiEndAutoBoxNinePiece(popup.gui, 5, 0, 0, true)
+
+        ::continue::
     end
 
     for i, gui in ipairs(to_destroy) do

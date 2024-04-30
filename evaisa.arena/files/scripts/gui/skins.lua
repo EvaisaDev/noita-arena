@@ -961,7 +961,7 @@ skins.init = function()
 
         
 
-        self.last_player_skins["self"] = {path = temp_path, xml_path = texture_file_name, arm_path = arm_path, arm_xml_path = texture_file_name_arm}
+        self.last_player_skins["self"] = {path = temp_path, xml_path = texture_file_name, arm_path = arm_path, arm_xml_path = texture_file_name_arm, cape = cape, cape_edge = cape_edge}
 
 
     end

@@ -292,10 +292,76 @@ networking = {
         request_ready_states = function(lobby, message, user, data)
             networking.send.ready(lobby, data.client.ready, true)
         end,
-        allow_round_end = function(lobby, message, user, data)
+        --[[allow_round_end = function(lobby, message, user, data)
             if(steamutils.IsOwner(lobby, user))then
                 data.allow_round_end = true
                 print("Allowing round to end.")
+            end
+        end,]]
+        round_end = function(lobby, message, user, data)
+            if(steamutils.IsOwner(lobby, user))then
+                local winner_string = message[1]
+                local win_condition_user = message[2]
+                local winner = ArenaGameplay.FindUser(lobby, winner_string)
+
+                if(winner == nil)then
+                    GamePrintImportant(GameTextGetTranslatedOrNot("$arena_tie_text"), GameTextGetTranslatedOrNot("$arena_round_end_text"))
+                    
+                    GameAddFlagRun("round_finished")
+
+                    delay.new(5 * 60, function()
+                        ArenaGameplay.LoadLobby(lobby, data, false)
+                    end, function(frames)
+                        if (frames % 60 == 0) then
+                            GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_returning_to_lobby_text"), tostring(math.floor(frames / 60))))
+                        end
+                    end)
+                else
+
+                    if(not data.spectator_mode and winner == steam.user.getSteamID())then
+                        GameAddFlagRun("arena_winner")
+                        local catchup_mechanic = GlobalsGetValue("perk_catchup", "losers")
+                        if(catchup_mechanic == "winner")then
+                            GameAddFlagRun("first_death")
+                            GamePrint(GameTextGetTranslatedOrNot("$arena_compensation_winner"))
+                        end
+                        if(GlobalsGetValue("upgrades_system", "false") == "true")then
+                            local catchup_mechanic_upgrades = GlobalsGetValue("upgrades_catchup", "losers")
+                            if(catchup_mechanic_upgrades == "winner")then
+                                GameAddFlagRun("pick_upgrade")
+                            end
+                        end
+                    end
+        
+                    GameAddFlagRun("round_finished")
+
+                    if(win_condition_user ~= nil)then
+                        GamePrintImportant(string.format(GameTextGetTranslatedOrNot("$arena_win_condition_text"), steamutils.getTranslatedPersonaName(winner)), GameTextGetTranslatedOrNot("$arena_win_condition_description"))
+                    else
+                        GamePrintImportant(string.format(GameTextGetTranslatedOrNot("$arena_winner_text"), steamutils.getTranslatedPersonaName(winner)), GameTextGetTranslatedOrNot("$arena_round_end_text"))
+                    end
+        
+                    if(win_condition_user == nil or not GameHasFlagRun("win_condition_end_match"))then
+
+                        delay.new(5 * 60, function()
+                            ArenaGameplay.LoadLobby(lobby, data, false)
+                        end, function(frames)
+                            if (frames % 60 == 0) then
+                                GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_returning_to_lobby_text"), tostring(math.floor(frames / 60))))
+                            end
+                        end)
+                    else
+                        delay.new(10 * 60, function()
+                            StopGame()
+                        end, function(frames)
+                            if (frames % 60 == 0) then
+                                GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_win_condition_ending_game_text"), tostring(math.floor(frames / 60))))
+                            end
+                        end)
+                    end
+                    
+                end
+
             end
         end,
         arena_loaded = function(lobby, message, user, data)
@@ -1306,6 +1372,8 @@ networking = {
             if (data.state == "arena") then
                 local username = steamutils.getTranslatedPersonaName(user)
 
+                print("Player " .. tostring(username) .. " died.")
+
                 local killer = message[1]
                 -- iterate data.tweens backwards and remove tweens belonging to the dead player
                 for i = #data.tweens, 1, -1 do
@@ -1334,7 +1402,10 @@ networking = {
                     end
                 end
 
-                gameplay_handler.WinnerCheck(lobby, data)
+                if(steamutils.IsOwner(lobby))then
+                    gameplay_handler.WinnerCheck(lobby, data)
+                end
+                
 
 
             end
@@ -2655,8 +2726,11 @@ networking = {
             end
 
         end,
-        allow_round_end = function(lobby)
+        --[[allow_round_end = function(lobby)
             steamutils.send("allow_round_end", {}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+        end,]]
+        round_end = function(lobby, winner, win_condition)
+            steamutils.send("round_end", { tostring(winner), win_condition }, steamutils.messageTypes.OtherPlayers, lobby, true, true)
         end,
         item_picked_up = function(lobby, item_id, to_spectators)
             if(to_spectators)then

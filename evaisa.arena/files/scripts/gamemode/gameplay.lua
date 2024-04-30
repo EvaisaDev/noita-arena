@@ -169,9 +169,7 @@ ArenaGameplay = {
         table.sort(player_ids, function(a, b) return a < b end)
         local local_player = tostring(steam.user.getSteamID())
         for i, player_id in ipairs(player_ids) do
-            --print(player_id)
             if(player_id == local_player)then
-                --GamePrint("player index: "..tostring(i))
                 return i
             end
         end
@@ -286,12 +284,12 @@ ArenaGameplay = {
         steam.matchmaking.setLobbyData(lobby, "ready_players", bitser.dumps(ready_players))
     end,
     GetGameData = function(lobby, data)
-        local mountainCount = tonumber(steam.matchmaking.getLobbyData(lobby, "holyMountainCount"))
+        local mountainCount = tonumber(steamutils.GetLobbyData( "holyMountainCount"))
         if (mountainCount ~= nil) then
             GlobalsSetValue("holyMountainCount", tostring(mountainCount))
             arena_log:print("Holymountain count: " .. mountainCount)
         end
-        local goldCount = tonumber(steam.matchmaking.getLobbyData(lobby, "total_gold"))
+        local goldCount = tonumber(steamutils.GetLobbyData( "total_gold"))
         if (goldCount ~= nil) then
             data.client.first_spawn_gold = goldCount
             arena_log:print("Gold count: " .. goldCount)
@@ -395,7 +393,7 @@ ArenaGameplay = {
             arena_log:print("Player data: " .. data.client.serialized_player)
         end
         
-        local ready_players_string = steam.matchmaking.getLobbyData(lobby, "ready_players")
+        local ready_players_string = steamutils.GetLobbyData( "ready_players")
         local ready_players = (ready_players_string ~= nil and ready_players_string ~= "null") and
             bitser.loads(ready_players_string) or nil
 
@@ -404,8 +402,8 @@ ArenaGameplay = {
         for k, member in pairs(members) do
             if (member.id ~= steam.user.getSteamID()) then
                 local user = member.id
-                local wins = tonumber(steam.matchmaking.getLobbyData(lobby, tostring(user) .. "_wins")) or 0
-                local winstreak = tonumber(steam.matchmaking.getLobbyData(lobby, tostring(user) .. "_winstreak")) or 0
+                local wins = tonumber(steamutils.GetLobbyData( tostring(user) .. "_wins")) or 0
+                local winstreak = tonumber(steamutils.GetLobbyData( tostring(user) .. "_winstreak")) or 0
                 data.players[tostring(user)].wins = wins
                 data.players[tostring(user)].winstreak = winstreak
             end
@@ -429,6 +427,10 @@ ArenaGameplay = {
         end
     end,
     GracefulReset = function(lobby, data)
+        if(data.unstuck_ui)then
+            GuiDestroy(data.unstuck_ui)
+            data.unstuck_ui = nil
+        end
         if (data.spectator_gui) then
             GuiDestroy(data.spectator_gui)
             data.spectator_gui = nil
@@ -453,6 +455,9 @@ ArenaGameplay = {
             data.ready_counter:cleanup()
             data.ready_counter = nil
         end
+
+        GameRemoveFlagRun("Immortal")
+        GameRemoveFlagRun("no_shooting")
     end,
     ResetEverything = function(lobby)
         local player_entity = player.Get()
@@ -461,8 +466,9 @@ ArenaGameplay = {
         for i, perk_data in ipairs(perk_list) do
             local perk_id = perk_data.id
             local flag_name = get_perk_picked_flag_name(perk_id)
+            local pickup_count_string = get_pickup_count_string( perk_id )
 
-            local pickup_count = tonumber(GlobalsGetValue(flag_name .. "_PICKUP_COUNT", "0"))
+            local pickup_count = tonumber(GlobalsGetValue(pickup_count_string, "0"))
 
             if (pickup_count > 0) then
                 if (perk_data.func_remove ~= nil) then
@@ -470,12 +476,15 @@ ArenaGameplay = {
                 end
             end
             GameRemoveFlagRun(flag_name)
-            GlobalsSetValue(flag_name .. "_PICKUP_COUNT", "0")
+            GlobalsSetValue(pickup_count_string, "0")
         end
 
         if (player ~= nil) then
             EntityKill(player)
         end
+
+        GameRemoveFlagRun("Immortal")
+        GameRemoveFlagRun("no_shooting")
         GameRemoveFlagRun("was_last_ready")
         GameRemoveFlagRun( "arena_unlimited_spells" )
         GlobalsSetValue("TEMPLE_SHOP_ITEM_COUNT", "5")
@@ -511,6 +520,8 @@ ArenaGameplay = {
         GlobalsSetValue("smash_knockback", "1" )
         GlobalsSetValue("smash_knockback_dummy", "1")
 
+
+
         if (steamutils.IsOwner(lobby)) then
             steam.matchmaking.deleteLobbyData(lobby, "holyMountainCount")
             steam.matchmaking.deleteLobbyData(lobby, "total_gold")
@@ -526,7 +537,7 @@ ArenaGameplay = {
                 steam.matchmaking.deleteLobbyData(lobby, winstreak_key)
             end
 
-            local winner_keys = steam.matchmaking.getLobbyData(lobby, "winner_keys")
+            local winner_keys = steamutils.GetLobbyData( "winner_keys")
             if (winner_keys == nil) then
                 winner_keys = {}
             else
@@ -1002,7 +1013,7 @@ ArenaGameplay = {
         if(data.players[tostring(user)] ~= nil and data.players[tostring(user)].wins ~= nil)then
             return data.players[tostring(user)].wins or 0
         end
-        local wins = tonumber(steam.matchmaking.getLobbyData(lobby, tostring(user) .. "_wins")) or 0
+        local wins = tonumber(steamutils.GetLobbyData( tostring(user) .. "_wins")) or 0
         if(data.players[tostring(user)] ~= nil)then 
             data.players[tostring(user)].wins = wins
             print("Updated wins for " .. tostring(user) .. " to " .. tostring(wins))
@@ -1013,7 +1024,7 @@ ArenaGameplay = {
         if(data.players[tostring(user)] ~= nil and data.players[tostring(user)].winstreak ~= nil)then
             return data.players[tostring(user)].winstreak or 0
         end
-        local winstreak = tonumber(steam.matchmaking.getLobbyData(lobby, tostring(user) .. "_winstreak")) or 0
+        local winstreak = tonumber(steamutils.GetLobbyData( tostring(user) .. "_winstreak")) or 0
         if(data.players[tostring(user)] ~= nil)then 
             data.players[tostring(user)].winstreak = winstreak
             print("Updated winstreak for " .. tostring(user) .. " to " .. tostring(winstreak))
@@ -1021,17 +1032,10 @@ ArenaGameplay = {
         return winstreak
     end,
     WinnerCheck = function(lobby, data)
-        
-        --[[if(true)then
-            return
-        end]]
-        
-
+        print("winner check?")
         if(GameHasFlagRun("round_finished"))then
             return
         end
-
-        -- print("WinnerCheck (gameplay)")
 
         local alive = (not data.spectator_mode and data.client.alive) and 1 or 0
         local winner = data.spectator_mode and nil or steam.user.getSteamID() 
@@ -1042,66 +1046,51 @@ ArenaGameplay = {
             end
         end
 
-        -- print("Alive count: "..tostring(alive))
+        print("Alive: " .. tostring(alive) .. ", winner: " .. tostring(winner))
 
         if (alive == 1) then
-            -- if we are owner, add win to tally
-            if (steamutils.IsOwner(lobby)) then
-                ArenaGameplay.AddRound(lobby)
+            ArenaGameplay.AddRound(lobby)
 
-                local winner_key = tostring(winner) .. "_wins"
-                local winstreak_key = tostring(winner) .. "_winstreak"
+            local winner_key = tostring(winner) .. "_wins"
+            local winstreak_key = tostring(winner) .. "_winstreak"
 
-                local winner_keys = steam.matchmaking.getLobbyData(lobby, "winner_keys")
-                
-                if (winner_keys == nil) then
-                    winner_keys = {}
-                else
-                    winner_keys = bitser.loads(winner_keys)
-                end
-
-
-                for k, v in pairs(winner_keys) do
-                    if (tostring(v) ~= tostring(winner_key)) then
-                        --print(v .. "treak")
-                        steam.matchmaking.setLobbyData(lobby, v .. "treak", "0")
-                    end
-                end
-
-
-                if (not table.contains(winner_keys, winner_key)) then
-                    table.insert(winner_keys, winner_key)
-                    steam.matchmaking.setLobbyData(lobby, "winner_keys", bitser.dumps(winner_keys))
-                end
-
-
-                for k, v in pairs(data.players) do
-                    local id = v.id
-                    if (tostring(id) ~= tostring(winner)) then
-                        steam.matchmaking.setLobbyData(lobby, tostring(id) .. "_winstreak", "0")
-                    end
-                end
-
-                local current_wins = tonumber(tonumber(steam.matchmaking.getLobbyData(lobby, winner_key)) or "0")
-                local current_winstreak = tonumber(tonumber(steam.matchmaking.getLobbyData(lobby, winstreak_key)) or "0")
-
-                print("incrementing win count for "..tostring(winner).." to "..tostring(current_wins + 1))
-                steam.matchmaking.setLobbyData(lobby, winner_key, tostring(current_wins + 1))
-                steam.matchmaking.setLobbyData(lobby, winstreak_key, tostring(current_winstreak + 1))
-
-                wait.new(function() 
-                    return steam.matchmaking.getLobbyData(lobby, winner_key) == tostring(current_wins + 1)
-                end, function()
-                    networking.send.allow_round_end(lobby)
-                    data.allow_round_end = true
-                end)
-
-
+            local winner_keys = steamutils.GetLobbyData( "winner_keys")
+            
+            if (winner_keys == nil) then
+                winner_keys = {}
+            else
+                winner_keys = bitser.loads(winner_keys)
             end
 
-            
 
-            -- check if winner is us!!!
+            for k, v in pairs(winner_keys) do
+                if (tostring(v) ~= tostring(winner_key)) then
+                    --print(v .. "treak")
+                    steam.matchmaking.setLobbyData(lobby, v .. "treak", "0")
+                end
+            end
+
+
+            if (not table.contains(winner_keys, winner_key)) then
+                table.insert(winner_keys, winner_key)
+                steam.matchmaking.setLobbyData(lobby, "winner_keys", bitser.dumps(winner_keys))
+            end
+
+
+            for k, v in pairs(data.players) do
+                local id = v.id
+                if (tostring(id) ~= tostring(winner)) then
+                    steam.matchmaking.setLobbyData(lobby, tostring(id) .. "_winstreak", "0")
+                end
+            end
+
+            local current_wins = tonumber(tonumber(steamutils.GetLobbyData( winner_key)) or "0")
+            local current_winstreak = tonumber(tonumber(steamutils.GetLobbyData( winstreak_key)) or "0")
+
+            print("incrementing win count for "..tostring(winner).." to "..tostring(current_wins + 1))
+            steam.matchmaking.setLobbyData(lobby, winner_key, tostring(current_wins + 1))
+            steam.matchmaking.setLobbyData(lobby, winstreak_key, tostring(current_winstreak + 1))
+
             if(not data.spectator_mode and winner == steam.user.getSteamID())then
                 GameAddFlagRun("arena_winner")
                 local catchup_mechanic = GlobalsGetValue("perk_catchup", "losers")
@@ -1117,77 +1106,30 @@ ArenaGameplay = {
                 end
             end
 
-            -- data.allow_round_end = false
-
-            local updated_was_wins = false
-            wait.new(function()  
-                if(lobby_data_updated_this_frame[tostring(winner) .. "_wins"])then
-                    updated_was_wins = lobby_data_updated_this_frame[tostring(winner) .. "_wins"]
-                end
-                return lobby_data_updated_this_frame[tostring(winner) .. "_wins"] or lobby_data_updated_this_frame[tostring(winner) .. "_winstreak"]
-            end, function() 
-
-                wait.new(function()  
-                    --print("winstreak updated: "..tostring(lobby_data_updated_this_frame[tostring(winner) .. "_winstreak"]))
-                    --print("wins updated: "..tostring(lobby_data_updated_this_frame[tostring(winner) .. "_wins"]))
-                    --print("updated_was_wins: "..tostring(updated_was_wins))
-
-                    return updated_was_wins and lobby_data_updated_this_frame[tostring(winner) .. "_winstreak"] or lobby_data_updated_this_frame[tostring(winner) .. "_wins"]
-                end, function() 
-                    --print("user wins: "..tostring(ArenaGameplay.GetWins(lobby, winner, data)))
-                    --print("user winstreak: "..tostring(ArenaGameplay.GetWinstreak(lobby, winner, data)))
-                    GameAddFlagRun("round_finished")
-                    local win_condition_user = ArenaGameplay.CheckWinCondition(lobby, data)
-
-                    if(win_condition_user ~= nil)then
-                        GamePrintImportant(string.format(GameTextGetTranslatedOrNot("$arena_win_condition_text"), steamutils.getTranslatedPersonaName(winner)), GameTextGetTranslatedOrNot("$arena_win_condition_description"))
-                    else
-                        GamePrintImportant(string.format(GameTextGetTranslatedOrNot("$arena_winner_text"), steamutils.getTranslatedPersonaName(winner)), GameTextGetTranslatedOrNot("$arena_round_end_text"))
-                    end
-
-                    if(win_condition_user == nil or not GameHasFlagRun("win_condition_end_match"))then
-                        local new_seed = GameGetFrameNum() + tonumber(GlobalsGetValue("world_seed", "0"));
-
-                        networking.send.update_world_seed(lobby, new_seed)
-                        SetWorldSeed(new_seed)
-                        
-                        delay.new(5 * 60, function()
-                            ArenaGameplay.LoadLobby(lobby, data, false)
-                        end, function(frames)
-                            if (frames % 60 == 0) then
-                                GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_returning_to_lobby_text"), tostring(math.floor(frames / 60))))
-                            end
-                        end)
-                    else
-                        delay.new(10 * 60, function()
-                            StopGame()
-                        end, function(frames)
-                            if (frames % 60 == 0) then
-                                GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_win_condition_ending_game_text"), tostring(math.floor(frames / 60))))
-                            end
-                        end)
-                    end
-                end)
-            end)
-        elseif (alive == 0) then
-            if (steamutils.IsOwner(lobby)) then
-                ArenaGameplay.AddRound(lobby)
-            end
-
-
+            GameAddFlagRun("round_finished")
             local win_condition_user = ArenaGameplay.CheckWinCondition(lobby, data)
 
-            GameAddFlagRun("round_finished")
+            if(win_condition_user ~= nil)then
+                GamePrintImportant(string.format(GameTextGetTranslatedOrNot("$arena_win_condition_text"), steamutils.getTranslatedPersonaName(winner)), GameTextGetTranslatedOrNot("$arena_win_condition_description"))
+                networking.send.round_end(lobby, winner, true)
+            else
+                GamePrintImportant(string.format(GameTextGetTranslatedOrNot("$arena_winner_text"), steamutils.getTranslatedPersonaName(winner)), GameTextGetTranslatedOrNot("$arena_round_end_text"))
+                networking.send.round_end(lobby, winner)
+            end
+
+            print("Win condition: "..tostring(win_condition_user))
 
             if(win_condition_user == nil or not GameHasFlagRun("win_condition_end_match"))then
-                GamePrintImportant(GameTextGetTranslatedOrNot("$arena_tie_text"), GameTextGetTranslatedOrNot("$arena_round_end_text"))
                 local new_seed = GameGetFrameNum() + tonumber(GlobalsGetValue("world_seed", "0"));
 
                 networking.send.update_world_seed(lobby, new_seed)
                 SetWorldSeed(new_seed)
-                
+
+                print("Loading lobby in 5 seconds")
+
                 delay.new(5 * 60, function()
                     ArenaGameplay.LoadLobby(lobby, data, false)
+                    
                 end, function(frames)
                     if (frames % 60 == 0) then
                         GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_returning_to_lobby_text"), tostring(math.floor(frames / 60))))
@@ -1202,6 +1144,28 @@ ArenaGameplay = {
                     end
                 end)
             end
+            
+        elseif (alive == 0) then
+            ArenaGameplay.AddRound(lobby)
+
+            GameAddFlagRun("round_finished")
+
+            networking.send.round_end(lobby, nil)
+            GamePrintImportant(GameTextGetTranslatedOrNot("$arena_tie_text"), GameTextGetTranslatedOrNot("$arena_round_end_text"))
+            local new_seed = GameGetFrameNum() + tonumber(GlobalsGetValue("world_seed", "0"));
+
+            networking.send.update_world_seed(lobby, new_seed)
+            SetWorldSeed(new_seed)
+
+            print("Loading lobby in 5 seconds")
+            
+            delay.new(5 * 60, function()
+                ArenaGameplay.LoadLobby(lobby, data, false)
+            end, function(frames)
+                if (frames % 60 == 0) then
+                    GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_returning_to_lobby_text"), tostring(math.floor(frames / 60))))
+                end
+            end)
 
         end
     end,
@@ -1268,7 +1232,9 @@ ArenaGameplay = {
             --player.Immortal(true)
             --player.Move(-3000, -3000)
 
-            ArenaGameplay.WinnerCheck(lobby, data)
+            if(steamutils.IsOwner(lobby))then
+                ArenaGameplay.WinnerCheck(lobby, data)
+            end
         end
     end,
     ClearWorld = function()
@@ -1347,6 +1313,19 @@ ArenaGameplay = {
         end
     end,
     LoadLobby = function(lobby, data, show_message, first_entry)
+        if(data.unstuck_ui)then
+            GuiDestroy(data.unstuck_ui)
+            data.unstuck_ui = nil
+        end
+        if(data.low_framerate_popup ~= nil)then
+            data.low_framerate_popup:destroy()
+            np.ComponentUpdatesSetEnabled("ProjectileSystem", true)
+            np.ComponentUpdatesSetEnabled("CellEaterSystem", true)
+            np.ComponentUpdatesSetEnabled("LooseGroundSystem", true)
+            np.ComponentUpdatesSetEnabled("BlackHoleSystem", true)
+            np.ComponentUpdatesSetEnabled("MagicConvertMaterialSystem", true)
+            np.ComponentUpdatesSetEnabled("PhysicsBodySystem", true)
+        end
         if(data.hm_timer ~= nil)then
             data.hm_timer.clear()
             data.hm_timer = nil
@@ -1403,22 +1382,24 @@ ArenaGameplay = {
         GameRemoveFlagRun("countdown_completed")
         GameRemoveFlagRun("round_finished")
         GameRemoveFlagRun("was_last_ready")
+        GameRemoveFlagRun("Immortal")
+        GameRemoveFlagRun("no_shooting")
         GlobalsSetValue("smash_knockback", "1" )
         GlobalsSetValue("smash_knockback_dummy", "1")
         show_message = show_message or false
         first_entry = first_entry or false
 
-        np.ComponentUpdatesSetEnabled("CellEaterSystem", false)
-        np.ComponentUpdatesSetEnabled("LooseGroundSystem", false)
-        np.ComponentUpdatesSetEnabled("BlackHoleSystem", false)
-        np.ComponentUpdatesSetEnabled("MagicConvertMaterialSystem", false)
+        --np.ComponentUpdatesSetEnabled("CellEaterSystem", false)
+        --np.ComponentUpdatesSetEnabled("LooseGroundSystem", false)
+        --np.ComponentUpdatesSetEnabled("BlackHoleSystem", false)
+        --np.ComponentUpdatesSetEnabled("MagicConvertMaterialSystem", false)
 
         local members = steamutils.getLobbyMembers(lobby)
         for k, member in pairs(members) do
             if (member.id ~= steam.user.getSteamID()) then
                 local user = member.id
-                local wins = tonumber(steam.matchmaking.getLobbyData(lobby, tostring(user) .. "_wins")) or 0
-                local winstreak = tonumber(steam.matchmaking.getLobbyData(lobby, tostring(user) .. "_winstreak")) or 0
+                local wins = tonumber(steamutils.GetLobbyData( tostring(user) .. "_wins")) or 0
+                local winstreak = tonumber(steamutils.GetLobbyData( tostring(user) .. "_winstreak")) or 0
                 if(data.players[tostring(user)])then
                     data.players[tostring(user)].wins = wins
                     data.players[tostring(user)].winstreak = winstreak
@@ -1490,14 +1471,7 @@ ArenaGameplay = {
 
 
 
-            if (data.client.player_loaded_from_data) then
-                if(GameHasFlagRun("picked_perk"))then
-                    GameAddFlagRun("skip_perks")
-                end
-                if(GameHasFlagRun("picked_health"))then
-                    GameAddFlagRun("skip_health")
-                end
-            else
+            if (not data.client.player_loaded_from_data) then
                 if(GlobalsGetValue("upgrades_system", "false") == "true" and GameHasFlagRun("pick_upgrade"))then
                     data.upgrade_system = upgrade_system.create(3, function(upgrade)
                         data.upgrade_system = nil
@@ -1546,7 +1520,7 @@ ArenaGameplay = {
                 -- if we are the owner of the lobby
                 if (steamutils.IsOwner(lobby)) then
                     -- get the gold count from the lobby
-                    local gold = tonumber(steam.matchmaking.getLobbyData(lobby, "total_gold")) or 0
+                    local gold = tonumber(steamutils.GetLobbyData( "total_gold")) or 0
                     -- add the new gold
                     gold = gold + extra_gold
                     -- set the new gold count
@@ -1556,7 +1530,7 @@ ArenaGameplay = {
         else
             if (steamutils.IsOwner(lobby)) then
                 -- get the gold count from the lobby
-                local gold = tonumber(steam.matchmaking.getLobbyData(lobby, "total_gold")) or 0
+                local gold = tonumber(steamutils.GetLobbyData( "total_gold")) or 0
                 -- add the new gold
                 gold = gold + extra_gold
                 -- set the new gold count
@@ -1593,7 +1567,7 @@ ArenaGameplay = {
                             if (wands == nil or #wands == 0) then
                                 return nil
                             end
-                            local player_entity = player.Get()
+                            local player_entity = player.Get() 
 
                             for _, wand in ipairs(wands) do
                                 GameKillInventoryItem(player_entity, wand.entity_id)
@@ -1622,6 +1596,8 @@ ArenaGameplay = {
                 GameAddFlagRun("can_save_player")
 
                 networking.send.request_perk_update(lobby)
+
+                GameAddFlagRun("should_save_player")
             end)
 
         else
@@ -1685,6 +1661,19 @@ ArenaGameplay = {
         return math.floor(num * mult + 0.5) / mult
     end,
     LoadArena = function(lobby, data, show_message, map)
+        if(data.unstuck_ui)then
+            GuiDestroy(data.unstuck_ui)
+            data.unstuck_ui = nil
+        end
+        if(data.low_framerate_popup ~= nil)then
+            data.low_framerate_popup:destroy()
+            np.ComponentUpdatesSetEnabled("ProjectileSystem", true)
+            np.ComponentUpdatesSetEnabled("CellEaterSystem", true)
+            np.ComponentUpdatesSetEnabled("LooseGroundSystem", true)
+            np.ComponentUpdatesSetEnabled("BlackHoleSystem", true)
+            np.ComponentUpdatesSetEnabled("MagicConvertMaterialSystem", true)
+            np.ComponentUpdatesSetEnabled("PhysicsBodySystem", true)
+        end
         if(data.hm_timer ~= nil)then
             data.hm_timer.clear()
             data.hm_timer = nil
@@ -1712,10 +1701,8 @@ ArenaGameplay = {
 
         show_message = show_message or false
 
-        np.ComponentUpdatesSetEnabled("CellEaterSystem", true)
-        np.ComponentUpdatesSetEnabled("LooseGroundSystem", true)
-        np.ComponentUpdatesSetEnabled("BlackHoleSystem", true)
-        np.ComponentUpdatesSetEnabled("MagicConvertMaterialSystem", true)
+        
+
 
         ArenaGameplay.ClearWorld()
 
@@ -2354,6 +2341,169 @@ ArenaGameplay = {
             data.ready_counter:update(lobby, data)
         end
 
+        if (not IsPaused()) then
+            if(data.unstuck_ui == nil)then
+                data.unstuck_ui = GuiCreate()
+            end
+
+            GuiStartFrame(data.unstuck_ui)
+
+            local screen_width, screen_height = GuiGetScreenDimensions(data.unstuck_ui)
+
+            GuiOptionsAdd(data.unstuck_ui, 6)
+
+            if(GameGetIsGamepadConnected())then
+                GuiOptionsAdd(data.unstuck_ui, 2)
+            else
+                GuiOptionsRemove(data.unstuck_ui, 2)
+            end
+
+            if (GuiImageButton(data.unstuck_ui, 21312, screen_width - 60, screen_height - 20, "", "mods/evaisa.arena/files/sprites/ui/unstuck.png")) then
+                
+                GamePlaySound("data/audio/Desktop/ui.bank", "ui/button_click", 0, 0)
+
+                np.ComponentUpdatesSetEnabled("ProjectileSystem", true)
+                np.ComponentUpdatesSetEnabled("CellEaterSystem", true)
+                np.ComponentUpdatesSetEnabled("LooseGroundSystem", true)
+                np.ComponentUpdatesSetEnabled("BlackHoleSystem", true)
+                np.ComponentUpdatesSetEnabled("MagicConvertMaterialSystem", true)
+                np.ComponentUpdatesSetEnabled("PhysicsBodySystem", true)
+
+                GameAddFlagRun("DeserializedHolyMountain")
+
+                ArenaGameplay.SavePlayerData(lobby, data)
+
+                gameplay_handler.ResetEverything(lobby)
+                delay.new(3, function()
+                    if(not data.spectator_mode)then
+                        gameplay_handler.GetGameData(lobby, data)
+                    end
+
+                    gameplay_handler.LoadLobby(lobby, data, true, true)
+                end)
+            end
+            local _, _, hovered, draw_x, draw_y = GuiGetPreviousWidgetInfo(data.unstuck_ui)
+
+            --GuiTooltip(data.unstuck_ui, GameTextGetTranslatedOrNot("$arena_reset_hm"), GameTextGetTranslatedOrNot("$arena_reset_hm_description"))
+
+            if(hovered)then
+                GuiOptionsAddForNextWidget(data.unstuck_ui, 2)
+                local total_height = 0
+                local max_width = 0
+                local strings = {
+                    GameTextGetTranslatedOrNot("$arena_reset_hm"),
+                    GameTextGetTranslatedOrNot("$arena_reset_hm_description"),
+                    GameTextGetTranslatedOrNot("$arena_reset_hm_description_2")
+                }
+                local colors = {
+                    {1, 1, 1, 1},
+                    {0.9, 0.4, 0.4, 1},
+                    {0.7, 0.7, 0.7, 1}
+                }
+                for k, v in ipairs(strings)do
+                    local width, height = GuiGetTextDimensions(data.unstuck_ui, v)
+                    if(width > max_width)then
+                        max_width = width
+                    end
+                    total_height = total_height + height
+                end
+
+                
+                -- offset
+                local box_x = draw_x - max_width - 10
+                local box_y = draw_y - total_height - 10
+
+                local current_height = 0
+
+                GuiBeginAutoBox(data.unstuck_ui)
+
+                for k, v in ipairs(strings)do
+                    local color = colors[k]
+                    GuiColorSetForNextWidget(data.unstuck_ui, color[1], color[2], color[3], color[4])
+                    GuiZSetForNextWidget(data.unstuck_ui, -12)
+                    local width, height = GuiGetTextDimensions(data.unstuck_ui, v)
+                    GuiText(data.unstuck_ui, box_x, box_y + current_height, v)
+                    current_height = current_height + height
+                end
+                GuiZSetForNextWidget(data.unstuck_ui, -11)
+                GuiEndAutoBoxNinePiece(data.unstuck_ui)
+            end
+        end
+
+        if(GameHasFlagRun("lock_ready_state") and data.low_framerate_popup ~= nil )then
+            data.low_framerate_popup:destroy()
+        end
+  
+
+        local framerate = ArenaGameplay.GetFramerate(data)
+
+
+        if(ModSettingGet("evaisa.arena.lag_detection") and #(EntityGetWithTag("workshop") or {}) > 0 and framerate < 10 and not data.low_framerate_popup)then
+
+            np.ComponentUpdatesSetEnabled("ProjectileSystem", false)
+            np.ComponentUpdatesSetEnabled("CellEaterSystem", false)
+            np.ComponentUpdatesSetEnabled("LooseGroundSystem", false)
+            np.ComponentUpdatesSetEnabled("BlackHoleSystem", false)
+            np.ComponentUpdatesSetEnabled("MagicConvertMaterialSystem", false)
+            np.ComponentUpdatesSetEnabled("PhysicsBodySystem", false)
+
+            local entities = EntityGetInRadius(0, 0, 10000000)
+
+            for k, v in pairs(entities)do
+                local projectile_comp = EntityGetFirstComponentIncludingDisabled(v, "ProjectileComponent")
+                if(projectile_comp ~= nil)then
+                    EntityRemoveComponent(v, projectile_comp)
+                    EntityKill(v)
+                end
+            end
+
+            data.low_framerate_popup = popup.create("low_framerate", GameTextGetTranslatedOrNot("$arena_lag_detected_name"),{
+                {
+                    text = GameTextGetTranslatedOrNot("$arena_lag_detected_description"),
+                    color = {214 / 255, 60 / 255, 60 / 255, 1}
+                },
+                GameTextGetTranslatedOrNot("$arena_lag_detected_description_2")
+            }, {
+                {
+                    text = GameTextGetTranslatedOrNot("$mp_close_popup"),
+                    callback = function()
+                        np.ComponentUpdatesSetEnabled("ProjectileSystem", true)
+                        np.ComponentUpdatesSetEnabled("CellEaterSystem", true)
+                        np.ComponentUpdatesSetEnabled("LooseGroundSystem", true)
+                        np.ComponentUpdatesSetEnabled("BlackHoleSystem", true)
+                        np.ComponentUpdatesSetEnabled("MagicConvertMaterialSystem", true)
+                        np.ComponentUpdatesSetEnabled("PhysicsBodySystem", true)
+                    end
+                },
+                {
+                    text = GameTextGetTranslatedOrNot("$arena_lag_detected_kill"),
+                    callback = function()
+                        np.ComponentUpdatesSetEnabled("ProjectileSystem", true)
+                        np.ComponentUpdatesSetEnabled("CellEaterSystem", true)
+                        np.ComponentUpdatesSetEnabled("LooseGroundSystem", true)
+                        np.ComponentUpdatesSetEnabled("BlackHoleSystem", true)
+                        np.ComponentUpdatesSetEnabled("MagicConvertMaterialSystem", true)
+                        np.ComponentUpdatesSetEnabled("PhysicsBodySystem", true)
+
+                        ArenaGameplay.SavePlayerData(lobby, data)
+
+                        GameAddFlagRun("DeserializedHolyMountain")
+                        gameplay_handler.ResetEverything(lobby)
+                        delay.new(3, function()
+                            if(not data.spectator_mode)then
+                                gameplay_handler.GetGameData(lobby, data)
+                            end
+
+                            gameplay_handler.LoadLobby(lobby, data, true, true)
+                        end)
+                    end
+                }
+            }, -6000)
+        elseif(not (ModSettingGet("evaisa.arena.lag_detection") and #(EntityGetWithTag("workshop") or {}) > 0))then
+            data.frame_times = {}
+            data.last_frame_time = nil
+        end
+
         -- get ready percentage
         local ready_percentage = math.floor((ArenaGameplay.ReadyAmount(data, lobby) / ArenaGameplay.TotalPlayers(lobby)) * 100)
 
@@ -2409,6 +2559,33 @@ ArenaGameplay = {
             end
         end
 
+        -- was trying to repair the HM but thats duplicating entities so nvm
+        --[[if(GameGetFrameNum() % 120 == 0)then
+            if(not data.spectator_mode)then
+                -- load map
+                if(GameHasFlagRun("item_shop"))then
+                    LoadPixelScene("mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple_itemshop/0.plz", "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple_itemshop/0_visual.plz", -174, -133, "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple_itemshop/0_background.png", true, false, nil, nil, true)
+                    LoadPixelScene("mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple_itemshop/1.plz", "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple_itemshop/1_visual.plz", 338, -133, "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple_itemshop/1_background.png", true, false, nil, nil, true)
+                    LoadPixelScene("mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple_itemshop/2.plz", "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple_itemshop/2_visual.plz", 850, -133, "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple_itemshop/2_background.png", true, false, nil, nil, true)
+                else
+                    LoadPixelScene("mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/0.plz", "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/0_visual.plz", -174, -133, "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/0_background.png", true, false, nil, nil, true)
+                    LoadPixelScene("mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/1.plz", "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/1_visual.plz", 338, -133, "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/1_background.png", true, false, nil, nil, true)
+                    LoadPixelScene("mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/2.plz", "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/2_visual.plz", 850, -133, "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/2_background.png", true, false, nil, nil, true)
+                end
+            else
+                -- load map
+                if(GameHasFlagRun("item_shop"))then
+                    LoadPixelScene("mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple_itemshop/0.plz", "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple_itemshop/0_visual.plz", -174, -133, "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple_itemshop/0_background.png", true, false, nil, nil, true)
+                    LoadPixelScene("mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple_itemshop/1.plz", "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple_itemshop/1_visual.plz", 338, -133, "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple_itemshop/1_background.png", true, false, nil, nil, true)
+                    LoadPixelScene("mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple_itemshop/2.plz", "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple_itemshop/2_visual.plz", 850, -133, "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple_itemshop/2_background.png", true, false, nil, nil, true)
+                else
+                    LoadPixelScene("mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/0.plz", "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/0_visual.plz", -174, -133, "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/0_background.png", true, false, nil, nil, true)
+                    LoadPixelScene("mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/1.plz", "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/1_visual.plz", 338, -133, "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/1_background.png", true, false, nil, nil, true)
+                    LoadPixelScene("mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/2.plz", "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/2_visual.plz", 850, -133, "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/2_background.png", true, false, nil, nil, true)
+                end
+            end
+        end]]
+
 
         if(not IsPaused() and not (data.spectator_mode and data.lobby_spectated_player == nil))then
             ArenaGameplay.UpdateDummy(lobby, data, true)
@@ -2432,6 +2609,7 @@ ArenaGameplay = {
                 networking.send.request_sync_hm(lobby, data.lobby_spectated_player, data.last_synced_entity_count)
             end
         else
+
             networking.send.character_position(lobby, data, true)
 
         -- networking.send.wand_update(lobby, data, nil, nil, true)
@@ -3033,6 +3211,24 @@ ArenaGameplay = {
             end
         end
     end,
+    GetFramerate = function(data)
+        data.frame_times = data.frame_times or {}
+        local now_time = GameGetRealWorldTimeSinceStarted()
+        local seconds_passed_since_last_frame = GameGetRealWorldTimeSinceStarted() - (data.last_frame_time or now_time)
+        data.last_frame_time = now_time
+        table.insert(data.frame_times, seconds_passed_since_last_frame)
+        if #data.frame_times > 60 then
+          table.remove(data.frame_times, 1)
+        end
+        local average_frame_time = 0
+        for i, v in ipairs(data.frame_times) do
+          average_frame_time = average_frame_time + v
+        end
+        average_frame_time = average_frame_time / #data.frame_times
+        local FPS = 1 / average_frame_time
+
+        return FPS
+    end,
     ValidatePlayers = function(lobby, data)
         local to_remove = {}
         for k, v in pairs(data.players) do
@@ -3062,7 +3258,9 @@ ArenaGameplay = {
                 ]]
                 lobby_member_names[k] = nil
                 if (data.state == "arena") then
-                    ArenaGameplay.WinnerCheck(lobby, data) 
+                    if(steamutils.IsOwner(lobby))then
+                        ArenaGameplay.WinnerCheck(lobby, data)
+                    end
                 end
             end
         end
@@ -3094,6 +3292,18 @@ ArenaGameplay = {
 
     end,
     Update = function(lobby, data)
+
+
+        if(data.low_framerate_popup ~= nil and data.low_framerate_popup.destroyed)then
+            np.ComponentUpdatesSetEnabled("ProjectileSystem", true)
+            np.ComponentUpdatesSetEnabled("CellEaterSystem", true)
+            np.ComponentUpdatesSetEnabled("LooseGroundSystem", true)
+            np.ComponentUpdatesSetEnabled("BlackHoleSystem", true)
+            np.ComponentUpdatesSetEnabled("MagicConvertMaterialSystem", true)
+            np.ComponentUpdatesSetEnabled("PhysicsBodySystem", true)
+            data.low_framerate_popup = nil
+        end
+
         username_gui = username_gui or GuiCreate()
 
         GuiStartFrame(username_gui)
@@ -3283,6 +3493,7 @@ ArenaGameplay = {
                 if(pickup ~= "")then
                     networking.send.pick_hm_entity(lobby, pickup)
                     GlobalsSetValue("hm_item_pickup", "")
+                    GameAddFlagRun("should_save_player")
                 end
 
                 if(GameHasFlagRun("picked_up_new_heart"))then
@@ -3294,6 +3505,8 @@ ArenaGameplay = {
                         steamutils.AddLobbyFlag(lobby, tostring(steam.user.getSteamID()).."picked_heart")
 
                     end
+
+                    GameAddFlagRun("should_save_player")
     
                 end
             end
@@ -3444,6 +3657,7 @@ ArenaGameplay = {
                         --GamePrint("inventory_was_closed")
                         networking.send.item_update(lobby, data, nil, true, false)
                         networking.send.switch_item(lobby, data, nil, true, false)
+                        GameAddFlagRun("should_save_player")
                     end
                     data.client.inventory_was_open = false
                 end
@@ -3476,6 +3690,7 @@ ArenaGameplay = {
             end
             if(GlobalsGetValue("arena_item_pickup", "0") ~= "0")then
                 networking.send.item_picked_up(lobby, tonumber(GlobalsGetValue("arena_item_pickup", "0")))
+                GameAddFlagRun("should_save_player")
                 GlobalsSetValue("arena_item_pickup", "0")
             end
             
@@ -3494,6 +3709,7 @@ ArenaGameplay = {
                 GameAddFlagRun("ForceUpdateInventory")
                 no_switching = 10
                 data.client.last_inventory = current_inventory_info
+                GameAddFlagRun("should_save_player")
             end
 
             if(no_switching > 0)then
@@ -3549,9 +3765,10 @@ ArenaGameplay = {
                 ArenaGameplay.LoadPlayer(lobby, data)
                 arena_log:print("Player is missing, spawning player.")
             else
-                if (GameGetFrameNum() % 40 == 0 and GameHasFlagRun("can_save_player")) then
+                if (GameHasFlagRun("should_save_player") and GameHasFlagRun("can_save_player")) then
                     --print("Saving player data")
                     ArenaGameplay.SavePlayerData(lobby, data)
+                    GameRemoveFlagRun("should_save_player")
                 end
             end
 

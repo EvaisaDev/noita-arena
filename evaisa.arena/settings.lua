@@ -32,6 +32,13 @@ mod_settings =
                 value_default = false,
                 scope = MOD_SETTING_SCOPE_RUNTIME,
             },
+            {
+                id = "lag_detection",
+                ui_name = "Lag Detection",
+                ui_description = "Enable lag detection in the Holy Mountain. Allows you to clear the canvas when it is too laggy.",
+                value_default = true,
+                scope = MOD_SETTING_SCOPE_RUNTIME,
+            },
             --[[{
                 id = "spectator_unstable",
                 ui_name = "Enable Spectator System",
@@ -39,7 +46,7 @@ mod_settings =
                 value_default = false,
                 scope = MOD_SETTING_SCOPE_RUNTIME,
             },]]
-			{
+			--[[{
 				id = "simulated_latency",
 				ui_name = "Simulated Latency",
                 ui_description = "Simulate latency for testing purposes. (frames)",
@@ -49,7 +56,7 @@ mod_settings =
 				value_display_multiplier = 1,
 				value_display_formatting = " $0 frames",
 				scope = MOD_SETTING_SCOPE_RUNTIME,
-			},
+			},]]
         },
     },
 }

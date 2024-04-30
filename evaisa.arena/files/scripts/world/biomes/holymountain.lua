@@ -66,6 +66,7 @@ function spawn_hp( x, y )
 	EntitySetTransform(chunk_loader, 300, 0)
 	EntityApplyTransform(chunk_loader, 600, 0)
 	EntitySetTransform(chunk_loader, 600, 0)]]
+	GameAddFlagRun("should_save_player")
 end
 
 function spawn_all_shopitems( x, y )
@@ -231,6 +232,7 @@ function spawn_all_shopitems( x, y )
 	end
 
 	GlobalsSetValue("temple_second_row_spots", smallfolk.dumps(second_row_spots))
+	GameAddFlagRun("should_save_player")
 	
 end
 
@@ -247,6 +249,8 @@ function spawn_all_perks( x, y )
 		SetRandomSeed( seed_x, seed_y )
 		perk_spawn_many( x, y )
 	end
+
+	GameAddFlagRun("should_save_player")
 end
 
 function spawn_perk_reroll( x, y )
@@ -310,6 +314,8 @@ function spawn_item_shop_item( x, y )
 	SetRandomSeed( seed_x, seed_y )
 
 	generate_shop_potion(x, y, round_scaled)
+
+	GameAddFlagRun("should_save_player")
 end
 
 function spawn_wardrobe(x, y)

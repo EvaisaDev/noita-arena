@@ -11,10 +11,7 @@ do_mod_appends = function(filename, ...)
 end
 
 local function debugPrint(msg, level)
-  local level = level or 1
-  if level <= DEBUG_LOG_LEVEL then
-    print("[DEBUG] [Parallax:" .. _G["PARALLAX_MODID"].. "] " .. msg)
-  end
+
 end
 
 local function parallaxPrint(msg)

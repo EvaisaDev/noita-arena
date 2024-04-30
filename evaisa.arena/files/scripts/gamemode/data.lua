@@ -211,7 +211,7 @@ function data:New()
                 return
             end
             self.players[tostring(user)] = playerinfo:New(user)
-            local ready = steam.matchmaking.getLobbyData(lobby, tostring(user).."_ready")
+            local ready = steamutils.GetLobbyData( tostring(user).."_ready")
             if(ready ~= nil and ready ~= "")then
                 self.players[tostring(user)].ready = ready == "true"
             end

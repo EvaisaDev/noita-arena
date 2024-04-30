@@ -1,6 +1,10 @@
 arena_log = logger.init("noita-arena.log")
 perk_log = logger.init("noita-arena-perk.log")
 
+if(not debugging)then
+	arena_log.enabled = false
+end
+
 
 mp_helpers = dofile("mods/evaisa.mp/files/scripts/helpers.lua")
 local steamutils = dofile_once("mods/evaisa.mp/lib/steamutils.lua")
@@ -348,8 +352,8 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 152,
-    required_online_version = 347,
+    version = 157,
+    required_online_version = 351,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
     end,
@@ -826,7 +830,7 @@ ArenaMode = {
                     if(perk_search_content == "" or ifind(string.lower(GameTextGetTranslatedOrNot(perk.ui_name)), string.lower(perk_search_content), 1, true)) then
                         iteration = iteration + 1
                         GuiLayoutBeginHorizontal(gui, 0, -((iteration - 1) * 2), true)
-                        local is_blacklisted = perk_blacklist_data[perk.id]--steamutils.GetLobbyData("perk_blacklist_"..perk.id) == "true"
+                        local is_blacklisted = perk_blacklist_data[perk.id]--steam.matchmaking.getLobbyData(lobby,"perk_blacklist_"..perk.id) == "true"
                         GuiZSetForNextWidget(gui, -5600)
                         GuiImage(gui, new_id(), 0, 0, perk.ui_icon, is_blacklisted and 0.4 or 1, 1, 1)
                         local visible, clicked, _, hovered = get_widget_info(gui)
@@ -923,7 +927,7 @@ ArenaMode = {
                     if(spell_search_content == "" or ifind(string.lower(GameTextGetTranslatedOrNot(spell.name)), string.lower(spell_search_content), 1, true)) then
                         iteration = iteration + 1
                         GuiLayoutBeginHorizontal(gui, 0, -((iteration - 1) * 2), true)
-                        local is_blacklisted = spell_blacklist_data[spell.id] --steamutils.GetLobbyData("spell_blacklist_"..spell.id) == "true"
+                        local is_blacklisted = spell_blacklist_data[spell.id] --steam.matchmaking.getLobbyData(lobby,"spell_blacklist_"..spell.id) == "true"
                         GuiZSetForNextWidget(gui, -5600)
                         GuiImage(gui, new_id(), 0, 0, spell.sprite, is_blacklisted and 0.4 or 1, 1, 1)
                         local visible, clicked, _, hovered = get_widget_info(gui)
@@ -1015,7 +1019,7 @@ ArenaMode = {
                     if(card_search_content == "" or ifind(string.lower(GameTextGetTranslatedOrNot(card.ui_name)), string.lower(card_search_content), 1, true)) then
                         iteration = iteration + 1
                         GuiLayoutBeginHorizontal(gui, 0, -((iteration - 1) * 2), true)
-                        local is_blacklisted = card_blacklist_data[card.id]--steamutils.GetLobbyData("card_blacklist_"..card.id) == "true"
+                        local is_blacklisted = card_blacklist_data[card.id]--steam.matchmaking.getLobbyData(lobby,"card_blacklist_"..card.id) == "true"
                         GuiZSetForNextWidget(gui, -5600)
                         GuiColorSetForNextWidget(gui, card.card_symbol_tint and card.card_symbol_tint[1] or 1, card.card_symbol_tint and card.card_symbol_tint[2] or 1, card.card_symbol_tint and card.card_symbol_tint[3] or 1, 1)
                         GuiImage(gui, new_id(), 0, 0, card.card_symbol, is_blacklisted and 0.4 or 1, 1, 1)
@@ -1286,7 +1290,7 @@ ArenaMode = {
 
         TryUpdateData(lobby)
 
-        if(tostring(content_hash) ~= steam.matchmaking.getLobbyData(lobby, "content_hash"))then
+        if(tostring(content_hash) ~= steam.matchmaking.getLobbyData(lobby,"content_hash"))then
             if(steamutils.IsOwner(lobby))then
                 print("content hash mismatch, updating")
                 steam.matchmaking.setLobbyData(lobby, "content_hash", content_hash)
@@ -1754,8 +1758,7 @@ ArenaMode = {
         
         gameplay_handler.ResetEverything(lobby)
 
-        if (not was_in_progress) then
-            GlobalsSetValue("TEMPLE_PERK_REROLL_COUNT", "0")
+        if (not was_in_progress or data.spectator_mode) then
             steamutils.RemoveLocalLobbyData(lobby, "player_data")
             steamutils.RemoveLocalLobbyData(lobby, "reroll_count")
         else
@@ -1942,7 +1945,7 @@ ArenaMode = {
 
         if (GameGetFrameNum() % 60 == 0) then
             if (data ~= nil) then
-                local unique_game_id = steam.matchmaking.getLobbyData(lobby, "unique_game_id") or "0"
+                local unique_game_id = steamutils.GetLobbyData( "unique_game_id") or "0"
                 steamutils.SetLocalLobbyData(lobby, "unique_game_id", tostring(unique_game_id))
             end
 
@@ -1973,7 +1976,7 @@ ArenaMode = {
         ComponentSetValue2(world_state_component, "fog", 0)
         ComponentSetValue2(world_state_component, "intro_weather", true)
 
-        local update_seed = steam.matchmaking.getLobbyData(lobby, "update_seed")
+        local update_seed = steamutils.GetLobbyData( "update_seed")
         if (update_seed == nil) then
             update_seed = "0"
         end
@@ -2088,19 +2091,11 @@ ArenaMode = {
             data:DefinePlayer(lobby, user)
         end
 
-        local simulated_latency = math.floor(ModSettingGet("evaisa.arena.simulated_latency") or 0)
         if (data ~= nil) then
-            if (simulated_latency > 0) then
-                delay.new(simulated_latency, function()
-                    if (networking.receive[event]) then
-                        networking.receive[event](lobby, message, user, data)
-                    end
-                end)
-            else
-                if (networking.receive[event]) then
-                    networking.receive[event](lobby, message, user, data)
-                end
+            if (networking.receive[event]) then
+                networking.receive[event](lobby, message, user, data)
             end
+
         end
         --print("Received event: " .. event)
 
