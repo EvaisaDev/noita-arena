@@ -466,9 +466,8 @@ ArenaGameplay = {
         for i, perk_data in ipairs(perk_list) do
             local perk_id = perk_data.id
             local flag_name = get_perk_picked_flag_name(perk_id)
-            local pickup_count_string = get_pickup_count_string( perk_id )
 
-            local pickup_count = tonumber(GlobalsGetValue(pickup_count_string, "0"))
+            local pickup_count = tonumber(GlobalsGetValue(flag_name .. "_PICKUP_COUNT", "0"))
 
             if (pickup_count > 0) then
                 if (perk_data.func_remove ~= nil) then
@@ -476,7 +475,7 @@ ArenaGameplay = {
                 end
             end
             GameRemoveFlagRun(flag_name)
-            GlobalsSetValue(pickup_count_string, "0")
+            GlobalsSetValue(flag_name .. "_PICKUP_COUNT", "0")
         end
 
         if (player ~= nil) then
@@ -487,6 +486,7 @@ ArenaGameplay = {
         GameRemoveFlagRun("no_shooting")
         GameRemoveFlagRun("was_last_ready")
         GameRemoveFlagRun( "arena_unlimited_spells" )
+        GameRemoveFlagRun("should_save_player")
         GlobalsSetValue("TEMPLE_SHOP_ITEM_COUNT", "5")
         GlobalsSetValue("TEMPLE_PERK_REROLL_COUNT", "0")
         GlobalsSetValue("EXTRA_MONEY_COUNT", "0")
@@ -3231,10 +3231,16 @@ ArenaGameplay = {
     end,
     ValidatePlayers = function(lobby, data)
         local to_remove = {}
+        local player_count = 0
         for k, v in pairs(data.players) do
             local playerid = ArenaGameplay.FindUser(lobby, k)
 
-            if (playerid == nil) then
+            print("Checking player " .. tostring(k) .. " with id " .. tostring(playerid))
+
+            if (playerid == nil or steamutils.IsSpectator(lobby, playerid)) then
+
+                print("round should end!!")
+
                 v:Clean(lobby)
                 data.players[k] = nil
                 table.insert(to_remove, k)
@@ -3262,10 +3268,16 @@ ArenaGameplay = {
                         ArenaGameplay.WinnerCheck(lobby, data)
                     end
                 end
+            else
+                player_count = player_count + 1
             end
         end
+
+
         for k, v in ipairs(to_remove) do
+            data.players[v] = nil
             table.remove(to_remove, k)
+
         end
     end,
     GetAlivePlayers = function(lobby, data)

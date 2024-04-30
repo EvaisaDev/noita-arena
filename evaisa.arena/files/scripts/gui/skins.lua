@@ -120,6 +120,7 @@ skins.init = function()
     self.last_file_name = cache_folder..uniqueFileName()..".png"
     saveImage(player_modified_img, self.last_file_name)
 
+
     self.tools = {
         {
             id = "pencil",
@@ -380,6 +381,34 @@ skins.init = function()
         id = id + 1
         return id
     end
+
+
+    self.load = function(lobby)
+        
+        local last_skin = ModSettingGet("arena_last_skin")
+        if(last_skin ~= nil)then
+            for i, skin in ipairs(self.loaded_skins)do
+                if(skin.name == last_skin)then
+                    -- select skin and apply.
+                    self.selected_skin = {
+                        name = skin.name,
+                        path = skin.path,
+                        img = skin.img,
+                        is_default = skin.is_default
+                    }
+
+                    player_modified_img = loadImage(skin.path)
+
+                    fs.remove(self.last_file_name)
+                    self.last_file_name = "data/evaisa.arena/cache/"..uniqueFileName()..".png"
+                    saveImage(player_modified_img, self.last_file_name)
+                    self.apply_skin(lobby)
+                    break
+                end
+            end
+        end
+    end
+    
 
     self.draw = function(lobby, data)
         if(not self.editor_open)then
@@ -905,6 +934,10 @@ skins.init = function()
         end
 
         print("Applying skin to self")
+        
+        if(self.selected_skin)then
+            ModSettingSet("arena_last_skin", self.selected_skin.name)
+        end
 
         -- generate skin
         local temp_path, arm_path, file_name, cape, cape_edge = self.generate_skin(self.last_file_name)

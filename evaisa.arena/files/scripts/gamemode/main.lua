@@ -378,6 +378,20 @@ ArenaMode = {
             return false, "Game is in progress, please wait"
         end
     end,
+    custom_spectator_check = function(lobby)
+        local lobby_state = steam.matchmaking.getLobbyData(lobby, "arena_state") or "lobby"
+
+        -- if we are the only player in the lobby and arena state is not lobby, allow entry
+        if(steam.matchmaking.getNumLobbyMembers(lobby) == 1 and lobby_state ~= "lobby")then
+            return true, "Preparing in Holy Mountain"
+        end
+
+        if(lobby_state == "lobby")then
+            return true, "Preparing in Holy Mountain"
+        else
+            return false, "Game is in progress, please wait"
+        end
+    end,
     binding_register = function(bindings)
         print("Registering bindings for Noita Arena")
         -- Arena Spectator keyboard bindings
@@ -1721,6 +1735,8 @@ ArenaMode = {
         BiomeMapLoad_KeepPlayer("mods/evaisa.arena/files/scripts/world/map_arena.lua")
     end,
     start = function(lobby, was_in_progress)
+
+        skin_system.load(lobby)
 
         for i, v in ipairs(EntityGetWithTag("player_unit"))do
             EntityKill(v)
