@@ -455,7 +455,7 @@ ArenaMode = {
             name = "$arena_settings_gamemode_name",
             description = "$arena_settings_gamemode_description",
             type = "enum",
-            options = { { "ffa", "$arena_settings_gamemode_ffa" }, { "continuous", "$arena_settings_gamemode_continuous" }, },
+            options = { { "ffa", "$arena_settings_gamemode_ffa" }, { "continuous", "$arena_settings_gamemode_continuous", {"$arena_settings_experimental", "$arena_settings_experimental_desc"} }, },
             default = "ffa"
         },
         {
