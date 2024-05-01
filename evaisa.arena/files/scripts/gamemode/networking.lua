@@ -181,6 +181,36 @@ typedef struct G {
 #pragma pack(pop)
 ]])
 
+-- damage details
+--[[
+    local data = {
+        ragdoll_fx,
+        damage_types,
+        knockback_force,
+        impulse[1],
+        impulse[2],
+        world_pos[1],
+        world_pos[2],
+    }
+]]
+ffi.cdef([[
+#pragma pack(push, 1)
+typedef struct H {
+    int ragdoll_fx;
+    int damage_types;
+    float knockback_force;
+    float impulse_x;
+    float impulse_y;
+    float world_pos_x;
+    float world_pos_y;
+    float explosion_x;
+    float explosion_y;
+    float blood_multiplier;
+    bool smash_explosion;
+} DamageDetails;
+#pragma pack(pop)
+]])
+
 
 local Controls = ffi.typeof("Controls")
 local ZoneUpdate = ffi.typeof("ZoneUpdate")
@@ -189,49 +219,43 @@ local CharacterPos = ffi.typeof("CharacterPos")
 local FireWand = ffi.typeof("FireWand")
 local PlayerStats = ffi.typeof("PlayerStats")
 local WandStats = ffi.typeof("WandStats")
+local DamageDetails = ffi.typeof("DamageDetails")
 
 
 
 local function deserialize_damage_details(str)
-    local ragdoll_fx, damage_types, knockback_force, impulse_x, impulse_y, world_pos_x, world_pos_y = str:match("(%d+)|(%d+)|([%d%.]+)|([%d%.%-]+)|([%d%.%-]+)|([%d%.%-]+)|([%d%.%-]+)")
-    return {
+    local values = {}
+    for value in str:gmatch("[^,]+") do
+        table.insert(values, tonumber(value))
+    end
+
+    local ragdoll_fx = values[1]
+    local damage_types = values[2]
+    local knockback_force = values[3]
+    local blood_multiplier = values[4]
+    local impulse_x = values[5]
+    local impulse_y = values[6]
+    local world_pos_x = values[7]
+    local world_pos_y = values[8]
+    local smash_explosion = values[9] == 1
+    local explosion_x = values[10]
+    local explosion_y = values[11]
+    
+    
+    --print("ragdoll_fx: " .. tostring(ragdoll_fx) .. ",\ndamage_types: " .. tostring(damage_types) .. ",\nknockback_force: " .. tostring(knockback_force) .. ",\nimpulse_x: " .. tostring(impulse_x) .. ",\nimpulse_y: " .. tostring(impulse_y) .. ",\nworld_pos_x: " .. tostring(world_pos_x) .. ",\nworld_pos_y: " .. tostring(world_pos_y) .. ",\nsmash_explosion: " .. tostring(smash_explosion) .. ",\nexplosion_x: " .. tostring(explosion_x) .. ",\nexplosion_y: " .. tostring(explosion_y))
+
+    return DamageDetails{
         ragdoll_fx = tonumber(ragdoll_fx),
         damage_types = tonumber(damage_types),
         knockback_force = tonumber(knockback_force),
-        impulse = {tonumber(impulse_x), tonumber(impulse_y)},
-        world_pos = {tonumber(world_pos_x), tonumber(world_pos_y)}
-    }
-end
-
-local pack_damage_details = function(details)
-    if(details.impulse == nil)then
-        return {}
-    end
-
-    local data = {
-        details.ragdoll_fx,
-        details.damage_types,
-        details.knockback_force,
-        details.blood_multiplier,
-        details.impulse[1],
-        details.impulse[2],
-        details.world_pos[1],
-        details.world_pos[2],
-    }
-    return data
-end
-
-local unpack_damage_details = function(data)
-    if(data[1] == nil)then
-        return nil
-    end
-    return {
-        ragdoll_fx = data[1],
-        damage_types = data[2],
-        knockback_force = data[3],
-        blood_multiplier = data[4],
-        impulse = {data[5], data[6]},
-        world_pos = {data[7], data[8]},
+        blood_multiplier = tonumber(blood_multiplier),
+        impulse_x = tonumber(impulse_x),
+        impulse_y = tonumber(impulse_y),
+        world_pos_x = tonumber(world_pos_x),
+        world_pos_y = tonumber(world_pos_y),
+        smash_explosion = smash_explosion,
+        explosion_x = tonumber(explosion_x),
+        explosion_y = tonumber(explosion_y),
     }
 end
 
@@ -462,6 +486,10 @@ networking = {
                 dev_log:print("Received character position update.")
             end]]
 
+            if(data.state ~= "arena" and not data.spectator_mode)then
+                return
+            end
+
             if (not gameplay_handler.CheckPlayer(lobby, user, data)) then
                 --[[if (dev_log) then
                     dev_log:print("player is invalid!!")
@@ -511,6 +539,11 @@ networking = {
             end
         end,
         item_update = function(lobby, message, user, data)
+            if(data.state ~= "arena" and not data.spectator_mode)then
+                return
+            end
+
+
             if (not gameplay_handler.CheckPlayer(lobby, user, data)) then
                 --print("Entity is missing!!! wtf!??")
                 return
@@ -754,6 +787,10 @@ networking = {
         end,
        
         input = function(lobby, message, user, data)
+            if(data.state ~= "arena" and not data.spectator_mode)then
+                return
+            end
+
             if (not gameplay_handler.CheckPlayer(lobby, user, data)) then
                 return
             end
@@ -954,6 +991,10 @@ networking = {
             end
         end,
         animation_update = function(lobby, message, user, data)
+            if(data.state ~= "arena" and not data.spectator_mode)then
+                return
+            end
+
             if (not gameplay_handler.CheckPlayer(lobby, user, data)) then
                 return
             end
@@ -975,7 +1016,9 @@ networking = {
             end
         end,
         switch_item = function(lobby, message, user, data)
-
+            if(data.state ~= "arena" and not data.spectator_mode)then
+                return
+            end
             
             delay.new(5, function()
                 if (not gameplay_handler.CheckPlayer(lobby, user, data)) then
@@ -1054,6 +1097,10 @@ networking = {
         
         end,
         sync_wand_stats = function(lobby, message, user, data)
+            if(data.state ~= "arena" and not data.spectator_mode)then
+                return
+            end
+
             if (not gameplay_handler.CheckPlayer(lobby, user, data)) then
                 return
             end
@@ -1189,7 +1236,7 @@ networking = {
         health_update = function(lobby, message, user, data)
             local health = message[1]
             local maxHealth = message[2]
-            local damage_details = unpack_damage_details(message[3])
+            local damage_details = message[3]
 
             if (health ~= nil and maxHealth ~= nil) then
                 if (data.players[tostring(user)].entity ~= nil) then
@@ -1197,28 +1244,42 @@ networking = {
                         return
                     end
 
+                    --print("Received health update!!")
+
                     local last_health = maxHealth
                     if (data.players[tostring(user)].health) then
                         last_health = data.players[tostring(user)].health
                     end
+
+                   -- print("last health: " .. tostring(last_health) .. ", new health: " .. tostring(health) .. ", max health: " .. tostring(maxHealth))
+
                     if (health < last_health) then
                         local damage = last_health - health
 
                         --[[
-                            {
-                                ragdoll_fx = 1 
-                                damage_types = 16 -- bitflag
-                                knockback_force = 0    
-                                impulse = {0, 0},
-                                world_pos = {216.21, 12.583},
-                            }
+                            int ragdoll_fx;
+                            int damage_types;
+                            float knockback_force;
+                            float impulse_x;
+                            float impulse_y;
+                            float world_pos_x;
+                            float world_pos_y;
                         ]]
 
+
+                        local damage_entity = EntityGetWithName("dummy_damage")
+                        if(damage_entity == nil or damage_entity == 0 or not EntityGetIsAlive(damage_entity))then
+                            damage_entity = EntityCreateNew("dummy_damage")
+                        end
                         if(damage_details ~= nil and damage_details.ragdoll_fx ~= nil)then
                             --print(json.stringify(damage_details))
 
+                            --print("damage types: " .. tostring(damage_details.damage_types))
+
                             local damage_types = mp_helpers.GetDamageTypes(damage_details.damage_types)
                             local ragdoll_fx = mp_helpers.GetRagdollFX(damage_details.ragdoll_fx)
+
+
 
                             --print("ragdoll_fx: " .. tostring(ragdoll_fx))
 
@@ -1241,18 +1302,38 @@ networking = {
 
                             local old_blood_multiplier = ComponentGetValue2(damage_model_comp, "blood_multiplier")
                             ComponentSetValue2(damage_model_comp, "blood_multiplier", blood_multiplier)
+
+                            
+
                             for i, damage_type in ipairs(damage_types) do
-                                EntityInflictDamage(data.players[tostring(user)].entity, damage_per_type, damage_type, "damage_fake",
-                                ragdoll_fx, damage_details.impulse[1], damage_details.impulse[2], EntityGetWithName("dummy_damage"), damage_details.world_pos[1], damage_details.world_pos[2], damage_details.knockback_force)
+                                --print("inflicting damage: " .. tostring(damage_per_type) .. " of type: " .. tostring(damage_type))
+                                EntityInflictDamage(data.players[tostring(user)].entity, 
+                                damage_per_type, 
+                                damage_type, 
+                                "damage_fake",
+                                ragdoll_fx, 
+                                damage_details.impulse_x, 
+                                damage_details.impulse_y, 
+                                damage_entity, 
+                                damage_details.world_pos_x, 
+                                damage_details.world_pos_y, 
+                                damage_details.knockback_force)
                             end
                             if(old_blood_multiplier ~= nil)then
                                 ComponentSetValue2(damage_model_comp, "blood_multiplier", old_blood_multiplier)
                             end
                         else
+                            EntityInflictDamage(data.players[tostring(user)].entity, 
+                            damage, 
+                            "DAMAGE_DROWNING", 
+                            "damage_fake",
+                            "NONE", 
+                            0, 
+                            0, 
+                            EntityGetWithName("dummy_damage"))
 
+                            --print("inflicting damage: " .. tostring(damage))
 
-                            EntityInflictDamage(data.players[tostring(user)].entity, damage, "DAMAGE_DROWNING", "damage_fake",
-                            "NONE", 0, 0, EntityGetWithName("dummy_damage"))
                         end
 
                     end
@@ -1300,6 +1381,10 @@ networking = {
 
         end,
         fire_wand = function(lobby, message, user, data)
+            if(data.state ~= "arena" and not data.spectator_mode)then
+                return
+            end
+
             if (not gameplay_handler.CheckPlayer(lobby, user, data)) then
                 return
             end
@@ -1369,6 +1454,10 @@ networking = {
             end
         end,
         death = function(lobby, message, user, data)
+            if(data.state ~= "arena" and not data.spectator_mode)then
+                return
+            end
+
             if (data.state == "arena") then
                 local username = steamutils.getTranslatedPersonaName(user)
 
@@ -1411,6 +1500,10 @@ networking = {
             end
         end,
         zone_update = function(lobby, message, user, data)
+            if(data.state ~= "arena" and not data.spectator_mode)then
+                return
+            end
+
             if (not steamutils.IsOwner(lobby, user))then
                 return
             end
@@ -1427,6 +1520,10 @@ networking = {
             networking.send.perk_update(lobby, data, user)
         end,
         player_data_update = function(lobby, message, user, data)
+            if(data.state ~= "arena" and not data.spectator_mode)then
+                return
+            end
+
             --[[
                 template:
                 local message = {
@@ -1544,6 +1641,10 @@ networking = {
             end
         end,
         player_stats_update = function(lobby, message, user, data)
+            if(data.state ~= "arena" and not data.spectator_mode)then
+                return
+            end
+
             --[[
                 template:
                 local message = {
@@ -1641,6 +1742,10 @@ networking = {
             end
         end,
         item_picked_up = function(lobby, message, user, data)
+            if(data.state ~= "arena" and not data.spectator_mode)then
+                return
+            end
+
             --GamePrint("pickup received.")
             local entities = EntityGetInRadius(0, 0, 1000000000)
             local item_id = message
@@ -1672,6 +1777,10 @@ networking = {
             end
         end,
         physics_update = function(lobby, message, user, data)
+            if(data.state ~= "arena" and not data.spectator_mode)then
+                return
+            end
+
             local entities = EntityGetInRadiusWithTag(0, 0, 1000000000, "does_physics_update")
             local item_id = message.id
             local x, y, r, vx, vy, vr = message.x, message.y, message.r, message.vel_x, message.vel_y, message.vel_a
@@ -1723,6 +1832,8 @@ networking = {
 
             local converted_any = false
         
+            local player_entity = player_helper.Get()
+
             local rnd = random_create(9123,58925+iter ) -- TODO: store for next change
             local from_material_name = nil
             
@@ -1738,7 +1849,7 @@ networking = {
                     ConvertMaterialEverywhere( from_material, to_material )
                     converted_any = true
         
-                    local player_entity = player_helper.Get()
+                    
                     if (player_entity) then
                         local x, y = EntityGetTransform(player_entity)
                         -- shoot particles of new material
@@ -1761,7 +1872,7 @@ networking = {
 
             if converted_any then
                 -- remove tripping effect
-                EntityRemoveIngestionStatusEffect( entity, "TRIP" );
+                EntityRemoveIngestionStatusEffect( player_entity, "TRIP" );
         
                 local x, y = GameGetCameraPos()
 
@@ -1772,7 +1883,7 @@ networking = {
                 -- particle fx
                 local eye = EntityLoad( "data/entities/particles/treble_eye.xml", x,y-10 )
                 if eye ~= 0 then
-                    EntityAddChild( entity, eye )
+                    EntityAddChild( player_entity, eye )
                 end
         
                 -- log
@@ -1786,7 +1897,7 @@ networking = {
         
                 -- add ui icon
                 local add_icon = true
-                local children = EntityGetAllChildren(entity)
+                local children = EntityGetAllChildren(player_entity)
                 if children ~= nil then
                     for i,it in ipairs(children) do
                         if ( EntityGetName(it) == "fungal_shift_ui_icon" ) then
@@ -1804,7 +1915,7 @@ networking = {
                         description = "$statusdesc_reality_mutation",
                         icon_sprite_file = "data/ui_gfx/status_indicators/fungal_shift.png"
                     })
-                    EntityAddChild( entity, icon_entity )
+                    EntityAddChild( player_entity, icon_entity )
                 end
             end
         end,
@@ -2112,6 +2223,21 @@ networking = {
                 data.hm_timer.clear()
                 data.hm_timer = nil
             end
+        end,
+        update_state = function(lobby, message, user, data)
+            local state = message
+
+            if(data.players[tostring(user)])then
+                data.players[tostring(user)].state = state
+
+                if(state == "arena" and data.state == "arena")then
+                    gameplay_handler.LoadClientPlayers(lobby, data)
+                end
+            end
+        end,
+        set_map = function(lobby, message, user, data)
+            steam.matchmaking.setLobbyData(lobby, "current_map", message)
+            print("Setting current map to "..tostring(message))
         end,
     },
     send = {
@@ -2593,6 +2719,7 @@ networking = {
 
             if (health ~= nil and max_health ~= nil) then
                 if ((data.client.max_hp ~= max_health or data.client.hp ~= health) or force) then
+                   -- print(GlobalsGetValue("last_damage_details", ""))
                     local damage_details = deserialize_damage_details(GlobalsGetValue("last_damage_details", ""))
 
                     if(not GameHasFlagRun("player_died"))then
@@ -2601,7 +2728,7 @@ networking = {
 
                     --print(json.stringify(damage_details))
 
-                    steamutils.send("health_update", { health, max_health, pack_damage_details(damage_details) }, steamutils.messageTypes.OtherPlayers, lobby,
+                    steamutils.send("health_update", { health, max_health, damage_details }, steamutils.messageTypes.OtherPlayers, lobby,
                         true, true)
                     data.client.max_hp = max_health
                     data.client.hp = health
@@ -2891,6 +3018,13 @@ networking = {
         end,
         hm_timer_clear = function(lobby)
             steamutils.send("hm_timer_clear", {}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+        end,
+        update_state = function(lobby, state)
+            steam.matchmaking.setLobbyMemberData(lobby, "state", state)
+            steamutils.send("update_state", state, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+        end,
+        set_map = function(lobby, map)
+            steamutils.send("set_map", map, steamutils.messageTypes.Host, lobby, true, true)
         end,
     },
 }

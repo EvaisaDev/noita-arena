@@ -352,7 +352,7 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 157,
+    version = 158,
     required_online_version = 351,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
@@ -450,6 +450,14 @@ ArenaMode = {
             type = "bool",
             default = true
         },  
+        {
+            id = "arena_gamemode",
+            name = "$arena_settings_gamemode_name",
+            description = "$arena_settings_gamemode_description",
+            type = "enum",
+            options = { { "ffa", "$arena_settings_gamemode_ffa" }, { "continuous", "$arena_settings_gamemode_continuous" }, },
+            default = "ffa"
+        },
         {
             id = "map_picker",
             name = "$arena_settings_map_picker_name",
@@ -1383,6 +1391,12 @@ ArenaMode = {
         end
         randomized_seed = random_seeds == "true"
 
+        local gamemode = steam.matchmaking.getLobbyData(lobby, "setting_arena_gamemode")
+        if (gamemode == nil) then
+            gamemode = "ffa"
+        end
+        GlobalsSetValue("arena_gamemode", tostring(gamemode))
+
         local map_picker = steam.matchmaking.getLobbyData(lobby, "setting_map_picker")
         if (map_picker == nil) then
             map_picker = "random"
@@ -1941,7 +1955,9 @@ ArenaMode = {
 
         if(data.last_state ~= data.state)then
             data.last_state = data.state
-            steam.matchmaking.setLobbyData(lobby, "arena_state", data.state)
+            if(GlobalsGetValue("arena_gamemode", "ffa") ~= "continuous")then
+                steam.matchmaking.setLobbyData(lobby, "arena_state", data.state)
+            end
         end
 
         skin_system.editor_open = GameHasFlagRun("wardrobe_open") and not GameHasFlagRun("game_paused") and gui_closed

@@ -210,7 +210,7 @@ function data:New()
             if(steamutils.IsSpectator(lobby, user))then
                 return
             end
-            self.players[tostring(user)] = playerinfo:New(user)
+            self.players[tostring(user)] = playerinfo:New(lobby, user)
             local ready = steamutils.GetLobbyData( tostring(user).."_ready")
             if(ready ~= nil and ready ~= "")then
                 self.players[tostring(user)].ready = ready == "true"

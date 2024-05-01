@@ -180,9 +180,16 @@ ArenaGameplay = {
             local rounds = ArenaGameplay.GetNumRounds(lobby)
             rounds = tonumber(rounds) or 0
             rounds = rounds + 1
-            networking.send.update_round(lobby, rounds)
+            if(GlobalsGetValue("arena_gamemode", "ffa") ~= "continuous")then
+                networking.send.update_round(lobby, rounds)
+            end
             GlobalsSetValue("holyMountainCount", tostring(rounds))
             steam.matchmaking.setLobbyData(lobby, "holyMountainCount", tostring(rounds))
+        elseif(GlobalsGetValue("arena_gamemode", "ffa") == "continuous")then
+            local rounds = ArenaGameplay.GetNumRounds(lobby)
+            rounds = tonumber(rounds) or 0
+            rounds = rounds + 1
+            GlobalsSetValue("holyMountainCount", tostring(rounds))
         end
     end,
     GetSpawnPoints = function()
@@ -1032,6 +1039,11 @@ ArenaGameplay = {
         return winstreak
     end,
     WinnerCheck = function(lobby, data)
+
+        if(GlobalsGetValue("arena_gamemode", "ffa") == "continuous")then
+            return
+        end
+
         print("winner check?")
         if(GameHasFlagRun("round_finished"))then
             return
@@ -1171,7 +1183,19 @@ ArenaGameplay = {
     end,
     KillCheck = function(lobby, data)
         if (GameHasFlagRun("player_died")) then
+           
             local killer = GlobalsGetValue("killer", "");
+
+            if(GlobalsGetValue("arena_gamemode", "ffa") == "continuous")then
+                ArenaGameplay.AddRound(lobby)
+                delay.new(5 * 60, function()
+                    ArenaGameplay.LoadLobby(lobby, data, false)
+                end, function(frames)
+                    if (frames % 60 == 0) then
+                        GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_returning_to_lobby_text"), tostring(math.floor(frames / 60))))
+                    end
+                end)
+            end
 
             if(killer == "")then
                 killer = nil
@@ -1203,6 +1227,7 @@ ArenaGameplay = {
                 elseif(catchup_mechanic == "first_death")then
                     GameAddFlagRun("first_death")
                 end
+                
                 
                 GamePrint(GameTextGetTranslatedOrNot("$arena_compensation"))
             end
@@ -1313,6 +1338,8 @@ ArenaGameplay = {
         end
     end,
     LoadLobby = function(lobby, data, show_message, first_entry)
+        networking.send.update_state(lobby, "lobby")
+        
         if(data.unstuck_ui)then
             GuiDestroy(data.unstuck_ui)
             data.unstuck_ui = nil
@@ -1661,6 +1688,9 @@ ArenaGameplay = {
         return math.floor(num * mult + 0.5) / mult
     end,
     LoadArena = function(lobby, data, show_message, map)
+        networking.send.update_state(lobby, "arena")
+        
+
         if(data.unstuck_ui)then
             GuiDestroy(data.unstuck_ui)
             data.unstuck_ui = nil
@@ -1706,8 +1736,9 @@ ArenaGameplay = {
 
         ArenaGameplay.ClearWorld()
 
-        playermenu:Close()
-
+        if(playermenu ~= nil)then
+            playermenu:Close()
+        end
         --[[
         local current_player = player.Get()
 
@@ -1761,6 +1792,7 @@ ArenaGameplay = {
 
         -- load map
         if(map)then
+            print("Loading map: "..tostring(map))
             for k, v in ipairs(available_map_list)do
                 if(v.id == map)then
                     arena = v
@@ -1816,6 +1848,15 @@ ArenaGameplay = {
             })
             return
         end
+
+        if(steamutils.IsOwner(lobby))then
+            print("Setting current map to "..tostring(arena.id))
+            steam.matchmaking.setLobbyData(lobby, "current_map", arena.id)
+        else
+            networking.send.set_map(lobby, arena.id)
+        end
+
+
         GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_map_loaded"), tostring(arena.name)))
 
         BiomeMapLoad_KeepPlayer(arena.biome_map, arena.pixel_scenes)
@@ -1836,6 +1877,30 @@ ArenaGameplay = {
                 --GamePrint("Loading arena")
 
                 GameAddFlagRun("can_save_player")
+                
+                if(GlobalsGetValue("arena_gamemode", "ffa") == "continuous")then
+                    GameAddFlagRun("player_is_unlocked") 
+                    GameRemoveFlagRun("no_shooting")    
+
+                    player.Unlock(data)
+
+                    local player_entity = player.Get()
+                    gameplay_handler.UpdateCosmetics(lobby, data, "arena_unlocked", player_entity, false)
+        
+                    for k, v in pairs(data.players) do
+                        if(v.entity ~= nil)then
+                            gameplay_handler.UpdateCosmetics(lobby, data, "arena_unlocked", v.entity, true)
+                        end
+                    end
+        
+                    GameAddFlagRun("countdown_completed")
+                    if(not data.spectator_mode)then
+                        player.Immortal(false)
+                    end
+                    ArenaGameplay.AllowFiring(data)
+                
+                    networking.send.request_item_update(lobby)
+                end
             end)
         end
     end,
@@ -1845,6 +1910,43 @@ ArenaGameplay = {
     end,
     SetReady = function(lobby, data, ready, silent)
         if (ready == nil) then
+            return
+        end
+
+        
+        if(ready and GlobalsGetValue("arena_gamemode", "ffa") == "continuous")then
+            -- we go directly into arena!!
+            local current_map = steamutils.GetLobbyData("current_map")
+
+            print("Current map: "..tostring(current_map))
+
+            if(not ArenaGameplay.IsArenaLoaded(lobby, data))then
+                current_map = nil
+                if(steamutils.IsOwner(lobby))then
+                    steam.matchmaking.deleteLobbyData(lobby, "current_map")
+                end
+            end
+
+            if(current_map == nil)then
+                local map_picker = GlobalsGetValue("map_picker", "random")
+
+                if(map_picker == "vote")then
+                    map_picker = "random"
+                end
+
+                if(steamutils.IsOwner(lobby))then
+                    local new_seed = GameGetFrameNum() + tonumber(GlobalsGetValue("world_seed", "0"));
+
+                    networking.send.update_world_seed(lobby, new_seed)
+                    SetWorldSeed(new_seed)
+                end
+
+                ArenaGameplay.LoadArena(lobby, data, true)
+            else
+
+                ArenaGameplay.LoadArena(lobby, data, true, current_map)
+            end
+            
             return
         end
 
@@ -1914,10 +2016,12 @@ ArenaGameplay = {
             if (ArenaGameplay.ReadyCheck(lobby, data)) then
 
                 if(ArenaLoadCountdown == nil)then
+
                     local new_seed = GameGetFrameNum() + tonumber(GlobalsGetValue("world_seed", "0"));
 
                     networking.send.update_world_seed(lobby, new_seed)
                     SetWorldSeed(new_seed)
+        
 
                     print("all players ready!")
                     GameAddFlagRun("lock_ready_state")
@@ -1985,6 +2089,7 @@ ArenaGameplay = {
                                 picked_maps[map_id] = true
                             end
                         end
+
 
                         networking.send.start_map_vote(lobby, map_ids)
                         gameplay_handler.StartMapVote(lobby, data, map_ids)
@@ -2601,7 +2706,7 @@ ArenaGameplay = {
                 data.spectator_lobby_loaded = true
                 SpectatorMode.SpawnSpectatedPlayer(lobby, data)
             end
-            if(GameGetFrameNum() % 15 == 0)then
+            if(GameGetFrameNum() % 15 == 0 and GlobalsGetValue("arena_gamemode", "ffa") ~= "continuous")then
                 ArenaGameplay.RunReadyCheck(lobby, data)
             end
 
@@ -2617,9 +2722,11 @@ ArenaGameplay = {
             --networking.send.animation_update(lobby, data, true)
             if(GameGetFrameNum() % 15 == 0)then
                 networking.send.player_data_update(lobby, data, true)
-                ArenaGameplay.RunReadyCheck(lobby, data)
-
-                networking.send.ready(lobby, data.client.ready or false, false)
+                if(GlobalsGetValue("arena_gamemode", "ffa") ~= "continuous")then
+                    ArenaGameplay.RunReadyCheck(lobby, data)
+                
+                    networking.send.ready(lobby, data.client.ready or false, false)
+                end
             end
             networking.send.player_stats_update(lobby, data, true)
             networking.send.spectate_data(lobby, data, nil, false)
@@ -2777,6 +2884,10 @@ ArenaGameplay = {
     end,
     CheckPlayer = function(lobby, user, data)
         if(not data.players[tostring(user)])then
+            return false
+        end
+
+        if(GlobalsGetValue("arena_gamemode", "ffa") == "continuous" and not data.spectator_mode and data.players[tostring(user)].state ~= "arena")then
             return false
         end
 
@@ -3030,10 +3141,21 @@ ArenaGameplay = {
         end
         
     end,
+    IsArenaLoaded = function(lobby, data)
+        local players = steamutils.getLobbyMembers(lobby)
+        for _, member in pairs(players) do
+            if (data.players[tostring(member.id)] and data.players[tostring(member.id)].state == "arena") then
+                return true
+            end
+        end
+
+        return false
+    end,
     LoadClientPlayers = function(lobby, data)
         local members = steamutils.getLobbyMembers(lobby)
 
         for _, member in pairs(members) do
+
             if (member.id ~= steam.user.getSteamID() and data.players[tostring(member.id)].entity) then
                 data.players[tostring(member.id)]:Clean(lobby)
             end
@@ -3042,8 +3164,12 @@ ArenaGameplay = {
                 print(json.stringify(data.players[tostring(member.id)]))
             end]]
             if (member.id ~= steam.user.getSteamID() and data.players[tostring(member.id)].entity == nil) then
-                --GamePrint("Loading player " .. tostring(member.id))
-                ArenaGameplay.SpawnClientPlayer(lobby, member.id, data)
+
+                if(not (GlobalsGetValue("arena_gamemode", "ffa") == "continuous" and not data.spectator_mode and data.players[tostring(member.id)].state ~= "arena"))then
+                    --GamePrint("Loading player " .. tostring(member.id))
+                    ArenaGameplay.SpawnClientPlayer(lobby, member.id, data)
+                end
+
             end
         end
     end,
@@ -3078,6 +3204,12 @@ ArenaGameplay = {
                 local rng = dofile_once("mods/evaisa.arena/lib/rng.lua")
                 local world_seed = tonumber(GlobalsGetValue("world_seed", "0"))
                 local spawn_seed = world_seed + (ArenaGameplay.GetNumRounds(lobby) * 62362)
+
+                if(GlobalsGetValue("arena_gamemode", "ffa") == "continuous")then
+                    spawn_seed = spawn_seed + GameGetFrameNum()
+                end
+
+
                 local spawn_rng = rng.new(spawn_seed)
                 local spawn_points = ArenaGameplay.GetSpawnPoints()
                 -- shuffle spawn points using spawn_rng.range(a, b)
@@ -3174,7 +3306,8 @@ ArenaGameplay = {
         if(not data.spectator_mode)then
             player_entity = player.Get()
         end
-        if (steamutils.IsOwner(lobby)) then
+        if (steamutils.IsOwner(lobby) and GlobalsGetValue("arena_gamemode", "ffa") ~= "continuous") then
+
             if ((data.spectator_mode or player_entity ~= nil) and (not data.players_loaded and ArenaGameplay.CheckAllPlayersLoaded(lobby, data))) then
                 data.players_loaded = true
                 arena_log:print("All players loaded")
@@ -3182,6 +3315,8 @@ ArenaGameplay = {
                 networking.send.start_countdown(lobby)
                 ArenaGameplay.FightCountdown(lobby, data)
             end
+        else
+            data.players_loaded = true
         end
         if (data.countdown ~= nil) then
             data.countdown:update()
@@ -3235,8 +3370,6 @@ ArenaGameplay = {
         for k, v in pairs(data.players) do
             local playerid = ArenaGameplay.FindUser(lobby, k)
 
-            print("Checking player " .. tostring(k) .. " with id " .. tostring(playerid))
-
             if (playerid == nil or steamutils.IsSpectator(lobby, playerid)) then
 
                 print("round should end!!")
@@ -3263,7 +3396,7 @@ ArenaGameplay = {
                 end
                 ]]
                 lobby_member_names[k] = nil
-                if (data.state == "arena") then
+                if (data.state == "arena" and GlobalsGetValue("arena_gamemode", "ffa") ~= "continuous") then
                     if(steamutils.IsOwner(lobby))then
                         ArenaGameplay.WinnerCheck(lobby, data)
                     end

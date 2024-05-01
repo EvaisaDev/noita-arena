@@ -37,15 +37,19 @@ function damage_about_to_be_received( damage, x, y, entity_thats_responsible, cr
 end
 
 local function serialize_damage_details(tbl)
-    return string.format("%d|%d|%f|%f|%f|%f",
+    --[[
         tbl.ragdoll_fx,
         tbl.damage_types,
         tbl.knockback_force,
         tbl.impulse[1],
         tbl.impulse[2],
         tbl.world_pos[1],
-        tbl.world_pos[2]
-    )
+        tbl.world_pos[2],
+        tbl.smash_explosion and 1 or 0,
+        tbl.explosion_x or 0,
+        tbl.explosion_y or 0
+    ]]
+    return string.format("%d,%d,%f,%f,%f,%f,%f,%f,%d,%f,%f", tbl.ragdoll_fx, tbl.damage_types, tbl.knockback_force, tbl.blood_multiplier, tbl.impulse[1], tbl.impulse[2], tbl.world_pos[1], tbl.world_pos[2], tbl.smash_explosion and 1 or 0, tbl.explosion_x or 0, tbl.explosion_y or 0)
 end
 
 

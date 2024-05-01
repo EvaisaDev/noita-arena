@@ -2,7 +2,7 @@ local steamutils = dofile_once("mods/evaisa.mp/lib/steamutils.lua")
 
 local playerinfo = {}
 
-function playerinfo:New(user)
+function playerinfo:New(lobby, user)
     local obj = {
         entity = nil,
         held_item = nil,
@@ -36,6 +36,12 @@ function playerinfo:New(user)
             rightClick = false,
         }
     }
+
+    local state = steam.matchmaking.getLobbyMemberData(lobby, user, "state")
+    if(state)then
+        obj.state = state
+    end
+
     obj.Death = function(self, damage_details)
         if(self.entity ~= nil and EntityGetIsAlive(self.entity))then
 
@@ -52,6 +58,21 @@ function playerinfo:New(user)
                 ComponentSetValue2(damage_model_comp, "ui_report_damage", false)
             end
 
+            --[[
+                typedef struct H {
+                    int ragdoll_fx;
+                    int damage_types;
+                    float knockback_force;
+                    float impulse_x;
+                    float impulse_y;
+                    float world_pos_x;
+                    float world_pos_y;
+                    float explosion_x;
+                    float explosion_y;
+                    bool smash_explosion;
+                } DamageDetails;
+            ]]
+
             if(damage_details.ragdoll_fx ~= nil)then
                 local damage_types = mp_helpers.GetDamageTypes(damage_details.damage_types)
                 local ragdoll_fx = mp_helpers.GetRagdollFX(damage_details.ragdoll_fx)
@@ -65,7 +86,7 @@ function playerinfo:New(user)
                         damage_type = "DAMAGE_PROJECTILE"
                     end
                     EntityInflictDamage(self.entity, damage_per_type, damage_type, "damage_fake",
-                    ragdoll_fx, damage_details.impulse[1], damage_details.impulse[2], GameGetWorldStateEntity(), damage_details.world_pos[1], damage_details.world_pos[2], damage_details.knockback_force)
+                    ragdoll_fx, damage_details.impulse_x, damage_details.impulse_y, GameGetWorldStateEntity(), damage_details.world_pos_x, damage_details.world_pos_y, damage_details.knockback_force)
                 end
             else
                 EntityInflictDamage(self.entity, 69420, "DAMAGE_MATERIAL", "", "NORMAL", 0, 0, GameGetWorldStateEntity())
