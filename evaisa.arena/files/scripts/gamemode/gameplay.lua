@@ -1728,6 +1728,7 @@ ArenaGameplay = {
         GameRemoveFlagRun("player_is_unlocked")
         GameRemoveFlagRun("wardrobe_open")
         GameRemoveFlagRun("chat_bind_disabled")
+        GameRemoveFlagRun("pick_upgrade")
 
         show_message = show_message or false
 
@@ -2446,6 +2447,7 @@ ArenaGameplay = {
             data.ready_counter:update(lobby, data)
         end
 
+        --[[
         if (not IsPaused()) then
             if(data.unstuck_ui == nil)then
                 data.unstuck_ui = GuiCreate()
@@ -2477,14 +2479,15 @@ ArenaGameplay = {
                 GameAddFlagRun("DeserializedHolyMountain")
 
                 ArenaGameplay.SavePlayerData(lobby, data)
+                delay.new(15, function()
+                    gameplay_handler.ResetEverything(lobby)
+                    delay.new(15, function()
+                        if(not data.spectator_mode)then
+                            gameplay_handler.GetGameData(lobby, data)
+                        end
 
-                gameplay_handler.ResetEverything(lobby)
-                delay.new(3, function()
-                    if(not data.spectator_mode)then
-                        gameplay_handler.GetGameData(lobby, data)
-                    end
-
-                    gameplay_handler.LoadLobby(lobby, data, true, true)
+                        gameplay_handler.LoadLobby(lobby, data, true, true)
+                    end)
                 end)
             end
             local _, _, hovered, draw_x, draw_y = GuiGetPreviousWidgetInfo(data.unstuck_ui)
@@ -2533,7 +2536,7 @@ ArenaGameplay = {
                 GuiZSetForNextWidget(data.unstuck_ui, -11)
                 GuiEndAutoBoxNinePiece(data.unstuck_ui)
             end
-        end
+        end]]
 
         if(GameHasFlagRun("lock_ready_state") and data.low_framerate_popup ~= nil )then
             data.low_framerate_popup:destroy()
@@ -2562,6 +2565,16 @@ ArenaGameplay = {
                 end
             end
 
+            delay.new(15, function()
+                np.ComponentUpdatesSetEnabled("ProjectileSystem", true)
+                np.ComponentUpdatesSetEnabled("CellEaterSystem", true)
+                np.ComponentUpdatesSetEnabled("LooseGroundSystem", true)
+                np.ComponentUpdatesSetEnabled("BlackHoleSystem", true)
+                np.ComponentUpdatesSetEnabled("MagicConvertMaterialSystem", true)
+                np.ComponentUpdatesSetEnabled("PhysicsBodySystem", true)
+            end)
+
+            --[[
             data.low_framerate_popup = popup.create("low_framerate", GameTextGetTranslatedOrNot("$arena_lag_detected_name"),{
                 {
                     text = GameTextGetTranslatedOrNot("$arena_lag_detected_description"),
@@ -2593,17 +2606,19 @@ ArenaGameplay = {
                         ArenaGameplay.SavePlayerData(lobby, data)
 
                         GameAddFlagRun("DeserializedHolyMountain")
-                        gameplay_handler.ResetEverything(lobby)
-                        delay.new(3, function()
-                            if(not data.spectator_mode)then
-                                gameplay_handler.GetGameData(lobby, data)
-                            end
-
-                            gameplay_handler.LoadLobby(lobby, data, true, true)
+                        delay.new(15, function()
+                            gameplay_handler.ResetEverything(lobby)
+                            delay.new(15, function()
+                                if(not data.spectator_mode)then
+                                    gameplay_handler.GetGameData(lobby, data)
+                                end
+        
+                                gameplay_handler.LoadLobby(lobby, data, true, true)
+                            end)
                         end)
                     end
                 }
-            }, -6000)
+            }, -6000)]]
         elseif(not (ModSettingGet("evaisa.arena.lag_detection") and #(EntityGetWithTag("workshop") or {}) > 0))then
             data.frame_times = {}
             data.last_frame_time = nil
@@ -3905,6 +3920,9 @@ ArenaGameplay = {
 
             GlobalsSetValue("wand_fire_count", "0")
 
+            if(data.state == "lobby" and current_player ~= nil and GameGetFrameNum() % 120 == 0 and not data.preparing)then
+                GameAddFlagRun("should_save_player")
+            end
 
             if ((not GameHasFlagRun("player_unloaded")) and current_player == nil and not data.preparing) then
                 ArenaGameplay.LoadPlayer(lobby, data)
