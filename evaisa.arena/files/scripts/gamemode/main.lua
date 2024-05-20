@@ -1,5 +1,8 @@
 arena_log = logger.init("noita-arena.log")
 perk_log = logger.init("noita-arena-perk.log")
+perk_info_saved = logger.init("perk_info_saved.lua")
+perk_info_loaded = logger.init("perk_info_loaded.lua")
+
 
 if(not debugging)then
 	arena_log.enabled = false

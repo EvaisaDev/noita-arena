@@ -1,5 +1,6 @@
 local entity = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/entity.lua")
 local EZWand = dofile("mods/evaisa.arena/files/scripts/utilities/EZWand.lua")
+local inspect = dofile("mods/evaisa.arena/lib/inspect.lua")
 dofile_once("data/scripts/perks/perk_list.lua")
 
 local player_helper = {}
@@ -685,6 +686,10 @@ player_helper.GetPerks = function()
         end
     end
 
+    perk_info_saved:print("\n[Saved Perk Content]")
+    perk_info_saved:print(inspect(perk_info))
+    
+
     return perk_info
 end
 
@@ -818,6 +823,10 @@ player_helper.GivePerk = function(perk_id, amount, skip_count)
 end
 
 player_helper.SetPerks = function(perks, skip_count)
+
+    perk_info_loaded:print("\n[Loaded Perk Content]")
+    perk_info_loaded:print(inspect(perks))
+
     local player = player_helper.Get()
     if (player == nil) then
         return
