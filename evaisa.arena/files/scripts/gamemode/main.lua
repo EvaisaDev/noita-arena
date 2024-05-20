@@ -1413,7 +1413,7 @@ ArenaMode = {
         randomized_seed = random_seeds == "true"
         --[[if(randomized_seed and randomized_seed ~= old_randomized_seed)then
             SetNewSeed(lobby)
-        end]
+        end]]
 
         local gamemode = steam.matchmaking.getLobbyData(lobby, "setting_arena_gamemode")
         if (gamemode == nil) then
