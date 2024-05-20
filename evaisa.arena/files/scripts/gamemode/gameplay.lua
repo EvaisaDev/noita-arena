@@ -485,8 +485,8 @@ ArenaGameplay = {
             GlobalsSetValue(flag_name .. "_PICKUP_COUNT", "0")
         end
 
-        if (player ~= nil) then
-            EntityKill(player)
+        if (player_entity ~= nil) then
+            EntityKill(player_entity)
         end
 
         GameRemoveFlagRun("Immortal")
