@@ -47,6 +47,7 @@ local playerinfo_menu = dofile("mods/evaisa.arena/files/scripts/utilities/player
 dofile_once("data/scripts/perks/perk_list.lua")
 dofile_once("mods/evaisa.arena/content/data.lua")
 
+local applied_seed = 0
 
 perks_sorted = {}
 perk_enum = {}
@@ -137,6 +138,22 @@ end
 dofile("data/scripts/perks/perk_list.lua")
 dofile("data/scripts/gun/gun_actions.lua")
 dofile("mods/evaisa.arena/files/scripts/gamemode/misc/upgrades.lua")
+
+local function SetNewSeed(lobby)
+    local seed = 0
+    print("Randomized seed? " .. tostring(randomized_seed))
+    print("Is owner? " .. tostring(steamutils.IsOwner(lobby)))
+    if(randomized_seed and steamutils.IsOwner(lobby))then
+        local a, b, c, d, e, f = GameGetDateAndTimeLocal()
+        math.randomseed(GameGetFrameNum() + a + b + c + d + e + f)
+        seed = math.random(1, 4294967294)
+        steam.matchmaking.setLobbyData(lobby, "seed", tostring(seed))
+    else
+        seed = tonumber(steam.matchmaking.getLobbyData(lobby, "seed") or 1)
+    end
+    print("Setting seed to " .. tostring(seed))
+    return seed
+end
 
 local function TryUpdateData(lobby)
 
@@ -1392,7 +1409,11 @@ ArenaMode = {
         if (random_seeds == nil) then
             random_seeds = "true"
         end
+        local old_randomized_seed = randomized_seed
         randomized_seed = random_seeds == "true"
+        --[[if(randomized_seed and randomized_seed ~= old_randomized_seed)then
+            SetNewSeed(lobby)
+        end]
 
         local gamemode = steam.matchmaking.getLobbyData(lobby, "setting_arena_gamemode")
         if (gamemode == nil) then
@@ -1636,6 +1657,15 @@ ArenaMode = {
 
         arena_log:print("Lobby data refreshed")
     end,
+    start_data = function(lobby)
+        applied_seed = SetNewSeed(lobby)
+        lobby_seed = applied_seed
+        return applied_seed
+    end,
+    apply_start_data = function(lobby, start_data)
+        applied_seed = start_data
+        lobby_seed = applied_seed
+    end,
     enter = function(lobby)
 
         was_content_mismatched = false
@@ -1724,6 +1754,8 @@ ArenaMode = {
 
         ArenaMode.refresh(lobby)
 
+        --SetNewSeed(lobby)
+
         --[[
         local game_in_progress = steam.matchmaking.getLobbyData(lobby, "in_progress") == "true"
         if(game_in_progress)then
@@ -1752,7 +1784,6 @@ ArenaMode = {
         BiomeMapLoad_KeepPlayer("mods/evaisa.arena/files/scripts/world/map_arena.lua")
     end,
     start = function(lobby, was_in_progress)
-
         skin_system.load(lobby)
 
         for i, v in ipairs(EntityGetWithTag("player_unit"))do
@@ -1811,25 +1842,9 @@ ArenaMode = {
 
 
         GameAddFlagRun("player_unloaded")
-        local seed = 0
 
-        if(randomized_seed and steamutils.IsOwner(lobby))then
-            local a, b, c, d, e, f = GameGetDateAndTimeLocal()
-            SetRandomSeed(GameGetFrameNum() + a + b + c + d + e + f+ 235123, GameGetFrameNum() + a + b + c + d + e + f + 325325)
-            --steam.matchmaking.setLobbyData(lobby, "seed", tostring(Random(1, 1000000000)))
-            seed = Random(1, 1000000000)
-            steam.matchmaking.setLobbyData(lobby, "seed", tostring(seed))
-        else
-            seed = tonumber(steam.matchmaking.getLobbyData(lobby, "seed") or 1)
-        end
-        
-        
+        SetWorldSeed(applied_seed)
 
-        SetWorldSeed(seed)
-
-        print(tostring(seed))
-
-        GlobalsSetValue("world_seed", tostring(seed))
 
         local player_entity = player.Get()
 
