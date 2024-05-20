@@ -686,7 +686,6 @@ player_helper.GetPerks = function()
         end
     end
 
-    perk_info_saved:print("\n[Saved Perk Content]")
     perk_info_saved:print(inspect(perk_info))
     
 
@@ -824,7 +823,6 @@ end
 
 player_helper.SetPerks = function(perks, skip_count)
 
-    perk_info_loaded:print("\n[Loaded Perk Content]")
     perk_info_loaded:print(inspect(perks))
 
     local player = player_helper.Get()
