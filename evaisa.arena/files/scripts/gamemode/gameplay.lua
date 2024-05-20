@@ -1101,9 +1101,13 @@ ArenaGameplay = {
 
             print("incrementing win count for "..tostring(winner).." to "..tostring(current_wins + 1))
             steam.matchmaking.setLobbyData(lobby, winner_key, tostring(current_wins + 1))
-            data.players[tostring(winner)].wins = current_wins + 1
             steam.matchmaking.setLobbyData(lobby, winstreak_key, tostring(current_winstreak + 1))
-            data.players[tostring(winner)].winstreak = current_winstreak + 1
+
+            if(winner ~= steam.user.getSteamID())then
+                data.players[tostring(winner)].winstreak = current_winstreak + 1
+                data.players[tostring(winner)].wins = current_wins + 1
+            end
+
 
             if(not data.spectator_mode and winner == steam.user.getSteamID())then
                 GameAddFlagRun("arena_winner")
