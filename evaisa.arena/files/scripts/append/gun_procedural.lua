@@ -3,21 +3,20 @@ dofile("mods/evaisa.arena/files/scripts/misc/random_action.lua")
 local rng = dofile_once("mods/evaisa.arena/lib/rng.lua")
 dofile("mods/evaisa.arena/files/scripts/gamemode/misc/seed_gen.lua")
 
-local a, b, c, d, e, f = GameGetDateAndTimeLocal()
+--local random_seed = get_new_seed(0, 0, GameHasFlagRun("shop_sync"))
 
-local random_seed = get_new_seed(0, 0, GameHasFlagRun("shop_sync"))
-
-
-local random = rng.new(random_seed)
 local index = 0
 
 GetRandomActionWithType = function( x, y, level, type, i)
+	local seed_x, seed_y = get_new_seed( x + level, y + i, GameHasFlagRun("shop_sync") )
+	SetRandomSeed( seed_x, seed_y )
+
 	local action = RandomActionWithType( level, type, x * 324 + i, y * 436 - (i * 45) ) or "LIGHT_BULLET"
 	return action
 end
 
 
-Random = function(a, b)
+--[[Random = function(a, b)
 	if(a == nil and b == nil)then
 		return random.next_float()
 	elseif(b == nil)then
@@ -25,19 +24,21 @@ Random = function(a, b)
 	else
 		return random.range(a, b)
 	end
-end
+end]]
 
-SetRandomSeed = function(x, y)
+--[[SetRandomSeed = function(x, y)
 	local seed = get_new_seed(x, y, GameHasFlagRun("shop_sync"))
 	if(seed ~= random_seed)then
-		random = rng.new(seed)
+		--random = rng.new(seed)
 		random_seed = seed
 	end
-end
+end]]
 
 local old_wand_add_random_cards = wand_add_random_cards
 function wand_add_random_cards( gun, entity_id, level, cost )
 
+
+	
 	if(not GameHasFlagRun("shop_no_tiers"))then
 		old_wand_add_random_cards( gun, entity_id, level)
 		return
@@ -45,6 +46,10 @@ function wand_add_random_cards( gun, entity_id, level, cost )
 
 	local is_rare = gun["is_rare"]
 	local x, y = EntityGetTransform( entity_id )
+
+
+	local seed_x, seed_y = get_new_seed( x + cost + level, y, GameHasFlagRun("shop_sync") )
+	SetRandomSeed( seed_x, seed_y )
 
 	-- stuff in the gun
 	local good_cards = 5

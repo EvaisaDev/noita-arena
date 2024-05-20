@@ -1,13 +1,22 @@
 get_new_seed = function(x, y, synced)
     local rounds = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0
-    local a, b, c, d, e, f = GameGetDateAndTimeLocal()
-    local seed = ((GameGetFrameNum() + GameGetRealWorldTimeSinceStarted() + a * 34 + b / 14 + c + d * 3 + e + f * 53) / 2) * (rounds + 1)
+    local seed = GameGetFrameNum() * ((rounds + 1) * 16)
 
     if(synced)then
-        seed = ((tonumber(GlobalsGetValue("world_seed", "0")) or 1) * 214) * rounds
+        seed = (rounds + 1) * 16
     end
-	if(x and y)then
-		seed = seed + (x * 324) + (y * 436)
-	end
-    return seed
+
+    local seed_x = seed
+    local seed_y = seed
+
+    if(x ~= nil)then
+        seed_x = seed_x + (x * 12)
+    end
+
+    if(y ~= nil)then
+        seed_y = seed_y + (y * 12)
+    end
+
+
+    return seed_x, seed_y
 end

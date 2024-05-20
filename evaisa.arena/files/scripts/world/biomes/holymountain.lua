@@ -75,16 +75,18 @@ function spawn_all_shopitems( x, y )
 		return
 	end
 
-	local rng = dofile_once("mods/evaisa.arena/lib/rng.lua")
+	--local rng = dofile_once("mods/evaisa.arena/lib/rng.lua")
 
-	a, b, c, d, e, f = GameGetDateAndTimeLocal()
+	local a, b, c, d, e, f = GameGetDateAndTimeLocal()
 	
-	local random_seed = get_new_seed(x, y, GameHasFlagRun("shop_sync"))
+	local random_seed_x, random_seed_y = get_new_seed(x, y, GameHasFlagRun("shop_sync"))
+
+	SetRandomSeed( random_seed_x, random_seed_y )
 
 	local rounds = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0
 
 
-	local random = rng.new(random_seed)
+	--local random = rng.new(random_seed)
 
 	--[[local spawn_shop, spawn_perks = temple_random( x, y )
 	if( spawn_shop == "0" ) then
@@ -126,7 +128,7 @@ function spawn_all_shopitems( x, y )
 	local count = tonumber( GlobalsGetValue( "TEMPLE_SHOP_ITEM_COUNT", "5" ) )
 	local width = 132
 	local item_width = width / count
-	local sale_item_i = random.range( 1, count, true )
+	local sale_item_i = Random( 1, count )
 
 	--print("Sale item: "..tostring(sale_item_i))
 
@@ -208,7 +210,7 @@ function spawn_all_shopitems( x, y )
 	-- "Random" shop type is basically vanilla and we default to this if no other shop type is match is found.
 	else
 		local shop_random_ratio = tonumber(GlobalsGetValue("shop_random_ratio", "50"))
-		if( random.range( 0, 100 ) >= shop_random_ratio ) then
+		if( Random( 0, 100 ) >= shop_random_ratio ) then
 			for i=1,count do
 				if( i == sale_item_i ) then
 					generate_shop_item( x + (i-1)*item_width, y, true, round_scaled, false )
@@ -241,12 +243,11 @@ function spawn_all_perks( x, y )
 		return
 	end
 	if(GameHasFlagRun("first_death"))then
-		local rounds = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0
-		local seed_x, seed_y = (x * 3256) + rounds * 765 + (GameGetFrameNum() / 30), (y * 5326) + rounds * 123 + (GameGetFrameNum() / 20)
-		if(GameHasFlagRun("shop_sync"))then
-			seed_x, seed_y = (x * 3256) + rounds * 765, (y * 5326) + rounds * 123
-		end
-		SetRandomSeed( seed_x, seed_y )
+		local a, b, c, d, e, f = GameGetDateAndTimeLocal()
+	
+		local random_seed_x, random_seed_y = get_new_seed(x, y, GameHasFlagRun("perk_sync"))
+	
+		SetRandomSeed( random_seed_x, random_seed_y )
 		perk_spawn_many( x, y )
 	end
 
@@ -270,18 +271,13 @@ function spawn_item_shop_item( x, y )
 	if(GameHasFlagRun("DeserializedHolyMountain"))then
 		return
 	end
-	local rng = dofile_once("mods/evaisa.arena/lib/rng.lua")
-
-	a, b, c, d, e, f = GameGetDateAndTimeLocal()
-	
-	local random_seed = get_new_seed(x, y, GameHasFlagRun("shop_sync"))
 
 	local rounds = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0
-	if(GameHasFlagRun("shop_sync"))then
-		random_seed = ((tonumber(GlobalsGetValue("world_seed", "0")) or 1) * 214) * rounds
-	end
 
-	local random = rng.new(random_seed)
+		
+	local random_seed_x, random_seed_y = get_new_seed(x, y, GameHasFlagRun("shop_sync"))
+	
+	SetRandomSeed( random_seed_x, random_seed_y )
 
 	--[[local spawn_shop, spawn_perks = temple_random( x, y )
 	if( spawn_shop == "0" ) then
@@ -306,12 +302,7 @@ function spawn_item_shop_item( x, y )
 	if(round_scaled < 0)then
 		round_scaled = 0
 	end
-	
-	local seed_x, seed_y = (x * 3256) + rounds * 765 + (GameGetFrameNum() / 30), (y * 5326) + rounds * 123 + (GameGetFrameNum() / 20)
-	if(GameHasFlagRun("shop_sync"))then
-        seed_x, seed_y = (x * 3256) + rounds * 765, (y * 5326) + rounds * 123
-	end
-	SetRandomSeed( seed_x, seed_y )
+
 
 	generate_shop_potion(x, y, round_scaled)
 

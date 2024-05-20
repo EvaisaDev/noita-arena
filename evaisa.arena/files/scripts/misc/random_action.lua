@@ -5,6 +5,7 @@ local rng = dofile_once("mods/evaisa.arena/lib/rng.lua")
 
 dofile("mods/evaisa.arena/files/scripts/gamemode/misc/seed_gen.lua")
 
+--[[
 local a, b, c, d, e, f = GameGetDateAndTimeLocal()
 
 local worldState = GameGetWorldStateEntity()
@@ -17,8 +18,9 @@ if(GameHasFlagRun("shop_sync"))then
     random_seed = ((tonumber(GlobalsGetValue("world_seed", "0")) or 1) * 214) * rounds
 end
 
-local random = rng.new(random_seed)
 
+local random = rng.new(random_seed)
+]]
 
 local generate_spell_list = function()
     local spell_list = {}
@@ -77,12 +79,15 @@ end
 
 function RandomAction(max_level, x, y)
     --if(GameHasFlagRun("shop_sync"))then
-        local seed = get_new_seed(x, y, GameHasFlagRun("shop_sync"))
+        --[[local seed = get_new_seed(x, y, GameHasFlagRun("shop_sync"))
         if(seed ~= random_seed)then
             random = rng.new(seed)
             random_seed = seed
             print("new seed: "..tostring(seed))
-        end
+        end]]
+
+        local seed_x, seed_y = get_new_seed( x, y, GameHasFlagRun("shop_sync") )
+        SetRandomSeed( seed_x, seed_y )
     --end
 
     local spell_list = generate_spell_list()
@@ -102,7 +107,8 @@ function RandomAction(max_level, x, y)
         total_probability = total_probability + action.probability
     end
 
-    local random_value = random.random() * total_probability
+   -- local random_value = random.random() * total_probability
+   local random_value = Random() * total_probability
 
     for _, action in ipairs(available_actions) do
         random_value = random_value - action.probability
@@ -117,12 +123,15 @@ end
 -- GetRandomActionWithType function to find a random action with the specified action_type and max_level
 function RandomActionWithType(max_level, action_type, x, y)
     --if(GameHasFlagRun("shop_sync"))then
-    local seed = get_new_seed(x, y, GameHasFlagRun("shop_sync"))
+    --[[local seed = get_new_seed(x, y, GameHasFlagRun("shop_sync"))
     if(seed ~= random_seed)then
         random = rng.new(seed)
         random_seed = seed
-    end
+    end]]
     --end
+
+    local seed_x, seed_y = get_new_seed( x, y, GameHasFlagRun("shop_sync") )
+    SetRandomSeed( seed_x, seed_y )
 
     local spell_list = generate_spell_list()
 
@@ -146,7 +155,8 @@ function RandomActionWithType(max_level, action_type, x, y)
         total_probability = total_probability + action.probability
     end
 
-    local random_value = random.random() * total_probability
+    --local random_value = random.random() * total_probability
+    local random_value = Random() * total_probability
 
     for _, action in ipairs(available_actions) do
         random_value = random_value - action.probability

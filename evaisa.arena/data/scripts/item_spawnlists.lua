@@ -174,16 +174,12 @@ spawnlists =
 	},
 }
 
+dofile("mods/evaisa.arena/files/scripts/gamemode/misc/seed_gen.lua")
+
 function spawn_from_list( listname, x, y, sync )
 	local spawnlist
 
-	local rounds = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0
-	local seed_x, seed_y = (x * 3256) + rounds * 765 + (GameGetFrameNum() / 30), (y * 5326) + rounds * 123 + (GameGetFrameNum() / 20)
-	if(GameHasFlagRun("shop_sync") or sync)then
-        seed_x, seed_y = (x * 3256) + rounds * 765, (y * 5326) + rounds * 123
-	end
-
-	--print("Item spawn seed: " .. tostring(seed_x) .. ", " .. tostring(seed_y))
+	local seed_x, seed_y = get_new_seed( x, y, GameHasFlagRun("shop_sync") )
 	SetRandomSeed( seed_x, seed_y )
 
 	if ( type( listname ) == "string" ) then
