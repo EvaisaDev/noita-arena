@@ -1754,7 +1754,8 @@ ArenaMode = {
 
         ArenaMode.refresh(lobby)
 
-        --SetNewSeed(lobby)
+        applied_seed = SetNewSeed(lobby)
+        lobby_seed = applied_seed
 
         --[[
         local game_in_progress = steam.matchmaking.getLobbyData(lobby, "in_progress") == "true"
@@ -2133,7 +2134,7 @@ ArenaMode = {
     end,
     ]]
     received = function(lobby, event, message, user)
-        if (data == nil) then
+        if (user == steam.user.getSteamID() or data == nil) then
             return
         end
 
