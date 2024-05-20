@@ -1972,11 +1972,13 @@ ArenaMode = {
             return
         end
 
-        if(data.last_state ~= data.state)then
+        if(steamutils.IsOwner(lobby) and data.last_state ~= data.state)then
             data.last_state = data.state
             if(GlobalsGetValue("arena_gamemode", "ffa") ~= "continuous")then
                 steam.matchmaking.setLobbyData(lobby, "arena_state", data.state)
             end
+        elseif(not steamutils.IsOwner(lobby))then
+            data.last_state = nil
         end
 
         skin_system.editor_open = GameHasFlagRun("wardrobe_open") and not GameHasFlagRun("game_paused") and gui_closed
