@@ -284,8 +284,8 @@ networking = {
 
             if(GameHasFlagRun("lock_ready_state"))then
                 data.players[tostring(user)].ready = true
-                if (steamutils.IsOwner(lobby)) then
-                    steam.matchmaking.setLobbyData(lobby, tostring(user) .. "_ready", "true")
+                if (steam_utils.IsOwner()) then
+                    steam_utils.TrySetLobbyData(lobby, tostring(user) .. "_ready", "true")
                 end
                 return
             end
@@ -297,9 +297,9 @@ networking = {
                     GamePrint(tostring(username) .. " is ready.")
                 end
 
-                if (steamutils.IsOwner(lobby)) then
+                if (steam_utils.IsOwner()) then
                     arena_log:print(tostring(user) .. "_ready: " .. tostring(message[1]))
-                    steam.matchmaking.setLobbyData(lobby, tostring(user) .. "_ready", "true")
+                    steam_utils.TrySetLobbyData(lobby, tostring(user) .. "_ready", "true")
                 end
             else
                 data.players[tostring(user)].ready = false
@@ -308,8 +308,8 @@ networking = {
                     GamePrint(tostring(username) .. " is no longer ready.")
                 end
 
-                if (steamutils.IsOwner(lobby)) then
-                    steam.matchmaking.setLobbyData(lobby, tostring(user) .. "_ready", "false")
+                if (steam_utils.IsOwner()) then
+                    steam_utils.TrySetLobbyData(lobby, tostring(user) .. "_ready", "false")
                 end
             end
         end,
@@ -317,13 +317,13 @@ networking = {
             networking.send.ready(lobby, data.client.ready, true)
         end,
         --[[allow_round_end = function(lobby, message, user, data)
-            if(steamutils.IsOwner(lobby, user))then
+            if(steam_utils.IsOwner( user))then
                 data.allow_round_end = true
                 print("Allowing round to end.")
             end
         end,]]
         round_end = function(lobby, message, user, data)
-            if(steamutils.IsOwner(lobby, user))then
+            if(steam_utils.IsOwner( user))then
                 local winner_string = message[1]
                 local win_condition_user = message[2]
                 local winner = ArenaGameplay.FindUser(lobby, winner_string)
@@ -342,7 +342,7 @@ networking = {
                     end)
                 else
 
-                    if(not data.spectator_mode and winner == steam.user.getSteamID())then
+                    if(not data.spectator_mode and winner == steam_utils.getSteamID())then
                         GameAddFlagRun("arena_winner")
                         local catchup_mechanic = GlobalsGetValue("perk_catchup", "losers")
                         if(catchup_mechanic == "winner")then
@@ -396,12 +396,12 @@ networking = {
             GamePrint(username .. " has loaded the arena.")
             arena_log:print(username .. " has loaded the arena.")
 
-            if (steamutils.IsOwner(lobby)) then
-                steam.matchmaking.setLobbyData(lobby, tostring(user) .. "_loaded", "true")
+            if (steam_utils.IsOwner()) then
+                steam_utils.TrySetLobbyData(lobby, tostring(user) .. "_loaded", "true")
             end
         end,
         enter_arena = function(lobby, message, user, data)
-            if (not steamutils.IsOwner(lobby, user))then
+            if (not steam_utils.IsOwner( user))then
                 return
             end
             if(data.ready_counter)then
@@ -412,7 +412,7 @@ networking = {
             gameplay_handler.LoadArena(lobby, data, true, arena)
         end,
         start_countdown = function(lobby, message, user, data)
-            if (not steamutils.IsOwner(lobby, user))then
+            if (not steam_utils.IsOwner( user))then
                 return
             end
 
@@ -425,7 +425,7 @@ networking = {
     
         end,
         sync_countdown = function(lobby, message, user, data)
-            if (not steamutils.IsOwner(lobby, user))then
+            if (not steam_utils.IsOwner( user))then
                 return
             end
             if(data.state == "arena" and data.countdown ~= nil)then
@@ -434,7 +434,7 @@ networking = {
             end
         end,
         check_can_unlock = function(lobby, message, user, data)
-            if (not steamutils.IsOwner(lobby, user))then
+            if (not steam_utils.IsOwner( user))then
                 return
             end
             
@@ -457,7 +457,7 @@ networking = {
             end
         end,
         unlock = function(lobby, message, user, data)
-            if (not steamutils.IsOwner(lobby, user))then
+            if (not steam_utils.IsOwner( user))then
                 return
             end
             RunWhenPlayerExists(function()
@@ -1491,7 +1491,7 @@ networking = {
                     end
                 end
 
-                if(steamutils.IsOwner(lobby))then
+                if(steam_utils.IsOwner())then
                     gameplay_handler.WinnerCheck(lobby, data)
                 end
                 
@@ -1504,7 +1504,7 @@ networking = {
                 return
             end
 
-            if (not steamutils.IsOwner(lobby, user))then
+            if (not steam_utils.IsOwner( user))then
                 return
             end
 
@@ -1711,7 +1711,7 @@ networking = {
         end,
         lock_ready_state = function(lobby, message, user, data)
             -- check if user is lobby owner
-            if (not steamutils.IsOwner(lobby, user)) then
+            if (not steam_utils.IsOwner( user)) then
                 return
             end
             
@@ -1920,7 +1920,7 @@ networking = {
             end
         end,
         start_map_vote = function(lobby, message, user, data)
-            if (not steamutils.IsOwner(lobby, user))then
+            if (not steam_utils.IsOwner( user))then
                 return
             end
             GamePrint("starting map vote")
@@ -1959,7 +1959,7 @@ networking = {
 
         end,
         map_vote_timer_update = function(lobby, message, user, data)
-            if (not steamutils.IsOwner(lobby, user))then
+            if (not steam_utils.IsOwner( user))then
                 return
             end
             local frames = message
@@ -1968,7 +1968,7 @@ networking = {
             end
         end,
         map_vote_finish = function(lobby, message, user, data)
-            if (not steamutils.IsOwner(lobby, user))then
+            if (not steam_utils.IsOwner( user))then
                 return
             end
             if(data.vote_loop ~= nil)then
@@ -1978,19 +1978,19 @@ networking = {
             end
         end,
         load_lobby = function(lobby, message, user, data)
-            if (not steamutils.IsOwner(lobby, user))then
+            if (not steam_utils.IsOwner( user))then
                 return
             end
             ArenaGameplay.LoadLobby(lobby, data, false)
         end,
         update_round = function(lobby, message, user, data)
-            if (not steamutils.IsOwner(lobby, user))then
+            if (not steam_utils.IsOwner( user))then
                 return
             end
             GlobalsSetValue("holyMountainCount", tostring(message))
         end,
         update_world_seed = function(lobby, message, user, data)
-            if (not steamutils.IsOwner(lobby, user))then
+            if (not steam_utils.IsOwner( user))then
                 return
             end
             SetWorldSeed( message )
@@ -2165,7 +2165,7 @@ networking = {
                 end
                 return
             end
-            if(not steamutils.IsOwner(lobby, user))then
+            if(not steam_utils.IsOwner( user))then
                 return
             end
 
@@ -2176,7 +2176,7 @@ networking = {
                 
                 local timer_frames = tonumber(hm_timer_time) * 60
                 data.hm_timer = delay.new(timer_frames, function()
-                    if(steamutils.IsOwner(lobby))then
+                    if(steam_utils.IsOwner())then
                         ArenaGameplay.ForceReady(lobby, data)
                     end
                 end, function(frame)
@@ -2216,7 +2216,7 @@ networking = {
             if(data.state ~= "lobby")then
                 return
             end
-            if(not steamutils.IsOwner(lobby, user))then
+            if(not steam_utils.IsOwner( user))then
                 return
             end
             if(data.hm_timer)then
@@ -2236,7 +2236,7 @@ networking = {
             end
         end,
         set_map = function(lobby, message, user, data)
-            steam.matchmaking.setLobbyData(lobby, "current_map", message)
+            steam_utils.TrySetLobbyData(lobby, "current_map", message)
             print("Setting current map to "..tostring(message))
         end,
     },

@@ -142,12 +142,12 @@ dofile("mods/evaisa.arena/files/scripts/gamemode/misc/upgrades.lua")
 local function SetNewSeed(lobby)
     local seed = 0
     print("Randomized seed? " .. tostring(randomized_seed))
-    print("Is owner? " .. tostring(steamutils.IsOwner(lobby)))
-    if(randomized_seed and steamutils.IsOwner(lobby))then
+    print("Is owner? " .. tostring(steam_utils.IsOwner()))
+    if(randomized_seed and steam_utils.IsOwner())then
         local a, b, c, d, e, f = GameGetDateAndTimeLocal()
         math.randomseed(GameGetFrameNum() + a + b + c + d + e + f)
         seed = math.random(1, 4294967294)
-        steam.matchmaking.setLobbyData(lobby, "seed", tostring(seed))
+        steam_utils.TrySetLobbyData(lobby, "seed", tostring(seed))
     else
         seed = tonumber(steam.matchmaking.getLobbyData(lobby, "seed") or 1)
     end
@@ -241,7 +241,7 @@ local function TryUpdateData(lobby)
 
     GlobalsSetValue("content_string", tostring(content_string))
 
-    if(tostring(content_hash) ~= steam.matchmaking.getLobbyData(lobby, "content_hash") and not steamutils.IsOwner(lobby))then
+    if(tostring(content_hash) ~= steam.matchmaking.getLobbyData(lobby, "content_hash") and not steam_utils.IsOwner())then
         print("content mismatch!")
         return
     end
@@ -321,7 +321,7 @@ local function SendLobbyData(lobby)
             end
         end
         --print(perk_blacklist_string_temp)
-        steam.matchmaking.setLobbyData(lobby, "perk_blacklist_data", perk_blacklist_string_temp)
+        steam_utils.TrySetLobbyData(lobby, "perk_blacklist_data", perk_blacklist_string_temp)
     end
 
     if(sorted_spell_list_ids)then
@@ -334,7 +334,7 @@ local function SendLobbyData(lobby)
             end
         end
         --print(spell_blacklist_string_temp)
-        steam.matchmaking.setLobbyData(lobby, "spell_blacklist_data", spell_blacklist_string_temp)
+        steam_utils.TrySetLobbyData(lobby, "spell_blacklist_data", spell_blacklist_string_temp)
     end
 
     if(sorted_map_list_ids)then
@@ -347,7 +347,7 @@ local function SendLobbyData(lobby)
             end
         end
         --print(map_blacklist_string_temp)
-        steam.matchmaking.setLobbyData(lobby, "map_blacklist_data", map_blacklist_string_temp)
+        steam_utils.TrySetLobbyData(lobby, "map_blacklist_data", map_blacklist_string_temp)
     end
 
     if(sorted_card_list_ids)then
@@ -360,7 +360,7 @@ local function SendLobbyData(lobby)
             end
         end
         --print(card_blacklist_string_temp)
-        steam.matchmaking.setLobbyData(lobby, "card_blacklist_data", card_blacklist_string_temp)
+        steam_utils.TrySetLobbyData(lobby, "card_blacklist_data", card_blacklist_string_temp)
     end
         
     steam.matchmaking.sendLobbyChatMsg(lobby, "refresh")
@@ -388,7 +388,7 @@ ArenaMode = {
         local lobby_state = steam.matchmaking.getLobbyData(lobby, "arena_state") or "lobby"
 
         -- if we are the only player in the lobby and arena state is not lobby, allow entry
-        if(steam.matchmaking.getNumLobbyMembers(lobby) == 1 and lobby_state ~= "lobby")then
+        if(steam_utils.getNumLobbyMembers() == 1 and lobby_state ~= "lobby")then
             return true, "Preparing in Holy Mountain"
         end
 
@@ -402,7 +402,7 @@ ArenaMode = {
         local lobby_state = steam.matchmaking.getLobbyData(lobby, "arena_state") or "lobby"
 
         -- if we are the only player in the lobby and arena state is not lobby, allow entry
-        if(steam.matchmaking.getNumLobbyMembers(lobby) == 1 and lobby_state ~= "lobby")then
+        if(steam_utils.getNumLobbyMembers() == 1 and lobby_state ~= "lobby")then
             return true, "Preparing in Holy Mountain"
         end
 
@@ -849,7 +849,7 @@ ArenaMode = {
                     GameAddFlagRun("chat_bind_disabled")
                 end
 
-                if(steamutils.IsOwner(lobby))then
+                if(steam_utils.IsOwner())then
                     GuiZSetForNextWidget(gui, -5600)
                     if GuiButton(gui, new_id(), 0, 0, "$arena_disable_all") then
                         for i, perk in ipairs(sorted_perk_list)do
@@ -878,7 +878,7 @@ ArenaMode = {
                         local visible, clicked, _, hovered = get_widget_info(gui)
 
                         if(visible and clicked)then
-                            if(steamutils.IsOwner(lobby))then
+                            if(steam_utils.IsOwner())then
                                 GamePlaySound( "data/audio/Desktop/ui.bank", "ui/button_click", GameGetCameraPos() )
                                 perk_blacklist_data[perk.id] = not is_blacklisted
                                 SendLobbyData(lobby)
@@ -900,7 +900,7 @@ ArenaMode = {
                         local text_width, text_height = GuiGetTextDimensions(gui, perk.ui_name)
                         GuiZSetForNextWidget(gui, -5600)
                         if(GuiButton(gui, new_id(), offset, ((icon_height / 2) - (text_height / 2)), perk.ui_name))then
-                            if(steamutils.IsOwner(lobby))then
+                            if(steam_utils.IsOwner())then
                                 perk_blacklist_data[perk.id] = not is_blacklisted
                                 SendLobbyData(lobby)
                             end
@@ -937,7 +937,7 @@ ArenaMode = {
                     GameAddFlagRun("chat_bind_disabled")
                 end
 
-                if(steamutils.IsOwner(lobby))then
+                if(steam_utils.IsOwner())then
                     GuiZSetForNextWidget(gui, -5600)
                     if GuiButton(gui, new_id(), 0, 0, "$arena_disable_all") then
                         for i, spell in ipairs(sorted_spell_list)do
@@ -975,7 +975,7 @@ ArenaMode = {
                         local visible, clicked, _, hovered = get_widget_info(gui)
 
                         if(visible and clicked)then
-                            if(steamutils.IsOwner(lobby))then
+                            if(steam_utils.IsOwner())then
                                 GamePlaySound( "data/audio/Desktop/ui.bank", "ui/button_click", GameGetCameraPos() )
                                 spell_blacklist_data[spell.id] = not is_blacklisted
                                 SendLobbyData(lobby)
@@ -998,7 +998,7 @@ ArenaMode = {
                         --GuiText(gui, offset, ((icon_height / 2) - (text_height / 2)), spell.name)
                         GuiZSetForNextWidget(gui, -5600)
                         if(GuiButton(gui, new_id(), offset, ((icon_height / 2) - (text_height / 2)), spell.name))then
-                            if(steamutils.IsOwner(lobby))then
+                            if(steam_utils.IsOwner())then
                                 spell_blacklist_data[spell.id] = not is_blacklisted
                                 SendLobbyData(lobby)
                             end
@@ -1038,7 +1038,7 @@ ArenaMode = {
                     GameAddFlagRun("chat_bind_disabled")
                 end
 
-                if(steamutils.IsOwner(lobby))then
+                if(steam_utils.IsOwner())then
                     GuiZSetForNextWidget(gui, -5600)
                     if GuiButton(gui, new_id(), 0, 0, "$arena_disable_all") then
                         for i, card in ipairs(sorted_card_list)do
@@ -1068,7 +1068,7 @@ ArenaMode = {
                         local visible, clicked, _, hovered = get_widget_info(gui)
 
                         if(visible and clicked)then
-                            if(steamutils.IsOwner(lobby))then
+                            if(steam_utils.IsOwner())then
                                 GamePlaySound( "data/audio/Desktop/ui.bank", "ui/button_click", GameGetCameraPos() )
                                 card_blacklist_data[card.id] = not is_blacklisted
                                 SendLobbyData(lobby)
@@ -1090,7 +1090,7 @@ ArenaMode = {
                         local text_width, text_height = GuiGetTextDimensions(gui, card.ui_name)
                         GuiZSetForNextWidget(gui, -5600)
                         if(GuiButton(gui, new_id(), offset, ((icon_height / 2) - (text_height / 2)), card.ui_name))then
-                            if(steamutils.IsOwner(lobby))then
+                            if(steam_utils.IsOwner())then
                                 card_blacklist_data[card.id] = not is_blacklisted
                                 SendLobbyData(lobby)
                             end
@@ -1129,7 +1129,7 @@ ArenaMode = {
                     GameAddFlagRun("chat_bind_disabled")
                 end
 
-                if(steamutils.IsOwner(lobby))then
+                if(steam_utils.IsOwner())then
                     GuiZSetForNextWidget(gui, -5600)
                     if GuiButton(gui, new_id(), 0, 0, "$arena_disable_all") then
                         for i, map in ipairs(sorted_map_list)do
@@ -1190,7 +1190,7 @@ ArenaMode = {
 
 
                         if(visible and clicked)then
-                            if(steamutils.IsOwner(lobby))then
+                            if(steam_utils.IsOwner())then
                                 map_blacklist_data[map.id] = not is_blacklisted
 
                                 GamePlaySound( "data/audio/Desktop/ui.bank", "ui/button_click", GameGetCameraPos() )
@@ -1251,7 +1251,7 @@ ArenaMode = {
                         GuiText(gui, -(icon_width * scale) + offset, offset, GameTextGetTranslatedOrNot(map.name))
                         GuiZSetForNextWidget(gui, -5631)
                         if(GuiButton(gui, new_id("map_list_stuff"), -(text_width + 2) - 1, offset-1, GameTextGetTranslatedOrNot(map.name)))then
-                            if(steamutils.IsOwner(lobby))then
+                            if(steam_utils.IsOwner())then
                                 map_blacklist_data[map.id] = not is_blacklisted
                                 SendLobbyData(lobby)
                             end
@@ -1322,7 +1322,7 @@ ArenaMode = {
 
         --print(json.stringify(perk_blacklist_data))
 
-        if(steamutils.IsOwner(lobby))then
+        if(steam_utils.IsOwner())then
             SendLobbyData(lobby)
         end
     end,
@@ -1333,10 +1333,10 @@ ArenaMode = {
         TryUpdateData(lobby)
 
         if(tostring(content_hash) ~= steam.matchmaking.getLobbyData(lobby,"content_hash"))then
-            if(steamutils.IsOwner(lobby))then
+            if(steam_utils.IsOwner())then
                 print("content hash mismatch, updating")
-                steam.matchmaking.setLobbyData(lobby, "content_hash", content_hash)
-                steam.matchmaking.setLobbyData(lobby, "mod_list", player_mods)
+                steam_utils.TrySetLobbyData(lobby, "content_hash", content_hash)
+                steam_utils.TrySetLobbyData(lobby, "mod_list", player_mods)
             else
                 was_content_mismatched = true
                 content_hash_popup_active = content_hash_popup_active or false
@@ -1678,9 +1678,9 @@ ArenaMode = {
             end
         end
         
-        if(steamutils.IsOwner(lobby))then
-            steam.matchmaking.setLobbyData(lobby, "mod_list", player_mods)
-            steam.matchmaking.setLobbyData(lobby, "custom_lobby_string", "( round 0 )")
+        if(steam_utils.IsOwner())then
+            steam_utils.TrySetLobbyData(lobby, "mod_list", player_mods)
+            steam_utils.TrySetLobbyData(lobby, "custom_lobby_string", "( round 0 )")
         end
 
         print("MP Version: " .. MP_VERSION .." < " .. ArenaMode.required_online_version)
@@ -1858,9 +1858,9 @@ ArenaMode = {
         --local unique_seed = data.random.range(100, 10000000)
         --GlobalsSetValue("unique_seed", tostring(unique_seed))
 
-        if (steamutils.IsOwner(lobby)) then
+        if (steam_utils.IsOwner()) then
             local unique_game_id = data.random.range(100, 10000000)
-            steam.matchmaking.setLobbyData(lobby, "unique_game_id", tostring(unique_game_id))
+            steam_utils.TrySetLobbyData(lobby, "unique_game_id", tostring(unique_game_id))
         end
 
         if (not data.spectator_mode and player_entity == nil) then
@@ -1939,9 +1939,9 @@ ArenaMode = {
         --local unique_seed = data.random.range(100, 10000000)
         --GlobalsSetValue("unique_seed", tostring(unique_seed))
 
-        if (steamutils.IsOwner(lobby)) then
+        if (steam_utils.IsOwner()) then
             local unique_game_id = data.random.range(100, 10000000)
-            steam.matchmaking.setLobbyData(lobby, "unique_game_id", tostring(unique_game_id))
+            steam_utils.TrySetLobbyData(lobby, "unique_game_id", tostring(unique_game_id))
         end
 
         gameplay_handler.GetGameData(lobby, data)
@@ -1972,12 +1972,12 @@ ArenaMode = {
             return
         end
 
-        if(steamutils.IsOwner(lobby) and data.last_state ~= data.state)then
+        if(steam_utils.IsOwner() and data.last_state ~= data.state)then
             data.last_state = data.state
             if(GlobalsGetValue("arena_gamemode", "ffa") ~= "continuous")then
-                steam.matchmaking.setLobbyData(lobby, "arena_state", data.state)
+                steam_utils.TrySetLobbyData(lobby, "arena_state", data.state)
             end
-        elseif(not steamutils.IsOwner(lobby))then
+        elseif(not steam_utils.IsOwner())then
             data.last_state = nil
         end
 
@@ -2004,7 +2004,7 @@ ArenaMode = {
 
             local members = steamutils.getLobbyMembers(lobby)
             for k, member in pairs(members) do
-                if (member.id ~= steam.user.getSteamID()) then
+                if (member.id ~= steam_utils.getSteamID()) then
                     local name = steamutils.getTranslatedPersonaName(member.id)
                     if (name ~= nil) then
                         lobby_member_names[tostring(member.id)] = name
@@ -2029,12 +2029,12 @@ ArenaMode = {
         ComponentSetValue2(world_state_component, "fog", 0)
         ComponentSetValue2(world_state_component, "intro_weather", true)
 
-        local update_seed = steamutils.GetLobbyData( "update_seed")
+        --[[local update_seed = steamutils.GetLobbyData( "update_seed")
         if (update_seed == nil) then
             update_seed = "0"
         end
 
-        GlobalsSetValue("update_seed", update_seed)
+        GlobalsSetValue("update_seed", update_seed)]]
 
         if (data ~= nil) then
 
@@ -2049,7 +2049,7 @@ ArenaMode = {
         end
 
         --[[if(input:WasKeyPressed("f10"))then
-            if(steamutils.IsOwner(lobby))then
+            if(steam_utils.IsOwner())then
                 ArenaGameplay.AddRound(lobby)
                 delay.new(5, function()
                     ArenaGameplay.LoadLobby(lobby, data, false)
@@ -2136,7 +2136,7 @@ ArenaMode = {
     end,
     ]]
     received = function(lobby, event, message, user)
-        if (user == steam.user.getSteamID() or data == nil) then
+        if (user == steam_utils.getSteamID() or data == nil) then
             return
         end
 

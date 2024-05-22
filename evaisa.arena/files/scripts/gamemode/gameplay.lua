@@ -167,7 +167,7 @@ ArenaGameplay = {
             table.insert(player_ids, tostring(member.id))
         end
         table.sort(player_ids, function(a, b) return a < b end)
-        local local_player = tostring(steam.user.getSteamID())
+        local local_player = tostring(steam_utils.getSteamID())
         for i, player_id in ipairs(player_ids) do
             if(player_id == local_player)then
                 return i
@@ -176,7 +176,7 @@ ArenaGameplay = {
         return 1
     end,
     AddRound = function(lobby)
-        if(steamutils.IsOwner(lobby))then
+        if(steam_utils.IsOwner())then
             local rounds = ArenaGameplay.GetNumRounds(lobby)
             rounds = tonumber(rounds) or 0
             rounds = rounds + 1
@@ -184,7 +184,7 @@ ArenaGameplay = {
                 networking.send.update_round(lobby, rounds)
             end
             GlobalsSetValue("holyMountainCount", tostring(rounds))
-            steam.matchmaking.setLobbyData(lobby, "holyMountainCount", tostring(rounds))
+            steam_utils.TrySetLobbyData(lobby, "holyMountainCount", tostring(rounds))
         elseif(GlobalsGetValue("arena_gamemode", "ffa") == "continuous")then
             local rounds = ArenaGameplay.GetNumRounds(lobby)
             rounds = tonumber(rounds) or 0
@@ -282,13 +282,13 @@ ArenaGameplay = {
         local ready_players = {}
         local members = steamutils.getLobbyMembers(lobby)
         for k, member in pairs(members) do
-            if (member.id ~= steam.user.getSteamID()) then
+            if (member.id ~= steam_utils.getSteamID()) then
                 if (data.players[tostring(member.id)] ~= nil and data.players[tostring(member.id)].ready) then
                     table.insert(ready_players, tostring(member.id))
                 end
             end
         end
-        steam.matchmaking.setLobbyData(lobby, "ready_players", bitser.dumps(ready_players))
+        steam_utils.TrySetLobbyData(lobby, "ready_players", bitser.dumps(ready_players))
     end,
     GetGameData = function(lobby, data)
         local mountainCount = tonumber(steamutils.GetLobbyData( "holyMountainCount"))
@@ -301,7 +301,7 @@ ArenaGameplay = {
             data.client.first_spawn_gold = goldCount
             arena_log:print("Gold count: " .. goldCount)
         end
-        local playerData = steamutils.GetLocalLobbyData(lobby, "player_data") --steam.matchmaking.getLobbyMemberData(lobby, steam.user.getSteamID(), "player_data")
+        local playerData = steamutils.GetLocalLobbyData(lobby, "player_data") --steam.matchmaking.getLobbyMemberData(lobby, steam_utils.getSteamID(), "player_data")
         --local rerollCount = tonumber(steamutils.GetLocalLobbyData(lobby, "reroll_count") or 0)
 
         --[[
@@ -407,7 +407,7 @@ ArenaGameplay = {
         local members = steamutils.getLobbyMembers(lobby)
 
         for k, member in pairs(members) do
-            if (member.id ~= steam.user.getSteamID()) then
+            if (member.id ~= steam_utils.getSteamID()) then
                 local user = member.id
                 local wins = tonumber(steamutils.GetLobbyData( tostring(user) .. "_wins")) or 0
                 local winstreak = tonumber(steamutils.GetLobbyData( tostring(user) .. "_winstreak")) or 0
@@ -420,7 +420,7 @@ ArenaGameplay = {
 
         if (ready_players ~= nil) then
             for k, member in pairs(members) do
-                if (member.id ~= steam.user.getSteamID()) then
+                if (member.id ~= steam_utils.getSteamID()) then
                     if (data.players[tostring(member.id)] ~= nil and data.players[tostring(member.id)].ready) then
                         data.players[tostring(member.id)].ready = false
                     end
@@ -529,11 +529,11 @@ ArenaGameplay = {
 
 
 
-        if (steamutils.IsOwner(lobby)) then
+        if (steam_utils.IsOwner()) then
             steam.matchmaking.deleteLobbyData(lobby, "holyMountainCount")
             steam.matchmaking.deleteLobbyData(lobby, "total_gold")
             steam.matchmaking.deleteLobbyData(lobby, "ready_players")
-            steam.matchmaking.setLobbyData(lobby, "custom_lobby_string", "( round 0 )")
+            steam_utils.TrySetLobbyData(lobby, "custom_lobby_string", "( round 0 )")
 
             -- loop through all players and remove their data
             local members = steamutils.getLobbyMembers(lobby)
@@ -572,7 +572,7 @@ ArenaGameplay = {
 
         local members = steamutils.getLobbyMembers(lobby)
         for k, member in pairs(members) do
-            if (member.id ~= steam.user.getSteamID()) then
+            if (member.id ~= steam_utils.getSteamID()) then
                 if (data.players[tostring(member.id)] ~= nil and data.players[tostring(member.id)].ready) then
                     amount = amount + 1
                 end
@@ -585,7 +585,7 @@ ArenaGameplay = {
 
         local members = steamutils.getLobbyMembers(lobby)
         for k, member in pairs(members) do
-            if (member.id ~= steam.user.getSteamID()) then
+            if (member.id ~= steam_utils.getSteamID()) then
                 if (data.players[tostring(member.id)] ~= nil) then
                     data.players[tostring(member.id)].ready = true
                 end
@@ -598,7 +598,7 @@ ArenaGameplay = {
     CheckFiringBlock = function(lobby, data)
         local members = steamutils.getLobbyMembers(lobby)
         for k, member in pairs(members) do
-            if (member.id ~= steam.user.getSteamID()) then
+            if (member.id ~= steam_utils.getSteamID()) then
                 if (data.players[tostring(member.id)] ~= nil and data.players[tostring(member.id)].entity ~= nil) then
                     local player_entity = data.players[tostring(member.id)].entity
                     if (EntityGetIsAlive(player_entity)) then
@@ -819,7 +819,7 @@ ArenaGameplay = {
                 end
 
 
-                if (data.zone_size ~= nil and can_shrink and steamutils.IsOwner(lobby)) then
+                if (data.zone_size ~= nil and can_shrink and steam_utils.IsOwner()) then
                     local zone_shrink_time = 0;
 
                     local last_zone_size = data.zone_size
@@ -939,7 +939,7 @@ ArenaGameplay = {
                     -- GamePrint("Zone size: " .. data.zone_size .. " (" .. last_zone_size .. " -> " .. data.zone_size .. ")")
                 end
 
-                if ((not steamutils.IsOwner(lobby)) and (not IsPaused()) and data.zone_size ~= nil) then
+                if ((not steam_utils.IsOwner()) and (not IsPaused()) and data.zone_size ~= nil) then
                     if (data.zone_gui == nil) then
                         data.zone_gui = GuiCreate()
                     end
@@ -1050,7 +1050,7 @@ ArenaGameplay = {
         end
 
         local alive = (not data.spectator_mode and data.client.alive) and 1 or 0
-        local winner = data.spectator_mode and nil or steam.user.getSteamID() 
+        local winner = data.spectator_mode and nil or steam_utils.getSteamID() 
         for k, v in pairs(data.players) do
             if (v.alive) then
                 alive = alive + 1
@@ -1078,21 +1078,21 @@ ArenaGameplay = {
             for k, v in pairs(winner_keys) do
                 if (tostring(v) ~= tostring(winner_key)) then
                     --print(v .. "treak")
-                    steam.matchmaking.setLobbyData(lobby, v .. "treak", "0")
+                    steam_utils.TrySetLobbyData(lobby, v .. "treak", "0")
                 end
             end
 
 
             if (not table.contains(winner_keys, winner_key)) then
                 table.insert(winner_keys, winner_key)
-                steam.matchmaking.setLobbyData(lobby, "winner_keys", bitser.dumps(winner_keys))
+                steam_utils.TrySetLobbyData(lobby, "winner_keys", bitser.dumps(winner_keys))
             end
 
 
             for k, v in pairs(data.players) do
                 local id = v.id
                 if (tostring(id) ~= tostring(winner)) then
-                    steam.matchmaking.setLobbyData(lobby, tostring(id) .. "_winstreak", "0")
+                    steam_utils.TrySetLobbyData(lobby, tostring(id) .. "_winstreak", "0")
                 end
             end
 
@@ -1100,16 +1100,16 @@ ArenaGameplay = {
             local current_winstreak = tonumber(tonumber(steamutils.GetLobbyData( winstreak_key)) or "0")
 
             print("incrementing win count for "..tostring(winner).." to "..tostring(current_wins + 1))
-            steam.matchmaking.setLobbyData(lobby, winner_key, tostring(current_wins + 1))
-            steam.matchmaking.setLobbyData(lobby, winstreak_key, tostring(current_winstreak + 1))
+            steam_utils.TrySetLobbyData(lobby, winner_key, tostring(current_wins + 1))
+            steam_utils.TrySetLobbyData(lobby, winstreak_key, tostring(current_winstreak + 1))
 
-            if(winner ~= steam.user.getSteamID())then
+            if(winner ~= steam_utils.getSteamID())then
                 data.players[tostring(winner)].winstreak = current_winstreak + 1
                 data.players[tostring(winner)].wins = current_wins + 1
             end
 
 
-            if(not data.spectator_mode and winner == steam.user.getSteamID())then
+            if(not data.spectator_mode and winner == steam_utils.getSteamID())then
                 GameAddFlagRun("arena_winner")
                 local catchup_mechanic = GlobalsGetValue("perk_catchup", "losers")
                 if(catchup_mechanic == "winner")then
@@ -1207,7 +1207,7 @@ ArenaGameplay = {
                 killer = nil
             end
 
-            local username = steamutils.getTranslatedPersonaName(steam.user.getSteamID())
+            local username = steamutils.getTranslatedPersonaName(steam_utils.getSteamID())
 
             if (killer == nil) then
                 GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_other_player_died"), tostring(username)))
@@ -1263,7 +1263,7 @@ ArenaGameplay = {
             --player.Immortal(true)
             --player.Move(-3000, -3000)
 
-            if(steamutils.IsOwner(lobby))then
+            if(steam_utils.IsOwner())then
                 ArenaGameplay.WinnerCheck(lobby, data)
             end
         end
@@ -1363,7 +1363,7 @@ ArenaGameplay = {
             data.hm_timer.clear()
             data.hm_timer = nil
         end
-        local has_picked_heart = steamutils.HasLobbyFlag(lobby, tostring(steam.user.getSteamID()).."picked_heart")
+        local has_picked_heart = steamutils.HasLobbyFlag(lobby, tostring(steam_utils.getSteamID()).."picked_heart")
 
         if(has_picked_heart)then
             GameAddFlagRun("picked_health")
@@ -1429,7 +1429,7 @@ ArenaGameplay = {
 
         local members = steamutils.getLobbyMembers(lobby)
         for k, member in pairs(members) do
-            if (member.id ~= steam.user.getSteamID()) then
+            if (member.id ~= steam_utils.getSteamID()) then
                 local user = member.id
                 local wins = tonumber(steamutils.GetLobbyData( tostring(user) .. "_wins")) or 0
                 local winstreak = tonumber(steamutils.GetLobbyData( tostring(user) .. "_winstreak")) or 0
@@ -1551,23 +1551,23 @@ ArenaGameplay = {
 
             RunWhenPlayerExists(function()
                 -- if we are the owner of the lobby
-                if (steamutils.IsOwner(lobby)) then
+                if (steam_utils.IsOwner()) then
                     -- get the gold count from the lobby
                     local gold = tonumber(steamutils.GetLobbyData( "total_gold")) or 0
                     -- add the new gold
                     gold = gold + extra_gold
                     -- set the new gold count
-                    steam.matchmaking.setLobbyData(lobby, "total_gold", tostring(gold))
+                    steam_utils.TrySetLobbyData(lobby, "total_gold", tostring(gold))
                 end
             end)
         else
-            if (steamutils.IsOwner(lobby)) then
+            if (steam_utils.IsOwner()) then
                 -- get the gold count from the lobby
                 local gold = tonumber(steamutils.GetLobbyData( "total_gold")) or 0
                 -- add the new gold
                 gold = gold + extra_gold
                 -- set the new gold count
-                steam.matchmaking.setLobbyData(lobby, "total_gold", tostring(gold))
+                steam_utils.TrySetLobbyData(lobby, "total_gold", tostring(gold))
             end
         end
 
@@ -1714,10 +1714,10 @@ ArenaGameplay = {
             data.hm_timer.clear()
             data.hm_timer = nil
         end
-        if(not steamutils.IsOwner(lobby))then
+        if(not steam_utils.IsOwner())then
             networking.send.picked_heart(lobby, false)
         else
-            steamutils.RemoveLobbyFlag(lobby, tostring(steam.user.getSteamID()).."picked_heart")
+            steamutils.RemoveLobbyFlag(lobby, tostring(steam_utils.getSteamID()).."picked_heart")
         end
         if(not data.spectator_mode)then
             ArenaGameplay.SavePlayerData(lobby, data, true)
@@ -1773,7 +1773,7 @@ ArenaGameplay = {
         local members = steamutils.getLobbyMembers(lobby)
 
         for _, member in pairs(members) do
-            if (member.id ~= steam.user.getSteamID() and data.players[tostring(member.id)] ~= nil) then
+            if (member.id ~= steam_utils.getSteamID() and data.players[tostring(member.id)] ~= nil) then
                 data.players[tostring(member.id)].alive = true
             end
         end
@@ -1856,9 +1856,9 @@ ArenaGameplay = {
             return
         end
 
-        if(steamutils.IsOwner(lobby))then
+        if(steam_utils.IsOwner())then
             print("Setting current map to "..tostring(arena.id))
-            steam.matchmaking.setLobbyData(lobby, "current_map", arena.id)
+            steam_utils.TrySetLobbyData(lobby, "current_map", arena.id)
         else
             networking.send.set_map(lobby, arena.id)
         end
@@ -1929,7 +1929,7 @@ ArenaGameplay = {
 
             if(not ArenaGameplay.IsArenaLoaded(lobby, data))then
                 current_map = nil
-                if(steamutils.IsOwner(lobby))then
+                if(steam_utils.IsOwner())then
                     steam.matchmaking.deleteLobbyData(lobby, "current_map")
                 end
             end
@@ -1941,7 +1941,7 @@ ArenaGameplay = {
                     map_picker = "random"
                 end
 
-                if(steamutils.IsOwner(lobby))then
+                if(steam_utils.IsOwner())then
                     local new_seed = GameGetFrameNum() + tonumber(GlobalsGetValue("world_seed", "0"));
 
                     networking.send.update_world_seed(lobby, new_seed)
@@ -1976,15 +1976,15 @@ ArenaGameplay = {
             GameAddFlagRun("was_last_ready")
         end
 
-        if (steamutils.IsOwner(lobby)) then
-            steam.matchmaking.setLobbyData(lobby, tostring(steam.user.getSteamID()) .. "_ready", tostring(ready))
+        if (steam_utils.IsOwner()) then
+            steam_utils.TrySetLobbyData(lobby, tostring(steam_utils.getSteamID()) .. "_ready", tostring(ready))
         end
     end,
     CleanMembers = function(lobby, data)
         local members = steamutils.getLobbyMembers(lobby)
 
         for _, member in pairs(members) do
-            if (member.id ~= steam.user.getSteamID() and data.players[tostring(member.id)] ~= nil) then
+            if (member.id ~= steam_utils.getSteamID() and data.players[tostring(member.id)] ~= nil) then
                 data.players[tostring(member.id)]:Clean(lobby)
             end
         end
@@ -2015,7 +2015,7 @@ ArenaGameplay = {
         end
     end,
     RunReadyCheck = function(lobby, data)
-        if (steamutils.IsOwner(lobby)) then
+        if (steam_utils.IsOwner()) then
             --print("we are owner!")
             -- check if all players are ready
 
@@ -2034,7 +2034,7 @@ ArenaGameplay = {
                     GameAddFlagRun("lock_ready_state")
                     networking.send.lock_ready_state(lobby)
                     -- kill any entity with workshop tag to prevent wand edits
-                    if(not data.spectator_mode and steam.matchmaking.getNumLobbyMembers(lobby) == 1)then
+                    if(not data.spectator_mode and steam_utils.getNumLobbyMembers() == 1)then
                         local all_entities = EntityGetWithTag("workshop")
                         for k, v in pairs(all_entities) do
                             EntityKill(v)
@@ -2124,7 +2124,7 @@ ArenaGameplay = {
 
         data.vote_loop = delay.new(vote_length + finish_time, function()
             -- finish
-            if(steamutils.IsOwner(lobby))then
+            if(steam_utils.IsOwner())then
                 -- find highest vote, if there is a tie, pick random
                 
                 ArenaGameplay.LoadArena(lobby, data, true, data.vote_loop.winner)
@@ -2133,7 +2133,7 @@ ArenaGameplay = {
             GuiDestroy(vote_gui)
         end, function(frames)
             --print("Current game frame: "..tostring(GameGetFrameNum()))
-            if(steamutils.IsOwner(lobby))then
+            if(steam_utils.IsOwner())then
                 --print("Sending map vote timer update")
                 networking.send.map_vote_timer_update(lobby, frames)
             end
@@ -2151,7 +2151,7 @@ ArenaGameplay = {
             end
             --GamePrint("Voting ends in "..tostring(math.floor(frames / 60)).." seconds")
 
-            if(steamutils.IsOwner(lobby))then
+            if(steam_utils.IsOwner())then
                 if(frames_left <= 0 )then
                     if(not data.vote_loop.vote_finished)then
                         local highest_vote = 0
@@ -2640,7 +2640,7 @@ ArenaGameplay = {
             
                 local timer_frames = tonumber(hm_timer_time) * 60
                 data.hm_timer = delay.new(timer_frames, function()
-                    if(steamutils.IsOwner(lobby))then
+                    if(steam_utils.IsOwner())then
                         ArenaGameplay.ForceReady(lobby, data)
                     end
                 end, function(frame)
@@ -2659,7 +2659,7 @@ ArenaGameplay = {
 
                     local message = string.format(GameTextGetTranslatedOrNot("$arena_hm_timer_string"), time_string)
   
-                    if(steamutils.IsOwner(lobby))then
+                    if(steam_utils.IsOwner())then
                         networking.send.hm_timer_update(lobby, frame)
                     end
 
@@ -2676,7 +2676,7 @@ ArenaGameplay = {
                 end)
             end
         else
-            if(steamutils.IsOwner(lobby))then
+            if(steam_utils.IsOwner())then
                 networking.send.hm_timer_clear(lobby)
             end
             if(data.hm_timer ~= nil)then
@@ -2845,7 +2845,7 @@ ArenaGameplay = {
             networking.send.request_item_update(lobby)
         end, function(frame, index) 
             -- if we are host
-            if (steamutils.IsOwner(lobby)) then
+            if (steam_utils.IsOwner()) then
                 networking.send.sync_countdown(lobby, frame, index)
             end
         end)
@@ -2988,7 +2988,7 @@ ArenaGameplay = {
 
 
         local players = {
-            [tostring(steam.user.getSteamID())] = {
+            [tostring(steam_utils.getSteamID())] = {
                 perks = data.client.perks or {},
                 health = data.client.hp or 100,
                 max_health = data.client.max_hp or 100,
@@ -3052,7 +3052,7 @@ ArenaGameplay = {
     end,
     SwitchDummy = function(dummy, lobby, data)
 
-        local dummy_target = data.target_dummy_player or steam.user.getSteamID()
+        local dummy_target = data.target_dummy_player or steam_utils.getSteamID()
         local new_target = nil
         -- check if target is in lobby
         local next_is_target = false
@@ -3069,7 +3069,7 @@ ArenaGameplay = {
 
         if(not data.spectator_mode)then
             player_count = player_count + 1
-            players[tostring(steam.user.getSteamID())] = {
+            players[tostring(steam_utils.getSteamID())] = {
                 perks = data.client.perks or {},
                 health = data.client.hp or 100,
                 max_health = data.client.max_hp or 100,
@@ -3177,14 +3177,14 @@ ArenaGameplay = {
 
         for _, member in pairs(members) do
 
-            if (member.id ~= steam.user.getSteamID() and data.players[tostring(member.id)].entity) then
+            if (member.id ~= steam_utils.getSteamID() and data.players[tostring(member.id)].entity) then
                 data.players[tostring(member.id)]:Clean(lobby)
             end
 
-            --[[if(member.id ~= steam.user.getSteamID())then
+            --[[if(member.id ~= steam_utils.getSteamID())then
                 print(json.stringify(data.players[tostring(member.id)]))
             end]]
-            if (member.id ~= steam.user.getSteamID() and data.players[tostring(member.id)].entity == nil) then
+            if (member.id ~= steam_utils.getSteamID() and data.players[tostring(member.id)].entity == nil) then
 
                 if(not (GlobalsGetValue("arena_gamemode", "ffa") == "continuous" and not data.spectator_mode and data.players[tostring(member.id)].state ~= "arena"))then
                     --GamePrint("Loading player " .. tostring(member.id))
@@ -3288,7 +3288,7 @@ ArenaGameplay = {
                         if(not data.spectator_mode)then
                             ArenaGameplay.LoadPlayer(lobby, data, x, y)
 
-                            if (not steamutils.IsOwner(lobby)) then
+                            if (not steam_utils.IsOwner()) then
                                 RunWhenPlayerExists(function()
                                     networking.send.arena_loaded(lobby)
                                 end)
@@ -3327,7 +3327,7 @@ ArenaGameplay = {
         if(not data.spectator_mode)then
             player_entity = player.Get()
         end
-        if (steamutils.IsOwner(lobby) and GlobalsGetValue("arena_gamemode", "ffa") ~= "continuous") then
+        if (steam_utils.IsOwner() and GlobalsGetValue("arena_gamemode", "ffa") ~= "continuous") then
 
             if ((data.spectator_mode or player_entity ~= nil) and (not data.players_loaded and ArenaGameplay.CheckAllPlayersLoaded(lobby, data))) then
                 data.players_loaded = true
@@ -3403,7 +3403,7 @@ ArenaGameplay = {
 
                 -- if we are the last player, unready
                 if(not data.spectator_mode)then
-                    if (steam.matchmaking.getNumLobbyMembers(lobby) == 1) then
+                    if (steam_utils.getNumLobbyMembers() == 1) then
                         GameRemoveFlagRun("lock_ready_state")
                         GameAddFlagRun("player_unready")
                         GameRemoveFlagRun("ready_check")
@@ -3411,14 +3411,14 @@ ArenaGameplay = {
                     end
                 end
 
-                --[[if (steamutils.IsOwner(lobby)) then
+                --[[if (steam_utils.IsOwner()) then
                     local winner_key = tostring(k) .. "_wins"
                     steam.matchmaking.deleteLobbyData(lobby, winner_key)
                 end
                 ]]
                 lobby_member_names[k] = nil
                 if (data.state == "arena" and GlobalsGetValue("arena_gamemode", "ffa") ~= "continuous") then
-                    if(steamutils.IsOwner(lobby))then
+                    if(steam_utils.IsOwner())then
                         ArenaGameplay.WinnerCheck(lobby, data)
                     end
                 end
@@ -3665,10 +3665,10 @@ ArenaGameplay = {
                 if(GameHasFlagRun("picked_up_new_heart"))then
                     GameRemoveFlagRun("picked_up_new_heart")
 
-                    if(not steamutils.IsOwner(lobby))then
+                    if(not steam_utils.IsOwner())then
                         networking.send.picked_heart(lobby, true)
                     else
-                        steamutils.AddLobbyFlag(lobby, tostring(steam.user.getSteamID()).."picked_heart")
+                        steamutils.AddLobbyFlag(lobby, tostring(steam_utils.getSteamID()).."picked_heart")
 
                     end
 
@@ -3957,7 +3957,7 @@ ArenaGameplay = {
 
         if (GameGetFrameNum() % 5 == 0) then
             -- if we are host
-            if (steamutils.IsOwner(lobby)) then
+            if (steam_utils.IsOwner()) then
                 ArenaGameplay.SendGameData(lobby, data)
             end
         end
@@ -4155,7 +4155,7 @@ ArenaGameplay = {
                     local entity_that_shot  = ComponentGetValue2(projectileComponent, "mEntityThatShot")
 
                     if(entity_that_shot == 0)then
-                        --math.randomseed( tonumber(tostring(steam.user.getSteamID())) + ((os.time() + GameGetFrameNum()) / 2))
+                        --math.randomseed( tonumber(tostring(steam_utils.getSteamID())) + ((os.time() + GameGetFrameNum()) / 2))
                         local rand = data.random.range(0, 100000)
                         local rng = math.floor(rand)
                         --GamePrint("Setting RNG: "..tostring(rng))

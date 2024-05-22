@@ -219,7 +219,7 @@ function data:New()
         DefinePlayers = function(self, lobby)
             local members = steamutils.getLobbyMembers(lobby)
             for k, member in pairs(members)do
-                if(member.id ~= steam.user.getSteamID())then
+                if(member.id ~= steam_utils.getSteamID())then
                     self:DefinePlayer(lobby, member.id)
                 end
             end

@@ -130,9 +130,9 @@ function playerinfo:New(lobby, user)
         self.wins = nil
         self.winstreak = nil
         
-        --[[if(steamutils.IsOwner(lobby))then
-            steam.matchmaking.setLobbyData(lobby, tostring(self.id).."_loaded", "false")
-            steam.matchmaking.setLobbyData(lobby, tostring(self.id).."_ready", "false")
+        --[[if(steam_utils.IsOwner())then
+            steam_utils.TrySetLobbyData(lobby, tostring(self.id).."_loaded", "false")
+            steam_utils.TrySetLobbyData(lobby, tostring(self.id).."_ready", "false")
         end]]
     end
     obj.Destroy = function(self)

@@ -453,7 +453,7 @@ SpectatorMode = {
             if(data.players[tostring(data.lobby_spectated_player)] == nil)then
                 return
             end
-            if (data.lobby_spectated_player ~= steam.user.getSteamID() and (data.players[tostring(data.lobby_spectated_player)].entity == nil or not EntityGetIsAlive(data.players[tostring(data.lobby_spectated_player)].entity))) then
+            if (data.lobby_spectated_player ~= steam_utils.getSteamID() and (data.players[tostring(data.lobby_spectated_player)].entity == nil or not EntityGetIsAlive(data.players[tostring(data.lobby_spectated_player)].entity))) then
 
                 --GamePrint("Loading player " .. tostring(member.id))
                 ArenaGameplay.SpawnClientPlayer(lobby, data.lobby_spectated_player, data, 0, 0)

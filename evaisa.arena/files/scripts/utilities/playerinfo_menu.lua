@@ -30,7 +30,7 @@ function playerinfo_menu:New()
 
     o.gui = GuiCreate()
 
-    local player_id = steam.user.getSteamID()
+    local player_id = steam_utils.getSteamID()
     local self_name = steamutils.getTranslatedPersonaName(player_id)
 
     o.Destroy = function(self)
