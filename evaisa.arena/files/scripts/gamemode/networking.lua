@@ -29,25 +29,17 @@ end
 
 
 local ffi = require("ffi")
+-- cdef memcmp
+ffi.cdef[[
+    int memcmp(const void *s1, const void *s2, size_t n);
+]]
+local memcmp = ffi.C.memcmp
 
--- Controls struct
+
+-- Keyboard struct
 ffi.cdef([[
 #pragma pack(push, 1)
 typedef struct A {
-    float aim_x;
-    float aim_y;
-    float aimNormal_x;
-    float aimNormal_y;
-    float aimNonZero_x;
-    float aimNonZero_y;
-    float mouse_x;
-    float mouse_y;
-    float mouseRaw_x;
-    float mouseRaw_y;
-    float mouseRawPrev_x;
-    float mouseRawPrev_y;
-    float mouseDelta_x;
-    float mouseDelta_y;
     bool kick:1;
     bool fire:1;
     bool fire2:1;
@@ -62,14 +54,37 @@ typedef struct A {
     bool fly:1;
     bool leftClick:1;
     bool rightClick:1;
-} Controls;
+} Keyboard;
 #pragma pack(pop)
 ]])
+
+-- Mouse struct
+ffi.cdef([[
+#pragma pack(push, 1)
+typedef struct B {
+    float aim_x;
+    float aim_y;
+    float aimNormal_x;
+    float aimNormal_y;
+    float aimNonZero_x;
+    float aimNonZero_y;
+    float mouse_x;
+    float mouse_y;
+    float mouseRaw_x;
+    float mouseRaw_y;
+    float mouseRawPrev_x;
+    float mouseRawPrev_y;
+    float mouseDelta_x;
+    float mouseDelta_y;
+} Mouse;
+#pragma pack(pop)
+]])
+
 
 -- Zone Update Struct
 ffi.cdef([[
 #pragma pack(push, 1)
-typedef struct B {
+typedef struct C {
     float zone_size;
     float shrink_time;
 } ZoneUpdate;
@@ -79,7 +94,7 @@ typedef struct B {
 -- Physics Update
 ffi.cdef([[
 #pragma pack(push, 1)
-typedef struct C {
+typedef struct D {
     int id;
     float x;
     float y;
@@ -95,7 +110,7 @@ typedef struct C {
 -- character pos
 ffi.cdef([[
 #pragma pack(push, 1)
-typedef struct D {
+typedef struct E {
     int frames_in_air;
     float x;
     float y;
@@ -118,7 +133,7 @@ typedef struct D {
 ]]
 ffi.cdef([[
 #pragma pack(push, 1)
-typedef struct E {
+typedef struct F {
     float x;
     float y;
     float r;
@@ -144,7 +159,7 @@ typedef struct E {
 ]]
 ffi.cdef([[
 #pragma pack(push, 1)
-typedef struct F {
+typedef struct G {
     float mFlyingTimeLeft;
     float fly_time_max;
     float air_in_lungs;
@@ -171,7 +186,7 @@ local msg_data = {
 ]]
 ffi.cdef([[
 #pragma pack(push, 1)
-typedef struct G {
+typedef struct H {
     float mana;
     int cast_delay_start_frame;
     int reload_frames_left;
@@ -195,7 +210,7 @@ typedef struct G {
 ]]
 ffi.cdef([[
 #pragma pack(push, 1)
-typedef struct H {
+typedef struct I {
     int ragdoll_fx;
     int damage_types;
     float knockback_force;
@@ -211,8 +226,20 @@ typedef struct H {
 #pragma pack(pop)
 ]])
 
+-- item switch
+ffi.cdef([[
+#pragma pack(push, 1)
+typedef struct J {
+    int slot_x;
+    int slot_y;
+    bool is_wand:1;
+} ItemSwitch;
+#pragma pack(pop)
+]])
 
-local Controls = ffi.typeof("Controls")
+
+local Keyboard = ffi.typeof("Keyboard")
+local Mouse = ffi.typeof("Mouse")
 local ZoneUpdate = ffi.typeof("ZoneUpdate")
 local PhysicsUpdate = ffi.typeof("PhysicsUpdate")
 local CharacterPos = ffi.typeof("CharacterPos")
@@ -220,6 +247,7 @@ local FireWand = ffi.typeof("FireWand")
 local PlayerStats = ffi.typeof("PlayerStats")
 local WandStats = ffi.typeof("WandStats")
 local DamageDetails = ffi.typeof("DamageDetails")
+local ItemSwitch = ffi.typeof("ItemSwitch")
 
 
 
@@ -768,15 +796,6 @@ networking = {
                 
             end
         end,
-        request_wand_update = function(lobby, message, user, data)
-           --[[ if(data.spectator_mode)then
-                return
-            end
-            data.client.previous_wand = nil
-            networking.send.wand_update(lobby, data, user, true)
-            networking.send.switch_item(lobby, data, user, true)
-            ]]
-        end,
         request_item_update = function(lobby, message, user, data)
             if(data.spectator_mode)then
                 return
@@ -786,7 +805,7 @@ networking = {
             networking.send.switch_item(lobby, data, user, true)
         end,
        
-        input = function(lobby, message, user, data)
+        keyboard = function(lobby, message, user, data)
             if(data.state ~= "arena" and not data.spectator_mode)then
                 return
             end
@@ -1026,7 +1045,7 @@ networking = {
                 end
 
                 --GlobalsSetValue(tostring(wand.entity_id).."_wand", wandInfo.id)
-                local is_wand, slot_x, slot_y = message[1], message[2], message[3]
+                local is_wand, slot_x, slot_y = message.is_wand, message.slot_x, message.slot_y
                 -- GamePrint("Switching item to slot: " .. tostring(slot_x) .. ", " .. tostring(slot_y))
                 if (data.players[tostring(user)].entity and EntityGetIsAlive(data.players[tostring(user)].entity)) then
                     local items = GameGetAllInventoryItems(data.players[tostring(user)].entity) or {}
@@ -1725,7 +1744,7 @@ networking = {
             GameAddFlagRun("ready_check")
             GameRemoveFlagRun("player_unready")
         end,
-        request_spectate_data = function(lobby, message, user, data)
+        --[[request_spectate_data = function(lobby, message, user, data)
            networking.send.spectate_data(lobby, data, user, true)
         end,
         spectate_data = function(lobby, message, user, data)
@@ -1740,7 +1759,7 @@ networking = {
                 local heart = EntityLoad("data/entities/animals/heart.xml", message.heart[1], message.heart[2])
                 EntityAddTag(heart, "spectator_simulated")
             end
-        end,
+        end,]]
         item_picked_up = function(lobby, message, user, data)
             if(data.state ~= "arena" and not data.spectator_mode)then
                 return
@@ -2303,6 +2322,18 @@ networking = {
                     is_on_ground = ComponentGetValue2(characterData, "is_on_ground"),
                     is_on_slippery_ground = ComponentGetValue2(characterData, "is_on_slippery_ground"),
                 }
+
+                if(data.client.last_character_pos == nil)then
+                    data.client.last_character_pos = c
+                end
+
+                -- use ffi.C.memcmp() to check if the character state has changed
+                local memcmp_result = memcmp(ffi.new("CharacterPos", data.client.last_character_pos), ffi.new("CharacterPos", c), ffi.sizeof("CharacterPos"))
+
+                -- if same, return
+                if(memcmp_result == 0)then
+                    return
+                end
         
                 -- Check if it's time to send an update based on frame delay
                 if current_frame - last_update_frame >= frame_delay then
@@ -2315,6 +2346,8 @@ networking = {
                         steamutils.send("character_position", c, steamutils.messageTypes.OtherPlayers, lobby, false, true)
                     end
                 end
+
+                data.client.last_character_pos = c
             end
         end,
         item_update = function(lobby, data, user, force, to_spectators)
@@ -2361,7 +2394,7 @@ networking = {
                 steamutils.sendToPlayer("request_item_update", {}, user, true)
             end
         end,
-        input = function(lobby, data, to_spectators)
+        keyboard = function(lobby, data, to_spectators)
             local player = player_helper.Get()
             if (player == nil) then
                 return
@@ -2384,15 +2417,8 @@ networking = {
                 local fly = ComponentGetValue2(controls, "mButtonDownFly") -- boolean
                 local leftClick = ComponentGetValue2(controls, "mButtonDownLeftClick") -- boolean
                 local rightClick = ComponentGetValue2(controls, "mButtonDownRightClick") -- boolean
-                local aim_x, aim_y = ComponentGetValue2(controls, "mAimingVector") -- float, float
-                local aimNormal_x, aimNormal_y = ComponentGetValue2(controls, "mAimingVectorNormalized") -- float, float
-                local aimNonZero_x, aimNonZero_y = ComponentGetValue2(controls, "mAimingVectorNonZeroLatest") -- float, float
-                local mouse_x, mouse_y = ComponentGetValue2(controls, "mMousePosition") -- float, float
-                local mouseRaw_x, mouseRaw_y = ComponentGetValue2(controls, "mMousePositionRaw") -- float, float
-                local mouseRawPrev_x, mouseRawPrev_y = ComponentGetValue2(controls, "mMousePositionRawPrev") -- float, float
-                local mouseDelta_x, mouseDelta_y = ComponentGetValue2(controls, "mMouseDelta") -- float, float
 
-                local c = Controls{
+                local c = Keyboard{
                     kick = kick,
                     fire = fire,
                     fire2 = fire2,
@@ -2407,6 +2433,49 @@ networking = {
                     fly = fly,
                     leftClick = leftClick,
                     rightClick = rightClick,
+                }
+
+                -- memcmp previous keyboard state to current state
+                if(data.client.previous_keyboard == nil)then
+                    data.client.previous_keyboard = c
+                end
+
+                -- use ffi.C.memcmp() to check if the keyboard state has changed
+      
+                local memcmp_result = memcmp(ffi.new("Keyboard", data.client.previous_keyboard), ffi.new("Keyboard", c), ffi.sizeof("Keyboard"))
+                
+                -- if same, return
+                if(memcmp_result == 0)then
+                    return
+                end
+                
+                if(to_spectators)then
+                    steamutils.send("keyboard", c, steamutils.messageTypes.Spectators, lobby, true, true)
+                else
+                    steamutils.send("keyboard", c, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+                end
+
+                data.client.previous_keyboard = c
+            end
+        end,
+        mouse = function(lobby, data, to_spectators)
+            local player = player_helper.Get()
+            if (player == nil) then
+                return
+            end
+            local controls = EntityGetFirstComponentIncludingDisabled(player, "ControlsComponent")
+
+            
+            if (controls ~= nil) then
+                local aim_x, aim_y = ComponentGetValue2(controls, "mAimingVector") -- float, float
+                local aimNormal_x, aimNormal_y = ComponentGetValue2(controls, "mAimingVectorNormalized") -- float, float
+                local aimNonZero_x, aimNonZero_y = ComponentGetValue2(controls, "mAimingVectorNonZeroLatest") -- float, float
+                local mouse_x, mouse_y = ComponentGetValue2(controls, "mMousePosition") -- float, float
+                local mouseRaw_x, mouseRaw_y = ComponentGetValue2(controls, "mMousePositionRaw") -- float, float
+                local mouseRawPrev_x, mouseRawPrev_y = ComponentGetValue2(controls, "mMousePositionRawPrev") -- float, float
+                local mouseDelta_x, mouseDelta_y = ComponentGetValue2(controls, "mMouseDelta") -- float, float
+
+                local c = Mouse{
                     aim_x = aim_x,
                     aim_y = aim_y,
                     aimNormal_x = aimNormal_x,
@@ -2423,103 +2492,24 @@ networking = {
                     mouseDelta_y = mouseDelta_y,
                 }
 
+                if(data.client.previous_mouse == nil)then
+                    data.client.previous_mouse = c
+                end
+      
+                local memcmp_result = memcmp(ffi.new("Mouse", data.client.previous_mouse), ffi.new("Mouse", c), ffi.sizeof("Mouse"))
+                
+                -- if same, return
+                if(memcmp_result == 0)then
+                    return
+                end
+                
                 if(to_spectators)then
-                    steamutils.send("input", c, steamutils.messageTypes.Spectators, lobby, false, true)
+                    steamutils.send("mouse", c, steamutils.messageTypes.Spectators, lobby, true, true)
                 else
-                    steamutils.send("input", c, steamutils.messageTypes.OtherPlayers, lobby, false, true)
+                    steamutils.send("mouse", c, steamutils.messageTypes.OtherPlayers, lobby, true, true)
                 end
 
-                --[[
-                local inputs = {
-                    kick = kick,
-                    fire = fire,
-                    fire2 = fire2,
-                    action = action,
-                    throw = throw,
-                    interact = interact,
-                    left = left,
-                    right = right,
-                    up = up,
-                    down = down,
-                    jump = jump,
-                    fly = fly,
-                    leftClick = leftClick,
-                    rightClick = rightClick,
-                    aim_x = round_to_decimal(aim_x, 2),
-                    aim_y = round_to_decimal(aim_y, 2),
-                    aimNormal_x = round_to_decimal(aimNormal_x, 2),
-                    aimNormal_y = round_to_decimal(aimNormal_y, 2),
-                    aimNonZero_x = round_to_decimal(aimNonZero_x, 2),
-                    aimNonZero_y = round_to_decimal(aimNonZero_y, 2),
-                    mouse_x = round_to_decimal(mouse_x, 2),
-                    mouse_y = round_to_decimal(mouse_y, 2),
-                    mouseRaw_x = round_to_decimal(mouseRaw_x, 2),
-                    mouseRaw_y = round_to_decimal(mouseRaw_y, 2),
-                    mouseRawPrev_x = round_to_decimal(mouseRawPrev_x, 2),
-                    mouseRawPrev_y = round_to_decimal(mouseRawPrev_y, 2),
-                    mouseDelta_x = round_to_decimal(mouseDelta_x, 2),
-                    mouseDelta_y = round_to_decimal(mouseDelta_y, 2),
-                }
-
-                local input_map = {
-                    kick = 1,
-                    fire = 2,
-                    fire2 = 3,
-                    action = 4,
-                    throw = 5,
-                    interact = 6,
-                    left = 7,
-                    right = 8,
-                    up = 9,
-                    down = 10,
-                    jump = 11,
-                    fly = 12,
-                    leftClick = 13,
-                    rightClick = 14,
-                    aim_x = 15,
-                    aim_y = 16,
-                    aimNormal_x = 17,
-                    aimNormal_y = 18,
-                    aimNonZero_x = 19,
-                    aimNonZero_y = 20,
-                    mouse_x = 21,
-                    mouse_y = 22,
-                    mouseRaw_x = 23,
-                    mouseRaw_y = 24,
-                    mouseRawPrev_x = 25,
-                    mouseRawPrev_y = 26,
-                    mouseDelta_x = 27,
-                    mouseDelta_y = 28,
-                }
-                if(data.client.previous_input == nil)then
-                    data.client.previous_input = {}
-                end
-
-                local changed_inputs = {}
-                for k, v in pairs(input_map)do
-
-                    if(data.client.previous_input[k] ~= nil)then
-                        if(data.client.previous_input[k] ~= inputs[k])then
-                           
-                            table.insert( changed_inputs, { v, inputs[k] })
-                        end
-                    end
-                end
-
-
-
-                -- send changed inputs to spectators and store current inputs
-                if(#changed_inputs > 0)then
-                    local to_send = changed_inputs
-
-                    if(to_spectators)then
-                        steamutils.send("input", to_send, steamutils.messageTypes.Spectators, lobby, false, true)
-                    else
-                        steamutils.send("input", to_send, steamutils.messageTypes.OtherPlayers, lobby, false, true)
-                    end
-                end
-
-                data.client.previous_input = inputs]]
+                data.client.previous_mouse = c
             end
         end,
         player_stats_update = function(lobby, data, to_spectators)
@@ -2542,11 +2532,25 @@ networking = {
                         money = ComponentGetValue2(wallet_comp, "money"),
                     }
 
+                    -- memcmp
+                    if(data.client.last_player_stats == nil)then
+                        data.client.last_player_stats = message
+                    end
+
+                    local memcmp_result = memcmp(ffi.new("PlayerStats", data.client.last_player_stats), ffi.new("PlayerStats", message), ffi.sizeof("PlayerStats"))
+                    
+                    -- if same, return
+                    if(memcmp_result == 0)then
+                        return
+                    end
+
                     if(to_spectators)then
                         steamutils.send("player_stats_update", message, steamutils.messageTypes.Spectators, lobby, true, true)
                     else
                         steamutils.send("player_stats_update", message, steamutils.messageTypes.OtherPlayers, lobby, true, true)
                     end
+
+                    data.client.last_player_stats = message
                 end
             end
         end,
@@ -2595,6 +2599,9 @@ networking = {
             local held_item = player_helper.GetActiveHeldItem()
             if (held_item ~= nil and held_item ~= 0) then
                 if (force or user ~= nil or held_item ~= data.client.previous_selected_item) then
+
+                    print("sending item switch")
+
                     --local wand_id = tonumber(GlobalsGetValue(tostring(held_item) .. "_item")) or -1
                     --if (wand_id ~= -1) then
                     local item_comp = EntityGetFirstComponentIncludingDisabled(held_item, "ItemComponent")
@@ -2612,16 +2619,23 @@ networking = {
                         is_wand = true
                     end
 
+                    local item = ItemSwitch{
+                        is_wand = is_wand,
+                        slot_x = slot_x,
+                        slot_y = slot_y,
+                    }
+
                     if (user == nil) then
                         if(to_spectators)then
-                            steamutils.send("switch_item", { is_wand, slot_x, slot_y }, steamutils.messageTypes.Spectators, lobby, true, true)
+                            steamutils.send("switch_item", item, steamutils.messageTypes.Spectators, lobby, true, true)
                         else
-                            steamutils.send("switch_item", { is_wand, slot_x, slot_y }, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+                            steamutils.send("switch_item", item, steamutils.messageTypes.OtherPlayers, lobby, true, true)
                         end
                         data.client.previous_selected_item = held_item
                     else
-                        steamutils.sendToPlayer("switch_item", { is_wand, slot_x, slot_y }, user, true)
+                        steamutils.sendToPlayer("switch_item", item, user, true)
                     end
+                    
                     --end
                 end
             end
@@ -2827,7 +2841,7 @@ networking = {
         lock_ready_state = function(lobby)
             steamutils.send("lock_ready_state", {}, steamutils.messageTypes.OtherPlayers, lobby, true)
         end,
-        request_spectate_data = function(lobby, user)
+        --[[request_spectate_data = function(lobby, user)
             steamutils.sendToPlayer("request_spectate_data", {}, user, true)
         end,
         spectate_data = function(lobby, data, user, force)
@@ -2852,7 +2866,7 @@ networking = {
                 end
             end
 
-        end,
+        end,]]
         --[[allow_round_end = function(lobby)
             steamutils.send("allow_round_end", {}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
         end,]]

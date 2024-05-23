@@ -2739,7 +2739,8 @@ ArenaGameplay = {
             networking.send.character_position(lobby, data, true)
 
         -- networking.send.wand_update(lobby, data, nil, nil, true)
-            networking.send.input(lobby, data, true)
+            networking.send.keyboard(lobby, data, true)
+            networking.send.mouse(lobby, data, true)
             --networking.send.animation_update(lobby, data, true)
             if(GameGetFrameNum() % 15 == 0)then
                 networking.send.player_data_update(lobby, data, true)
@@ -2750,7 +2751,7 @@ ArenaGameplay = {
                 end
             end
             networking.send.player_stats_update(lobby, data, true)
-            networking.send.spectate_data(lobby, data, nil, false)
+            --networking.send.spectate_data(lobby, data, nil, false)
 
             GameAddFlagRun("Immortal")
 
@@ -2891,7 +2892,7 @@ ArenaGameplay = {
 
         networking.send.request_sync_hm(lobby, user)
         networking.send.request_item_update(lobby, user)
-        networking.send.request_spectate_data(lobby, user)
+        --networking.send.request_spectate_data(lobby, user)
         networking.send.request_skin(lobby, user)
         networking.send.request_perk_update(lobby, user)
         
@@ -3361,7 +3362,8 @@ ArenaGameplay = {
                 end
                 networking.send.player_stats_update(lobby, data)
 
-                networking.send.input(lobby, data)
+                networking.send.keyboard(lobby, data)
+                networking.send.mouse(lobby, data)
 
                 --ArenaGameplay.CheckFiringBlock(lobby, data)
             end
@@ -3896,7 +3898,7 @@ ArenaGameplay = {
                 if (data.state == "arena") then
                     networking.send.switch_item(lobby, data)
                 else
-                    networking.send.switch_item(lobby, data, nil, true, true)
+                    networking.send.switch_item(lobby, data, nil, false, true)
                 end
             end
 
