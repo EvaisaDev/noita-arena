@@ -64,18 +64,10 @@ ffi.cdef([[
 typedef struct B {
     float aim_x;
     float aim_y;
-    float aimNormal_x;
-    float aimNormal_y;
-    float aimNonZero_x;
-    float aimNonZero_y;
     float mouse_x;
     float mouse_y;
     float mouseRaw_x;
     float mouseRaw_y;
-    float mouseRawPrev_x;
-    float mouseRawPrev_y;
-    float mouseDelta_x;
-    float mouseDelta_y;
 } Mouse;
 #pragma pack(pop)
 ]])
@@ -979,24 +971,40 @@ networking = {
                         controls_data.rightClick = false
                     end
 
+                end
+            end
+        end,
+        mouse = function(lobby, message, user, data)
+            if(data.state ~= "arena" and not data.spectator_mode)then
+                return
+            end
 
-                    --[[
-                    local aim_x, aim_y = ComponentGetValue2(controls, "mAimingVector") -- float, float
-                    local aimNormal_x, aimNormal_y = ComponentGetValue2(controls, "mAimingVectorNormalized") -- float, float
-                    local aimNonZero_x, aimNonZero_y = ComponentGetValue2(controls, "mAimingVectorNonZeroLatest") -- float, float
-                    local mouse_x, mouse_y = ComponentGetValue2(controls, "mMousePosition") -- float, float
-                    local mouseRaw_x, mouseRaw_y = ComponentGetValue2(controls, "mMousePositionRaw") -- float, float
-                    local mouseRawPrev_x, mouseRawPrev_y = ComponentGetValue2(controls, "mMousePositionRawPrev") -- float, float
-                    local mouseDelta_x, mouseDelta_y = ComponentGetValue2(controls, "mMouseDelta") -- float, float
-                    ]]
-    
+            if (not gameplay_handler.CheckPlayer(lobby, user, data)) then
+                return
+            end
+
+            -- check which inputs have changed
+            if (data.spectator_mode or (GameHasFlagRun("player_is_unlocked") and (not GameHasFlagRun("no_shooting")))) then
+                if (data.players[tostring(user)] ~= nil and data.players[tostring(user)].entity ~= nil and EntityGetIsAlive(data.players[tostring(user)].entity)) then
+                    local controlsComp = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity, "ControlsComponent")
+
                     ComponentSetValue2(controlsComp, "mAimingVector", message.aim_x, message.aim_y)
-                    ComponentSetValue2(controlsComp, "mAimingVectorNormalized", message.aimNormal_x, message.aimNormal_y)
-                    ComponentSetValue2(controlsComp, "mAimingVectorNonZeroLatest", message.aimNonZero_x, message.aimNonZero_y)
+
+                    -- get length of aiming vector
+                    local length = math.sqrt(message.aim_x * message.aim_x + message.aim_y * message.aim_y)
+                    local normalized_x, normalized_y = message.aim_x / length, message.aim_y / length
+
+                    ComponentSetValue2(controlsComp, "mAimingVectorNormalized", normalized_x, normalized_y)
+     
                     ComponentSetValue2(controlsComp, "mMousePosition", message.mouse_x, message.mouse_y)
+
+                    local mouse_raw_x_prev, mouse_raw_y_prev = ComponentGetValue2(controlsComp, "mMousePositionRawPrev")
+
+                    local dx, dy = message.mouseRaw_x - mouse_raw_x_prev, message.mouseRaw_y - mouse_raw_y_prev
+
                     ComponentSetValue2(controlsComp, "mMousePositionRaw", message.mouseRaw_x, message.mouseRaw_y)
-                    ComponentSetValue2(controlsComp, "mMousePositionRawPrev", message.mouseRawPrev_x, message.mouseRawPrev_y)
-                    ComponentSetValue2(controlsComp, "mMouseDelta", message.mouseDelta_x, message.mouseDelta_y)
+                    ComponentSetValue2(controlsComp, "mMousePositionRawPrev", message.mouseRaw_x, message.mouseRaw_y)
+                    ComponentSetValue2(controlsComp, "mMouseDelta", dx, dy)
 
                     local children = EntityGetAllChildren(data.players[tostring(user)].entity) or {}
                     for i, child in ipairs(children) do
@@ -1005,7 +1013,6 @@ networking = {
                             EntityApplyTransform(child, message.mouse_x, message.mouse_y)
                         end
                     end
-
                 end
             end
         end,
@@ -2478,18 +2485,10 @@ networking = {
                 local c = Mouse{
                     aim_x = aim_x,
                     aim_y = aim_y,
-                    aimNormal_x = aimNormal_x,
-                    aimNormal_y = aimNormal_y,
-                    aimNonZero_x = aimNonZero_x,
-                    aimNonZero_y = aimNonZero_y,
                     mouse_x = mouse_x,
                     mouse_y = mouse_y,
                     mouseRaw_x = mouseRaw_x,
                     mouseRaw_y = mouseRaw_y,
-                    mouseRawPrev_x = mouseRawPrev_x,
-                    mouseRawPrev_y = mouseRawPrev_y,
-                    mouseDelta_x = mouseDelta_x,
-                    mouseDelta_y = mouseDelta_y,
                 }
 
                 if(data.client.previous_mouse == nil)then
@@ -3031,7 +3030,7 @@ networking = {
             steamutils.send("hm_timer_update", frames, steamutils.messageTypes.OtherPlayers, lobby, true, true)
         end,
         hm_timer_clear = function(lobby)
-            steamutils.send("hm_timer_clear", {}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+            steamutils.send("hm_timer_clear", nil, steamutils.messageTypes.OtherPlayers, lobby, true, true)
         end,
         update_state = function(lobby, state)
             steam.matchmaking.setLobbyMemberData(lobby, "state", state)

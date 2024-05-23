@@ -2676,10 +2676,10 @@ ArenaGameplay = {
                 end)
             end
         else
-            if(steam_utils.IsOwner())then
-                networking.send.hm_timer_clear(lobby)
-            end
             if(data.hm_timer ~= nil)then
+                if(steam_utils.IsOwner())then
+                    networking.send.hm_timer_clear(lobby)
+                end
                 data.hm_timer.clear()
                 data.hm_timer = nil
             end
