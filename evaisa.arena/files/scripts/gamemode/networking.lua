@@ -2025,6 +2025,10 @@ networking = {
             if data.players[tostring(user)] then
                 data.players[tostring(user)].skin_data = message
 
+                if(skin_system and lobby)then
+                    skin_system.update_client_skin(lobby, data.players[tostring(user)].entity, user, data)
+                end
+
                 if(data.players[tostring(user)].entity)then
                     if(skin_system and lobby)then
                         skin_system.apply_skin_to_entity(lobby, data.players[tostring(user)].entity, user, data)

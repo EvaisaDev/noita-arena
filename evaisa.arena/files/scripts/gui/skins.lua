@@ -837,8 +837,7 @@ skins.init = function()
 
     end
 
-    self.apply_skin_to_entity = function(lobby, entity, user, data)
-
+    self.update_client_skin = function(lobby, entity, user, data)
         if user then
             if(not data.players[tostring(user)])then
                 return
@@ -869,10 +868,48 @@ skins.init = function()
             local texture_file_arm = string.format(get_content("mods/evaisa.arena/files/gfx/skins/player_arm.xml"), arm_path)
             local texture_file_name_arm = "data/evaisa.arena/cache/skin_arm_"..tostring(user).."_"..path_name..".xml"
             set_content(texture_file_name_arm, texture_file_arm)
+
+            data.players[tostring(user)].generated_skin = {
+                texture_file_name = texture_file_name,
+                texture_file_name_arm = texture_file_name_arm,
+                cape = cape,
+                cape_edge = cape_edge
+            }
+
+            
+            self.last_player_skins[tostring(user)] = {path = temp_path, xml_path = texture_file_name, arm_path = arm_path, arm_xml_path = texture_file_name_arm, cape = cape, cape_edge = cape_edge}
+            
+            return true
+        end
+    end
+
+    self.apply_skin_to_entity = function(lobby, entity, user, data)
+
+        if user then
+            if(not data.players[tostring(user)])then
+                return
+            end
+            local data = data.players[tostring(user)].skin_data
+            if not data or data == "" then
+                return
+            end
+
+            local generated_skin = data.players[tostring(user)].generated_skin
+            if(generated_skin == nil)then
+                -- generate skin
+                local success = self.update_client_skin(lobby, entity, user, data)
+
+                if(not success)then
+                    return
+                end
+
+                generated_skin = data.players[tostring(user)].generated_skin
+                
+            end
             
             local comp = EntityGetFirstComponentIncludingDisabled(entity, "SpriteComponent", "skin_root")
             if(comp)then
-                ComponentSetValue2(comp, "image_file", texture_file_name)
+                ComponentSetValue2(comp, "image_file", generated_skin.texture_file_name)
             end
 
             local children = EntityGetAllChildren(entity) or {}
@@ -880,21 +917,19 @@ skins.init = function()
                 if(EntityHasTag(child, "player_arm_r"))then
                     local comp = EntityGetFirstComponent(child, "SpriteComponent")
                     if(comp)then
-                        ComponentSetValue2(comp, "image_file", texture_file_name_arm)
+                        ComponentSetValue2(comp, "image_file", generated_skin.texture_file_name_arm)
                     end
                 end
                 if(EntityGetName(child) == "cape")then
                     local verlet_comp = EntityGetFirstComponent(child, "VerletPhysicsComponent")
 
                     if(verlet_comp)then
-                        ComponentSetValue2(verlet_comp, "cloth_color", cape)
-                        ComponentSetValue2(verlet_comp, "cloth_color_edge", cape_edge)
+                        ComponentSetValue2(verlet_comp, "cloth_color", generated_skin.cape)
+                        ComponentSetValue2(verlet_comp, "cloth_color_edge", generated_skin.cape_edge)
                     end
                 end
             end
 
-            self.last_player_skins[tostring(user)] = {path = temp_path, xml_path = texture_file_name, arm_path = arm_path, arm_xml_path = texture_file_name_arm, cape = cape, cape_edge = cape_edge}
-            
         elseif(self.last_player_skins["self"])then
             local comp = EntityGetFirstComponentIncludingDisabled(entity, "SpriteComponent", "skin_root")
             if(comp)then

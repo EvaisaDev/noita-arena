@@ -1,7 +1,5 @@
 dofile("mods/evaisa.arena/files/scripts/gui/image.lua")
 
-local fs = require("fs")
-
 local color_picker = {}
 
 color_picker.new = function()
