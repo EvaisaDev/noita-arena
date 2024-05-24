@@ -1457,6 +1457,8 @@ ArenaGameplay = {
                     GameDestroyInventoryItems(player.Get())
                 end
             end)
+
+
         else
             ArenaGameplay.ClearWorld()
         end

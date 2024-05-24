@@ -1785,7 +1785,9 @@ ArenaMode = {
         BiomeMapLoad_KeepPlayer("mods/evaisa.arena/files/scripts/world/map_arena.lua")
     end,
     start = function(lobby, was_in_progress)
-        skin_system.load(lobby)
+        RunWhenPlayerExists(function()
+            skin_system.load(lobby)
+        end)
 
         for i, v in ipairs(EntityGetWithTag("player_unit"))do
             EntityKill(v)
