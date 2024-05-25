@@ -8,7 +8,7 @@ dofile("mods/evaisa.arena/files/scripts/gamemode/misc/seed_gen.lua")
 local index = 0
 
 GetRandomActionWithType = function( x, y, level, type, i)
-	print("GetRandomActionWithType\n"..debug.traceback())
+	print("GetRandomActionWithType)
 
 	local seed_x, seed_y = get_new_seed( x + level, y + i, GameHasFlagRun("shop_sync") )
 	SetRandomSeed( seed_x, seed_y )
@@ -38,7 +38,7 @@ end]]
 
 local old_wand_add_random_cards = wand_add_random_cards
 function wand_add_random_cards( gun, entity_id, level, cost )
-	print("wand_add_random_cards\n"..debug.traceback())
+	print("wand_add_random_cards)
 
 	
 	if(not GameHasFlagRun("shop_no_tiers"))then
@@ -190,7 +190,7 @@ function wand_add_random_cards( gun, entity_id, level, cost )
 end
 
 function generate_gun( cost, level, force_unshuffle )
-	print("generate_gun\n"..debug.traceback())
+	print("generate_gun)
 
 	local entity_id = GetUpdatedEntityID()
 	local x, y = EntityGetTransform( entity_id )
