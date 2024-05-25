@@ -8,7 +8,7 @@ dofile("mods/evaisa.arena/files/scripts/gamemode/misc/seed_gen.lua")
 local index = 0
 
 GetRandomActionWithType = function( x, y, level, type, i)
-	--print("GetRandomActionWithType")
+	--
 
 	--local seed_x, seed_y = get_new_seed( x + level, y + i, GameHasFlagRun("shop_sync") )
 	--SetRandomSeed( seed_x, seed_y )
@@ -38,7 +38,7 @@ end]]
 
 local old_wand_add_random_cards = wand_add_random_cards
 function wand_add_random_cards( gun, entity_id, level, cost )
-	print("wand_add_random_cards")
+	
 
 	
 	if(not GameHasFlagRun("shop_no_tiers"))then
@@ -49,11 +49,11 @@ function wand_add_random_cards( gun, entity_id, level, cost )
 	local is_rare = gun["is_rare"]
 	local x, y = EntityGetTransform( entity_id )
 
-	print("wand_add_random_cards: 1")
+	
 	local seed_x, seed_y = get_new_seed( x + cost + level, y, GameHasFlagRun("shop_sync") )
 	SetRandomSeed( seed_x, seed_y )
 
-	print("wand_add_random_cards: 2")
+	
 
 	-- stuff in the gun
 	local good_cards = 5
@@ -66,7 +66,7 @@ function wand_add_random_cards( gun, entity_id, level, cost )
 	if( level == nil ) then level = 1 end
 	level = tonumber( level )
 
-	print("wand_add_random_cards: 3")
+	
 
 	local orig_level = level
 	level = level - 1
@@ -78,7 +78,7 @@ function wand_add_random_cards( gun, entity_id, level, cost )
 	local random_bullets = 0 
 	local good_card_count = 0
 
-	print("wand_add_random_cards: 4")
+	
 
 	if( Random(0,100) < 50 and card_count < 3 ) then card_count = card_count + 1 end 
 	
@@ -96,7 +96,7 @@ function wand_add_random_cards( gun, entity_id, level, cost )
 		random_bullets = 1
 	end
 
-	print("wand_add_random_cards: 5")
+	
 
 	if( Random( 0, 100 ) < 4 or is_rare == 1 ) then
 		local p = Random(0,100) 
@@ -119,7 +119,7 @@ function wand_add_random_cards( gun, entity_id, level, cost )
 		AddGunActionPermanent( entity_id, card )
 	end
 
-	print("wand_add_random_cards: 6")
+	
 
 	-- --------------- CARDS -------------------------
 	-- TODO: tweak the % 
@@ -130,14 +130,14 @@ function wand_add_random_cards( gun, entity_id, level, cost )
 
 		-- local bullet_card = GetRandomActionWithType( x, y, level, ACTION_TYPE_PROJECTILE, 0 )
 		local extra_level = level
-		print("wand_add_random_cards: 7")
+		
 
 		while( Random( 1, 10 ) == 10 ) do
 			extra_level = extra_level + 1
 			bullet_card = GetRandomActionWithType( x, y + cost, extra_level, ACTION_TYPE_PROJECTILE, 0 )
 		end
 
-		print("wand_add_random_cards: 8")
+		
 
 		if( card_count < 3 ) then
 			if( card_count > 1 and Random( 0, 100 ) < 20 ) then
@@ -178,9 +178,9 @@ function wand_add_random_cards( gun, entity_id, level, cost )
 			end
 		end
 
-		print("wand_add_random_cards: 9")
+		
 	else
-		print("wand_add_random_cards: 10")
+		
 		for i=1,card_count do
 			if( Random(0,100) < good_cards and card_count > 2 ) then
 				-- if actions_per_round == 1 and the first good card, then make sure it's a draw x
@@ -203,13 +203,13 @@ function wand_add_random_cards( gun, entity_id, level, cost )
 				end
 			end
 		end
-		print("wand_add_random_cards: 11")
+		
 	end
-	print("wand_add_random_cards: 12")
+	
 end
 
 function generate_gun( cost, level, force_unshuffle )
-	print("generate_gun")
+	
 
 	local entity_id = GetUpdatedEntityID()
 	local x, y = EntityGetTransform( entity_id )

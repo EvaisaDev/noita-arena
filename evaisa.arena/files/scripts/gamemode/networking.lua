@@ -569,8 +569,6 @@ networking = {
                 return
             end
 
-            print("Item update received!")
-
             if (data.players[tostring(user)].entity and EntityGetIsAlive(data.players[tostring(user)].entity)) then
                 --print("weewoo update items")
                 local items_data = message[1]
@@ -2334,8 +2332,6 @@ networking = {
                 steamutils.messageTypes.OtherPlayers, lobby, true, true)
         end,
         request_perk_update = function(lobby, user)
-            arena_log:print("Requesting perk update")
-
             if(user == nil)then
                 steamutils.send("request_perk_update", {}, steamutils.messageTypes.OtherPlayers, lobby, true)
             else
@@ -2661,8 +2657,6 @@ networking = {
             if (held_item ~= nil and held_item ~= 0) then
                 if (force or user ~= nil or held_item ~= data.client.previous_selected_item) then
 
-                    print("sending item switch")
-
                     --local wand_id = tonumber(GlobalsGetValue(tostring(held_item) .. "_item")) or -1
                     --if (wand_id ~= -1) then
                     local item_comp = EntityGetFirstComponentIncludingDisabled(held_item, "ItemComponent")
@@ -2837,7 +2831,6 @@ networking = {
 
             local perk_string = bitser.dumps(perk_info)
             if (user ~= nil or perk_string ~= data.client.previous_perk_string) then
-                arena_log:print("Sent perk update!!")
                 if(user)then
                     steamutils.sendToPlayer("perk_update", perk_info, user, true, true)
                 else
