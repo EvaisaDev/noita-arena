@@ -569,6 +569,8 @@ networking = {
                 return
             end
 
+            print("Item update received!")
+
             if (data.players[tostring(user)].entity and EntityGetIsAlive(data.players[tostring(user)].entity)) then
                 --print("weewoo update items")
                 local items_data = message[1]
@@ -2152,7 +2154,7 @@ networking = {
                         end
 
                         networking.send.request_item_update(lobby, user)
-                        networking.send.request_spectate_data(lobby, user)
+                        --networking.send.request_spectate_data(lobby, user)
                     end
                 end
             end
