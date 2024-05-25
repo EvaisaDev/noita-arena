@@ -1810,7 +1810,7 @@ networking = {
             end
             data.network_entity_cache = data.network_entity_cache or {}
 
-            local item_id = message.id
+            local item_id = math.floor(message.id)
             local x, y, r, vx, vy, vr = message.x, message.y, message.r, message.vel_x, message.vel_y, message.vel_a
 
             
