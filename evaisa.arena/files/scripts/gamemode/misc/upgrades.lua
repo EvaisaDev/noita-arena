@@ -737,6 +737,8 @@ upgrades = {
 
             if(wand ~= nil)then
 
+                SetRandomSeed( entity_who_picked + x + GameGetFrameNum(), wand + y + GameGetFrameNum() )
+
                 dofile("mods/evaisa.arena/files/scripts/misc/random_action.lua")
                 GetRandomActionWithType = function( x, y, level, type, i)
                     --print("Custom get action called!")
@@ -758,16 +760,16 @@ upgrades = {
                 local card = good_cards[ Random( 1, #good_cards ) ] or RandomAction(level)
     
                 if( r <= 50 ) then
-                    local p = random.range(1,100)
+                    local p = Random(1,100)
     
                     if( p <= 86 ) then
-                        card = GetRandomActionWithType( x + random.range(-1000, 1000), y + random.range(-1000, 1000), level, ACTION_TYPE_MODIFIER, 666 )
+                        card = GetRandomActionWithType( x + Random(-1000, 1000), y + Random(-1000, 1000), level, ACTION_TYPE_MODIFIER, 666 )
                     elseif( p <= 93 ) then
-                        card = GetRandomActionWithType( x + random.range(-1000, 1000), y + random.range(-1000, 1000), level, ACTION_TYPE_STATIC_PROJECTILE, 666 )
+                        card = GetRandomActionWithType( x + Random(-1000, 1000), y + Random(-1000, 1000), level, ACTION_TYPE_STATIC_PROJECTILE, 666 )
                     elseif ( p < 100 ) then
-                        card = GetRandomActionWithType( x + random.range(-1000, 1000), y + random.range(-1000, 1000), level, ACTION_TYPE_PROJECTILE, 666 )
+                        card = GetRandomActionWithType( x + Random(-1000, 1000), y + Random(-1000, 1000), level, ACTION_TYPE_PROJECTILE, 666 )
                     else
-                        card = GetRandomActionWithType( x + random.range(-1000, 1000), y + random.range(-1000, 1000), level, ACTION_TYPE_UTILITY, 666 )
+                        card = GetRandomActionWithType( x + Random(-1000, 1000), y + Random(-1000, 1000), level, ACTION_TYPE_UTILITY, 666 )
                     end
                 end
 
