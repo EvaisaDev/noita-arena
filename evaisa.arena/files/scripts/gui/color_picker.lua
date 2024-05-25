@@ -52,8 +52,8 @@ color_picker.new = function()
         for i, color_picker in ipairs(color_picker_ids)do
             for y = 0, color_picker.h - 1 do
                 for x = 0, color_picker.w - 1 do
-                    local pixel = getPixel(color_picker, x, y)
-                    local distance = math.abs(r - pixel[1]) + math.abs(g - pixel[2]) + math.abs(b - pixel[3])
+                    local c_r, c_g, c_b, c_a = getPixel(color_picker, x, y)
+                    local distance = math.abs(r - c_r) + math.abs(g - c_g) + math.abs(b - c_b)
                     if(distance < closest_distance)then
                         closest_distance = distance
                         closest_index = i
@@ -124,25 +124,25 @@ color_picker.new = function()
                 self.dragging_bar = true
 
                 --local color = ModImageGetPixel(color_picker_ids[self.bar_index + 1], self.picker_x, self.picker_y)
-                local pixel = getPixel(current_color_picker, self.picker_x, self.picker_y)
-                local color = color_merge(pixel[1], pixel[2], pixel[3], pixel[4])
+                local c_r, c_g, c_b, c_a = getPixel(current_color_picker, self.picker_x, self.picker_y)
+                local color = color_merge(c_r, c_g, c_b, c_a)
                 self.picked_color = color
-                self.current_hex = rgb_to_hex(pixel[1], pixel[2], pixel[3])
-                self.current_red = pixel[1]
-                self.current_green = pixel[2]
-                self.current_blue = pixel[3]
+                self.current_hex = rgb_to_hex(c_r, c_g, c_b)
+                self.current_red = c_r
+                self.current_green = c_g
+                self.current_blue = c_b
             elseif(self.dragging_picker or (picker_relative_x < color_picker_img.w and picker_relative_y < color_picker_img.h and picker_relative_x >= 0 and picker_relative_y >= 0))then
                 self.picker_x = math.max(0, math.min(color_picker_img.w - 1, picker_relative_x))
                 self.picker_y = math.max(0, math.min(color_picker_img.h - 1, picker_relative_y))
                 
                 --local color = ModImageGetPixel(color_picker_ids[self.bar_index + 1], self.picker_x, self.picker_y)
-                local pixel = getPixel(current_color_picker, self.picker_x, self.picker_y)
-                local color = color_merge(pixel[1], pixel[2], pixel[3], pixel[4])
+                local c_r, c_g, c_b, c_a = getPixel(current_color_picker, self.picker_x, self.picker_y)
+                local color = color_merge(c_r, c_g, c_b, c_a)
                 self.picked_color = color
-                self.current_hex = rgb_to_hex(pixel[1], pixel[2], pixel[3])
-                self.current_red = pixel[1]
-                self.current_green = pixel[2]
-                self.current_blue = pixel[3]
+                self.current_hex = rgb_to_hex(c_r, c_g, c_b)
+                self.current_red = c_r
+                self.current_green = c_g
+                self.current_blue = c_b
                 self.dragging_picker = true
             end
         else
