@@ -8,10 +8,10 @@ dofile("mods/evaisa.arena/files/scripts/gamemode/misc/seed_gen.lua")
 local index = 0
 
 GetRandomActionWithType = function( x, y, level, type, i)
-	print("GetRandomActionWithType")
+	--print("GetRandomActionWithType")
 
-	local seed_x, seed_y = get_new_seed( x + level, y + i, GameHasFlagRun("shop_sync") )
-	SetRandomSeed( seed_x, seed_y )
+	--local seed_x, seed_y = get_new_seed( x + level, y + i, GameHasFlagRun("shop_sync") )
+	--SetRandomSeed( seed_x, seed_y )
 
 	local action = RandomActionWithType( level, type, x * 324 + i, y * 436 - (i * 45) ) or "LIGHT_BULLET"
 	return action
