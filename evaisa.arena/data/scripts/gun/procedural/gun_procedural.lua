@@ -552,7 +552,6 @@ end
 ---------------------------------------------------------------------------------
 
 function WandDiff( gun, wand )
-	print("WandDiff")
 
 	local score = 0
 	score = score + ( math.abs( gun.fire_rate_wait - wand.fire_rate_wait ) * 2 )
@@ -599,6 +598,7 @@ function GetWand( gun )
 	gun_in_wand_space.spread_degrees = clamp( ((gun["spread_degrees"] + 5 ) / 5 ) - 1, 0, 2 )
 	gun_in_wand_space.reload_time = clamp( ((gun["reload_time"]+5)/25)-1, 0, 2 )
 
+	print("Pre wand loop")
 	for k,wand in pairs(wands) do
 		local score = WandDiff( gun_in_wand_space, wand )
 		if( score <= best_score ) then
@@ -610,6 +610,7 @@ function GetWand( gun )
 			end
 		end
 	end
+	print("Post wand loop")
 	return best_wand
 end
 
