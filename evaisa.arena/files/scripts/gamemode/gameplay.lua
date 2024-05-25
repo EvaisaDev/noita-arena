@@ -1345,7 +1345,7 @@ ArenaGameplay = {
     end,
     LoadLobby = function(lobby, data, show_message, first_entry)
         networking.send.update_state(lobby, "lobby")
-        
+        data.network_entity_cache = {}
         if(data.unstuck_ui)then
             GuiDestroy(data.unstuck_ui)
             data.unstuck_ui = nil
@@ -1696,6 +1696,7 @@ ArenaGameplay = {
         return math.floor(num * mult + 0.5) / mult
     end,
     LoadArena = function(lobby, data, show_message, map)
+        data.network_entity_cache = {}
         networking.send.update_state(lobby, "arena")
         
 

@@ -1808,11 +1808,65 @@ networking = {
             if(data.state ~= "arena" and not data.spectator_mode)then
                 return
             end
+            data.network_entity_cache = data.network_entity_cache or {}
 
-            local entities = EntityGetInRadiusWithTag(0, 0, 1000000000, "does_physics_update")
             local item_id = message.id
             local x, y, r, vx, vy, vr = message.x, message.y, message.r, message.vel_x, message.vel_y, message.vel_a
+
+            
             local takes_control = message.takes_control
+
+            local entities_cleanup = EntityGetInRadiusWithTag(0, 0, 1000, "does_physics_update")
+            
+            local has_found = {}
+            for k, v in ipairs(entities_cleanup)do
+                local entity_id = EntityHelper.GetVariable(v, "arena_entity_id")
+                if(entity_id ~= nil and entity_id == item_id)then
+                    if(has_found[entity_id])then
+                        EntityKill(v)
+                        return
+                    end
+
+                    has_found[entity_id] = true
+                end
+            end
+
+
+            -- check cache
+            for k = #data.network_entity_cache, 1, -1 do
+                local v = data.network_entity_cache[k]
+                if not EntityGetIsAlive(v[2]) then
+                    table.remove(data.network_entity_cache, k)
+                else
+                    if(v[1] == item_id)then
+                        local entity_id = v[2]
+
+                        if(takes_control)then
+                            for i = #data.controlled_physics_entities, 1, -1 do
+                                if(data.controlled_physics_entities[i] == entity_id)then
+                                    table.remove(data.controlled_physics_entities, i)
+    
+                                    --GamePrint("No longer in control")
+    
+                                end
+                            end
+                        end
+    
+                        local body_ids = PhysicsBodyIDGetFromEntity( entity_id )
+                        if(body_ids ~= nil and #body_ids > 0)then
+                            local body_id = body_ids[1]
+
+                            PhysicsBodyIDSetTransform(body_id, x, y, r, vx, vy, vr)
+                            
+                        end
+                        return
+                    end
+                end
+            end
+            
+            local entities = EntityGetInRadiusWithTag(0, 0, 1000000000, "does_physics_update")
+
+
             for k, v in ipairs(entities)do
                 --if(EntityGetFirstComponentIncludingDisabled(v, "ItemComponent") ~= nil)then
                 local entity_id = EntityHelper.GetVariable(v, "arena_entity_id")
@@ -1828,6 +1882,8 @@ networking = {
                             end
                         end
                     end
+
+                    table.insert(data.network_entity_cache, {item_id, v})
 
                     local body_ids = PhysicsBodyIDGetFromEntity( v )
                     if(body_ids ~= nil and #body_ids > 0)then
