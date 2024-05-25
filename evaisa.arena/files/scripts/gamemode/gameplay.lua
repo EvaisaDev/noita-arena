@@ -2861,7 +2861,7 @@ ArenaGameplay = {
             return
         end
 
-        print("Client player spawned!: )
+        print("Client player spawned!: ")
 
 
         local client = EntityLoad("mods/evaisa.arena/files/entities/client.xml", x or -1000, y or -1000)

@@ -320,7 +320,7 @@ gun_names = {
   ---------
 
 function SetItemSprite( entity_id, ability_comp, item_file, r )
-	print("SetItemSprite)
+	print("SetWandSprite")
 	if( r < 1000 ) then item_file = item_file .. "0" end
 	if( r < 100 ) then item_file = item_file .. "0" end
 	if( r < 10 ) then item_file = item_file .. "0" end
@@ -338,7 +338,7 @@ end
 
 
 function SetWandSprite( entity_id, ability_comp, item_file, offset_x, offset_y, tip_x, tip_y )
-	print("SetWandSprite)
+	print("SetWandSprite")
 	if( ability_comp ~= nil ) then
 		ComponentSetValue( ability_comp, "sprite_file", item_file)
 	end
@@ -369,7 +369,7 @@ function clamp(val, lower, upper)
 end
 
 local function shuffleTable( t )
-	print("shuffleTable)
+	print("shuffleTable")
 	assert( t, "shuffleTable() expected a table, got nil" )
 	local iterations = #t
 	local j
@@ -381,7 +381,7 @@ local function shuffleTable( t )
 end
 
 function init_total_prob( value )
-	print("init_total_prob)
+	print("init_total_prob")
 	value.total_prob = 0
 	for i,v in ipairs(value) do
 		if( v.prob ~= nil ) then
@@ -391,7 +391,7 @@ function init_total_prob( value )
 end
 
 function init_gun_probs()
-	print("init_gun_probs)
+	print("init_gun_probs")
 	for k,v in pairs(gun_probs) do
 		init_total_prob( gun_probs[k] )
 	end
@@ -399,7 +399,7 @@ end
 
 
 function get_gun_probs( what )
-	print("get_gun_probs)
+	print("get_gun_probs")
 	
 	-- if( what == nil ) then print( "ERROR - director_helpers - spawn() ... what = nil") end
     if( gun_probs[what] == nil ) then
@@ -432,7 +432,7 @@ end
 ------------------------ GENERATION FUNCTIONS -----------------------------------
 
 function apply_random_variable( t_gun, variable )
-	print("apply_random_variable)
+	print("apply_random_variable")
 
 	-- print( variable )
 	local cost = t_gun["cost"]
@@ -552,7 +552,7 @@ end
 ---------------------------------------------------------------------------------
 
 function WandDiff( gun, wand )
-	print("WandDiff)
+	print("WandDiff")
 
 	local score = 0
 	score = score + ( math.abs( gun.fire_rate_wait - wand.fire_rate_wait ) * 2 )
@@ -565,7 +565,7 @@ function WandDiff( gun, wand )
 end
 
 function GetWand( gun )
-	print("GetWand)
+	print("GetWand")
 
 	local best_wand = nil
 	local best_score = 1000
@@ -619,7 +619,7 @@ end
 
 function get_gun_data( cost, level, force_unshuffle )
 
-	print("get_gun_data)
+	print("get_gun_data")
 
 	-- Algorithm overview
 	-- We do the generation of these in random order. Each variable, looks at the cost and tries to figure out what's
@@ -784,7 +784,7 @@ end
 
 function wand_add_random_cards( gun, entity_id, level )
 
-	print("wand_add_random_cards)
+	print("wand_add_random_cards")
 
 	local is_rare = gun["is_rare"]
 	local x, y = EntityGetTransform( entity_id )
@@ -927,7 +927,7 @@ end
 
 function make_wand_from_gun_data( gun, entity_id, level )
 
-	print("make_wand_from_gun_data)
+	print("make_wand_from_gun_data")
 
 	local is_rare = gun["is_rare"]
 	local x, y = EntityGetTransform( entity_id )
@@ -989,7 +989,7 @@ function generate_gun( cost, level, force_unshuffle )
 	local x, y = EntityGetTransform( entity_id )
 	SetRandomSeed( x, y )
 
-	print("generate_gun)
+	print("generate_gun")
 
 	local gun = get_gun_data( cost, level, force_unshuffle )
 	make_wand_from_gun_data( gun, entity_id, level )
