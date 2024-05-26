@@ -306,6 +306,8 @@ local function TryUpdateData(lobby)
             end
         end
     end
+
+    content_hash = "tourney:"..tostring(content_hash)
     
 end
 
@@ -372,7 +374,7 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 163,
+    version = 164,
     required_online_version = 351,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
@@ -1998,7 +2000,7 @@ ArenaMode = {
 
         data.using_controller = GameGetIsGamepadConnected()
 
-        if (GameGetFrameNum() % 60 == 0) then
+        if (GameGetFrameNum() % 61 == 0) then
             if (data ~= nil) then
                 local unique_game_id = steamutils.GetLobbyData( "unique_game_id") or "0"
                 steamutils.SetLocalLobbyData(lobby, "unique_game_id", tostring(unique_game_id))

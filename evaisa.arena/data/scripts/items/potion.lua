@@ -57,14 +57,14 @@ materials_magic =
 		material="magic_liquid_unstable_teleportation",
 		cost=500,
 	},
-	{
+	--[[{
 		material="magic_liquid_polymorph",
 		cost=500,
 	},
 	{
 		material="magic_liquid_random_polymorph",
 		cost=500,
-	},
+	},]]
 	{
 		material="magic_liquid_berserk",
 		cost=500,
@@ -93,25 +93,24 @@ materials_magic =
 		material="magic_liquid_worm_attractor",
 		cost=800,
 	},
-	{
+	--[[{
 		material="magic_liquid_protection_all",
 		cost=800,
-	},
+	},]]
 	{
 		material="magic_liquid_mana_regeneration",
 		cost=500,
 	},
 }
 
+dofile("mods/evaisa.arena/files/scripts/gamemode/misc/seed_gen.lua")
+
 function init( entity_id )
 	local x,y = EntityGetTransform( entity_id )
 
-	local rounds = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0
-	local seed_x, seed_y = (x * 3256) + rounds * 765 + (GameGetFrameNum() / 30), (y * 5326) + rounds * 123 + (GameGetFrameNum() / 20)
-	if(GameHasFlagRun("shop_sync"))then
-        seed_x, seed_y = (x * 3256) + rounds * 765, (y * 5326) + rounds * 123
-	end
+	local seed_x, seed_y = get_new_seed( x, y, GameHasFlagRun("shop_sync") )
 	SetRandomSeed( seed_x, seed_y )
+	
 
 	
 	local potion_material = "water"

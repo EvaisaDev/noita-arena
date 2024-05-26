@@ -1005,12 +1005,12 @@ ArenaGameplay = {
                     end
                 end
 
-                if (GameGetFrameNum() % 60 == 0) then
+                if (GameGetFrameNum() % 53 == 0) then
                     ArenaGameplay.DamageZoneCheck(0, 0, data.zone_size, data.zone_size + 200)
 
                 end
             else
-                if (GameGetFrameNum() % 60 == 0) then
+                if (GameGetFrameNum() % 54 == 0) then
                     ArenaGameplay.DamageFloorCheck(zone_floor, zone_floor + 200)
                 end
             end
@@ -2730,11 +2730,11 @@ ArenaGameplay = {
                 data.spectator_lobby_loaded = true
                 SpectatorMode.SpawnSpectatedPlayer(lobby, data)
             end
-            if(GameGetFrameNum() % 15 == 0 and GlobalsGetValue("arena_gamemode", "ffa") ~= "continuous")then
+            if(GameGetFrameNum() % 17 == 0 and GlobalsGetValue("arena_gamemode", "ffa") ~= "continuous")then
                 ArenaGameplay.RunReadyCheck(lobby, data)
             end
 
-            if(data.lobby_spectated_player ~= nil and GameGetFrameNum() % 120 == 0)then
+            if(data.lobby_spectated_player ~= nil and GameGetFrameNum() % 123 == 0)then
                 networking.send.request_sync_hm(lobby, data.lobby_spectated_player, data.last_synced_entity_count)
             end
         else
@@ -2745,14 +2745,18 @@ ArenaGameplay = {
             networking.send.keyboard(lobby, data, true)
             networking.send.mouse(lobby, data, true)
             --networking.send.animation_update(lobby, data, true)
-            if(GameGetFrameNum() % 15 == 0)then
+            if(GameGetFrameNum() % 13 == 0)then
                 networking.send.player_data_update(lobby, data, true)
+            end
+
+            if(GameGetFrameNum() % 17 == 0)then
                 if(GlobalsGetValue("arena_gamemode", "ffa") ~= "continuous")then
                     ArenaGameplay.RunReadyCheck(lobby, data)
                 
                     networking.send.ready(lobby, data.client.ready or false, false)
                 end
             end
+
             networking.send.player_stats_update(lobby, data, true)
             --networking.send.spectate_data(lobby, data, nil, false)
 
@@ -2773,16 +2777,17 @@ ArenaGameplay = {
                 ArenaGameplay.SetReady(lobby, data, false)
             end
 
-            if (GameGetFrameNum() % 5 == 0) then
-                -- message_handler.send.UpdateHp(lobby, data)
+            if (GameGetFrameNum() % 6 == 0) then
                 networking.send.health_update(lobby, data)
-                --message_handler.send.SendPerks(lobby)
+            end
+
+            if (GameGetFrameNum() % 7 == 0) then
                 networking.send.perk_update(lobby, data)
             end
                         
         end
 
-        if(GameGetFrameNum() % 120 == 0)then
+        if(GameGetFrameNum() % 122 == 0)then
             networking.send.request_perk_update(lobby)
         end
 
@@ -3357,7 +3362,7 @@ ArenaGameplay = {
             end
             if (data.players_loaded) then
 
-                if(GameGetFrameNum() % 15 == 0)then
+                if(GameGetFrameNum() % 18 == 0)then
                     networking.send.player_data_update(lobby, data)
                 end
                 networking.send.player_stats_update(lobby, data)
@@ -3502,7 +3507,7 @@ ArenaGameplay = {
             SpectatorMode.UpdateSpectatorEntity(lobby, data)
             SpectatorMode.HandleSpectatorSync(lobby, data)
 
-            if(GameGetFrameNum() % 60 == 0)then
+            if(GameGetFrameNum() % 57 == 0)then
                 local InventoryGuiComponent = EntityGetFirstComponentIncludingDisabled(data.spectator_entity, "InventoryGuiComponent")
                 if(InventoryGuiComponent ~= nil)then
                     EntitySetComponentIsEnabled(data.spectator_entity, InventoryGuiComponent, data.selected_client ~= nil)
@@ -3691,7 +3696,7 @@ ArenaGameplay = {
             ArenaGameplay.CancelFire(lobby, data)
         end
         ArenaGameplay.UpdateTweens(lobby, data)
-        if (GameGetFrameNum() % 60 == 0) then
+        if (GameGetFrameNum() % 59 == 0) then
             ArenaGameplay.ValidatePlayers(lobby, data)
         end
     end,
@@ -3957,7 +3962,7 @@ ArenaGameplay = {
             end
         end
 
-        if (GameGetFrameNum() % 5 == 0) then
+        if (GameGetFrameNum() % 6 == 0) then
             -- if we are host
             if (steam_utils.IsOwner()) then
                 ArenaGameplay.SendGameData(lobby, data)
