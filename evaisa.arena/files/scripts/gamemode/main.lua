@@ -307,7 +307,10 @@ local function TryUpdateData(lobby)
         end
     end
 
-    content_hash = "tourney:"..tostring(content_hash)
+    -- check if content hash does not start with "tourney:"
+    if(string.sub(tostring(content_hash), 1, 7) ~= "tourney")then
+        content_hash = "tourney:"..tostring(content_hash)
+    end
     
 end
 
@@ -374,7 +377,7 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 164,
+    version = 165,
     required_online_version = 351,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
