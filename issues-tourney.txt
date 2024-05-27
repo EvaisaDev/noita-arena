@@ -1,0 +1,19 @@
+- inventory randomly goes invisible in spectator mode
+- inventory flashes when players edit in spectator mode
+- remove procedural script from EZWand default wand for performance
+- client entities can die to electricity :/
+- spamming the spell refresh causes spectators to lag
+- round only ends for lobby owner
+- flasks are pure white in spectator inventory
+- shops desync sometimes?
+- items fall through shop pedestals
+- practice dummy doesn't sync to spectators
+- when entering the arena the spectator doesn't target a player sometimes.
+- spectators load items into the arena sometimes
+- spectators gain wand card effects
+- wand shows on spectator entity sometimes
+- Tab button locks up sometimes for spectators(?
+- Swapper desyncs and teleports you to players
+- shops desync with extra item(?
+- spectator can't see cards
+- if players are standing still when spectator teleports they will show in the wrong position
