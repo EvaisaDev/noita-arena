@@ -128,7 +128,7 @@ sorted_perk_list = sorted_perk_list or nil
 sorted_perk_list_ids = sorted_perk_list_ids or nil
 sorted_map_list = sorted_map_list or nil
 sorted_map_list_ids = sorted_map_list_ids or nil
-
+checksum_materials_done = false
 
 
 local function ifind(s, pattern, init, plain)
@@ -163,6 +163,7 @@ local function TryUpdateData(lobby)
         content_hash = 0
         sorted_spell_list = {}
         sorted_spell_list_ids = {}
+
         for _, spell in pairs(actions)do
             table.insert(sorted_spell_list, spell)
             table.insert(sorted_spell_list_ids, spell)
@@ -196,6 +197,24 @@ local function TryUpdateData(lobby)
         table.sort(sorted_perk_list_ids, function(a, b)
             return GameTextGetTranslatedOrNot(a.id) < GameTextGetTranslatedOrNot(b.id)
         end)
+    end
+
+    if(not checksum_materials_done)then
+        checksum_materials_done = true
+
+        local mats = {
+            CellFactory_GetAllFires(true, true),
+            CellFactory_GetAllGases(true, true),
+            CellFactory_GetAllLiquids(true, true),
+            CellFactory_GetAllSolids(true, true),
+            CellFactory_GetAllSands(true, true),
+        }
+        
+        for _, mat_list in ipairs(mats)do
+            for _, material in ipairs(mat_list)do
+                content_hash = content_hash + (string.bytes(CellFactory_GetName(material)) * material)
+            end
+        end
     end
 
     if(sorted_map_list == nil)then
@@ -1590,9 +1609,13 @@ ArenaMode = {
 
         local upgrades_system = steam.matchmaking.getLobbyData(lobby, "setting_upgrades_system")
         if (upgrades_system == nil) then
-            upgrades_system = false
+            upgrades_system = "false"
         end
-        GlobalsSetValue("upgrades_system", tostring(upgrades_system))
+        if (upgrades_system == "true") then
+            GameAddFlagRun("upgrades_system")
+        else
+            GameRemoveFlagRun("upgrades_system")
+        end
 
         local upgrades_catchup = steam.matchmaking.getLobbyData(lobby, "setting_upgrades_catchup")
         if (upgrades_catchup == nil) then

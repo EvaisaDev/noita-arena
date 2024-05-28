@@ -369,7 +369,7 @@ networking = {
                             GameAddFlagRun("first_death")
                             GamePrint(GameTextGetTranslatedOrNot("$arena_compensation_winner"))
                         end
-                        if(GlobalsGetValue("upgrades_system", "false") == "true")then
+                        if(GameHasFlagRun("upgrades_system"))then
                             local catchup_mechanic_upgrades = GlobalsGetValue("upgrades_catchup", "losers")
                             if(catchup_mechanic_upgrades == "winner")then
                                 GameAddFlagRun("pick_upgrade")

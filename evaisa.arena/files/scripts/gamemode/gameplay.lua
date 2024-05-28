@@ -527,6 +527,7 @@ ArenaGameplay = {
         GlobalsSetValue("smash_knockback", "1" )
         GlobalsSetValue("smash_knockback_dummy", "1")
 
+        print("Resetting everything!!!")
 
 
         if (steam_utils.IsOwner()) then
@@ -1116,7 +1117,7 @@ ArenaGameplay = {
                     GameAddFlagRun("first_death")
                     GamePrint(GameTextGetTranslatedOrNot("$arena_compensation_winner"))
                 end
-                if(GlobalsGetValue("upgrades_system", "false") == "true")then
+                if(GameHasFlagRun("upgrades_system"))then
                     local catchup_mechanic_upgrades = GlobalsGetValue("upgrades_catchup", "losers")
                     if(catchup_mechanic_upgrades == "winner")then
                         GameAddFlagRun("pick_upgrade")
@@ -1237,9 +1238,20 @@ ArenaGameplay = {
                 
                 GamePrint(GameTextGetTranslatedOrNot("$arena_compensation"))
             end
-            if(GlobalsGetValue("upgrades_system", "false") == "true")then
+            if(GameHasFlagRun("upgrades_system"))then
                 local catchup_mechanic_upgrades = GlobalsGetValue("upgrades_catchup", "losers")
-                if(catchup_mechanic_upgrades == "losers" or (data.deaths == 0 and catchup_mechanic_upgrades == "first_death"))then
+
+                -- check if we were the last to die
+                local alive = (not data.spectator_mode and data.client.alive) and 1 or 0
+                for k, v in pairs(data.players) do
+                    if (v.alive) then
+                        alive = alive + 1
+                    end
+                end
+
+                local last = alive == 1
+
+                if((catchup_mechanic_upgrades == "losers" and not last) or (data.deaths == 0 and catchup_mechanic_upgrades == "first_death"))then
                     GameAddFlagRun("pick_upgrade")
                 end
             end
@@ -1393,9 +1405,13 @@ ArenaGameplay = {
             if(catchup_mechanic == "everyone")then
                 GameAddFlagRun("first_death")
             end
-            if(GlobalsGetValue("upgrades_system", "false") == "true")then
+            if(GameHasFlagRun("upgrades_system"))then
                 local catchup_mechanic_upgrades = GlobalsGetValue("upgrades_catchup", "losers")
+
+                print("Card catchup: "..tostring(catchup_mechanic_upgrades))
+
                 if(catchup_mechanic_upgrades == "everyone")then
+                    print("Okay player should pick card!")
                     GameAddFlagRun("pick_upgrade")
                 end
             end
@@ -1507,9 +1523,13 @@ ArenaGameplay = {
 
 
             if (not data.client.player_loaded_from_data) then
-                if(GlobalsGetValue("upgrades_system", "false") == "true" and GameHasFlagRun("pick_upgrade"))then
-                    data.upgrade_system = upgrade_system.create(3, function(upgrade)
-                        data.upgrade_system = nil
+                if GameHasFlagRun("upgrades_system") then
+                    RunWhenPlayerExists(function()
+                        if(GameHasFlagRun("pick_upgrade"))then
+                            data.upgrade_system = upgrade_system.create(3, function(upgrade)
+                                data.upgrade_system = nil
+                            end)
+                        end
                     end)
                 end
                 GameRemoveFlagRun("picked_health")
