@@ -3,9 +3,6 @@
 	<VelocityComponent>
 	</VelocityComponent>
 
-	<SimplePhysicsComponent>
-	</SimplePhysicsComponent>
-	 
 	<HitboxComponent 
 		aabb_min_x="-6" 
 		aabb_max_x="6" 
@@ -17,13 +14,22 @@
     <StreamingKeepAliveComponent/>
 
 	<InteractableComponent
-		radius="14"
-		name="refresh"
-		ui_text="$arena_use_refresh"
+		radius="30"
+		name="card_pick"
+		ui_text="$arena_card_pick"
+	/>
+
+	<SpriteOffsetAnimatorComponent
+		y_amount = "1"
+		y_speed = "1"
 	/>
 
 	<LuaComponent 
-		script_interacting="mods/evaisa.arena/files/scripts/gamemode/misc/spell_refresh.lua" >
+		script_interacting="mods/evaisa.arena/files/scripts/gamemode/misc/card_pick.lua" 
+		script_source_file = "mods/evaisa.arena/files/scripts/gamemode/misc/card_pick.lua"
+        execute_on_added = "1"
+        execute_every_n_frame = "5"
+		>
 	</LuaComponent>
 
 	<LightComponent 
@@ -37,11 +43,11 @@
 
 	<SpriteComponent 
 		alpha="1" 
-		image_file="data/items_gfx/spell_refresh.xml" 
+		image_file="mods/evaisa.arena/files/sprites/entities/cards.png" 
 		next_rect_animation="" 
 		rect_animation="" 
 		offset_x="9"
-		offset_y="18"
+		offset_y="5"
 		z_index="20" >
 	</SpriteComponent>
 

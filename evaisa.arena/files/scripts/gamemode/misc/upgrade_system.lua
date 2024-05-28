@@ -134,7 +134,7 @@ local upgrade_system = {
 
             local x, y = GuiGetScreenDimensions(self.gui)
 
-            local skip_enabled = true
+            local skip_enabled = false
             local added_index = 0
             if(skip_enabled)then
                 added_index = 1

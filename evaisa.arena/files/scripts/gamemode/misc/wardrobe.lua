@@ -12,7 +12,7 @@ if(player == nil)then
     return
 end
 
-local max_distance = 50
+local max_distance = 30
 local x, y = EntityGetTransform(entity)
 local px, py = EntityGetTransform(player)
 

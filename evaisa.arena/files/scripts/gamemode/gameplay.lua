@@ -3535,7 +3535,7 @@ ArenaGameplay = {
 
         end
 
-        if(data.upgrade_system ~= nil and not IsPaused())then
+        if(GameHasFlagRun("card_menu_open") and data.upgrade_system ~= nil and not IsPaused())then
             data.upgrade_system:draw()
         end
 

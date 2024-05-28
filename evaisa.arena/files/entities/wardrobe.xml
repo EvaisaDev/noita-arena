@@ -2,7 +2,7 @@
     <InteractableComponent
         _enabled="1"
         _tags="wardrobe"
-        radius = "50"
+        radius = "30"
         ui_text = "Press $0 to toggle wardrobe"
         name = "wardrobe"
     />

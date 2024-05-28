@@ -12,6 +12,7 @@ local smallfolk = dofile("mods/evaisa.arena/lib/smallfolk.lua")
 
 RegisterSpawnFunction( 0xff6d934c, "spawn_hp" )
 RegisterSpawnFunction( 0xff5b8b31, "spawn_refresh" )
+RegisterSpawnFunction( 0xff4090e1, "spawn_card_pick" )
 
 RegisterSpawnFunction( 0xff03fade, "spawn_spell_visualizer" )
 RegisterSpawnFunction( 0xff33934c, "spawn_all_shopitems" )
@@ -22,6 +23,12 @@ RegisterSpawnFunction( 0xff7345DF, "spawn_perk_reroll" )
 RegisterSpawnFunction( 0xffd14158, "spawn_target_dummy")
 RegisterSpawnFunction( 0xffc5529d, "spawn_item_shop_item")
 RegisterSpawnFunction( 0xffd8b950, "spawn_wardrobe")
+
+function spawn_card_pick ( x, y )
+	if(GameHasFlagRun("pick_upgrade"))then
+		EntityLoad( "mods/evaisa.arena/files/entities/misc/card_pick.xml", x, y - 6 )
+	end
+end
 
 function spawn_workshop( x, y )
 	--EntityLoad( "data/entities/buildings/workshop.xml", x, y )

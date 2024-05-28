@@ -2137,19 +2137,40 @@ networking = {
             -- destroy all applicable entities
             SpectatorMode.ClearHM()
 
-            data.last_synced_entity_count = #message
+
+            local entities = message[2]
+
+            data.last_synced_entity_count = #entities
             
-            networking.send.request_second_row(lobby, user)
+            --networking.send.request_second_row(lobby, user)
 
-            delay.new(2, function()
+            --delay.new(2, function()
 
-                for k, v in ipairs(message)do
-                    local ent = EntityCreateNew()
-                    local x, y, entity_data, uid = unpack(v)
-                    np.DeserializeEntity(ent, entity_data, x, y)
-                    
-                end
-            end)
+            local second_row_entities = EntityGetWithTag("hm_platform")
+            for k, v in ipairs(second_row_entities)do
+                EntityKill(v)
+            end
+
+            local second_row_spots = message[1]
+            
+            for k, v in ipairs(second_row_spots)do
+                local x, y = unpack(v)
+                --print("Spawning second row at: " .. tostring(x) .. ", " .. tostring(y))
+                --LoadPixelScene( "data/biome_impl/temple/shop_second_row.png", "data/biome_impl/temple/shop_second_row_visual.png", x, y, "", true )
+                EntityLoad("mods/evaisa.arena/files/entities/misc/hm_shop_platform.xml", x, y)
+            end
+
+
+            for k, v in ipairs(entities)do
+                local ent = EntityCreateNew()
+                local x, y, entity_data, uid = unpack(v)
+                np.DeserializeEntity(ent, entity_data, x, y)
+                
+            end
+
+
+
+            --end)
             
         end,
         pick_hm_entity = function(lobby, message, user, data)
@@ -2184,7 +2205,11 @@ networking = {
 
                         elseif(EntityGetFilename(entity) == "mods/evaisa.arena/files/entities/misc/spell_refresh.xml")then
                             was_refresh = true
-                            EntityLoad("data/entities/particles/image_emitters/spell_refresh_effect.xml", entity_x, entity_y-12)
+                            data.last_refreshed = data.last_refreshed or 0
+                            if(GameGetFrameNum() - data.last_refreshed > 60)then
+                                data.last_refreshed = GameGetFrameNum()
+                                EntityLoad("data/entities/particles/image_emitters/spell_refresh_effect.xml", entity_x, entity_y-12)
+                            end
                         elseif(EntityHasTag(entity, "heart"))then
                             EntityLoad("data/entities/particles/image_emitters/heart_fullhp_effect.xml", entity_x, entity_y-12)
                             EntityLoad("data/entities/particles/heart_out.xml", entity_x, entity_y-8)
@@ -3065,9 +3090,9 @@ networking = {
 
                 
                 if(user)then
-                    steamutils.sendToPlayer("sync_hm", to_sync, user, true, true)
+                    steamutils.sendToPlayer("sync_hm", {smallfolk.loads(GlobalsGetValue("temple_second_row_spots", "{}")), to_sync}, user, true, true)
                 else
-                    steamutils.send("sync_hm", to_sync, steamutils.messageTypes.Spectators, lobby, true, true)
+                    steamutils.send("sync_hm", { smallfolk.loads(GlobalsGetValue("temple_second_row_spots", "{}")), to_sync}, steamutils.messageTypes.Spectators, lobby, true, true)
                 end
             end)
           
