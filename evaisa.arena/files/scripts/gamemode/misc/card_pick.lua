@@ -23,9 +23,9 @@ if(math.abs(x - px) > max_distance or math.abs(y - py) > max_distance)then
 end
 
 if(GameHasFlagRun("card_menu_open"))then
-    ComponentSetValue2(interactComp, "ui_text", GameTextGetTranslatedOrNot("$arena_card_pick"))
-else
     ComponentSetValue2(interactComp, "ui_text", GameTextGetTranslatedOrNot("$arena_card_pick_2"))
+else
+    ComponentSetValue2(interactComp, "ui_text", GameTextGetTranslatedOrNot("$arena_card_pick"))
 end
 
 function interacting( entity_who_interacted, entity_interacted, interactable_name )
@@ -33,11 +33,11 @@ function interacting( entity_who_interacted, entity_interacted, interactable_nam
     if(GameHasFlagRun("card_menu_open"))then
         GameRemoveFlagRun("chat_bind_disabled")
         GameRemoveFlagRun("card_menu_open")
-        ComponentSetValue2(interactComp, "ui_text", GameTextGetTranslatedOrNot("$arena_card_pick"))
+        ComponentSetValue2(interactComp, "ui_text", GameTextGetTranslatedOrNot("$arena_card_pick_2"))
     else
         GameAddFlagRun("chat_bind_disabled")
         GameAddFlagRun("card_menu_open")
-        ComponentSetValue2(interactComp, "ui_text", GameTextGetTranslatedOrNot("$arena_card_pick_2"))
+        ComponentSetValue2(interactComp, "ui_text", GameTextGetTranslatedOrNot("$arena_card_pick"))
     end
 
     --GamePrint("Not implemented yet :(")

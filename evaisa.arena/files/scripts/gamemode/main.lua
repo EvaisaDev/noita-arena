@@ -453,7 +453,7 @@ ArenaMode = {
         bindings:RegisterBinding("arena_spectator_fast_move_joy", "Arena - Spectator [gamepad]", "Move Fast", "gamepad_right_trigger", "axis_button", false, false, false, false, true)
     
         -- Card system keyboard bindings
-        bindings:RegisterBinding("arena_cards_select_card", "Arena - Cards [keyboard]", "Take selected card", "Key_e", "key", false, true, false, false)
+        bindings:RegisterBinding("arena_cards_select_card1", "Arena - Cards [keyboard]", "Take selected card", "Key_ENTER", "key", false, true, false, false)
 
         -- Card system gamepad bindings
         bindings:RegisterBinding("arena_cards_select_card_joy", "Arena - Cards [gamepad]", "Take selected card", "JOY_BUTTON_A", "joy", false, false, true, false)

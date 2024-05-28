@@ -97,6 +97,14 @@ local upgrade_system = {
 
         self.pick = function(self)
 
+            local card_entity = EntityGetWithName("card_pick")
+            if(card_entity ~= nil)then
+                EntityKill(card_entity)
+            end
+
+            GameRemoveFlagRun("chat_bind_disabled")
+            GameRemoveFlagRun("card_menu_open")
+            
             if(self.skip_selected == true)then
                 self:clean()
                 callback()
@@ -285,7 +293,7 @@ local upgrade_system = {
             end
 
             local keys_pressed = {
-                e = bindings:IsJustDown("arena_cards_select_card"),
+                e = bindings:IsJustDown("arena_cards_select_card1"),
                 left_click = input:WasMousePressed("left"),
             }
 

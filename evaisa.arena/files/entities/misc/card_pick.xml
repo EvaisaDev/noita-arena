@@ -1,4 +1,4 @@
-<Entity tags="drillable,hittable,teleportable_NOT,item_pickup">
+<Entity name="card_pick" tags="card_pick">
 	
 	<VelocityComponent>
 	</VelocityComponent>
