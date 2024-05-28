@@ -1652,11 +1652,11 @@ ArenaGameplay = {
             -- load map
             if(GameHasFlagRun("item_shop"))then
                 BiomeMapLoad_KeepPlayer("mods/evaisa.arena/files/scripts/world/map_lobby.lua",
-                "mods/evaisa.arena/files/biome/holymountain_itemshop_scenes.xml")
+                "mods/evaisa.arena/files/biome/pixelscenes/temple_itemshop.xml")
             else
                 BiomeMapLoad_KeepPlayer("mods/evaisa.arena/files/scripts/world/map_lobby.lua",
-                "mods/evaisa.arena/files/biome/holymountain_scenes.xml")
-                
+                "mods/evaisa.arena/files/biome/pixelscenes/temple.xml")
+                 
             end
 
 
@@ -1669,10 +1669,10 @@ ArenaGameplay = {
             -- load map
             if(GameHasFlagRun("item_shop"))then
                 BiomeMapLoad_KeepPlayer("mods/evaisa.arena/files/scripts/world/map_lobby_spectator.lua",
-                "mods/evaisa.arena/files/biome/holymountain_itemshop_scenes.xml")
+                "mods/evaisa.arena/files/biome/pixelscenes/temple_itemshop.xml")
             else
                 BiomeMapLoad_KeepPlayer("mods/evaisa.arena/files/scripts/world/map_lobby_spectator.lua",
-                "mods/evaisa.arena/files/biome/holymountain_scenes.xml")
+                "mods/evaisa.arena/files/biome/pixelscenes/temple.xml")
                 
             end
 
@@ -2687,33 +2687,6 @@ ArenaGameplay = {
                 data.hm_timer = nil
             end
         end
-
-        -- was trying to repair the HM but thats duplicating entities so nvm
-        --[[if(GameGetFrameNum() % 120 == 0)then
-            if(not data.spectator_mode)then
-                -- load map
-                if(GameHasFlagRun("item_shop"))then
-                    LoadPixelScene("mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple_itemshop/0.plz", "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple_itemshop/0_visual.plz", -174, -133, "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple_itemshop/0_background.png", true, false, nil, nil, true)
-                    LoadPixelScene("mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple_itemshop/1.plz", "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple_itemshop/1_visual.plz", 338, -133, "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple_itemshop/1_background.png", true, false, nil, nil, true)
-                    LoadPixelScene("mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple_itemshop/2.plz", "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple_itemshop/2_visual.plz", 850, -133, "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple_itemshop/2_background.png", true, false, nil, nil, true)
-                else
-                    LoadPixelScene("mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/0.plz", "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/0_visual.plz", -174, -133, "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/0_background.png", true, false, nil, nil, true)
-                    LoadPixelScene("mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/1.plz", "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/1_visual.plz", 338, -133, "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/1_background.png", true, false, nil, nil, true)
-                    LoadPixelScene("mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/2.plz", "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/2_visual.plz", 850, -133, "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/2_background.png", true, false, nil, nil, true)
-                end
-            else
-                -- load map
-                if(GameHasFlagRun("item_shop"))then
-                    LoadPixelScene("mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple_itemshop/0.plz", "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple_itemshop/0_visual.plz", -174, -133, "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple_itemshop/0_background.png", true, false, nil, nil, true)
-                    LoadPixelScene("mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple_itemshop/1.plz", "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple_itemshop/1_visual.plz", 338, -133, "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple_itemshop/1_background.png", true, false, nil, nil, true)
-                    LoadPixelScene("mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple_itemshop/2.plz", "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple_itemshop/2_visual.plz", 850, -133, "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple_itemshop/2_background.png", true, false, nil, nil, true)
-                else
-                    LoadPixelScene("mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/0.plz", "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/0_visual.plz", -174, -133, "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/0_background.png", true, false, nil, nil, true)
-                    LoadPixelScene("mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/1.plz", "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/1_visual.plz", 338, -133, "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/1_background.png", true, false, nil, nil, true)
-                    LoadPixelScene("mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/2.plz", "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/2_visual.plz", 850, -133, "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/2_background.png", true, false, nil, nil, true)
-                end
-            end
-        end]]
 
 
         if(not IsPaused() and not (data.spectator_mode and data.lobby_spectated_player == nil))then

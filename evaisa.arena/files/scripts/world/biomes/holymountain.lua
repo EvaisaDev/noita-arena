@@ -43,7 +43,7 @@ function spawn_hp( x, y )
 
 	GameAddFlagRun("in_hm")
     if(not GameHasFlagRun("DeserializedHolyMountain"))then
-		local hp = EntityLoad( "mods/evaisa.arena/files/entities/misc/heart_fullhp.xml", x-16, y )
+		local hp = EntityLoad( "mods/evaisa.arena/files/entities/misc/heart_fullhp.xml", x+16, y )
 
 		if(not EntityHasTag(hp, "synced_once"))then
 			EntitySetName(hp, EntityGetName(hp).."_"..tostring((GameGetFrameNum() % 100000) + hp))
@@ -58,10 +58,13 @@ function spawn_hp( x, y )
 	end
 	
 	EntityLoad( "data/entities/buildings/music_trigger_temple.xml", x-16, y )
-	EntityLoad( "mods/evaisa.arena/files/entities/misc/spell_refresh.xml", x+16, y )
+	
+	EntityLoad( "mods/evaisa.arena/files/entities/misc/spell_refresh.xml", x-16, y )
+	--EntityApplyTransform(refresh, x+16, y)
+	
 	EntityLoad( "data/entities/buildings/coop_respawn.xml", x, y )
-	local chunk_loader = EntityLoad("mods/evaisa.arena/files/entities/chunk_loader.xml", 0, 0)
-	EntitySetTransform(chunk_loader, 1500, 0)
+	--local chunk_loader = EntityLoad("mods/evaisa.arena/files/entities/chunk_loader.xml", 0, 0)
+	--EntitySetTransform(chunk_loader, 1500, 0)
 	--[[EntityApplyTransform(chunk_loader, 300, 0)
 	EntitySetTransform(chunk_loader, 300, 0)
 	EntityApplyTransform(chunk_loader, 600, 0)

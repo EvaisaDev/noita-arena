@@ -5,22 +5,21 @@
 
 	<SimplePhysicsComponent>
 	</SimplePhysicsComponent>
-	
-	<UIInfoComponent
-		name="$item_spell_refresh"
-		>
-	</UIInfoComponent>
-
+	 
 	<HitboxComponent 
-		_tags="enabled_in_world"
 		aabb_min_x="-6" 
 		aabb_max_x="6" 
 		aabb_min_y="-8" 
-		aabb_max_y="0" 
-		is_enemy="0" 
-		is_item="1" 
-		is_player="0" >
+		aabb_max_y="0">
 	</HitboxComponent>
+
+    <StreamingKeepAliveComponent/>
+    <HitboxComponent
+        aabb_min_x="-500"
+        aabb_min_y="-500"
+        aabb_max_x="500"
+        aabb_max_y="500"
+    ></HitboxComponent>
 
 	<InteractableComponent
 		radius="8"
@@ -33,7 +32,6 @@
 	</LuaComponent>
 
 	<LightComponent 
-		_tags="enabled_in_world"
 		_enabled="1" 
 		r="255"
 		g="255"
@@ -43,7 +41,6 @@
 	</LightComponent>
 
 	<SpriteComponent 
-		_tags="enabled_in_world,character" 
 		alpha="1" 
 		image_file="data/items_gfx/spell_refresh.xml" 
 		next_rect_animation="" 
