@@ -22,6 +22,7 @@ function damage_received( damage, message, entity_thats_responsible, is_fatal, p
         is_dummy = true
     end
     if(is_dummy)then]]
+        print("Damage received: "..tostring(damage))
         local damageModelComponent = EntityGetFirstComponentIncludingDisabled( entity_id, "DamageModelComponent" )
         if damageModelComponent ~= nil then
             local health = ComponentGetValue2( damageModelComponent, "hp" )

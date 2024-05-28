@@ -40,6 +40,4 @@ function interacting( entity_who_interacted, entity_interacted, interactable_nam
         ComponentSetValue2(interactComp, "ui_text", GameTextGetTranslatedOrNot("$arena_card_pick"))
     end
 
-    --GamePrint("Not implemented yet :(")
-    --print("Not implemented yet :(")
 end

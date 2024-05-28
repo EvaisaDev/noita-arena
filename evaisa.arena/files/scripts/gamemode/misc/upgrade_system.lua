@@ -97,9 +97,10 @@ local upgrade_system = {
 
         self.pick = function(self)
 
-            local card_entity = EntityGetWithName("card_pick")
-            if(card_entity ~= nil)then
-                EntityKill(card_entity)
+            local card_entity = EntityGetWithTag("card_pick")
+            for k, v in ipairs(card_entity) do
+                EntityKill(v)
+                print("killed card entity")
             end
 
             GameRemoveFlagRun("chat_bind_disabled")
