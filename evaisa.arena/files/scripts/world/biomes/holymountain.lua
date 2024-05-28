@@ -11,6 +11,7 @@ dofile("mods/evaisa.arena/files/scripts/gamemode/misc/seed_gen.lua")
 local smallfolk = dofile("mods/evaisa.arena/lib/smallfolk.lua")
 
 RegisterSpawnFunction( 0xff6d934c, "spawn_hp" )
+RegisterSpawnFunction( 0xff5b8b31, "spawn_refresh" )
 
 RegisterSpawnFunction( 0xff03fade, "spawn_spell_visualizer" )
 RegisterSpawnFunction( 0xff33934c, "spawn_all_shopitems" )
@@ -43,7 +44,7 @@ function spawn_hp( x, y )
 
 	GameAddFlagRun("in_hm")
     if(not GameHasFlagRun("DeserializedHolyMountain"))then
-		local hp = EntityLoad( "mods/evaisa.arena/files/entities/misc/heart_fullhp.xml", x+16, y )
+		local hp = EntityLoad( "mods/evaisa.arena/files/entities/misc/heart_fullhp.xml", x, y )
 
 		if(not EntityHasTag(hp, "synced_once"))then
 			EntitySetName(hp, EntityGetName(hp).."_"..tostring((GameGetFrameNum() % 100000) + hp))
@@ -59,8 +60,6 @@ function spawn_hp( x, y )
 	
 	EntityLoad( "data/entities/buildings/music_trigger_temple.xml", x-16, y )
 	
-	EntityLoad( "mods/evaisa.arena/files/entities/misc/spell_refresh.xml", x-16, y )
-	--EntityApplyTransform(refresh, x+16, y)
 	
 	EntityLoad( "data/entities/buildings/coop_respawn.xml", x, y )
 	--local chunk_loader = EntityLoad("mods/evaisa.arena/files/entities/chunk_loader.xml", 0, 0)
@@ -71,6 +70,11 @@ function spawn_hp( x, y )
 	EntitySetTransform(chunk_loader, 600, 0)]]
 	GameAddFlagRun("should_save_player")
 end
+
+function spawn_refresh( x, y )
+	EntityLoad( "mods/evaisa.arena/files/entities/misc/spell_refresh.xml", x, y )
+end
+
 
 function spawn_all_shopitems( x, y )
 
