@@ -18,7 +18,7 @@ local px, py = EntityGetTransform(player)
 
 if(math.abs(x - px) > max_distance or math.abs(y - py) > max_distance)then
     GameRemoveFlagRun("card_menu_open")
-    print("too far!!")
+    --print("too far!!")
     GameRemoveFlagRun("chat_bind_disabled")
 end
 
