@@ -179,7 +179,6 @@ function damage_received( damage, message, entity_thats_responsible, is_fatal, p
                     if(entity_thats_responsible ~= nil)then
                         GlobalsSetValue("killer", EntityGetName(entity_thats_responsible) or "")
                     end
-                    GameAddFlagRun("player_unloaded")
                 end
             end
         end

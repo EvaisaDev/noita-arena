@@ -1203,7 +1203,7 @@ ArenaGameplay = {
         end
     end,
     KillCheck = function(lobby, data)
-        if (GameHasFlagRun("player_died")) then
+        if (GameHasFlagRun("player_died") and not GameHasFlagRun("killcheck_finished")) then
            
             local killer = GlobalsGetValue("killer", "");
 
@@ -1276,11 +1276,11 @@ ArenaGameplay = {
             --message_handler.send.Death(lobby, killer)
             networking.send.death(lobby, killer)
 
-            GameRemoveFlagRun("player_died")
-
             GamePrintImportant(GameTextGetTranslatedOrNot("$arena_player_died"))
 
             GameSetCameraFree(true)
+
+            GameAddFlagRun("killcheck_finished")
 
             if(not data.spectator_mode)then
                 data.is_spectating = true
@@ -1370,6 +1370,10 @@ ArenaGameplay = {
         end
     end,
     LoadLobby = function(lobby, data, show_message, first_entry)
+        
+        GameRemoveFlagRun("player_died")
+        GameRemoveFlagRun("killcheck_finished")
+
         networking.send.update_state(lobby, "lobby")
         data.network_entity_cache = {}
         if(data.unstuck_ui)then
@@ -3362,13 +3366,19 @@ ArenaGameplay = {
         if(not data.spectator_mode)then
             networking.send.character_position(lobby, data)
 
-            if(player_entity and GameHasFlagRun("player_died"))then
+            print("Player entity: " .. tostring(player_entity) .. " Player died: " .. tostring(GameHasFlagRun("player_died")))
+
+
+            if(player_entity and GameHasFlagRun("player_died") and not GameHasFlagRun("player_unloaded"))then
+                print("Player died, setting kill flag!")
                 local damage_model = EntityGetFirstComponentIncludingDisabled(player_entity, "DamageModelComponent")
 
                 ArenaGameplay.SavePlayerData(lobby, data)
 
                 if(damage_model)then
+                    ComponentSetValue2(damage_model, "hp", 0.04)
                     ComponentSetValue2(damage_model, "kill_now", true)
+                    GameAddFlagRun("player_unloaded")
                 end
                 
             end

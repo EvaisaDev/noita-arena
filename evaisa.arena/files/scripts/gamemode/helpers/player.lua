@@ -1041,8 +1041,8 @@ player_helper.Deserialize = function(data, skip_perk_count, lobby, lobby_data)
     if (data.health ~= nil and data.max_health ~= nil) then
         local healthComponent = EntityGetFirstComponentIncludingDisabled(player, "DamageModelComponent")
         if (healthComponent ~= nil) then
-            ComponentSetValue2(healthComponent, "hp", data.health)
-            ComponentSetValue2(healthComponent, "max_hp", data.max_health)
+            ComponentSetValue2(healthComponent, "hp", math.max(data.health, 0.04))
+            ComponentSetValue2(healthComponent, "max_hp", math.max(data.max_health, 0.04))
         end
     end
 
