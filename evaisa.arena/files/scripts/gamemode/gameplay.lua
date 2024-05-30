@@ -709,7 +709,7 @@ ArenaGameplay = {
                     -- set mNextFrameUsable to false
                     ComponentSetValue2(abilityComponent, "mNextFrameUsable", GameGetFrameNum() + 10)
                     -- set mReloadFramesLeft
-                    ComponentSetValue2(abilityComponent, "mReloadFramesLeft", 10)
+                    --ComponentSetValue2(abilityComponent, "mReloadFramesLeft", 10)
                     -- set mReloadNextFrameUsable to false
                     ComponentSetValue2(abilityComponent, "mReloadNextFrameUsable", GameGetFrameNum() + 10)
                 end
@@ -725,7 +725,7 @@ ArenaGameplay = {
                         -- set mNextFrameUsable to false
                         ComponentSetValue2(abilityComponent, "mNextFrameUsable", GameGetFrameNum() + 10)
                         -- set mReloadFramesLeft
-                        ComponentSetValue2(abilityComponent, "mReloadFramesLeft", 10)
+                        --ComponentSetValue2(abilityComponent, "mReloadFramesLeft", 10)
                         -- set mReloadNextFrameUsable to false
                         ComponentSetValue2(abilityComponent, "mReloadNextFrameUsable", GameGetFrameNum() + 10)
                     end
@@ -1131,9 +1131,11 @@ ArenaGameplay = {
             if(win_condition_user ~= nil)then
                 GamePrintImportant(string.format(GameTextGetTranslatedOrNot("$arena_win_condition_text"), steamutils.getTranslatedPersonaName(winner)), GameTextGetTranslatedOrNot("$arena_win_condition_description"))
                 networking.send.round_end(lobby, winner, true)
+                print("Sent win condition message")
             else
                 GamePrintImportant(string.format(GameTextGetTranslatedOrNot("$arena_winner_text"), steamutils.getTranslatedPersonaName(winner)), GameTextGetTranslatedOrNot("$arena_round_end_text"))
                 networking.send.round_end(lobby, winner)
+                print("Sent round end message")
             end
 
             print("Win condition: "..tostring(win_condition_user))
@@ -1146,7 +1148,7 @@ ArenaGameplay = {
 
                 print("Loading lobby in 5 seconds")
 
-                delay.new(5 * 60, function()
+                delay.new(300, function()
                     ArenaGameplay.LoadLobby(lobby, data, false)
                     
                 end, function(frames)
@@ -1155,7 +1157,7 @@ ArenaGameplay = {
                     end
                 end)
             else
-                delay.new(10 * 60, function()
+                delay.new(600, function()
                     StopGame()
                 end, function(frames)
                     if (frames % 60 == 0) then
@@ -2893,6 +2895,7 @@ ArenaGameplay = {
 
         if(data.spectator_mode and data.state == "lobby" and data.lobby_spectated_player == user)then
             data.selected_player = client
+            networking.send.request_character_position(lobby, data.selected_player)
         end
 
         return client

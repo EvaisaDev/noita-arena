@@ -251,12 +251,12 @@ entity.BlockFiring = function(ent, do_block)
             local ability = EntityGetFirstComponentIncludingDisabled( item, "AbilityComponent" );
             if ability then
                 if(do_block)then
-                    ComponentSetValue2( ability, "mReloadFramesLeft", 2000000 );
+                    --ComponentSetValue2( ability, "mReloadFramesLeft", 2000000 );
                     ComponentSetValue2( ability, "mNextFrameUsable", now + 2000000 );
                     ComponentSetValue2( ability, "mReloadNextFrameUsable", now + 2000000 );
 
                 else
-                    ComponentSetValue2( ability, "mReloadFramesLeft", 0 );
+                    --ComponentSetValue2( ability, "mReloadFramesLeft", 0 );
                     ComponentSetValue2( ability, "mNextFrameUsable", now );
                     ComponentSetValue2( ability, "mReloadNextFrameUsable", now );
                 end

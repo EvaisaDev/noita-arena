@@ -1,13 +1,11 @@
 -- rewrite table.concat to allow for any type but tostring first
+local _concat = table.concat
 table.concat = function(t, sep, i, j)
-    sep = sep or ""
-    i = i or 1
-    j = j or #t
-    local s = ""
-    for k = i, j do
-        s = s .. tostring(t[k]) .. sep
+    local out = {}
+    for k, v in ipairs(t) do
+        out[k] = tostring(v)
     end
-    return s
+    return _concat(out, sep, i, j)
 end
 
 Vector = {}
@@ -174,20 +172,20 @@ function Vector:print(name)
   else
     print(tostring(self))
   end
-  
+end
+
+function Vector:GamePrint(name)
+  if(name)then
+    GamePrint("["..name.."]"..tostring(self))
+  else
+    GamePrint(tostring(self))
+  end
 end
 
 function Vector:radian()
   return math.atan2(self.y, self.x)
 end
 
-function Vector:GamePrint(name)
-  if(name)then
-    print("["..name.."]"..tostring(self))
-  else
-    print(tostring(self))
-  end
-end
 
 setmetatable(Vector, { __call = function(_, ...) return Vector.new(...) end})
 

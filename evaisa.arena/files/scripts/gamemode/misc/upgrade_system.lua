@@ -100,7 +100,7 @@ local upgrade_system = {
             local card_entity = EntityGetWithTag("card_pick")
             for k, v in ipairs(card_entity) do
                 EntityKill(v)
-                print("killed card entity")
+                --print("killed card entity")
             end
 
             GameRemoveFlagRun("chat_bind_disabled")

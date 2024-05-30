@@ -1,19 +1,34 @@
 - inventory randomly goes invisible in spectator mode
 - inventory flashes when players edit in spectator mode
-- remove procedural script from EZWand default wand for performance
-- client entities can die to electricity :/
-- spamming the spell refresh causes spectators to lag
 - round only ends for lobby owner
-- flasks are pure white in spectator inventory
-- shops desync sometimes?
-- items fall through shop pedestals
+- flasks are pure white in spectator inventory (only occasionally)
 - practice dummy doesn't sync to spectators
 - when entering the arena the spectator doesn't target a player sometimes.
-- spectators load items into the arena sometimes
-- spectators gain wand card effects
+- spectators load shop items into the arena sometimes
+
 - wand shows on spectator entity sometimes
-- Tab button locks up sometimes for spectators(?
+ - may be fixed by passive spell effect fix
+
+- Tab button locks up sometimes for spectators occasionally(?
+ - Probably related to spectator entity dying bug
+
+
 - Swapper desyncs and teleports you to players
 - shops desync with extra item(?
 - spectator can't see cards
-- if players are standing still when spectator teleports they will show in the wrong position
+- swapping players sometimes causes clients to drop their spells??
+
+
+CHANGES:
+- Fixed card pick sometimes not showing up correctly.
+- Fixed winning players getting to pick a card if they die.
+- Added materials list to content hash.
+- Card pick is now a interactable object.
+- Extended the Holy Mountain.
+- Optimized wand deserialization slightly
+- Fixed lag when client spawn item refresh when spectated.
+- Fixed items falling through platforms in holy mountain when spectating
+- Fixed spectator entity dying to electricity and environmental disasters and dropping a ragdoll / items
+- Client position should be updated when spectator switches user, preventing position desync.
+- Spell refresh no longer blocks projectiles.
+- Passive spell effects should stay disabled on spectator entities

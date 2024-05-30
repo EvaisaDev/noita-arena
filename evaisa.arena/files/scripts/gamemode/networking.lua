@@ -352,8 +352,9 @@ networking = {
                     GamePrintImportant(GameTextGetTranslatedOrNot("$arena_tie_text"), GameTextGetTranslatedOrNot("$arena_round_end_text"))
                     
                     GameAddFlagRun("round_finished")
+                    print("No winner! Loading lobby..")
 
-                    delay.new(5 * 60, function()
+                    delay.new(300, function()
                         ArenaGameplay.LoadLobby(lobby, data, false)
                     end, function(frames)
                         if (frames % 60 == 0) then
@@ -386,8 +387,8 @@ networking = {
                     end
         
                     if(win_condition_user == nil or not GameHasFlagRun("win_condition_end_match"))then
-
-                        delay.new(5 * 60, function()
+                        print("Win condition not met, loading lobby..")
+                        delay.new(300, function()
                             ArenaGameplay.LoadLobby(lobby, data, false)
                         end, function(frames)
                             if (frames % 60 == 0) then
@@ -395,7 +396,8 @@ networking = {
                             end
                         end)
                     else
-                        delay.new(10 * 60, function()
+                        print("Win condition met! ending match..")
+                        delay.new(600, function()
                             StopGame()
                         end, function(frames)
                             if (frames % 60 == 0) then
@@ -2350,6 +2352,9 @@ networking = {
             steam_utils.TrySetLobbyData(lobby, "current_map", message)
             print("Setting current map to "..tostring(message))
         end,
+        request_character_position = function(lobby, message, user, data)
+            networking.send.character_position(lobby, data, false, user)
+        end,
     },
     send = {
         handshake = function(lobby)
@@ -2388,7 +2393,14 @@ networking = {
         check_can_unlock = function(lobby)
             steamutils.send("check_can_unlock", {}, steamutils.messageTypes.OtherPlayers, lobby, true)
         end,
-        character_position = function(lobby, data, to_spectators)
+        request_character_position = function(lobby, user)
+            if(user == nil)then
+                steamutils.send("request_character_position", {}, steamutils.messageTypes.OtherPlayers, lobby, true)
+            else
+                steamutils.sendToPlayer("request_character_position", {}, user, true)
+            end
+        end,
+        character_position = function(lobby, data, to_spectators, user)
             local t = GameGetRealWorldTimeSinceStarted()
             local min_framerate = 30 -- Minimum acceptable framerate
             local frame_delay = 60 / min_framerate -- Calculate frame delay based on minimum framerate
@@ -2421,7 +2433,7 @@ networking = {
                 local memcmp_result = memcmp(ffi.new("CharacterPos", data.client.last_character_pos), ffi.new("CharacterPos", c), ffi.sizeof("CharacterPos"))
 
                 -- if same, return
-                if(memcmp_result == 0)then
+                if(memcmp_result == 0 and user ~= nil)then
                     return
                 end
         
@@ -2430,8 +2442,10 @@ networking = {
                     -- Update last_update_frame to current frame
                     last_update_frame = current_frame
         
-                    if to_spectators then
-                        steamutils.send("character_position", c, steamutils.messageTypes.Spectators, lobby, false, true)
+                    if(user ~= nil)then
+                        steamutils.sendToPlayer("character_position", c, user, true)
+                    elseif to_spectators then
+                        steamutils.send("character_position", c, steamutils.messageTypes.Spectators, lobby, true, true)
                     else
                         steamutils.send("character_position", c, steamutils.messageTypes.OtherPlayers, lobby, false, true)
                     end

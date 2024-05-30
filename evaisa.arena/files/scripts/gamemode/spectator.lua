@@ -322,6 +322,7 @@ SpectatorMode = {
                             data.spectator_active_player = player
 
                             networking.send.request_item_update(lobby, player)
+                            networking.send.request_character_position(lobby, player)
                         end
                     end
                 end
@@ -356,6 +357,7 @@ SpectatorMode = {
                             data.spectator_active_player = player
 
                             networking.send.request_item_update(lobby, player)
+                            networking.send.request_character_position(lobby, player)
                         end
                     end
                 end
@@ -437,6 +439,7 @@ SpectatorMode = {
                                     data.spectator_active_player = player
 
                                     networking.send.request_item_update(lobby, player)
+                                    networking.send.request_character_position(lobby, player)
                                 end
                             end
                         end

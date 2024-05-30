@@ -4,7 +4,7 @@
         aabb_min_x="-500"
         aabb_min_y="-500"
         aabb_max_x="500"
-        aabb_max_y="500"
+        aabb_max_y="500" 
     ></HitboxComponent>
 
     <Entity>
@@ -25,12 +25,12 @@
     <InventoryGuiComponent />
 
     <Entity name="arm_r">
-        <InheritTransformComponent><Transform position.x="5000" position.y="5000" /></InheritTransformComponent>
+        <InheritTransformComponent></InheritTransformComponent>
         
         <HotspotComponent
         _tags="hand"
         sprite_hotspot_name="hand"
-        transform_with_scale="1"
+        transform_with_scale="0"
         ></HotspotComponent>
     </Entity>
 
@@ -152,7 +152,7 @@
 
 
     <ControlsComponent 
-        enabled="1" 
+        enabled="0" 
         gamepad_fire_on_thumbstick_extend="0" 
         gamepad_fire_on_thumbstick_extend_threshold="0.7" 
         gamepad_indirect_aiming_enabled="0" 
@@ -175,6 +175,12 @@
     <Entity
         name="inventory_full" >
     </Entity>
+
+    <LuaComponent
+        script_source_file="mods/evaisa.arena/files/scripts/gamemode/misc/spectator_entity_update.lua"
+        execute_on_added="1"
+        execute_every_n_frame="1"
+    />
 
     <ItemPickUpperComponent
         drop_items_on_death="0"
