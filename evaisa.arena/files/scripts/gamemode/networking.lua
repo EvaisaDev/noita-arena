@@ -2464,9 +2464,26 @@ networking = {
             end
 
             local item_data, spell_data = player_helper.GetItemData()
+
+
+            local data = { item_data or {}, force, GameHasFlagRun( "arena_unlimited_spells" ), spell_data or {} }
+
+            if (user ~= nil) then
+                steamutils.sendToPlayer("item_update", data, user, true)
+            else
+                if(to_spectators)then
+                    steamutils.send("item_update", data, steamutils.messageTypes.Spectators, lobby, true, true)
+                else
+                    steamutils.send("item_update", data, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+                end
+            end
+
+            -- wtf is this code why is it written like this i hate past me
+            --[[
             if(item_data ~= nil)then
                 local data = { item_data, force, GameHasFlagRun( "arena_unlimited_spells" ) }
 
+              
                 
                 if (user ~= nil) then
                     table.insert(data, spell_data)
@@ -2491,7 +2508,7 @@ networking = {
                         steamutils.send("item_update", {}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
                     end
                 end
-            end
+            end]]
         end,
         request_item_update = function(lobby, user)
             if(user == nil)then
