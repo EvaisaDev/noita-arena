@@ -1436,7 +1436,7 @@ ArenaGameplay = {
         ArenaGameplay.GracefulReset(lobby, data)
 
         data.selected_player = nil
-        data.selected_player_name = nil
+        data.selected_client = nil
         data.client.previous_spectate_data = nil
         data.allow_round_end = false
         data.controlled_physics_entities = {}
@@ -1769,10 +1769,8 @@ ArenaGameplay = {
             GameRemoveFlagRun("can_save_player")
         end
 
-        data.last_selected_player = data.lobby_spectated_player
-        data.lobby_spectated_player = nil
-        data.selected_player_name = nil
-        data.selected_player = nil
+        
+
         
         GameRemoveFlagRun("DeserializedHolyMountain")
         GameRemoveFlagRun("player_is_unlocked")
@@ -3528,17 +3526,11 @@ ArenaGameplay = {
             local inventory2Comp = EntityGetFirstComponentIncludingDisabled(data.spectator_entity, "Inventory2Component")
 
             if(inventory2Comp ~= nil)then
-                --ComponentSetValue2(inventory2Comp, "mItemHolstered", true)
-                --ComponentSetValue2(inventory2Comp, "mActiveItem", -1)
-                --ComponentSetValue2(inventory2Comp, "mActualActiveItem", -1)
-                --ComponentSetValue2(inventory2Comp, "mForceRefresh", true)
 
                 if(data.spectator_selected_item ~= nil and EntityGetIsAlive(data.spectator_selected_item ))then
                     game_funcs.SetActiveHeldEntity(data.spectator_entity, data.spectator_selected_item, false, false)
-                    ComponentSetValue2(inventory2Comp, "mItemHolstered", true)
                 else
                     data.spectator_selected_item = nil
-                    ComponentSetValue2(inventory2Comp, "mItemHolstered", true)
                     ComponentSetValue2(inventory2Comp, "mActiveItem", -1)
                     ComponentSetValue2(inventory2Comp, "mActualActiveItem", -1)
                 end
@@ -3717,7 +3709,6 @@ ArenaGameplay = {
                 local inventoryGuiComp = EntityGetFirstComponentIncludingDisabled(data.spectator_entity, "InventoryGuiComponent")
                 if (inventoryGuiComp ~= nil) then
                     ComponentSetValue2(inventoryGuiComp, "mActive", true)
-                    ComponentSetValue2(inventoryGuiComp, "mLastFrameActionsVisible", GameGetFrameNum())
                     ComponentSetValue2(inventoryGuiComp, "mLastFrameActionsVisible", GameGetFrameNum())
 
                 end

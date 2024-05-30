@@ -531,10 +531,6 @@ SpectatorMode = {
 
                 data.last_hm_switch = GameGetFrameNum()
 
-                --[[
-                    data.lobby_spectated_player = 
-                    data.selected_player_name = 
-                ]]
                 local lobby_spectated_player = data.lobby_spectated_player
                 data.last_hm_sync = nil
 

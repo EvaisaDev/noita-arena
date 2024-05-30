@@ -18,12 +18,9 @@ function data:New()
         spectator_text_gui = nil,
         arena_spectator = false,
         selected_player = nil,
-        selected_player_name = nil,
         spectator_mode = false,
         spectator_quick_switch_trigger = 0,
         spectator_lobby_loaded = false,
-
-        lobby_spectated_player = nil,
         controlled_physics_entities = {},
         cosmetics = {},
 

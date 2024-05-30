@@ -664,16 +664,6 @@ networking = {
                             end
                         end
 
-                        if(has_spectator)then
-                            local inventoryGuiComp = EntityGetFirstComponentIncludingDisabled(data.spectator_entity, "InventoryGuiComponent")
-                            --[[if (inventoryGuiComp ~= nil) then
-                                if(ComponentGetValue2(inventoryGuiComp, "mActive"))then
-                                    ComponentSetValue2(inventoryGuiComp, "mActive", false)
-                                    data.force_open_inventory = true
-                                end
-                            end]]
-                        end
-                        
                         local itemComp = EntityGetFirstComponentIncludingDisabled(item_entity, "ItemComponent")
                         if (itemComp ~= nil) then
                             ComponentSetValue2(itemComp, "inventory_slot", itemInfo.slot_x, itemInfo.slot_y)
@@ -682,6 +672,12 @@ networking = {
                         if (itemInfo.active) then
                             game_funcs.SetActiveHeldEntity(data.players[tostring(user)].entity, item_entity, false,
                                 false)
+
+                            if (has_spectator) then
+                                game_funcs.SetActiveHeldEntity(data.spectator_entity, spectator_item_entity, false,
+                                    false)
+                                data.spectator_selected_item = spectator_item_entity
+                            end
                         end
 
                         EntityHelper.SetVariable(item_entity, "arena_entity_id", itemInfo.id)
@@ -739,14 +735,6 @@ networking = {
 
                         end
 
-                        --[[local inventoryGuiComp = EntityGetFirstComponentIncludingDisabled(data.spectator_entity, "InventoryGuiComponent")
-                        if (inventoryGuiComp ~= nil) then
-                            if(ComponentGetValue2(inventoryGuiComp, "mActive"))then
-                                ComponentSetValue2(inventoryGuiComp, "mActive", false)
-                                data.force_open_inventory = true
-                            end
-                        end]]
-            
 
                     end
 
@@ -755,24 +743,6 @@ networking = {
                 end
 
                 if(has_spectator)then
-                    --[[local controls_comp = EntityGetFirstComponentIncludingDisabled(data.spectator_entity, "ControlsComponent")
-
-                    if (controls_comp ~= nil) then
-                        print("Refresh??")
-                        ComponentSetValue2(controls_comp, "enabled", false)
-                        delay.new(2, function()
-                            print("allow inputs!!")
-                            ComponentSetValue2(controls_comp, "enabled", true)
-                        end)
-                        delay.new(1, function()
-                            ComponentSetValue2(controls_comp, "mButtonDownChangeItemR", true)
-                            ComponentSetValue2(controls_comp, "mButtonFrameChangeItemR", GameGetFrameNum() + 1)
-                            ComponentSetValue2(controls_comp, "mButtonCountChangeItemR", 3)
-    
-                        end)
-
-                    end]]
-
                     local inventory2_comp = EntityGetFirstComponent( data.spectator_entity, "Inventory2Component" )
                     if( inventory2_comp ) then
                         delay.new(0, function()
@@ -783,7 +753,7 @@ networking = {
                                 end
                             end
                         end)
-                        ComponentSetValue2( inventory2_comp, "mActualActiveItem", 0 )
+                        --ComponentSetValue2( inventory2_comp, "mActualActiveItem", 0 )
                         --print("attempting refresh??")
                     end
                 end
@@ -1148,44 +1118,6 @@ networking = {
                     local mActiveItem = ComponentGetValue2(inventory2Comp, "mActiveItem")
 
                     if (mActiveItem ~= nil) then
-                        --[[
-                            local msg_data = {
-                                mana,
-                                GameGetFrameNum() - cast_delay_start_frame,
-                                mReloadFramesLeft = reload_frames_left,
-                                mReloadNextFrameUsable = reload_next_frame_usable - GameGetFrameNum(),
-                                mNextChargeFrame = next_charge_frame - GameGetFrameNum(),
-                            }
-                        ]]
-
-                        --[[local children = EntityGetAllChildren(mActiveItem) or {}
-                        for k, v in ipairs(children)do
-                            if(EntityHasTag(v, "card_action"))then
-                                --GamePrint("found card action")
-                                local item_comp = EntityGetFirstComponentIncludingDisabled(v, "ItemComponent")
-                                if(item_comp ~= nil)then
-                                    local slot = ComponentGetValue2(item_comp, "inventory_slot")
-                                    -- ComponentSetValue2(item_comp, "uses_remaining", 1)
-                                    --GamePrint("card in slot: " .. tostring(slot))
-                                    --print("card in slot: " .. tostring(slot))
-                                    if(message[6][tostring(slot)] ~= nil)then
-                                        print(json.stringify(message[6][tostring(slot)]))
-                                        --ComponentSetValue2(item_comp, "uses_remaining", message[6][tostring(slot)])
-                                        --print("wand uses updated!")
-                                    end
-                                end
-                            end
-                        end]]
-
-                        --[[
-                        WandStats{
-                            mana = mana,
-                            cast_delay_start_frame = GameGetFrameNum() - cast_delay_start_frame,
-                            reload_frames_left = reload_frames_left,
-                            reload_next_frame_usable = reload_next_frame_usable - GameGetFrameNum(),
-                            next_charge_frame = next_charge_frame - GameGetFrameNum(),
-                        }
-                        ]]
                         
                         local mana = message.mana
                         local mCastDelayStartFrame = GameGetFrameNum() - message.cast_delay_start_frame
@@ -1201,61 +1133,6 @@ networking = {
                             ComponentSetValue2(abilityComp, "mReloadNextFrameUsable", mReloadNextFrameUsable)
                             ComponentSetValue2(abilityComp, "mNextChargeFrame", mNextChargeFrame)
                         end
-
-                        -- This was removed because really spectator UI should be handled locally.
-                        --[[
-                        local has_spectator = false
-
-                        if(data.spectator_active_player == nil)then
-                            data.spectator_active_player = user
-                            data.selected_client = user
-                            data.selected_player = data.players[tostring(user)].entity
-                        end
-        
-                        -- if we are in spectator mode
-                        if (data.selected_client == user and data.spectator_entity ~= nil and EntityGetIsAlive(data.spectator_entity)) then
-                            has_spectator = true
-                        end
-    
-    
-                        if(has_spectator)then
-                            local spectator_inventory2Comp = EntityGetFirstComponentIncludingDisabled(data.spectator_entity, "Inventory2Component")
-
-                            -- if no inventory2Comp, return
-                            if (spectator_inventory2Comp == nil) then
-                                return
-                            end
-
-                            print("syncing spectator wand stats")
-
-                            mActiveItem = ComponentGetValue2(spectator_inventory2Comp, "mActiveItem")
-
-                            if (mActiveItem ~= nil) then
-
-    
-                                local mana = message[1]
-                                local mCastDelayStartFrame = GameGetFrameNum() - message[2]
-                                local mReloadFramesLeft = message[3]
-                                local mReloadNextFrameUsable = message[4] + GameGetFrameNum()
-                                local mNextChargeFrame = message[5] + GameGetFrameNum()
-        
-                                local abilityComp = EntityGetFirstComponentIncludingDisabled(mActiveItem, "AbilityComponent")
-                                if (abilityComp ~= nil) then
-                                    ComponentSetValue2(abilityComp, "mana", mana)
-                                    ComponentSetValue2(abilityComp, "mCastDelayStartFrame", mCastDelayStartFrame)
-                                    ComponentSetValue2(abilityComp, "mReloadFramesLeft", mReloadFramesLeft)
-                                    ComponentSetValue2(abilityComp, "mReloadNextFrameUsable", mReloadNextFrameUsable)
-                                    ComponentSetValue2(abilityComp, "mNextChargeFrame", mNextChargeFrame)
-
-                                    print("SO SYNCED!!!!")
-                                end
-
-                                
-                            end
-
-                        end
-                        ]]
-
 
                     end
                 end
