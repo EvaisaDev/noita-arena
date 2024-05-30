@@ -237,6 +237,7 @@ ArenaGameplay = {
                 local members = steamutils.getLobbyMembers(lobby)
                 for k, member in pairs(members) do
                     local wins = ArenaGameplay.GetWins(lobby, member.id, data)
+                    print("Checking wins ["..tostring(member.id).."] : " .. wins .. " - " .. value)
                     if(wins >= value)then
                         return member.id
                     end
@@ -1021,10 +1022,18 @@ ArenaGameplay = {
         if(data.players[tostring(user)] ~= nil and data.players[tostring(user)].wins ~= nil)then
             return data.players[tostring(user)].wins or 0
         end
+        -- if is localplayer
+        if(user == steam_utils.getSteamID())then
+            return data.wins or 0
+        end
+
         local wins = tonumber(steamutils.GetLobbyData( tostring(user) .. "_wins")) or 0
         if(data.players[tostring(user)] ~= nil)then 
             data.players[tostring(user)].wins = wins
             print("Updated wins for " .. tostring(user) .. " to " .. tostring(wins))
+        elseif(user == steam_utils.getSteamID())then
+            data.wins = wins
+            print("Updated local wins to " .. tostring(wins))
         end
         return wins
     end,
@@ -1107,6 +1116,9 @@ ArenaGameplay = {
             if(winner ~= steam_utils.getSteamID())then
                 data.players[tostring(winner)].winstreak = current_winstreak + 1
                 data.players[tostring(winner)].wins = current_wins + 1
+            else
+                data.winstreak = current_winstreak + 1
+                data.wins = current_wins + 1
             end
 
 
@@ -1458,6 +1470,7 @@ ArenaGameplay = {
             end
         end
 
+        
         if(not data.spectator_mode)then
             if (not first_entry) then
                 ArenaGameplay.SavePlayerData(lobby, data, true)
@@ -1471,6 +1484,12 @@ ArenaGameplay = {
             player.Immortal(true)
 
             RunWhenPlayerExists(function()
+                -- update local wins
+                local wins = tonumber(steamutils.GetLobbyData( tostring(steam_utils.getSteamID()) .. "_wins")) or 0
+                local winstreak = tonumber(steamutils.GetLobbyData( tostring(steam_utils.getSteamID()) .. "_winstreak")) or 0
+                data.wins = wins
+                data.winstreak = winstreak
+
                 if (first_entry and player.Get()) then
                     GameDestroyInventoryItems(player.Get())
                 end

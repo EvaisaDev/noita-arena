@@ -152,7 +152,7 @@
 
 
     <ControlsComponent 
-        enabled="0" 
+        enabled="1" 
         gamepad_fire_on_thumbstick_extend="0" 
         gamepad_fire_on_thumbstick_extend_threshold="0.7" 
         gamepad_indirect_aiming_enabled="0" 
