@@ -210,9 +210,11 @@ local function TryUpdateData(lobby)
             CellFactory_GetAllSands(true, true),
         }
         
+        local index = 1
         for _, mat_list in ipairs(mats)do
             for _, material in ipairs(mat_list)do
-                content_hash = content_hash + (string.bytes(CellFactory_GetName(material)) * material)
+                content_hash = content_hash + (string.bytes(material) * index)
+                index = index + 1
             end
         end
     end
