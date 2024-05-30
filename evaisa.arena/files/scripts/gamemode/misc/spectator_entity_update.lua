@@ -5,7 +5,7 @@ local inventory = EntityGetFirstComponentIncludingDisabled(entity, "Inventory2Co
 if inventory ~= nil then
     local held_item = ComponentGetValue2(inventory, "mActiveItem")
 
-    if held_item ~= nil and held_item ~= 0 then
+    if held_item ~= nil and held_item ~= 0 and EntityGetIsAlive(held_item) then
         -- surely this is sane.
         EntitySetComponentsWithTagEnabled(held_item, "enabled_in_world", false)
         EntitySetComponentsWithTagEnabled(held_item, "enabled_in_hand", false)
