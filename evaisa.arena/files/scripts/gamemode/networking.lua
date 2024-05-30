@@ -2167,7 +2167,7 @@ networking = {
                 local ent = EntityCreateNew()
                 local x, y, entity_data, uid = unpack(v)
                 np.DeserializeEntity(ent, entity_data, x, y)
-                
+                local name = EntityGetFilename(ent)
             end
 
 
@@ -2234,7 +2234,9 @@ networking = {
                             EntityKill(entity)
                         end
 
-                        networking.send.request_item_update(lobby, user)
+                        if(not was_refresh)then
+                            networking.send.request_item_update(lobby, user)
+                        end
                         --networking.send.request_spectate_data(lobby, user)
                     end
                 end
@@ -3035,6 +3037,7 @@ networking = {
             end
 
             
+            
 
             delay.new(function()
                 local valid = #(EntityGetWithTag("workshop") or {}) > 0
@@ -3052,6 +3055,11 @@ networking = {
                     "projectile",
                 }
 
+                local illegal_file_matches = {
+                    "verlet_chains",
+                    "particles",
+                }
+
                 local to_sync = {}
                 local filtered = {}
 
@@ -3063,7 +3071,13 @@ networking = {
                     for _, tag in ipairs(illegal_sync_tags)do
                         if(EntityHasTag(v, tag))then
                             goto continue
-                            break
+                        end
+                    end
+                    
+                    local file = EntityGetFilename(v)
+                    for _, match in ipairs(illegal_file_matches)do
+                        if(file:match(match) )then
+                            goto continue
                         end
                     end
 
