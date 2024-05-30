@@ -55,15 +55,20 @@ SpectatorMode = {
 
     end,
     HandleSpectatorSync = function(lobby, data)
-        if(data.selected_client == nil)then
+        print("Handling spectator sync")
+        if(data.spectated_player == nil)then
+            print("No spectated player")
             return
         end
-        local player = data.players[tostring(data.selected_client)]
+        local player = data.players[tostring(data.spectated_player)]
         if(player == nil)then
+            print("No player")
             return
         end
 
         if(player.entity and EntityGetIsAlive(player.entity) and data.spectator_entity and EntityGetIsAlive(data.spectator_entity))then
+            print("Syncing spectator data")
+            
             -- We will sync wand stats and stuff.
             local inventory2_comp = EntityGetFirstComponentIncludingDisabled(player.entity, "Inventory2Component")
             local spectator_inventory2_comp = EntityGetFirstComponentIncludingDisabled(data.spectator_entity, "Inventory2Component")
@@ -122,6 +127,7 @@ SpectatorMode = {
             local perk_string = bitser.dumps(player.perks)
 
    
+            -- ahh need to clear this when switching scene duhh
             if(data.last_selected_perk_string == perk_string)then
                 return
             end
@@ -190,18 +196,24 @@ SpectatorMode = {
 
             local screen_width, screen_height = GuiGetScreenDimensions(data.spectator_gui)
 
-            if(data.last_selected_player ~= nil and data.players[tostring(data.last_selected_player)] ~= nil and data.selected_client == nil)then
+            --[[if(data.last_selected_player ~= nil and data.players[tostring(data.last_selected_player)] ~= nil and data.spectated_player == nil)then
                 if(data.players[tostring(data.last_selected_player)].entity ~= nil and EntityGetIsAlive(data.players[tostring(data.last_selected_player)].entity))then
                     data.selected_player = data.players[tostring(data.last_selected_player)].entity
-                    data.selected_client = data.last_selected_player
+                    data.spectated_player = data.last_selected_player
                     data.selected_player_name = steamutils.getTranslatedPersonaName(data.last_selected_player)
                     data.last_selected_player = nil
                 end
             else
                 data.last_selected_player = nil
-            end
+            end]]
 
             --GamePrint("Spectator mode")
+
+            if(data.spectated_player ~= nil and data.players[tostring(data.spectated_player)] ~= nil and EntityGetIsAlive(data.players[tostring(data.spectated_player)].entity))then
+                data.selected_player = data.players[tostring(data.spectated_player)].entity
+                data.selected_player_name = steamutils.getTranslatedPersonaName(data.spectated_player)
+            end
+
             if (data.selected_player ~= nil) then
                 local client_entity = data.selected_player
                 if (client_entity ~= nil and EntityGetIsAlive(client_entity)) then
@@ -216,17 +228,7 @@ SpectatorMode = {
                         local camera_x_new = camera_x + camera_x_diff * camera_speed
                         local camera_y_new = camera_y + camera_y_diff * camera_speed
                         GameSetCameraPos(camera_x_new, camera_y_new)
-                    else
-                        data.selected_player = nil
-                        data.selected_client = nil
-                        data.selected_player_name = nil
-                        print("Cleared selected player 1")
                     end
-                else
-                    data.selected_player = nil
-                    data.selected_client = nil
-                    data.selected_player_name = nil
-                    print("Cleared selected player 2")
                 end
             end
 
@@ -284,7 +286,7 @@ SpectatorMode = {
 
                 if (keys_pressed.w or keys_pressed.a or keys_pressed.s or keys_pressed.d or stick_average >= 0.1 or stick_average <= -0.1) then
                     data.selected_player = nil
-                    data.selected_client = nil
+                    data.spectated_player = nil
                     data.selected_player_name = nil
                     
                     if(data.spectator_entity ~= nil)then
@@ -318,7 +320,7 @@ SpectatorMode = {
                         data.selected_player_name = "Unknown Player"
                         if (player ~= nil) then
                             data.selected_player_name = steamutils.getTranslatedPersonaName(player)
-                            data.selected_client = player
+                            data.spectated_player = player
                             data.spectator_active_player = player
 
                             networking.send.request_item_update(lobby, player)
@@ -353,7 +355,7 @@ SpectatorMode = {
                         data.selected_player_name = "Unknown Player"
                         if (player ~= nil) then
                             data.selected_player_name = steamutils.getTranslatedPersonaName(player)
-                            data.selected_client = player
+                            data.spectated_player = player
                             data.spectator_active_player = player
 
                             networking.send.request_item_update(lobby, player)
@@ -435,7 +437,7 @@ SpectatorMode = {
                                 data.selected_player_name = "Unknown Player"
                                 if (player ~= nil) then
                                     data.selected_player_name = steamutils.getTranslatedPersonaName(player)
-                                    data.selected_client = player
+                                    data.spectated_player = player
                                     data.spectator_active_player = player
 
                                     networking.send.request_item_update(lobby, player)
@@ -451,23 +453,23 @@ SpectatorMode = {
         end
     end,
     SpawnSpectatedPlayer = function(lobby, data)
-        if(data.lobby_spectated_player ~= nil)then
+        if(data.spectated_player ~= nil)then
   
-            if(data.players[tostring(data.lobby_spectated_player)] == nil)then
+            if(data.players[tostring(data.spectated_player)] == nil)then
                 return
             end
-            if (data.lobby_spectated_player ~= steam_utils.getSteamID() and (data.players[tostring(data.lobby_spectated_player)].entity == nil or not EntityGetIsAlive(data.players[tostring(data.lobby_spectated_player)].entity))) then
+            if (data.spectated_player ~= steam_utils.getSteamID() and (data.players[tostring(data.spectated_player)].entity == nil or not EntityGetIsAlive(data.players[tostring(data.spectated_player)].entity))) then
 
                 --GamePrint("Loading player " .. tostring(member.id))
-                ArenaGameplay.SpawnClientPlayer(lobby, data.lobby_spectated_player, data, 0, 0)
+                ArenaGameplay.SpawnClientPlayer(lobby, data.spectated_player, data, 0, 0)
 
                 --[[delay.new(5, function()
 
-                    networking.send.request_item_update(lobby, data.lobby_spectated_player)
-                    networking.send.request_spectate_data(lobby, data.lobby_spectated_player)
-                    networking.send.request_sync_hm(lobby, data.lobby_spectated_player)
-                    networking.send.request_second_row(lobby, data.lobby_spectated_player)
-                    networking.send.request_skin(lobby, data.lobby_spectated_player)
+                    networking.send.request_item_update(lobby, data.spectated_player)
+                    networking.send.request_spectate_data(lobby, data.spectated_player)
+                    networking.send.request_sync_hm(lobby, data.spectated_player)
+                    networking.send.request_second_row(lobby, data.spectated_player)
+                    networking.send.request_skin(lobby, data.spectated_player)
                     networking.send.request_perk_update(lobby)
                 end)]]
             end
@@ -516,11 +518,11 @@ SpectatorMode = {
     end,
     LobbySpectateUpdate = function(lobby, data)
         local members = steamutils.getLobbyMembers(lobby)
-        local lobby_spectated_player = data.lobby_spectated_player
+        local spectated_player = data.spectated_player
 
-        if(lobby_spectated_player == nil and members ~= nil and #members > 0)then
-            data.lobby_spectated_player = members[1].id
-            data.selected_player_name = steamutils.getTranslatedPersonaName(data.lobby_spectated_player)
+        if(spectated_player == nil and members ~= nil and #members > 0)then
+            data.spectated_player = members[1].id
+            data.selected_player_name = steamutils.getTranslatedPersonaName(data.spectated_player)
             data.spectator_lobby_loaded = false
 
             delay.new(5, function()
@@ -531,13 +533,13 @@ SpectatorMode = {
 
                 data.last_hm_switch = GameGetFrameNum()
 
-                local lobby_spectated_player = data.lobby_spectated_player
+                local spectated_player = data.spectated_player
                 data.last_hm_sync = nil
 
-                if(lobby_spectated_player ~= nil and members ~= nil and #members > 0)then
+                if(spectated_player ~= nil and members ~= nil and #members > 0)then
                     local index = 1
                     for k, v in ipairs(members)do
-                        if(v.id == lobby_spectated_player)then
+                        if(v.id == spectated_player)then
                             index = k
                             break
                         end
@@ -555,10 +557,9 @@ SpectatorMode = {
     
                     SpectatorMode.ClearHM()
 
-                    data.lobby_spectated_player = members[index].id
+                    data.spectated_player = members[index].id
                     data.spectator_active_player = members[index].id
-                    data.selected_client = members[index].id
-                    data.selected_player_name = steamutils.getTranslatedPersonaName(data.lobby_spectated_player)
+                    data.selected_player_name = steamutils.getTranslatedPersonaName(data.spectated_player)
                     data.spectator_lobby_loaded = false
                     data.selected_player = nil
                 end
@@ -567,7 +568,7 @@ SpectatorMode = {
         end
 
         for k, v in pairs(data.players)do
-            if(k ~= tostring(data.lobby_spectated_player))then
+            if(k ~= tostring(data.spectated_player))then
                 v:Destroy()
             end
         end
@@ -590,17 +591,17 @@ SpectatorMode = {
                     GameSetCameraPos(camera_x_new, camera_y_new)
                 else
                     data.selected_player = nil
-                    data.selected_client = nil
+                    data.spectated_player = nil
                     data.selected_player_name = nil
-                    data.lobby_spectated_player = nil
                     data.spectator_active_player = nil
                 end
             else
                 data.selected_player = nil
-                data.selected_client = nil
+                data.spectated_player = nil
                 data.selected_player_name = nil
-                data.lobby_spectated_player = nil
                 data.spectator_active_player = nil
+
+                print("Deselected player!!")
             end
         end
 
@@ -677,16 +678,16 @@ SpectatorMode = {
                 data.last_hm_switch = GameGetFrameNum()
 
                 --[[
-                    data.lobby_spectated_player = 
+                    data.spectated_player = 
                     data.selected_player_name = 
                 ]]
-                local lobby_spectated_player = data.lobby_spectated_player
+                local spectated_player = data.spectated_player
                 data.last_hm_sync = nil
 
-                if(lobby_spectated_player ~= nil and members ~= nil and #members > 0)then
+                if(spectated_player ~= nil and members ~= nil and #members > 0)then
                     local index = 1
                     for k, v in ipairs(members)do
-                        if(v.id == lobby_spectated_player)then
+                        if(v.id == spectated_player)then
                             index = k
                             break
                         end
@@ -704,10 +705,9 @@ SpectatorMode = {
     
                     SpectatorMode.ClearHM()
 
-                    data.lobby_spectated_player = members[index].id
+                    data.spectated_player = members[index].id
                     data.spectator_active_player = members[index].id
-                    data.selected_client = members[index].id
-                    data.selected_player_name = steamutils.getTranslatedPersonaName(data.lobby_spectated_player)
+                    data.selected_player_name = steamutils.getTranslatedPersonaName(data.spectated_player)
                     data.spectator_lobby_loaded = false
                     data.selected_player = nil
                 end
@@ -725,14 +725,14 @@ SpectatorMode = {
 
                 data.last_hm_switch = GameGetFrameNum()
 
-                local lobby_spectated_player = data.lobby_spectated_player
+                local spectated_player = data.spectated_player
 
                 data.last_hm_sync = nil
 
-                if(lobby_spectated_player ~= nil and members ~= nil and #members > 0)then
+                if(spectated_player ~= nil and members ~= nil and #members > 0)then
                     local index = 1
                     for k, v in ipairs(members)do
-                        if(v.id == lobby_spectated_player)then
+                        if(v.id == spectated_player)then
                             index = k
                             break
                         end
@@ -788,10 +788,9 @@ SpectatorMode = {
                         end
                     end
 
-                    data.lobby_spectated_player = members[index].id
+                    data.spectated_player = members[index].id
                     data.spectator_active_player = members[index].id
-                    data.selected_client = members[index].id
-                    data.selected_player_name = steamutils.getTranslatedPersonaName(data.lobby_spectated_player)
+                    data.selected_player_name = steamutils.getTranslatedPersonaName(data.spectated_player)
                     data.spectator_lobby_loaded = false
                     data.selected_player = nil
                 end

@@ -594,7 +594,7 @@ networking = {
                 local spectator_pickupper = nil
 
                 -- if we are in spectator mode
-                if (data.selected_client == user and data.spectator_entity ~= nil and EntityGetIsAlive(data.spectator_entity)) then
+                if (data.spectated_player == user and data.spectator_entity ~= nil and EntityGetIsAlive(data.spectator_entity)) then
                     local items = GameGetAllInventoryItems(data.spectator_entity) or {}
                     for i, item_id in ipairs(items) do
                         GameKillInventoryItem(data.spectator_entity, item_id)
@@ -1056,7 +1056,7 @@ networking = {
     
  
                     -- if we are in spectator mode
-                    if (data.selected_client == user and data.spectator_entity ~= nil and EntityGetIsAlive(data.spectator_entity)) then
+                    if (data.spectated_player == user and data.spectator_entity ~= nil and EntityGetIsAlive(data.spectator_entity)) then
                         has_spectator = true
                     end
     
@@ -1587,7 +1587,7 @@ networking = {
                     local has_spectator = false
 
                     -- if we are in spectator mode
-                    if (data.selected_client == user and data.spectator_entity ~= nil and EntityGetIsAlive(data.spectator_entity)) then
+                    if (data.spectated_player == user and data.spectator_entity ~= nil and EntityGetIsAlive(data.spectator_entity)) then
                         has_spectator = true
                     end
 
@@ -2001,7 +2001,7 @@ networking = {
             end
 
             -- if user is not spectated player, return
-            if(user ~= data.selected_client)then
+            if(user ~= data.spectated_player)then
                 return
             end
 
@@ -2130,7 +2130,7 @@ networking = {
         end,
         second_row_spots = function(lobby, message, user, data)
 
-            if(user ~= data.lobby_spectated_player or data.state ~= "lobby")then
+            if(user ~= data.spectated_player or data.state ~= "lobby")then
                 return
             end
 

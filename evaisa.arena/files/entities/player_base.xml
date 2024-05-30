@@ -160,6 +160,7 @@
     blood_spray_material="blood"
     physics_objects_damage="1"
     critical_damage_resistance="0.2"
+    wait_for_kill_flag_on_death="1"
     ><damage_multipliers
       explosion="0.35" >
     </damage_multipliers>

@@ -1409,8 +1409,6 @@ ArenaGameplay = {
 
         GameAddFlagRun("refresh_dummy")
 
-        data.lobby_spectated_player = nil
-
         -- get rounds
         local rounds = ArenaGameplay.GetNumRounds(lobby)
 
@@ -1435,9 +1433,6 @@ ArenaGameplay = {
 
         ArenaGameplay.GracefulReset(lobby, data)
 
-        data.selected_player = nil
-        data.selected_client = nil
-        data.client.previous_spectate_data = nil
         data.allow_round_end = false
         data.controlled_physics_entities = {}
         GameRemoveFlagRun("lock_ready_state")
@@ -1449,6 +1444,7 @@ ArenaGameplay = {
         GameRemoveFlagRun("no_shooting")
         GlobalsSetValue("smash_knockback", "1" )
         GlobalsSetValue("smash_knockback_dummy", "1")
+        data.last_selected_perk_string = nil
         show_message = show_message or false
         first_entry = first_entry or false
 
@@ -1738,6 +1734,7 @@ ArenaGameplay = {
     end,
     LoadArena = function(lobby, data, show_message, map)
         data.network_entity_cache = {}
+        data.last_selected_perk_string = nil
         networking.send.update_state(lobby, "arena")
         
 
@@ -1769,7 +1766,7 @@ ArenaGameplay = {
             GameRemoveFlagRun("can_save_player")
         end
 
-        
+
 
         
         GameRemoveFlagRun("DeserializedHolyMountain")
@@ -2728,7 +2725,7 @@ ArenaGameplay = {
         end
 
 
-        if(not IsPaused() and not (data.spectator_mode and data.lobby_spectated_player == nil))then
+        if(not IsPaused() and not (data.spectator_mode and data.spectated_player == nil))then
             ArenaGameplay.UpdateDummy(lobby, data, true)
         end
 
@@ -2746,8 +2743,8 @@ ArenaGameplay = {
                 ArenaGameplay.RunReadyCheck(lobby, data)
             end
 
-            if(data.lobby_spectated_player ~= nil and GameGetFrameNum() % 120 == 0)then
-                networking.send.request_sync_hm(lobby, data.lobby_spectated_player, data.last_synced_entity_count)
+            if(data.spectated_player ~= nil and GameGetFrameNum() % 120 == 0)then
+                networking.send.request_sync_hm(lobby, data.spectated_player, data.last_synced_entity_count)
             end
         else
 
@@ -2910,7 +2907,7 @@ ArenaGameplay = {
         
         --print(debug.traceback())
 
-        if(data.spectator_mode and data.state == "lobby" and data.lobby_spectated_player == user)then
+        if(data.spectator_mode and data.state == "lobby" and data.spectated_player == user)then
             data.selected_player = client
             networking.send.request_character_position(lobby, user)
         end
@@ -2927,7 +2924,7 @@ ArenaGameplay = {
         end
 
         -- if we are in lobby and player is not being spectated
-        if(data.spectator_mode and data.state == "lobby" and data.lobby_spectated_player ~= user)then
+        if(data.spectator_mode and data.state == "lobby" and data.spectated_player ~= user)then
             return false
         end
 
@@ -3341,6 +3338,7 @@ ArenaGameplay = {
         if(not data.spectator_mode)then
             player_entity = player.Get()
         end
+
         if (steam_utils.IsOwner() and GlobalsGetValue("arena_gamemode", "ffa") ~= "continuous") then
 
             if ((data.spectator_mode or player_entity ~= nil) and (not data.players_loaded and ArenaGameplay.CheckAllPlayersLoaded(lobby, data))) then
@@ -3363,6 +3361,17 @@ ArenaGameplay = {
 
         if(not data.spectator_mode)then
             networking.send.character_position(lobby, data)
+
+            if(player_entity and GameHasFlagRun("player_died"))then
+                local damage_model = EntityGetFirstComponentIncludingDisabled(player_entity, "DamageModelComponent")
+
+                ArenaGameplay.SavePlayerData(lobby, data)
+
+                if(damage_model)then
+                    ComponentSetValue2(damage_model, "kill_now", true)
+                end
+                
+            end
 
             if (GameHasFlagRun("took_damage")) then
                 GameRemoveFlagRun("took_damage")
@@ -3518,7 +3527,7 @@ ArenaGameplay = {
             if(GameGetFrameNum() % 60 == 0)then
                 local InventoryGuiComponent = EntityGetFirstComponentIncludingDisabled(data.spectator_entity, "InventoryGuiComponent")
                 if(InventoryGuiComponent ~= nil)then
-                    EntitySetComponentIsEnabled(data.spectator_entity, InventoryGuiComponent, data.selected_client ~= nil)
+                    EntitySetComponentIsEnabled(data.spectator_entity, InventoryGuiComponent, data.spectated_player ~= nil)
                 end
             end
 
@@ -3717,7 +3726,7 @@ ArenaGameplay = {
         end
 
         if(data.state == "lobby")then
-            if(not IsPaused() and not (data.spectator_mode and data.lobby_spectated_player == nil))then
+            if(not IsPaused() and not (data.spectator_mode and data.spectated_player == nil))then
                 ArenaGameplay.UpdateDummy(lobby, data)
                 for k, v in pairs(data.players) do
                     if (v.entity ~= nil and EntityGetIsAlive(v.entity)) then
