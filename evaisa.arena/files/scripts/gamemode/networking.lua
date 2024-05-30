@@ -1018,7 +1018,8 @@ networking = {
                 return
             end
             
-            delay.new(5, function()
+            -- idk why i am delaying item switching by 5 frames
+            --delay.new(5, function()
                 if (not gameplay_handler.CheckPlayer(lobby, user, data)) then
                     return
                 end
@@ -1090,7 +1091,7 @@ networking = {
                         end
                     end
                 end
-            end)
+            --end)
 
         
         end,

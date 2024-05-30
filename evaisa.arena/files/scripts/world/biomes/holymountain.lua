@@ -100,13 +100,6 @@ function spawn_all_shopitems( x, y )
 	local rounds = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0
 
 
-	--local random = rng.new(random_seed)
-
-	--[[local spawn_shop, spawn_perks = temple_random( x, y )
-	if( spawn_shop == "0" ) then
-		return
-	end]]
-
 	-- how many rounds it takes for the shop level to increment
 	local shop_scaling = tonumber(GlobalsGetValue("shop_scaling", "2"))
 	-- how much the shop level increments by
@@ -292,11 +285,6 @@ function spawn_item_shop_item( x, y )
 	local random_seed_x, random_seed_y = get_new_seed(x, y, GameHasFlagRun("shop_sync"))
 	
 	SetRandomSeed( random_seed_x, random_seed_y )
-
-	--[[local spawn_shop, spawn_perks = temple_random( x, y )
-	if( spawn_shop == "0" ) then
-		return
-	end]]
 
 	-- how many rounds it takes for the shop level to increment
 	local shop_scaling = tonumber(GlobalsGetValue("shop_scaling", "2"))

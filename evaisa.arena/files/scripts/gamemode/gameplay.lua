@@ -1192,7 +1192,7 @@ ArenaGameplay = {
 
             print("Loading lobby in 5 seconds")
             
-            delay.new(5 * 60, function()
+            delay.new(300, function()
                 ArenaGameplay.LoadLobby(lobby, data, false)
             end, function(frames)
                 if (frames % 60 == 0) then
@@ -1209,7 +1209,7 @@ ArenaGameplay = {
 
             if(GlobalsGetValue("arena_gamemode", "ffa") == "continuous")then
                 ArenaGameplay.AddRound(lobby)
-                delay.new(5 * 60, function()
+                delay.new(300, function()
                     ArenaGameplay.LoadLobby(lobby, data, false)
                 end, function(frames)
                     if (frames % 60 == 0) then
@@ -2597,12 +2597,12 @@ ArenaGameplay = {
 
         if(ModSettingGet("evaisa.arena.lag_detection") and #(EntityGetWithTag("workshop") or {}) > 0 and framerate < 10 and not data.low_framerate_popup)then
 
-            np.ComponentUpdatesSetEnabled("ProjectileSystem", false)
+            --[[np.ComponentUpdatesSetEnabled("ProjectileSystem", false)
             np.ComponentUpdatesSetEnabled("CellEaterSystem", false)
             np.ComponentUpdatesSetEnabled("LooseGroundSystem", false)
             np.ComponentUpdatesSetEnabled("BlackHoleSystem", false)
             np.ComponentUpdatesSetEnabled("MagicConvertMaterialSystem", false)
-            np.ComponentUpdatesSetEnabled("PhysicsBodySystem", false)
+            np.ComponentUpdatesSetEnabled("PhysicsBodySystem", false)]]
 
             local entities = EntityGetInRadius(0, 0, 10000000)
 
@@ -2614,14 +2614,14 @@ ArenaGameplay = {
                 end
             end
 
-            delay.new(15, function()
+            --[[delay.new(15, function()
                 np.ComponentUpdatesSetEnabled("ProjectileSystem", true)
                 np.ComponentUpdatesSetEnabled("CellEaterSystem", true)
                 np.ComponentUpdatesSetEnabled("LooseGroundSystem", true)
                 np.ComponentUpdatesSetEnabled("BlackHoleSystem", true)
                 np.ComponentUpdatesSetEnabled("MagicConvertMaterialSystem", true)
                 np.ComponentUpdatesSetEnabled("PhysicsBodySystem", true)
-            end)
+            end)]]
 
             --[[
             data.low_framerate_popup = popup.create("low_framerate", GameTextGetTranslatedOrNot("$arena_lag_detected_name"),{
@@ -3366,11 +3366,7 @@ ArenaGameplay = {
         if(not data.spectator_mode)then
             networking.send.character_position(lobby, data)
 
-            print("Player entity: " .. tostring(player_entity) .. " Player died: " .. tostring(GameHasFlagRun("player_died")))
-
-
             if(player_entity and GameHasFlagRun("player_died") and not GameHasFlagRun("player_unloaded"))then
-                print("Player died, setting kill flag!")
                 local damage_model = EntityGetFirstComponentIncludingDisabled(player_entity, "DamageModelComponent")
 
                 ArenaGameplay.SavePlayerData(lobby, data)

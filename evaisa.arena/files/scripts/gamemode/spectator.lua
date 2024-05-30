@@ -525,7 +525,7 @@ SpectatorMode = {
             data.selected_player_name = steamutils.getTranslatedPersonaName(data.spectated_player)
             data.spectator_lobby_loaded = false
 
-            delay.new(5, function()
+            --delay.new(5, function()
                 data.last_hm_switch = data.last_hm_switch or 1
                 if(GameGetFrameNum() - data.last_hm_switch < 30)then
                     return
@@ -563,7 +563,7 @@ SpectatorMode = {
                     data.spectator_lobby_loaded = false
                     data.selected_player = nil
                 end
-            end)
+            --end)
             
         end
 
