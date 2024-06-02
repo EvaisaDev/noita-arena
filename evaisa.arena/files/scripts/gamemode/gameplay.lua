@@ -3132,6 +3132,8 @@ ArenaGameplay = {
 
         data.target_dummy_player = new_target
 
+        networking.send.send_dummy_target(lobby, new_target)
+
         ArenaGameplay.UpdateDummyData(dummy, lobby, data)
 
     end,

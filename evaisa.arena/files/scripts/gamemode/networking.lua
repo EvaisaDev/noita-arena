@@ -2239,7 +2239,7 @@ networking = {
             networking.send.send_dummy_target(lobby, data.target_dummy_player, user)
         end,
         send_dummy_target = function(lobby, message, user, data)
-            if(user ~= data.spectated_player or data.state ~= "lobby")then
+            if(not data.spectator_mode or user ~= data.spectated_player or data.state ~= "lobby")then
                 return
             end
 
@@ -3025,7 +3025,11 @@ networking = {
             steamutils.sendToPlayer("request_dummy_target", {}, user, true)
         end,
         send_dummy_target = function(lobby, target, user)
-            steamutils.sendToPlayer("send_dummy_target", target, user, true)
+            if(user)then
+                steamutils.sendToPlayer("send_dummy_target", target, user, true)
+            else
+                steamutils.send("send_dummy_target", target, steamutils.messageTypes.Spectators, lobby, true, true)
+            end
         end,
     },
 }
