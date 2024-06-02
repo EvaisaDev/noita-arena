@@ -1,9 +1,8 @@
-- inventory randomly goes invisible in spectator mode
-- inventory flashes when players edit in spectator mode
-- round only ends for lobby owner
+
+- inventory flashes when players edit in spectator mode (cannot fix)
+
 - flasks are pure white in spectator inventory (only occasionally)
 - practice dummy doesn't sync to spectators
-- when entering the arena the spectator doesn't target a player sometimes.
 - spectators load shop items into the arena sometimes
 
 - wand shows on spectator entity sometimes
@@ -11,7 +10,6 @@
 
 - Tab button locks up sometimes for spectators occasionally(?
  - Probably related to spectator entity dying bug
-
 
 - Swapper desyncs and teleports you to players
 - shops desync with extra item(?
@@ -26,9 +24,17 @@ CHANGES:
 - Card pick is now a interactable object.
 - Extended the Holy Mountain.
 - Optimized wand deserialization slightly
-- Fixed lag when client spawn item refresh when spectated.
+- Fixed lag when client spam item refresh when spectated.
 - Fixed items falling through platforms in holy mountain when spectating
 - Fixed spectator entity dying to electricity and environmental disasters and dropping a ragdoll / items
 - Client position should be updated when spectator switches user, preventing position desync.
 - Spell refresh no longer blocks projectiles.
-- Passive spell effects should stay disabled on spectator entities
+- Passive spell effects should not show on the spectator entity
+- Wand no longer appears on spectator entity.
+- inventory randomly goes invisible in spectator mode
+- Fixed issue that would prevent win conditions from triggering
+- Fixed selected item desync on spectators.
+- When players enter the arena, spectators will automatically follow their last selected player.
+- Fixed perks not showing up for spectators when no client was selected in arena before entering HM
+- Fixed potion throw line appearing on spectator entity.
+- Added ability to remove keybindings by pressing backspace.

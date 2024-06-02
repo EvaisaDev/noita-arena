@@ -2914,6 +2914,7 @@ ArenaGameplay = {
         if(data.spectator_mode and data.state == "lobby" and data.spectated_player == user)then
             data.selected_player = client
             networking.send.request_character_position(lobby, user)
+            networking.send.request_dummy_target(lobby, user)
         end
 
         return client

@@ -6,6 +6,11 @@ hide_entity = function(entity)
     EntitySetComponentsWithTagEnabled(entity, "enabled_in_world", false)
     EntitySetComponentsWithTagEnabled(entity, "enabled_in_hand", false)
     EntitySetComponentsWithTagEnabled(entity, "enabled_in_inventory", true)
+    
+    local physics_throwable_comp = EntityGetFirstComponentIncludingDisabled(entity, "PhysicsThrowableComponent")
+    if physics_throwable_comp ~= nil then
+        ComponentSetValue2(physics_throwable_comp, "max_throw_speed", 10000000000)
+    end
 
     -- children
     local children = EntityGetAllChildren(entity)

@@ -2235,6 +2235,17 @@ networking = {
         request_character_position = function(lobby, message, user, data)
             networking.send.character_position(lobby, data, false, user)
         end,
+        request_dummy_target = function(lobby, message, user, data)
+            networking.send.send_dummy_target(lobby, data.target_dummy_player, user)
+        end,
+        send_dummy_target = function(lobby, message, user, data)
+            if(user ~= data.spectated_player or data.state ~= "lobby")then
+                return
+            end
+
+            data.target_dummy_player = message
+            GameAddFlagRun("refresh_dummy")
+        end,
     },
     send = {
         handshake = function(lobby)
@@ -3009,6 +3020,12 @@ networking = {
         end,
         set_map = function(lobby, map)
             steamutils.send("set_map", map, steamutils.messageTypes.Host, lobby, true, true)
+        end,
+        request_dummy_target = function(lobby, user)
+            steamutils.sendToPlayer("request_dummy_target", {}, user, true)
+        end,
+        send_dummy_target = function(lobby, target, user)
+            steamutils.sendToPlayer("send_dummy_target", target, user, true)
         end,
     },
 }
