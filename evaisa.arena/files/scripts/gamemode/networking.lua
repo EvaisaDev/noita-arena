@@ -2246,7 +2246,7 @@ networking = {
             local player = ArenaGameplay.FindUser(lobby, message)
 
             if(player)then
-                data.target_dummy_player = message
+                data.target_dummy_player = player
                 GameAddFlagRun("refresh_dummy")
             end
         end,
