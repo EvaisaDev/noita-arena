@@ -1143,6 +1143,7 @@ networking = {
             local health = message[1]
             local maxHealth = message[2]
             local damage_details = message[3]
+            local damage = message[4]
 
             if (health ~= nil and maxHealth ~= nil) then
                 if (data.players[tostring(user)].entity ~= nil) then
@@ -1159,8 +1160,10 @@ networking = {
 
                    -- print("last health: " .. tostring(last_health) .. ", new health: " .. tostring(health) .. ", max health: " .. tostring(maxHealth))
 
-                    if (health < last_health) then
-                        local damage = last_health - health
+                    if (health < last_health or damage) then
+                        if(damage == nil)then
+                            damage = last_health - health
+                        end
 
                         --[[
                             int ragdoll_fx;
@@ -2714,16 +2717,17 @@ networking = {
                         GlobalsSetValue("last_damage_details", "")
                     end
 
+                    local damage = nil
                     --print(json.stringify(damage_details))
                     data.client.max_hp = max_health
                     data.client.hp = health
 
                     if(force and GameHasFlagRun("prepared_damage"))then
-                        health = health - (0.04 * 2)
+                        damage = 0.04
                         print("Sending health update for blocked damage!")
                     end
 
-                    steamutils.send("health_update", { health, max_health, damage_details }, steamutils.messageTypes.OtherPlayers, lobby,
+                    steamutils.send("health_update", { health, max_health, damage_details, damage }, steamutils.messageTypes.OtherPlayers, lobby,
                         true, true)
                 end
             end
