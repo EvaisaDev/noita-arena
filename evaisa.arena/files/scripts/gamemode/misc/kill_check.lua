@@ -162,7 +162,10 @@ function damage_received( damage, message, entity_thats_responsible, is_fatal, p
 
                     GamePrintImportant("$log_gamefx_respawn", "$logdesc_gamefx_respawn")
 
-                    ComponentSetValue2( damageModelComponent, "invincibility_frames", 30 )
+                    --ComponentSetValue2( damageModelComponent, "invincibility_frames", 30 )
+                    local effect = GetGameEffectLoadTo( entity_id, "PROTECTION_ALL", true)
+
+                    ComponentSetValue2( effect, "frames", 30 )
 
                     ComponentSetValue2( damageModelComponent, "hp", damage + 4 )
                 else
@@ -171,7 +174,10 @@ function damage_received( damage, message, entity_thats_responsible, is_fatal, p
                         if(math.floor(hp * 25) > 1)then
                             ComponentSetValue2( damageModelComponent, "hp", damage + 0.04 )
 
-                            ComponentSetValue2( damageModelComponent, "invincibility_frames", 60 )
+                            --ComponentSetValue2( damageModelComponent, "invincibility_frames", 60 )
+                            local effect = GetGameEffectLoadTo( entity_id, "PROTECTION_ALL", true)
+
+                            ComponentSetValue2( effect, "frames", 60 )
                             
                             print("$log_gamefx_savinggrace")
                             GamePrint("$log_gamefx_savinggrace")
