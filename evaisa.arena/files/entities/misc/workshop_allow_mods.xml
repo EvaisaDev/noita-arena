@@ -1,10 +1,10 @@
 <Entity tags="spectator_no_clear,workshop">
 
   <HitboxComponent 
-    aabb_min_x="-450" 
-    aabb_min_y="-450"
-    aabb_max_x="450" 
-    aabb_max_y="450" >
+    aabb_min_x="-2000" 
+    aabb_min_y="-2000"
+    aabb_max_x="2000" 
+    aabb_max_y="2000" >
   </HitboxComponent>
   
 </Entity>

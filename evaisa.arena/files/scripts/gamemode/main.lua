@@ -267,11 +267,11 @@ local function TryUpdateData(lobby)
         return
     end
 
-    if(lobby_data_last_frame["perk_blacklist_data"] ~= nil and perk_blacklist_string ~= lobby_data_last_frame["perk_blacklist_data"])then
+    if(cached_lobby_data["perk_blacklist_data"] ~= nil and perk_blacklist_string ~= cached_lobby_data["perk_blacklist_data"])then
         print("Updating perk blacklist data")
         -- split byte string into table
         perk_blacklist_data = {}
-        perk_blacklist_string = lobby_data_last_frame["perk_blacklist_data"]
+        perk_blacklist_string = cached_lobby_data["perk_blacklist_data"]
         for i = 1, #perk_blacklist_string do
             local enabled = perk_blacklist_string:sub(i, i) == "1"
             if(enabled)then
@@ -282,11 +282,11 @@ local function TryUpdateData(lobby)
         end
     end
 
-    if(lobby_data_last_frame["spell_blacklist_data"] ~= nil and spell_blacklist_string ~= lobby_data_last_frame["spell_blacklist_data"])then
+    if(cached_lobby_data["spell_blacklist_data"] ~= nil and spell_blacklist_string ~= cached_lobby_data["spell_blacklist_data"])then
         print("Updating spell blacklist data")
         -- split byte string into table
         spell_blacklist_data = {}
-        spell_blacklist_string = lobby_data_last_frame["spell_blacklist_data"]
+        spell_blacklist_string = cached_lobby_data["spell_blacklist_data"]
         for i = 1, #spell_blacklist_string do
             local enabled = spell_blacklist_string:sub(i, i) == "1"
             if(enabled)then
@@ -297,11 +297,11 @@ local function TryUpdateData(lobby)
         end
     end
 
-    if(lobby_data_last_frame["map_blacklist_data"] ~= nil and map_blacklist_string ~= lobby_data_last_frame["map_blacklist_data"])then
+    if(cached_lobby_data["map_blacklist_data"] ~= nil and map_blacklist_string ~= cached_lobby_data["map_blacklist_data"])then
         print("Updating map blacklist data")
         -- split byte string into table
         map_blacklist_data = {}
-        map_blacklist_string = lobby_data_last_frame["map_blacklist_data"]
+        map_blacklist_string = cached_lobby_data["map_blacklist_data"]
         for i = 1, #map_blacklist_string do
             local enabled = map_blacklist_string:sub(i, i) == "1"
             if(enabled)then
@@ -313,11 +313,11 @@ local function TryUpdateData(lobby)
     end
 
     -- card blacklist
-    if(lobby_data_last_frame["card_blacklist_data"] ~= nil and card_blacklist_string ~= lobby_data_last_frame["card_blacklist_data"])then
+    if(cached_lobby_data["card_blacklist_data"] ~= nil and card_blacklist_string ~= cached_lobby_data["card_blacklist_data"])then
         print("Updating card blacklist data")
         -- split byte string into table
         card_blacklist_data = {}
-        card_blacklist_string = lobby_data_last_frame["card_blacklist_data"]
+        card_blacklist_string = cached_lobby_data["card_blacklist_data"]
         for i = 1, #card_blacklist_string do
             local enabled = card_blacklist_string:sub(i, i) == "1"
             if(enabled)then
