@@ -2236,15 +2236,19 @@ networking = {
             networking.send.character_position(lobby, data, false, user)
         end,
         request_dummy_target = function(lobby, message, user, data)
-            networking.send.send_dummy_target(lobby, data.target_dummy_player, user)
+            networking.send.dummy_target(lobby, data.target_dummy_player, user)
         end,
-        send_dummy_target = function(lobby, message, user, data)
+        dummy_target = function(lobby, message, user, data)
             if(not data.spectator_mode or user ~= data.spectated_player or data.state ~= "lobby")then
                 return
             end
 
-            data.target_dummy_player = message
-            GameAddFlagRun("refresh_dummy")
+            local player = ArenaGameplay.FindUser(lobby, message)
+
+            if(player)then
+                data.target_dummy_player = message
+                GameAddFlagRun("refresh_dummy")
+            end
         end,
     },
     send = {
@@ -3024,11 +3028,11 @@ networking = {
         request_dummy_target = function(lobby, user)
             steamutils.sendToPlayer("request_dummy_target", {}, user, true)
         end,
-        send_dummy_target = function(lobby, target, user)
+        dummy_target = function(lobby, target, user)
             if(user)then
-                steamutils.sendToPlayer("send_dummy_target", target, user, true)
+                steamutils.sendToPlayer("dummy_target", tostring(target), user, true)
             else
-                steamutils.send("send_dummy_target", target, steamutils.messageTypes.Spectators, lobby, true, true)
+                steamutils.send("dummy_target", tostring(target), steamutils.messageTypes.Spectators, lobby, true, true)
             end
         end,
     },
