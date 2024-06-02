@@ -64,7 +64,7 @@ local allow_on_clients = {
 }   
 
 local skip_function_list = {
-    
+    GAMBLE = true,
 }
 
 local rewrites = {
@@ -192,7 +192,6 @@ local rewrites = {
 		perk_icon = "data/items_gfx/perks/respawn.png",
         --game_effect = "RESPAWN",
         skip_functions_on_load = true,
-		do_not_remove = true,
 		stackable = STACKABLE_YES,
 		stackable_is_rare = true,
 		func = function( entity_perk_item, entity_who_picked, item_name )
@@ -238,6 +237,7 @@ local rewrites = {
 		perk_icon = "data/items_gfx/perks/always_cast.png",
 		stackable = STACKABLE_YES,
 		one_off_effect = true,
+		skip_functions_on_load = true,
 		func = function( entity_perk_item, entity_who_picked, item_name )
 			local x,y = EntityGetTransform( entity_perk_item )
 			local rounds = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0

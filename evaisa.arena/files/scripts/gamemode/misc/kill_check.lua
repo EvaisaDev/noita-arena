@@ -149,12 +149,20 @@ function damage_received( damage, message, entity_thats_responsible, is_fatal, p
 
                 local respawn_count = tonumber( GlobalsGetValue( "RESPAWN_COUNT", "0" ) )
                 if(respawn_count > 0)then
+                    local extra_respawn_count = tonumber(GlobalsGetValue("EXTRA_RESPAWN_COUNT", "0"))
                     respawn_count = respawn_count - 1
+
+                    extra_respawn_count = extra_respawn_count + 1
+
                     GlobalsSetValue( "RESPAWN_COUNT", tostring(respawn_count) )
+                    GlobalsSetValue( "EXTRA_RESPAWN_COUNT", tostring(extra_respawn_count) )
+
                     print("$logdesc_gamefx_respawn")
                     GamePrint("$logdesc_gamefx_respawn")
 
                     GamePrintImportant("$log_gamefx_respawn", "$logdesc_gamefx_respawn")
+
+                    ComponentSetValue2( damageModelComponent, "invincibility_frames", 30 )
 
                     ComponentSetValue2( damageModelComponent, "hp", damage + 4 )
                 else
@@ -162,6 +170,8 @@ function damage_received( damage, message, entity_thats_responsible, is_fatal, p
                         local hp = ComponentGetValue2( damageModelComponent, "hp" )
                         if(math.floor(hp * 25) > 1)then
                             ComponentSetValue2( damageModelComponent, "hp", damage + 0.04 )
+
+                            ComponentSetValue2( damageModelComponent, "invincibility_frames", 60 )
                             
                             print("$log_gamefx_savinggrace")
                             GamePrint("$log_gamefx_savinggrace")

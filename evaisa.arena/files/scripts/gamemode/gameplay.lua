@@ -1374,6 +1374,17 @@ ArenaGameplay = {
         GameRemoveFlagRun("player_died")
         GameRemoveFlagRun("killcheck_finished")
 
+
+        
+        local respawn_count = tonumber( GlobalsGetValue( "RESPAWN_COUNT", "0" ) )
+        local extra_respawn_count = tonumber(GlobalsGetValue("EXTRA_RESPAWN_COUNT", "0"))
+
+        if(respawn_count < extra_respawn_count)then
+            respawn_count = respawn_count + extra_respawn_count
+            GlobalsSetValue("RESPAWN_COUNT", tostring(respawn_count))
+            GlobalsSetValue("EXTRA_RESPAWN_COUNT", "0")
+        end
+
         networking.send.update_state(lobby, "lobby")
         data.network_entity_cache = {}
         if(data.unstuck_ui)then

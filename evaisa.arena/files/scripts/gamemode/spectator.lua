@@ -55,7 +55,6 @@ SpectatorMode = {
 
     end,
     HandleSpectatorSync = function(lobby, data)
-        print("Handling spectator sync")
         if(data.spectated_player == nil)then
             print("No spectated player")
             return
@@ -66,9 +65,7 @@ SpectatorMode = {
             return
         end
 
-        if(player.entity and EntityGetIsAlive(player.entity) and data.spectator_entity and EntityGetIsAlive(data.spectator_entity))then
-            print("Syncing spectator data")
-            
+        if(GameGetFrameNum() % 30 == 0 and player.entity and EntityGetIsAlive(player.entity) and data.spectator_entity and EntityGetIsAlive(data.spectator_entity))then
             -- We will sync wand stats and stuff.
             local inventory2_comp = EntityGetFirstComponentIncludingDisabled(player.entity, "Inventory2Component")
             local spectator_inventory2_comp = EntityGetFirstComponentIncludingDisabled(data.spectator_entity, "Inventory2Component")
