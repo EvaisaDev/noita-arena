@@ -3990,6 +3990,13 @@ ArenaGameplay = {
                 player.Move(0, 0)
                 GameRemoveFlagRun("in_hm")
             end
+
+            if(GameHasFlagRun("prepared_damage") and not GameHasFlagRun("took_damage"))then
+                -- damage was blocked
+                print("Damage was blocked, sending update")
+                networking.send.health_update(lobby, data, true)
+                GameRemoveFlagRun("prepared_damage")
+            end
         end
 
         if (GameGetFrameNum() % 5 == 0) then

@@ -2715,11 +2715,15 @@ networking = {
                     end
 
                     --print(json.stringify(damage_details))
+                    data.client.max_hp = max_health
+                    data.client.hp = health
+
+                    if(force and GameHasFlagRun("prepared_damage"))then
+                        health = health - 0.04
+                    end
 
                     steamutils.send("health_update", { health, max_health, damage_details }, steamutils.messageTypes.OtherPlayers, lobby,
                         true, true)
-                    data.client.max_hp = max_health
-                    data.client.hp = health
                 end
             end
         end,
