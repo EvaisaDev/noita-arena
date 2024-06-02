@@ -145,10 +145,27 @@ function damage_received( damage, message, entity_thats_responsible, is_fatal, p
             ComponentSetValue2( damageModelComponent, "hp", hp + damage )
         else
             if(is_fatal)then
-                local died = false
-
+                local died = true
                 local respawn_count = tonumber( GlobalsGetValue( "RESPAWN_COUNT", "0" ) )
-                if(respawn_count > 0)then
+
+                if(GameHasFlagRun( "saving_grace" ))then
+                    local hp = ComponentGetValue2( damageModelComponent, "hp" )
+                    if(math.floor(hp * 25) > 1)then
+                        ComponentSetValue2( damageModelComponent, "hp", damage + 0.04 )
+
+                        --ComponentSetValue2( damageModelComponent, "invincibility_frames", 60 )
+                        local effect = GetGameEffectLoadTo( entity_id, "PROTECTION_ALL", true)
+
+                        ComponentSetValue2( effect, "frames", 60 )
+                        
+                        print("$log_gamefx_savinggrace")
+                        GamePrint("$log_gamefx_savinggrace")
+
+                        died = false
+                    end
+                end
+
+                if(respawn_count > 0 and died)then
                     local extra_respawn_count = tonumber(GlobalsGetValue("EXTRA_RESPAWN_COUNT", "0"))
                     respawn_count = respawn_count - 1
 
@@ -168,26 +185,8 @@ function damage_received( damage, message, entity_thats_responsible, is_fatal, p
                     ComponentSetValue2( effect, "frames", 30 )
 
                     ComponentSetValue2( damageModelComponent, "hp", damage + 4 )
-                else
-                    if(GameHasFlagRun( "saving_grace" ))then
-                        local hp = ComponentGetValue2( damageModelComponent, "hp" )
-                        if(math.floor(hp * 25) > 1)then
-                            ComponentSetValue2( damageModelComponent, "hp", damage + 0.04 )
 
-                            --ComponentSetValue2( damageModelComponent, "invincibility_frames", 60 )
-                            local effect = GetGameEffectLoadTo( entity_id, "PROTECTION_ALL", true)
-
-                            ComponentSetValue2( effect, "frames", 60 )
-                            
-                            print("$log_gamefx_savinggrace")
-                            GamePrint("$log_gamefx_savinggrace")
-
-                        else
-                            died = true
-                        end
-                    else
-                        died = true
-                    end
+                    died = false
                 end
 
                 if(died)then
