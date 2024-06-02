@@ -51,6 +51,7 @@ function damage_about_to_be_received( damage, x, y, entity_thats_responsible, cr
     end
 
     GameAddFlagRun("prepared_damage")
+    GameRemoveFlagRun("finished_damage")
 
     local damage_details = GetDamageDetails()
 
@@ -146,6 +147,8 @@ function damage_received( damage, message, entity_thats_responsible, is_fatal, p
     --print(json.stringify(damage_details))
     -- check if would kill
     GameAddFlagRun("took_damage")
+    GameAddFlagRun("finished_damage")
+    GameRemoveFlagRun("prepared_damage")
     GlobalsSetValue("last_damage_details", tostring(serialize_damage_details(damage_details)))
 
     local damageModelComponent = EntityGetFirstComponentIncludingDisabled( entity_id, "DamageModelComponent" )

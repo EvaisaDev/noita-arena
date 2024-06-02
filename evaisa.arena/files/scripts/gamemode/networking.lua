@@ -2719,7 +2719,8 @@ networking = {
                     data.client.hp = health
 
                     if(force and GameHasFlagRun("prepared_damage"))then
-                        health = health - 0.04
+                        health = health - (0.04 * 2)
+                        print("Sending health update for blocked damage!")
                     end
 
                     steamutils.send("health_update", { health, max_health, damage_details }, steamutils.messageTypes.OtherPlayers, lobby,
