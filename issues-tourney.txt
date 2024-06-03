@@ -15,7 +15,7 @@
 - shops desync with extra item(?
 - spectator can't see cards
 - swapping players sometimes causes clients to drop their spells??
-
+- potion throw line appearing on spectator entity.
 
 CHANGES:
 - Fixed card pick sometimes not showing up correctly.
@@ -36,5 +36,13 @@ CHANGES:
 - Fixed selected item desync on spectators.
 - When players enter the arena, spectators will automatically follow their last selected player.
 - Fixed perks not showing up for spectators when no client was selected in arena before entering HM
-- Fixed potion throw line appearing on spectator entity.
-- Added ability to remove keybindings by pressing backspace.
+- Added ability to un-set keybindings by pressing backspace.
+- Fixed extra life perk not showing up in other player's perk lists.
+- Extra life is no longer one time use, it regenerates when entering the HM
+- Extra life now has invincibility frames.
+- Saving grace now has invincibility frames.
+- Extra life is now triggered after saving grace.
+- Synced blocked damage onto clients
+- Fixed bug where lobby type wouldn't update.
+- Fixed bug where chat could cause you to get stuck unable to control your player
+- Player health and other data is serialized before dying.

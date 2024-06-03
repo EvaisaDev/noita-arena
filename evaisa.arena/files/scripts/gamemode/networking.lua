@@ -1144,10 +1144,12 @@ networking = {
             local maxHealth = message[2]
             local damage_details = message[3]
             local damage = message[4]
+            local invincibility_frames = message[5]
 
             if (health ~= nil and maxHealth ~= nil) then
-                if (data.players[tostring(user)].entity ~= nil) then
-                    if(not EntityGetIsAlive(data.players[tostring(user)].entity))then
+                local client_entity = data.players[tostring(user)].entity
+                if (client_entity ~= nil) then
+                    if(not EntityGetIsAlive(client_entity))then
                         return
                     end
 
@@ -1163,6 +1165,12 @@ networking = {
                     if (health < last_health or damage) then
                         if(damage == nil)then
                             damage = last_health - health
+                        end
+
+                        if(invincibility_frames)then
+                            local effect = GetGameEffectLoadTo(client_entity, "PROTECTION_ALL", true)
+    
+                            ComponentSetValue2( effect, "frames", invincibility_frames )
                         end
 
                         --[[
@@ -1203,7 +1211,7 @@ networking = {
 
                             local blood_multiplier = damage_details.blood_multiplier
 
-                            local damage_model_comp = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity, "DamageModelComponent")
+                            local damage_model_comp = EntityGetFirstComponentIncludingDisabled(client_entity, "DamageModelComponent")
 
                             if(damage_model_comp == nil)then
                                 return
@@ -1216,7 +1224,7 @@ networking = {
 
                             for i, damage_type in ipairs(damage_types) do
                                 --print("inflicting damage: " .. tostring(damage_per_type) .. " of type: " .. tostring(damage_type))
-                                EntityInflictDamage(data.players[tostring(user)].entity, 
+                                EntityInflictDamage(client_entity, 
                                 damage_per_type, 
                                 damage_type, 
                                 "damage_fake",
@@ -1232,7 +1240,7 @@ networking = {
                                 ComponentSetValue2(damage_model_comp, "blood_multiplier", old_blood_multiplier)
                             end
                         else
-                            EntityInflictDamage(data.players[tostring(user)].entity, 
+                            EntityInflictDamage(client_entity, 
                             damage, 
                             "DAMAGE_DROWNING", 
                             "damage_fake",
@@ -1247,7 +1255,7 @@ networking = {
 
                     end
 
-                    local DamageModelComp = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity,
+                    local DamageModelComp = EntityGetFirstComponentIncludingDisabled(client_entity,
                         "DamageModelComponent")
 
                     if (DamageModelComp ~= nil) then
@@ -1301,8 +1309,9 @@ networking = {
             local rng = message[1]
             local message = message[2]
 
+            local client_entity = data.players[tostring(user)].entity
 
-            if (data.spectator_mode or (GameHasFlagRun("player_is_unlocked") and (not GameHasFlagRun("no_shooting"))) and data.players[tostring(user)].entity ~= nil and EntityGetIsAlive(data.players[tostring(user)].entity)) then
+            if (data.spectator_mode or (GameHasFlagRun("player_is_unlocked") and (not GameHasFlagRun("no_shooting"))) and client_entity ~= nil and EntityGetIsAlive(client_entity)) then
                 data.players[tostring(user)].can_fire = true
 
                 --print("Received fire wand message!")
@@ -1314,11 +1323,11 @@ networking = {
 
                 data.players[tostring(user)].projectile_rng_stack = rng
 
-                local controlsComp = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity,
+                local controlsComp = EntityGetFirstComponentIncludingDisabled(client_entity,
                     "ControlsComponent")
 
                 if (controlsComp ~= nil) then
-                    local inventory2Comp = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity,
+                    local inventory2Comp = EntityGetFirstComponentIncludingDisabled(client_entity,
                         "Inventory2Component")
 
                     if (inventory2Comp == nil) then
@@ -1348,14 +1357,14 @@ networking = {
                         local target_x = x + aim_x
                         local target_y = y + aim_y
 
-                        EntityHelper.BlockFiring(data.players[tostring(user)].entity, false)
+                        EntityHelper.BlockFiring(client_entity, false)
 
                         -- Add player_unit tag to fix physics projectile lob strength
-                        EntityAddTag(data.players[tostring(user)].entity, "player_unit")
-                        np.UseItem(data.players[tostring(user)].entity, mActiveItem, true, true, true, x, y, target_x, target_y)
-                        EntityRemoveTag(data.players[tostring(user)].entity, "player_unit")
+                        EntityAddTag(client_entity, "player_unit")
+                        np.UseItem(client_entity, mActiveItem, true, true, true, x, y, target_x, target_y)
+                        EntityRemoveTag(client_entity, "player_unit")
 
-                        EntityHelper.BlockFiring(data.players[tostring(user)].entity, true)
+                        EntityHelper.BlockFiring(client_entity, true)
 
                         ComponentSetValue2(controlsComp, "mButtonDownFire", firing)
                     end
@@ -1443,10 +1452,11 @@ networking = {
             if (not gameplay_handler.CheckPlayer(lobby, user, data)) then
                 return
             end
+            local client_entity = data.players[tostring(user)].entity
 
-            if (data.spectator_mode or (GameHasFlagRun("player_is_unlocked")) and data.players[tostring(user)].entity ~= nil and EntityGetIsAlive(data.players[tostring(user)].entity)) then
-                local player = data.players[tostring(user)].entity
-                local character_data_comp = EntityGetFirstComponentIncludingDisabled(player, "CharacterDataComponent")
+            if (data.spectator_mode or (GameHasFlagRun("player_is_unlocked")) and client_entity ~= nil and EntityGetIsAlive(client_entity)) then
+                
+                local character_data_comp = EntityGetFirstComponentIncludingDisabled(client_entity, "CharacterDataComponent")
                 if (character_data_comp ~= nil) then
                     local player_data = {
                         status_list = message[1],
@@ -1459,9 +1469,9 @@ networking = {
                         if(not data.players[tostring(user)].cosmetics[id])then
                             -- add cosmetic
                             data.players[tostring(user)].cosmetics[id] = true
-                            if(player)then
+                            if(client_entity)then
                                 print("Loading client cosmetic: " .. tostring(id))
-                                ArenaGameplay.UpdateCosmetics(lobby, data, "load", player, true)
+                                ArenaGameplay.UpdateCosmetics(lobby, data, "load", client_entity, true)
                             end
                         end
                     end
@@ -1470,8 +1480,8 @@ networking = {
                         if(not loaded_cosmetics[k])then
                             -- remove cosmetic
                             data.players[tostring(user)].cosmetics[k] = nil
-                            if(player)then
-                                ArenaGameplay.UpdateCosmetics(lobby, data, "unload", player, true)
+                            if(client_entity)then
+                                ArenaGameplay.UpdateCosmetics(lobby, data, "unload", client_entity, true)
                             end
                         end
                     end
@@ -1497,7 +1507,7 @@ networking = {
                         local effect = GetStatusElement(id, value)
 
                         --[[if(effect ~= nil and data.players[tostring(user)].status_effect_comps[id] == nil)then
-                            data.players[tostring(user)].status_effect_comps[id] = EntityAddComponent2( player, "SpriteComponent",
+                            data.players[tostring(user)].status_effect_comps[id] = EntityAddComponent2( client_entity, "SpriteComponent",
                             {
                                 image_file = effect.ui_icon,
                                 offset_x = offset,
@@ -1513,7 +1523,7 @@ networking = {
 
                         if(effect ~= nil and data.players[tostring(user)].status_effect_entities[id] == nil)then
                             if(effect.effect_entity)then
-                                data.players[tostring(user)].status_effect_entities[id] = LoadGameEffectEntityTo( player, effect.effect_entity )
+                                data.players[tostring(user)].status_effect_entities[id] = LoadGameEffectEntityTo( client_entity, effect.effect_entity )
                                 --GamePrint("Loaded effect of id: "..tostring(effect.id))
                             else
                                 data.players[tostring(user)].status_effect_entities[id] = EntityCreateNew("effect")
@@ -1522,7 +1532,7 @@ networking = {
                                     effect = id,
                                     frames = -1,
                                 })
-                                EntityAddChild(player, data.players[tostring(user)].status_effect_entities[id])
+                                EntityAddChild(client_entity, data.players[tostring(user)].status_effect_entities[id])
                             end
 
                             if(data.players[tostring(user)].status_effect_entities[id] ~= 0 and data.players[tostring(user)].status_effect_entities[id] ~= nil)then
@@ -2718,16 +2728,17 @@ networking = {
                     end
 
                     local damage = nil
+                    local invincibility_frames = nil
                     --print(json.stringify(damage_details))
                     data.client.max_hp = max_health
                     data.client.hp = health
 
                     if(force and GameHasFlagRun("prepared_damage"))then
                         damage = 0.04
-                        print("Sending health update for blocked damage!")
+                        invincibility_frames = tonumber(GlobalsGetValue("invincibility_frames", "5"))
                     end
 
-                    steamutils.send("health_update", { health, max_health, damage_details, damage }, steamutils.messageTypes.OtherPlayers, lobby,
+                    steamutils.send("health_update", { health, max_health, damage_details, damage, invincibility_frames }, steamutils.messageTypes.OtherPlayers, lobby,
                         true, true)
                 end
             end

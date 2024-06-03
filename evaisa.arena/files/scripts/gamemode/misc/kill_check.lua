@@ -150,6 +150,7 @@ function damage_received( damage, message, entity_thats_responsible, is_fatal, p
     GameAddFlagRun("finished_damage")
     GameRemoveFlagRun("prepared_damage")
     GlobalsSetValue("last_damage_details", tostring(serialize_damage_details(damage_details)))
+    local invincibility_frames = 0
 
     local damageModelComponent = EntityGetFirstComponentIncludingDisabled( entity_id, "DamageModelComponent" )
     if damageModelComponent ~= nil then
@@ -170,6 +171,8 @@ function damage_received( damage, message, entity_thats_responsible, is_fatal, p
                         local effect = GetGameEffectLoadTo( entity_id, "PROTECTION_ALL", true)
 
                         ComponentSetValue2( effect, "frames", 60 )
+
+                        invincibility_frames = 60
                         
                         print("$log_gamefx_savinggrace")
                         GamePrint("$log_gamefx_savinggrace")
@@ -193,9 +196,12 @@ function damage_received( damage, message, entity_thats_responsible, is_fatal, p
                     GamePrintImportant("$log_gamefx_respawn", "$logdesc_gamefx_respawn")
 
                     --ComponentSetValue2( damageModelComponent, "invincibility_frames", 30 )
+                    
                     local effect = GetGameEffectLoadTo( entity_id, "PROTECTION_ALL", true)
 
                     ComponentSetValue2( effect, "frames", 30 )
+
+                    invincibility_frames = 30
 
                     ComponentSetValue2( damageModelComponent, "hp", damage + 4 )
 
@@ -211,4 +217,6 @@ function damage_received( damage, message, entity_thats_responsible, is_fatal, p
             end
         end
     end
+
+    GlobalsSetValue("invincibility_frames", tostring(invincibility_frames))
 end
