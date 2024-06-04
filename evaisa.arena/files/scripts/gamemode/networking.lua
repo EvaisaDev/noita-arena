@@ -2313,6 +2313,12 @@ networking = {
                 print("Received nil message (card list state), destroying")
                 data.upgrade_system:clean()
                 data.upgrade_system = nil
+
+                local card_entity = EntityGetWithTag("card_pick")
+                for k, v in ipairs(card_entity) do
+                    EntityKill(v)
+                    --print("killed card entity")
+                end
             end
 
             local open = message[1]
@@ -3156,7 +3162,7 @@ networking = {
         end,
         card_list_state = function(lobby, data, user)
             local upgrades_system = data.upgrade_system
-            if(upgrades_system == nil)then
+            if(upgrades_system == nil or GameHasFlagRun("card_picked"))then
                 if(user)then
                     steamutils.sendToPlayer("card_list_state", nil, user, true)
                 else

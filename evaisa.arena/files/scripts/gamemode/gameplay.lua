@@ -3589,7 +3589,7 @@ ArenaGameplay = {
             data.upgrade_system:draw(data.is_spectating)
         end
 
-        if(GameHasFlagRun("update_card_menu_state"))then
+        if(GameHasFlagRun("update_card_menu_state") and not data.spectator_mode)then
             print("Sending card list state")
             networking.send.card_list_state(lobby, data)
             GameRemoveFlagRun("update_card_menu_state")

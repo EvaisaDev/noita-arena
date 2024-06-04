@@ -29,6 +29,8 @@ local upgrade_system = {
             option_count = option_count_or_cards
         end
 
+        GameRemoveFlagRun("card_picked")
+
         local rounds = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0
         local random_seed = os.time() + (GameGetFrameNum() + GameGetRealWorldTimeSinceStarted()) / 2
         if(GameHasFlagRun("card_sync"))then
@@ -144,10 +146,14 @@ local upgrade_system = {
             end
 
             GameAddFlagRun("update_card_menu_state")
+            GameAddFlagRun("card_picked")
+
+            print("picked card!")
         end
 
         self.draw = function(self, is_spectator)
-            if(self.selected_index ~= self.last_selected_index)then
+            if(self.selected_index ~= self.last_selected_index and not is_spectator)then
+                print("selected index changed!")
                 GameAddFlagRun("update_card_menu_state")
             end
             GuiStartFrame(self.gui)
