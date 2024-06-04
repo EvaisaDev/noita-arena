@@ -906,7 +906,7 @@ ArenaMode = {
                             end
                         end
                         if(visible and hovered)then
-                            GuiTooltip(gui, GameTextGetTranslatedOrNot("$arena_settings_hover_tooltip_blacklist"), perk.ui_description)
+                            GuiTooltip(gui, steamutils.IsOwner() and GameTextGetTranslatedOrNot("$arena_settings_hover_tooltip_blacklist") or "", perk.ui_description)
                         end
                         local icon_width, icon_height = GuiGetImageDimensions(gui, perk.ui_icon)
                         SetRandomSeed(iteration * 21, iteration * 245)
@@ -928,7 +928,7 @@ ArenaMode = {
                         end
                         local _, _, hovered = GuiGetPreviousWidgetInfo(gui)
                         if(visible and hovered)then
-                            GuiTooltip(gui, GameTextGetTranslatedOrNot("$arena_settings_hover_tooltip_blacklist"), perk.ui_description)
+                            GuiTooltip(gui, steamutils.IsOwner() and GameTextGetTranslatedOrNot("$arena_settings_hover_tooltip_blacklist") or "", perk.ui_description)
                         end
                         GuiLayoutEnd(gui)
                     end
@@ -1003,7 +1003,7 @@ ArenaMode = {
                             end
                         end
                         if(visible and hovered)then
-                            GuiTooltip(gui, GameTextGetTranslatedOrNot("$arena_settings_hover_tooltip_blacklist"), spell.description)
+                            GuiTooltip(gui, steamutils.IsOwner() and GameTextGetTranslatedOrNot("$arena_settings_hover_tooltip_blacklist") or "", spell.description)
                         end
                         local icon_width, icon_height = GuiGetImageDimensions(gui, spell.sprite)
                         SetRandomSeed(iteration * 21, iteration * 245)
@@ -1026,7 +1026,7 @@ ArenaMode = {
                         end
                         local _, _, hovered = GuiGetPreviousWidgetInfo(gui)
                         if(visible and hovered)then
-                            GuiTooltip(gui, GameTextGetTranslatedOrNot("$arena_settings_hover_tooltip_blacklist"), spell.description)
+                            GuiTooltip(gui, steamutils.IsOwner() and GameTextGetTranslatedOrNot("$arena_settings_hover_tooltip_blacklist") or "", spell.description)
                         end
                         GuiLayoutEnd(gui)
                     end
@@ -1096,7 +1096,7 @@ ArenaMode = {
                             end
                         end
                         if(visible and hovered)then
-                            GuiTooltip(gui, GameTextGetTranslatedOrNot("$arena_settings_hover_tooltip_blacklist"), card.ui_description)
+                            GuiTooltip(gui, steamutils.IsOwner() and GameTextGetTranslatedOrNot("$arena_settings_hover_tooltip_blacklist") or "", card.ui_description)
                         end
                         local icon_width, icon_height = GuiGetImageDimensions(gui, card.card_symbol)
                         SetRandomSeed(iteration * 21, iteration * 245)
@@ -1118,7 +1118,7 @@ ArenaMode = {
                         end
                         local _, _, hovered = GuiGetPreviousWidgetInfo(gui)
                         if(visible and hovered)then
-                            GuiTooltip(gui, GameTextGetTranslatedOrNot("$arena_settings_hover_tooltip_blacklist"), card.ui_description)
+                            GuiTooltip(gui, steamutils.IsOwner() and GameTextGetTranslatedOrNot("$arena_settings_hover_tooltip_blacklist") or "", card.ui_description)
                         end
                         GuiLayoutEnd(gui)
                     end
@@ -1244,9 +1244,11 @@ ArenaMode = {
 
 
                                 --GuiZSetForNextWidget(menu_gui, -5110)
-                                GuiColorSetForNextWidget( gui, 1, 0.4, 0.4, 1 )
-                                GuiZSetForNextWidget(gui, -7110)
-                                GuiText(gui, -widest_string, 0, GameTextGetTranslatedOrNot("$arena_settings_hover_tooltip_blacklist"))
+                                if(steamutils.IsOwner())then
+                                    GuiColorSetForNextWidget( gui, 1, 0.4, 0.4, 1 )
+                                    GuiZSetForNextWidget(gui, -7110)
+                                    GuiText(gui, -widest_string, 0, GameTextGetTranslatedOrNot("$arena_settings_hover_tooltip_blacklist"))
+                                end
                                 GuiColorSetForNextWidget( gui, 1, 1, 1, 1 )
                                 GuiZSetForNextWidget(gui, -7110)
                                 GuiText(gui, -widest_string, 0, GameTextGetTranslatedOrNot(map.name))
