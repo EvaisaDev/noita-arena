@@ -14,7 +14,7 @@ hide_entity = function(entity)
 
     local material_inventory_comp = EntityGetFirstComponentIncludingDisabled(entity, "MaterialInventoryComponent")
     if material_inventory_comp ~= nil then
-        ComponentSetValue2(material_inventory_comp, "last_frame_drank", GameGetFrameNum() - 1)
+        ComponentSetValue2(material_inventory_comp, "last_frame_drank", -100)
     end
 
     -- children

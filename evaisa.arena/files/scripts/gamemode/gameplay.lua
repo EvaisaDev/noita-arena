@@ -2647,7 +2647,7 @@ ArenaGameplay = {
 
             for k, v in pairs(entities)do
                 local projectile_comp = EntityGetFirstComponentIncludingDisabled(v, "ProjectileComponent")
-                if(projectile_comp ~= nil)then
+                if(projectile_comp ~= nil and EntityGetRootEntity(v) == v)then
                     EntityRemoveComponent(v, projectile_comp)
                     EntityKill(v)
                 end
@@ -3920,6 +3920,14 @@ ArenaGameplay = {
 
                         was_wand[v] = true
                         last_edited_times[v] = edited_times
+                    end
+                    local material_inventory_comp = EntityGetFirstComponentIncludingDisabled(v, "MaterialInventoryComponent")
+                    if(material_inventory_comp)then
+                        local last_frame_drank = ComponentGetValue2(material_inventory_comp, "last_frame_drank")
+                        if(last_frame_drank == GameGetFrameNum())then
+                            networking.send.item_update(lobby, data, nil, true, false)
+                            networking.send.switch_item(lobby, data, nil, true, false)
+                        end
                     end
                 end
 

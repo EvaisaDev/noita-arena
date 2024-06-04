@@ -577,6 +577,7 @@ networking = {
                 local force = message[2]
                 local unlimited_spells = message[3]
                 local spells = message[4] or {}
+                local frame = message[5] or 0
 
                 --print("Received item update")
 
@@ -630,6 +631,13 @@ networking = {
                             if(has_spectator)then
                                 spectator_item = EntityCreateNew()
                                 np.DeserializeEntity(spectator_item, itemInfo.data, x, y)
+                                
+                                local material_inventory_comp = EntityGetFirstComponentIncludingDisabled(spectator_item, "MaterialInventoryComponent")
+                                if(material_inventory_comp)then
+                                    local last_frame_drank = ComponentGetValue2(material_inventory_comp, "last_frame_drank")
+                                    local frame_offset = last_frame_drank - frame
+                                    ComponentSetValue2(material_inventory_comp, "last_frame_drank", GameGetFrameNum() + frame_offset)
+                                end
                             end
                         end
             
@@ -2453,7 +2461,7 @@ networking = {
             local item_data, spell_data = player_helper.GetItemData()
 
 
-            local message = { item_data or {}, force, GameHasFlagRun( "arena_unlimited_spells" ), spell_data or {} }
+            local message = { item_data or {}, force, GameHasFlagRun( "arena_unlimited_spells" ), spell_data or {}, GameGetFrameNum() }
 
             if (user ~= nil) then
                 steamutils.sendToPlayer("item_update", message, user, true)
