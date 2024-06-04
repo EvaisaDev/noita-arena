@@ -2311,6 +2311,10 @@ networking = {
 
             if(message[1] == nil)then
                 print("Received nil message (card list state), destroying")
+                local card = data.upgrade_system.upgrades[data.upgrade_system.selected_index]
+                
+                GamePrintImportant(GameTextGetTranslatedOrNot(card.ui_name), GameTextGetTranslatedOrNot(card.ui_description))
+
                 data.upgrade_system:clean()
                 data.upgrade_system = nil
 

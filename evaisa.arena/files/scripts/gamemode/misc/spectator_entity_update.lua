@@ -12,6 +12,11 @@ hide_entity = function(entity)
         EntityRemoveComponent(entity, physics_throwable_comp)
     end
 
+    local material_inventory_comp = EntityGetFirstComponentIncludingDisabled(entity, "MaterialInventoryComponent")
+    if material_inventory_comp ~= nil then
+        ComponentSetValue2(material_inventory_comp, "last_frame_drank", GameGetFrameNum() - 1)
+    end
+
     -- children
     local children = EntityGetAllChildren(entity)
     if children ~= nil then
@@ -21,12 +26,14 @@ hide_entity = function(entity)
     end
 end
 
+last_held_entity = last_held_entity or nil
 
 if inventory ~= nil then
     local held_item = ComponentGetValue2(inventory, "mActiveItem")
 
-    if held_item ~= nil and held_item ~= 0 and EntityGetIsAlive(held_item) then
+    if held_item ~= nil and held_item ~= 0 and held_item ~= last_held_entity and EntityGetIsAlive(held_item) then
         -- surely this is sane.
         hide_entity(held_item)
+        last_held_entity = held_item
     end
 end
