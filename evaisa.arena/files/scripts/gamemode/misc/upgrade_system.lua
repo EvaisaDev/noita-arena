@@ -148,6 +148,8 @@ local upgrade_system = {
             GameAddFlagRun("update_card_menu_state")
             GameAddFlagRun("card_picked")
 
+            GamePlaySound("data/audio/Desktop/ui.bank", "ui/button_click", 0, 0)
+
             print("picked card!")
         end
 
@@ -386,6 +388,7 @@ local upgrade_system = {
             if(self.selected_index ~= self.last_selected_index and not is_spectator)then
                 print("selected index changed!")
                 GameAddFlagRun("update_card_menu_state")
+                GamePlaySound("data/audio/Desktop/ui.bank", "ui/button_select", 0, 0)
             end
         end
 

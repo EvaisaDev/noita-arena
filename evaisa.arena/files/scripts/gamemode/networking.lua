@@ -2319,6 +2319,8 @@ networking = {
                     EntityKill(v)
                     --print("killed card entity")
                 end
+
+                GamePlaySound("data/audio/Desktop/ui.bank", "ui/button_click", 0, 0)
             end
 
             local open = message[1]
@@ -2334,6 +2336,7 @@ networking = {
 
             if(data.upgrade_system)then
                 data.upgrade_system.selected_index = selected
+                GamePlaySound("data/audio/Desktop/ui.bank", "ui/button_select", 0, 0)
                 print("Setting selected index to "..tostring(selected))
             end
         end,
