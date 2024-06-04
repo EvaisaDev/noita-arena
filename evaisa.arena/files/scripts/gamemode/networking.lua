@@ -2263,6 +2263,61 @@ networking = {
                 GameAddFlagRun("refresh_dummy")
             end
         end,
+        request_card_list = function(lobby, message, user, data)
+            if(data.state ~= "lobby")then
+                return
+            end
+            if(data.spectator_mode)then
+                return
+            end
+            networking.send.card_list(lobby, data, user)
+        end,
+        card_list = function(lobby, message, user, data)
+            if(not data.spectator_mode or user ~= data.spectated_player or data.state ~= "lobby")then
+                return
+            end
+
+            if( data.upgrade_system == nil )then
+                data.upgrade_system = upgrade_system.create(message, function(upgrade)
+                    data.upgrade_system = nil
+                end)
+            else
+                data.upgrade_system:clean()
+                data.upgrade_system = upgrade_system.create(message, function(upgrade)
+                    data.upgrade_system = nil
+                end)
+            end
+
+            networking.send.request_card_list_state(lobby, user)
+        end,
+        request_card_list_state = function(lobby, message, user, data)
+            if(data.state ~= "lobby")then
+                return
+            end
+            if(data.spectator_mode)then
+                return
+            end
+
+            networking.send.card_list_state(lobby, data, user)
+        end,
+        card_list_state = function(lobby, message, user, data)
+            if(not data.spectator_mode or user ~= data.spectated_player or data.state ~= "lobby")then
+                return
+            end
+
+            local open = message[1]
+            local selected = message[2]
+            
+            if(open)then
+                GameAddFlagRun("card_menu_open")
+            else
+                GameRemoveFlagRun("card_menu_open")
+            end
+
+            if(data.upgrade_system)then
+                data.upgrade_system.selected_index = selected
+            end
+        end,
     },
     send = {
         handshake = function(lobby)
@@ -3053,6 +3108,47 @@ networking = {
                 steamutils.sendToPlayer("dummy_target", tostring(target), user, true)
             else
                 steamutils.send("dummy_target", tostring(target), steamutils.messageTypes.Spectators, lobby, true, true)
+            end
+        end,
+        request_card_list = function(lobby, user)
+            if(user)then
+                steamutils.sendToPlayer("request_card_list", {}, user, true)
+            else
+                steamutils.send("request_card_list", {}, steamutils.messageTypes.OtherPlayers, lobby, true)
+            end
+        end,
+        card_list = function(lobby, data, user)
+            local upgrades_system = data.upgrade_system
+            if(upgrades_system == nil)then
+                return
+            end
+            local cards = {}
+            for k, v in pairs(upgrades_system.upgrades)do
+                table.insert(cards, v.id)
+            end
+            if(user)then
+                steamutils.sendToPlayer("card_list", cards, user, true)
+            else
+                steamutils.send("card_list", cards, steamutils.messageTypes.Spectators, lobby, true, true)
+            end
+        end,
+        request_card_list_state = function(lobby, user)
+            if(user)then
+                steamutils.sendToPlayer("request_card_list_state", {}, user, true)
+            else
+                steamutils.send("request_card_list_state", {}, steamutils.messageTypes.OtherPlayers, lobby, true)
+            end
+        end,
+        card_list_state = function(lobby, data, user)
+            local upgrades_system = data.upgrade_system
+            if(upgrades_system == nil)then
+                return
+            end
+
+            if(user)then
+                steamutils.sendToPlayer("card_list_state", {GameHasFlagRun("card_menu_open"), upgrades_system.selected_index}, user, true)
+            else
+                steamutils.send("card_list_state", {GameHasFlagRun("card_menu_open"), upgrades_system.selected_index}, steamutils.messageTypes.Spectators, lobby, true, true)
             end
         end,
     },

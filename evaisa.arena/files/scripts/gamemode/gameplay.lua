@@ -1748,6 +1748,8 @@ ArenaGameplay = {
         return math.floor(num * mult + 0.5) / mult
     end,
     LoadArena = function(lobby, data, show_message, map)
+        ArenaGameplay.GracefulReset(lobby, data)
+
         data.network_entity_cache = {}
         data.last_selected_perk_string = nil
         networking.send.update_state(lobby, "arena")
@@ -2926,6 +2928,7 @@ ArenaGameplay = {
             data.selected_player = client
             networking.send.request_character_position(lobby, user)
             networking.send.request_dummy_target(lobby, user)
+            networking.send.request_card_list(lobby, user)
         end
 
         return client
@@ -3383,10 +3386,12 @@ ArenaGameplay = {
             if(player_entity and GameHasFlagRun("player_died") and not GameHasFlagRun("player_unloaded"))then
                 local damage_model = EntityGetFirstComponentIncludingDisabled(player_entity, "DamageModelComponent")
 
-                ArenaGameplay.SavePlayerData(lobby, data)
+                
 
                 if(damage_model)then
                     ComponentSetValue2(damage_model, "hp", 0.04)
+                    ArenaGameplay.SavePlayerData(lobby, data)
+                    ComponentSetValue2(damage_model, "hp", -5)
                     ComponentSetValue2(damage_model, "kill_now", true)
                     GameAddFlagRun("player_unloaded")
                 end
@@ -3579,8 +3584,14 @@ ArenaGameplay = {
         end
 
         if(GameHasFlagRun("card_menu_open") and data.upgrade_system ~= nil and not IsPaused())then
-            data.upgrade_system:draw()
+            data.upgrade_system:draw(data.is_spectating)
         end
+
+        if(GameHasFlagRun("update_card_menu_state"))then
+            networking.send.card_list_state(lobby, data)
+            GameRemoveFlagRun("update_card_menu_state")
+        end
+        
 
         np.SetInventoryCursorEnabled(not data.is_spectating)
         if(data.is_spectating)then

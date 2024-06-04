@@ -1,12 +1,7 @@
-
 - inventory flashes when players edit in spectator mode (cannot fix)
 
 - flasks are pure white in spectator inventory (only occasionally)
-- practice dummy doesn't sync to spectators
 - spectators load shop items into the arena sometimes
-
-- wand shows on spectator entity sometimes
- - may be fixed by passive spell effect fix
 
 - Tab button locks up sometimes for spectators occasionally(?
  - Probably related to spectator entity dying bug
@@ -15,7 +10,6 @@
 - shops desync with extra item(?
 - spectator can't see cards
 - swapping players sometimes causes clients to drop their spells??
-- potion throw line appearing on spectator entity.
 
 CHANGES:
 - Fixed card pick sometimes not showing up correctly.
@@ -46,3 +40,5 @@ CHANGES:
 - Fixed bug where lobby type wouldn't update.
 - Fixed bug where chat could cause you to get stuck unable to control your player
 - Player health and other data is serialized before dying.
+- Fixed potion throw line appearing on spectators occasionally
+- Practice dummy changes now sync to spectators.

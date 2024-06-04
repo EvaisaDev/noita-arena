@@ -323,6 +323,7 @@ SpectatorMode = {
                             networking.send.request_item_update(lobby, player)
                             networking.send.request_character_position(lobby, player)
                             networking.send.request_dummy_target(lobby, player)
+                            networking.send.request_card_list(lobby, user)
                         end
                     end
                 end
@@ -359,6 +360,7 @@ SpectatorMode = {
                             networking.send.request_item_update(lobby, player)
                             networking.send.request_character_position(lobby, player)
                             networking.send.request_dummy_target(lobby, player)
+                            networking.send.request_card_list(lobby, user)
                         end
                     end
                 end
@@ -442,6 +444,7 @@ SpectatorMode = {
                                     networking.send.request_item_update(lobby, player)
                                     networking.send.request_character_position(lobby, player)
                                     networking.send.request_dummy_target(lobby, player)
+                                    networking.send.request_card_list(lobby, user)
                                 end
                             end
                         end

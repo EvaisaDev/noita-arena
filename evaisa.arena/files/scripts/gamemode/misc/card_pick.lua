@@ -20,6 +20,7 @@ if(math.abs(x - px) > max_distance or math.abs(y - py) > max_distance)then
     GameRemoveFlagRun("card_menu_open")
     --print("too far!!")
     GameRemoveFlagRun("chat_bind_disabled")
+    GameAddFlagRun("update_card_menu_state")
 end
 
 if(GameHasFlagRun("card_menu_open"))then
@@ -34,10 +35,12 @@ function interacting( entity_who_interacted, entity_interacted, interactable_nam
         GameRemoveFlagRun("chat_bind_disabled")
         GameRemoveFlagRun("card_menu_open")
         ComponentSetValue2(interactComp, "ui_text", GameTextGetTranslatedOrNot("$arena_card_pick_2"))
+        GameAddFlagRun("update_card_menu_state")
     else
         GameAddFlagRun("chat_bind_disabled")
         GameAddFlagRun("card_menu_open")
         ComponentSetValue2(interactComp, "ui_text", GameTextGetTranslatedOrNot("$arena_card_pick"))
+        GameAddFlagRun("update_card_menu_state")
     end
 
 end

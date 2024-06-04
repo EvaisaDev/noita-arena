@@ -21,7 +21,13 @@ local rng = dofile_once("mods/evaisa.arena/lib/rng.lua")
     }
 ]]
 local upgrade_system = {
-    create = function(option_count, callback)
+    create = function(option_count_or_cards, callback)
+        local option_count = 3
+        if(type(option_count_or_cards) == "table")then
+            option_count = #option_count_or_cards
+        else
+            option_count = option_count_or_cards
+        end
 
         local rounds = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0
         local random_seed = os.time() + (GameGetFrameNum() + GameGetRealWorldTimeSinceStarted()) / 2
@@ -56,33 +62,46 @@ local upgrade_system = {
         end
         
         local function GetUpgrades(count)
-            local recycle = (count > #valid_upgrades)
+            if(type(count) == "table")then
+                local result = {}
+                for k, v in ipairs(count) do
+                    for _, upgrade in ipairs(valid_upgrades)do
+                        if(upgrade.id == v)then
+                            table.insert(result, upgrade)
+                        end
+                    end
+                end
+                return result
+            else
+                local recycle = (count > #valid_upgrades)
         
-            local result = {}
-            local usedUpgrades = {}
-        
-            while count > 0 do
-                local upgrade = getRandomWeightedChoice(valid_upgrades)
-        
-                if not recycle then
-                    if not usedUpgrades[upgrade.id] then
-                        usedUpgrades[upgrade.id] = true
+                local result = {}
+                local usedUpgrades = {}
+            
+                while count > 0 do
+                    local upgrade = getRandomWeightedChoice(valid_upgrades)
+            
+                    if not recycle then
+                        if not usedUpgrades[upgrade.id] then
+                            usedUpgrades[upgrade.id] = true
+                            table.insert(result, upgrade)
+                            count = count - 1
+                        end
+                    else
                         table.insert(result, upgrade)
                         count = count - 1
                     end
-                else
-                    table.insert(result, upgrade)
-                    count = count - 1
                 end
+            
+                return result
             end
-        
-            return result
         end
         
         local self = {
             gui = GuiCreate(),
-            upgrades = GetUpgrades(option_count),
+            upgrades = GetUpgrades(option_count_or_cards),
             option_count = option_count,
+            last_selected_index = nil,
             selected_index = nil,
             skip_selected = false,
             card_render_size = 2,
@@ -123,10 +142,14 @@ local upgrade_system = {
                 EntityLoad( "data/entities/particles/image_emitters/perk_effect.xml", x, y )
                 v.func(player_entity)
             end
+
+            GameAddFlagRun("update_card_menu_state")
         end
 
-        self.draw = function(self)
-
+        self.draw = function(self, is_spectator)
+            if(self.selected_index ~= self.last_selected_index)then
+                GameAddFlagRun("update_card_menu_state")
+            end
             GuiStartFrame(self.gui)
 
             if(GameGetIsGamepadConnected())then
@@ -236,17 +259,19 @@ local upgrade_system = {
                     GuiText(self.gui, x / 2 - description_width / 2, card_y + (card_height * multiplier) + 10 + name_height, GameTextGetTranslatedOrNot(v.ui_description))
                 end
 
-                if(hovered)then
-                    self.selected_index = k
-                    self.skip_selected = false
-                end
-                
-                if(clicked or clicked2 or clicked3)then
-                    if(self.selected_index ~= nil or self.skip_selected == true)then
-                        self:pick()
+                if(not is_spectator)then
+
+                    if(hovered)then
+                        self.selected_index = k
+                        self.skip_selected = false
+                    end
+                    
+                    if(clicked or clicked2 or clicked3)then
+                        if(self.selected_index ~= nil or self.skip_selected == true)then
+                            self:pick()
+                        end
                     end
                 end
-                
                 
             end
 
@@ -281,78 +306,85 @@ local upgrade_system = {
                 end
 
 
-                if(hovered)then
-                    self.skip_selected = true
-                    self.selected_index = nil
+                if(not is_spectator)then
+                    if(hovered)then
+                        self.skip_selected = true
+                        self.selected_index = nil
+                    end
+
+                    if(clicked)then
+                        if(self.skip_selected)then
+                            self:pick()
+                        end
+                    end
+                end
+            end
+
+            if(not is_spectator)then
+                local keys_pressed = {
+                    e = bindings:IsJustDown("arena_cards_select_card1"),
+                    left_click = input:WasMousePressed("left"),
+                }
+
+                local stick_x, stick_y = input:GetGamepadAxis("left_stick")
+                local r_stick_x, r_stick_y = input:GetGamepadAxis("right_stick")
+                local left_bumper = input:WasGamepadButtonPressed("left_shoulder")
+                local right_bumper = input:WasGamepadButtonPressed("right_shoulder")
+                local gamepad_a = bindings:IsJustDown("arena_cards_select_card_joy")
+
+                local stick_x_left = stick_x < -0.5 and (not self.started_moving_left or GameGetFrameNum() % 30 == 0)
+                local stick_x_right = stick_x > 0.5 and (not self.started_moving_right or GameGetFrameNum() % 30 == 0)
+                local r_stick_x_left = r_stick_x < -0.5 and (not self.started_moving_left or GameGetFrameNum() % 30 == 0)
+                local r_stick_x_right = r_stick_x > 0.5 and (not self.started_moving_right or GameGetFrameNum() % 30 == 0)
+
+                local select_left = left_bumper or stick_x_left or r_stick_x_left
+                local select_right = right_bumper or stick_x_right or r_stick_x_right
+                
+                if(select_left)then
+                    if(self.selected_index == nil)then
+                        self.selected_index = 1
+                    else
+                        self.selected_index = self.selected_index - 1
+                        if(self.selected_index < 1)then
+                            self.selected_index = #self.upgrades
+                        end
+                    end
                 end
 
-                if(clicked)then
-                    if(self.skip_selected)then
+                if(select_right)then
+                    if(self.selected_index == nil)then
+                        self.selected_index = 1
+                    else
+                        self.selected_index = self.selected_index + 1
+                        if(self.selected_index > #self.upgrades)then
+                            self.selected_index = 1
+                        end
+                    end
+                end
+
+                if(stick_x < -0.5 or r_stick_x < -0.5)then
+                    self.started_moving_left = true
+                else
+                    self.started_moving_left = false
+                end
+
+                if(stick_x > 0.5 or r_stick_x > 0.5)then
+                    self.started_moving_right = true
+                else
+                    self.started_moving_right = false
+                end
+
+                if(--[[keys_pressed.e or keys_pressed.left_click or ]]gamepad_a)then
+                    if(self.selected_index ~= nil or self.skip_selected == true)then
                         self:pick()
                     end
                 end
             end
-
-            local keys_pressed = {
-                e = bindings:IsJustDown("arena_cards_select_card1"),
-                left_click = input:WasMousePressed("left"),
-            }
-
-            local stick_x, stick_y = input:GetGamepadAxis("left_stick")
-            local r_stick_x, r_stick_y = input:GetGamepadAxis("right_stick")
-            local left_bumper = input:WasGamepadButtonPressed("left_shoulder")
-            local right_bumper = input:WasGamepadButtonPressed("right_shoulder")
-            local gamepad_a = bindings:IsJustDown("arena_cards_select_card_joy")
-
-            local stick_x_left = stick_x < -0.5 and (not self.started_moving_left or GameGetFrameNum() % 30 == 0)
-            local stick_x_right = stick_x > 0.5 and (not self.started_moving_right or GameGetFrameNum() % 30 == 0)
-            local r_stick_x_left = r_stick_x < -0.5 and (not self.started_moving_left or GameGetFrameNum() % 30 == 0)
-            local r_stick_x_right = r_stick_x > 0.5 and (not self.started_moving_right or GameGetFrameNum() % 30 == 0)
-
-            local select_left = left_bumper or stick_x_left or r_stick_x_left
-            local select_right = right_bumper or stick_x_right or r_stick_x_right
-            
-            if(select_left)then
-                if(self.selected_index == nil)then
-                    self.selected_index = 1
-                else
-                    self.selected_index = self.selected_index - 1
-                    if(self.selected_index < 1)then
-                        self.selected_index = #self.upgrades
-                    end
-                end
-            end
-
-            if(select_right)then
-                if(self.selected_index == nil)then
-                    self.selected_index = 1
-                else
-                    self.selected_index = self.selected_index + 1
-                    if(self.selected_index > #self.upgrades)then
-                        self.selected_index = 1
-                    end
-                end
-            end
-
-            if(stick_x < -0.5 or r_stick_x < -0.5)then
-                self.started_moving_left = true
-            else
-                self.started_moving_left = false
-            end
-
-            if(stick_x > 0.5 or r_stick_x > 0.5)then
-                self.started_moving_right = true
-            else
-                self.started_moving_right = false
-            end
-
-            if(--[[keys_pressed.e or keys_pressed.left_click or ]]gamepad_a)then
-                if(self.selected_index ~= nil or self.skip_selected == true)then
-                    self:pick()
-                end
-            end
-            
+            self.last_selected_index = self.selected_index
         end
+
+        
+
 
         return self
 
