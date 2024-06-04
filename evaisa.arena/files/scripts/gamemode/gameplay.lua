@@ -1392,7 +1392,7 @@ ArenaGameplay = {
         GameRemoveFlagRun("player_died")
         GameRemoveFlagRun("killcheck_finished")
 
-
+        data.projectiles_hit = {}
         
         local respawn_count = tonumber( GlobalsGetValue( "RESPAWN_COUNT", "0" ) )
         local extra_respawn_count = tonumber(GlobalsGetValue("EXTRA_RESPAWN_COUNT", "0"))
@@ -2725,6 +2725,10 @@ ArenaGameplay = {
                     if(steam_utils.IsOwner())then
                         ArenaGameplay.ForceReady(lobby, data)
                     end
+                    if(data.hm_timer_gui)then
+                        GuiDestroy(data.hm_timer_gui)
+                        data.hm_timer_gui = nil
+                    end
                 end, function(frame)
                     --print("HM Tick: "..tostring(frame))
                     local seconds_left = math.floor((frame) / 60)
@@ -3609,7 +3613,7 @@ ArenaGameplay = {
 
         end
 
-        if(GameHasFlagRun("card_menu_open") and data.upgrade_system ~= nil and not IsPaused())then
+        if(data.upgrade_system ~= nil and not IsPaused())then
             data.upgrade_system:draw(data.is_spectating)
         end
 
@@ -4316,14 +4320,20 @@ ArenaGameplay = {
             return
         end
 
-        if (homingComponents ~= nil) then
+        if (homingComponents ~= nil and data.state == "arena") then
             for k, v in pairs(homingComponents) do
                 local target_who_shot = ComponentGetValue2(v, "target_who_shot")
                 if (target_who_shot == false) then
                     if (EntityHasTag(shooter_id, "client")) then
                         -- find closest player which isn't us
-                        local closest_player = nil
-                        local distance = 9999999
+                        --local closest_player = nil
+                        --local distance = 9999999
+
+                        if(ComponentGetValue2(v, "target_tag") == "homing_target")then
+                            ComponentSetValue2(v, "target_tag", "mortal")
+                        end
+                        
+                        --[[
                         local clients = EntityGetWithTag("client") or {}
                         -- add local player to list
                         if (player.Get()) then
@@ -4348,11 +4358,19 @@ ArenaGameplay = {
 
                         if (closest_player) then
                             ComponentSetValue2(v, "predefined_target", closest_player)
+                        end
+                        ]]
+
+                    else
+                        --local closest_player = nil
+                        --local distance = 9999999
+
+                        if(ComponentGetValue2(v, "target_tag") == "homing_target")then
                             ComponentSetValue2(v, "target_tag", "mortal")
                         end
-                    else
-                        local closest_player = nil
-                        local distance = 9999999
+
+                        --[[
+
                         local clients = EntityGetWithTag("client") or {}
 
                         for k, v in pairs(clients) do
@@ -4372,8 +4390,8 @@ ArenaGameplay = {
 
                         if (closest_player) then
                             ComponentSetValue2(v, "predefined_target", closest_player)
-                            ComponentSetValue2(v, "target_tag", "mortal")
                         end
+                        ]]
                     end
                 end
             end

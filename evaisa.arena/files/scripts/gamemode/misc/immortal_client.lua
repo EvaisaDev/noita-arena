@@ -1,6 +1,14 @@
 function damage_about_to_be_received( damage, x, y, entity_thats_responsible, critical_hit_chance )
-    print("Responsible: "..tostring(entity_thats_responsible))
-    print("damage: "..tostring(damage))
+
+    local damage_details = GetDamageDetails()
+
+    local projectile = damage_details.projectile_thats_responsible
+
+    --[[if(projectile ~= nil and EntityHasTag(projectile, "requires_handshake"))then
+        CrossCall("ProjectileHit", projectile, false)
+    end]]
+
+
     local is_dummy = nil
     if(entity_thats_responsible ~= 0 and EntityGetName(entity_thats_responsible) == "dummy_damage")then
         is_dummy = true

@@ -21,6 +21,16 @@ end
 function damage_about_to_be_received( damage, x, y, entity_thats_responsible, critical_hit_chance )
     local entity_id = GetUpdatedEntityID()
 
+    
+    local damage_details = GetDamageDetails()
+
+    local projectile = damage_details.projectile_thats_responsible
+
+    --[[if(projectile ~= nil and EntityHasTag(projectile, "requires_handshake"))then
+        damage = 0
+        CrossCall("ProjectileHit", projectile, entity_thats_responsible, true)
+    end]]
+
 
     if(GameHasFlagRun("smash_mode"))then
         --[[local damage_details = GetDamageDetails()
@@ -53,7 +63,6 @@ function damage_about_to_be_received( damage, x, y, entity_thats_responsible, cr
     GameAddFlagRun("prepared_damage")
     GameRemoveFlagRun("finished_damage")
 
-    local damage_details = GetDamageDetails()
 
    
 

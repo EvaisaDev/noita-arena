@@ -125,47 +125,104 @@ SpectatorMode = {
 
    
             -- ahh need to clear this when switching scene duhh
-            if(data.last_selected_perk_string == perk_string)then
-                return
+            if(data.last_selected_perk_string ~= perk_string)then
+                local children = EntityGetChildrenWithTag(data.spectator_entity, "perk") or {}
+
+                for i, child in ipairs(children) do
+                    EntityRemoveFromParent(child)
+                    EntityKill(child)
+                end
+    
+                for i, perk in ipairs(perk_data) do
+                    local perk_id = perk[1]
+                    local perk_stack = perk[2]
+    
+                    local perk_info = all_perks[perk_id]
+    
+                    
+    
+                    if(perk_info ~= nil)then
+                        
+                        for i = 1, perk_stack do
+                            local child = EntityCreateNew()
+                            EntityAddTag(child, "perk")
+                            EntityAddChild(data.spectator_entity, child)
+    
+                            --print("Adding perk: " .. tostring(perk_info.ui_name))
+                            local perk_comp = EntityAddComponent2(child, "UIIconComponent", {
+                                icon_sprite_file = perk_info.ui_icon,
+                                name = perk_info.ui_name,
+                                description = perk_info.ui_description,
+                                display_in_hud = true,
+                                is_perk = true
+                            })
+    
+                            ComponentAddTag(perk_comp, "perk")
+                        end
+                    end
+                end    
             end
 
             data.last_selected_perk_string = perk_string
 
-            local children = EntityGetChildrenWithTag(data.spectator_entity, "perk") or {}
+            --[[
+            local effects = {}
+            local effect_names = {}
+
+            local children = EntityGetAllChildren(player.entity) or {}
 
             for i, child in ipairs(children) do
-                EntityRemoveFromParent(child)
-                EntityKill(child)
-            end
-
-            for i, perk in ipairs(perk_data) do
-                local perk_id = perk[1]
-                local perk_stack = perk[2]
-
-                local perk_info = all_perks[perk_id]
-
-                
-
-                if(perk_info ~= nil)then
-                    
-                    for i = 1, perk_stack do
-                        local child = EntityCreateNew()
-                        EntityAddTag(child, "perk")
-                        EntityAddChild(data.spectator_entity, child)
-
-                        --print("Adding perk: " .. tostring(perk_info.ui_name))
-                        local perk_comp = EntityAddComponent2(child, "UIIconComponent", {
-                            icon_sprite_file = perk_info.ui_icon,
-                            name = perk_info.ui_name,
-                            description = perk_info.ui_description,
-                            display_in_hud = true,
-                            is_perk = true
-                        })
-
-                        ComponentAddTag(perk_comp, "perk")
+                local ui_icon_comp = EntityGetFirstComponentIncludingDisabled(child, "UIIconComponent")
+                if(ui_icon_comp ~= nil)then
+                    local is_perk = ComponentGetValue2(ui_icon_comp, "is_perk")
+                    if(not is_perk)then
+                        local icon_sprite_file = ComponentGetValue2(ui_icon_comp, "icon_sprite_file")
+                        local name = ComponentGetValue2(ui_icon_comp, "name")
+                        local description = ComponentGetValue2(ui_icon_comp, "description")
+                        table.insert(effects, {icon_sprite_file, name, description})
+                        table.insert(effect_names, name)
                     end
                 end
             end
+
+            effect_string = table.concat(effect_names, ",")
+
+            data.last_effect_string = data.last_effect_string or ""
+
+            if(data.last_effect_string ~= effect_string)then
+                local children = EntityGetChildrenWithTag(data.spectator_entity, "effect") or {}
+
+                for i, child in ipairs(children) do
+                    EntityRemoveFromParent(child)
+                    EntityKill(child)
+                end
+
+                for i, effect in ipairs(effects) do
+                    local icon_sprite_file = effect[1]
+                    local name = effect[2]
+                    local description = effect[3]
+
+                    local child = EntityCreateNew()
+                    EntityAddTag(child, "effect")
+                    EntityAddChild(data.spectator_entity, child)
+
+                    local effect_comp = EntityAddComponent2(child, "UIIconComponent", {
+                        icon_sprite_file = icon_sprite_file,
+                        name = name,
+                        description = description,
+                        display_in_hud = true,
+                        is_perk = false
+                    })
+
+                    ComponentAddTag(effect_comp, "effect")
+                end
+            end
+
+            data.last_effect_string = effect_string
+
+            ]]
+
+
 
         end
     end,

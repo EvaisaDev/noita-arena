@@ -9,6 +9,13 @@ for k,v in pairs(status_effects)do
   end
 end
 
+--[[
+SetStainPercentage = function( entity_id, effect_id )
+  EntityRemoveStainStatusEffect( entity_id, effect_id, 0 )
+  EntityAddRandomStains( entity_id, 
+end
+]]
+
 GetStainPercentage = function( entity_id, effect_id )
   local status_effect_data_component = EntityGetFirstComponentIncludingDisabled( entity_id, "StatusEffectDataComponent" )
   if(status_effect_data_component == nil)then

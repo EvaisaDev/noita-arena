@@ -1548,6 +1548,7 @@ networking = {
                                 EntityAddComponent2(data.players[tostring(user)].status_effect_entities[id], "UIIconComponent", {
                                     name = effect.ui_name,
                                     icon_sprite_file = effect.ui_icon,
+                                    description = effect.ui_description,
                                     display_above_head = true,
                                     display_in_hud = false,
                                     is_perk = false,
@@ -2192,6 +2193,10 @@ networking = {
                 data.hm_timer = delay.new(timer_frames, function()
                     if(steam_utils.IsOwner())then
                         ArenaGameplay.ForceReady(lobby, data)
+                    end
+                    if(data.hm_timer_gui)then
+                        GuiDestroy(data.hm_timer_gui)
+                        data.hm_timer_gui = nil
                     end
                 end, function(frame)
                     --print("HM Tick: "..tostring(frame))

@@ -49,6 +49,25 @@ dofile_once("mods/evaisa.arena/content/data.lua")
 
 local applied_seed = 0
 
+--[[
+np.CrossCallAdd("ProjectileHit", function(entity_id, shooter_id, do_request)
+    if(data ~= nil and data.projectile_seeds[entity_id] ~= nil)then
+        local seed = data.projectile_seeds[entity_id]
+        if(data.projectiles_hit == nil)then
+            data.projectiles_hit = {}
+        end
+        data.projectiles_hit[seed] = true
+
+        local user = gameplay_handler.FindUser(lobby_code, shooter_id)
+
+        if(do_request)then
+            networking.send.check_projectile_hit(user, seed)
+        end
+    end
+end)
+]]
+
+
 perks_sorted = {}
 perk_enum = {}
 all_perks = {}
@@ -394,7 +413,7 @@ ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
     version = 167,
-    required_online_version = 351,
+    required_online_version = 357,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
     end,

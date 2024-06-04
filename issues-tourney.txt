@@ -1,6 +1,5 @@
 - inventory flashes when players edit in spectator mode (cannot fix)
 
-- flasks are pure white in spectator inventory (only occasionally)
 - spectators load shop items into the arena sometimes
 
 - Tab button locks up sometimes for spectators occasionally(?
@@ -8,8 +7,8 @@
 
 - Swapper desyncs and teleports you to players
 - shops desync with extra item(?
-- spectator can't see cards
-- swapping players sometimes causes clients to drop their spells??
+
+- swapping players sometimes causes clients to drop their spells?? (this may have been the spectator dropping the spells.)
 
 CHANGES:
 - Fixed card pick sometimes not showing up correctly.
@@ -42,3 +41,9 @@ CHANGES:
 - Player health and other data is serialized before dying.
 - Fixed potion throw line appearing on spectators occasionally
 - Practice dummy changes now sync to spectators.
+- Fixed avatars not loading sometimes
+- Removed "click to blacklist" text for non lobby owners.
+- Card UI is now synced to spectators
+- Cards are serialized with the player, so when you re-join and didn't pick a card you get to pick one.
+- Fixed alt-tabbing making items disappear on Linux (and maybe Windows)
+- Fixed flasks turning white for spectators when player drinks from it.
