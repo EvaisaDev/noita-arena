@@ -1561,6 +1561,8 @@ ArenaGameplay = {
                             data.upgrade_system = upgrade_system.create(3, function(upgrade)
                                 data.upgrade_system = nil
                             end)
+
+                            networking.send.card_list(lobby, data)
                         end
                     end)
                 end

@@ -2277,15 +2277,19 @@ networking = {
                 return
             end
 
+            print("Received card list.")
+
             if( data.upgrade_system == nil )then
                 data.upgrade_system = upgrade_system.create(message, function(upgrade)
                     data.upgrade_system = nil
                 end)
+                print("Created upgrade system.")
             else
                 data.upgrade_system:clean()
                 data.upgrade_system = upgrade_system.create(message, function(upgrade)
                     data.upgrade_system = nil
                 end)
+                print("Updated upgrade system.")
             end
 
             networking.send.request_card_list_state(lobby, user)
@@ -3111,7 +3115,9 @@ networking = {
             end
         end,
         request_card_list = function(lobby, user)
+            print("card list request wawa")
             if(user)then
+                print("requesting card list")
                 steamutils.sendToPlayer("request_card_list", {}, user, true)
             else
                 steamutils.send("request_card_list", {}, steamutils.messageTypes.OtherPlayers, lobby, true)
