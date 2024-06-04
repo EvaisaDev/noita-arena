@@ -3538,6 +3538,7 @@ ArenaGameplay = {
     end,
     Update = function(lobby, data)
 
+        -- remove homing targets from non targets!!!
         if(GameGetFrameNum() % 25 == 0)then
             local targets = EntityGetWithTag("homing_target")
 

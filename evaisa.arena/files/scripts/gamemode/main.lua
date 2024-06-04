@@ -2032,6 +2032,7 @@ ArenaMode = {
         skin_system.editor_open = GameHasFlagRun("wardrobe_open") and not GameHasFlagRun("game_paused") and gui_closed
         skin_system.draw(lobby, data)
 
+        --[[
         if(GameGetFrameNum() % 10 == 0)then
             local mortals = EntityGetWithTag("mortal")
             for i = 0, #mortals do
@@ -2039,6 +2040,7 @@ ArenaMode = {
                 EntityAddTag(mortal, "homing_target")
             end
         end
+        ]]
 
         data.spectator_mode = steamutils.IsSpectator(lobby)
 
