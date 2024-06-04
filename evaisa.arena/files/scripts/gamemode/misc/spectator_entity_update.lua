@@ -12,10 +12,12 @@ hide_entity = function(entity)
         EntityRemoveComponent(entity, physics_throwable_comp)
     end
 
+    --[[
     local material_inventory_comp = EntityGetFirstComponentIncludingDisabled(entity, "MaterialInventoryComponent")
     if material_inventory_comp ~= nil then
         ComponentSetValue2(material_inventory_comp, "last_frame_drank", -100)
     end
+    ]]
 
     -- children
     local children = EntityGetAllChildren(entity)
