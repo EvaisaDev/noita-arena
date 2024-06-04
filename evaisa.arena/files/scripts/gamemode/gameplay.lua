@@ -3538,6 +3538,17 @@ ArenaGameplay = {
     end,
     Update = function(lobby, data)
 
+        if(GameGetFrameNum() % 25 == 0)then
+            local targets = EntityGetWithTag("homing_target")
+
+            for k, v in ipairs(targets or {})do
+                if(not EntityHasTag(v, "enemy") and not EntityHasTag(v, "player_unit"))then
+                    EntityRemoveTag(v, "homing_target")
+                end
+            end
+        end
+
+
 
         if(data.low_framerate_popup ~= nil and data.low_framerate_popup.destroyed)then
             np.ComponentUpdatesSetEnabled("ProjectileSystem", true)
@@ -4312,6 +4323,8 @@ ArenaGameplay = {
             local who_shot = ComponentGetValue2(projectileComp, "mWhoShot")
             --GamePrint("who_shot: "..tostring(who_shot))
         end]]
+
+        --[[
         local homingComponents = EntityGetComponentIncludingDisabled(projectile_id, "HomingComponent")
 
         local shooter_x, shooter_y = EntityGetTransform(shooter_id)
@@ -4333,7 +4346,7 @@ ArenaGameplay = {
                             ComponentSetValue2(v, "target_tag", "mortal")
                         end
                         
-                        --[[
+                        
                         local clients = EntityGetWithTag("client") or {}
                         -- add local player to list
                         if (player.Get()) then
@@ -4359,7 +4372,7 @@ ArenaGameplay = {
                         if (closest_player) then
                             ComponentSetValue2(v, "predefined_target", closest_player)
                         end
-                        ]]
+                        
 
                     else
                         --local closest_player = nil
@@ -4369,7 +4382,7 @@ ArenaGameplay = {
                             ComponentSetValue2(v, "target_tag", "mortal")
                         end
 
-                        --[[
+                        
 
                         local clients = EntityGetWithTag("client") or {}
 
@@ -4391,11 +4404,11 @@ ArenaGameplay = {
                         if (closest_player) then
                             ComponentSetValue2(v, "predefined_target", closest_player)
                         end
-                        ]]
+                        
                     end
                 end
             end
-        end
+        end]]
     end,
 }
 
