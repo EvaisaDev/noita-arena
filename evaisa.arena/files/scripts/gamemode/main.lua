@@ -867,6 +867,25 @@ ArenaMode = {
             end,
 			width = 100
 		},
+        {
+            id = "homing_mult",
+			name = "$arena_settings_homing_mult_name",
+			description = "$arena_settings_homing_mult_description",
+			type = "slider",
+			min = 0,
+			max = 100,
+			default = 100;
+			display_multiplier = 1,
+			formatting_string = " $0%",
+			width = 100
+        },
+        {
+            id = "homing_mult_self",
+            name = "$arena_settings_homing_mult_self_name",
+            description = "$arena_settings_homing_mult_self_description",
+            type = "bool",
+            default = false
+        }, 
     },
     lobby_menus = {
 
@@ -1699,7 +1718,24 @@ ArenaMode = {
             hm_timer_time = 60
         end
         GlobalsSetValue("hm_timer_time", tostring(math.floor(hm_timer_time)))
+
+        local homing_mult = tonumber(steam.matchmaking.getLobbyData(lobby, "setting_homing_mult"))
+        if (homing_mult == nil) then
+            homing_mult = 100
+        end
+        GlobalsSetValue("homing_mult", tostring(homing_mult))
         
+        local homing_mult_self = steam.matchmaking.getLobbyData(lobby, "setting_homing_mult_self")
+        if (homing_mult_self == nil) then
+            homing_mult_self = "false"
+        end
+        if(homing_mult_self == "true")then
+            GameAddFlagRun("homing_mult_self")
+        else
+            GameRemoveFlagRun("homing_mult_self")
+        end
+        
+
 
         arena_log:print("Lobby data refreshed")
     end,

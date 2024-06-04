@@ -4317,99 +4317,30 @@ ArenaGameplay = {
     end,
     OnProjectileFiredPost = function(lobby, data, shooter_id, projectile_id, rng, position_x, position_y, target_x,
                                      target_y, send_message, unknown1, multicast_index, unknown3)
+        
+        local homing_mult = tonumber(GlobalsGetValue("homing_mult", "100")) or 100
 
-
-        --[[local projectileComp = EntityGetFirstComponentIncludingDisabled(projectile_id, "ProjectileComponent")
-        if(projectileComp ~= nil)then
-            local who_shot = ComponentGetValue2(projectileComp, "mWhoShot")
-            --GamePrint("who_shot: "..tostring(who_shot))
-        end]]
-
-        --[[
-        local homingComponents = EntityGetComponentIncludingDisabled(projectile_id, "HomingComponent")
-
-        local shooter_x, shooter_y = EntityGetTransform(shooter_id)
-
-        if(shooter_id == nil or shooter_x == nil)then
+        if(math.ceil(homing_mult) == 100)then
             return
         end
 
-        if (homingComponents ~= nil and data.state == "arena") then
+        local homingComponents = EntityGetComponentIncludingDisabled(projectile_id, "HomingComponent")
+
+        if (not EntityHasTag(projectile_id, "homing_reduced") and homingComponents ~= nil) then
             for k, v in pairs(homingComponents) do
                 local target_who_shot = ComponentGetValue2(v, "target_who_shot")
+                
                 if (target_who_shot == false) then
-                    if (EntityHasTag(shooter_id, "client")) then
-                        -- find closest player which isn't us
-                        --local closest_player = nil
-                        --local distance = 9999999
-
-                        if(ComponentGetValue2(v, "target_tag") == "homing_target")then
-                            ComponentSetValue2(v, "target_tag", "mortal")
-                        end
-                        
-                        
-                        local clients = EntityGetWithTag("client") or {}
-                        -- add local player to list
-                        if (player.Get()) then
-                            table.insert(clients, player.Get())
-                        end
-
-
-                        for k, v in pairs(clients) do
-                            if (v ~= shooter_id) then
-                                if (closest_player == nil) then
-                                    closest_player = v
-                                else
-                                    local x, y = EntityGetTransform(v)
-                                    local dist = math.abs(x - shooter_x) + math.abs(y - shooter_y)
-                                    if (dist < distance) then
-                                        distance = dist
-                                        closest_player = v
-                                    end
-                                end
-                            end
-                        end
-
-                        if (closest_player) then
-                            ComponentSetValue2(v, "predefined_target", closest_player)
-                        end
-                        
-
-                    else
-                        --local closest_player = nil
-                        --local distance = 9999999
-
-                        if(ComponentGetValue2(v, "target_tag") == "homing_target")then
-                            ComponentSetValue2(v, "target_tag", "mortal")
-                        end
-
-                        
-
-                        local clients = EntityGetWithTag("client") or {}
-
-                        for k, v in pairs(clients) do
-                            if (v ~= shooter_id) then
-                                if (closest_player == nil) then
-                                    closest_player = v
-                                else
-                                    local x, y = EntityGetTransform(v)
-                                    local dist = math.abs(x - shooter_x) + math.abs(y - shooter_y)
-                                    if (dist < distance) then
-                                        distance = dist
-                                        closest_player = v
-                                    end
-                                end
-                            end
-                        end
-
-                        if (closest_player) then
-                            ComponentSetValue2(v, "predefined_target", closest_player)
-                        end
-                        
-                    end
+                    local coeff = ComponentGetValue2(v, "homing_targeting_coeff")
+                    coeff = coeff * (homing_mult / 100)
+                    ComponentSetValue2(v, "homing_targeting_coeff", coeff)
+                elseif(GameHasFlagRun("homing_mult_self"))then
+                    local coeff = ComponentGetValue2(v, "homing_targeting_coeff")
+                    coeff = coeff * (homing_mult / 100)
+                    ComponentSetValue2(v, "homing_targeting_coeff", coeff)
                 end
             end
-        end]]
+        end
     end,
 }
 
