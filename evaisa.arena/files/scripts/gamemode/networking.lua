@@ -2309,7 +2309,7 @@ networking = {
                 return
             end
 
-            if(message == nil)then
+            if(message[1] == nil)then
                 print("Received nil message (card list state), destroying")
                 data.upgrade_system:clean()
                 data.upgrade_system = nil
@@ -3110,7 +3110,7 @@ networking = {
             steamutils.send("hm_timer_update", frames, steamutils.messageTypes.OtherPlayers, lobby, true, true)
         end,
         hm_timer_clear = function(lobby)
-            steamutils.send("hm_timer_clear", nil, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+            steamutils.send("hm_timer_clear", {}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
         end,
         update_state = function(lobby, state)
             steam.matchmaking.setLobbyMemberData(lobby, "state", state)
@@ -3164,9 +3164,9 @@ networking = {
             local upgrades_system = data.upgrade_system
             if(upgrades_system == nil or GameHasFlagRun("card_picked"))then
                 if(user)then
-                    steamutils.sendToPlayer("card_list_state", nil, user, true)
+                    steamutils.sendToPlayer("card_list_state", {}, user, true)
                 else
-                    steamutils.send("card_list_state", nil, steamutils.messageTypes.Spectators, lobby, true, true)
+                    steamutils.send("card_list_state", {}, steamutils.messageTypes.Spectators, lobby, true, true)
                 end
                 return
             end
