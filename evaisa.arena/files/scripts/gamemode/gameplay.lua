@@ -340,6 +340,14 @@ ArenaGameplay = {
                     if(match_data.picked_perk)then
                         GameAddFlagRun("picked_perk")
                     end
+                    if(match_data.picked_card)then
+                        GameAddFlagRun("card_picked")
+                    end
+                    if(match_data.cards and match_data.cards[1] ~= nil)then
+                        data.client.cards = match_data.cards
+                    else
+                        data.client.cards = nil
+                    end
                     local floor_items = match_data.floor_items or {}
                     local shop_platforms = match_data.shop_platforms or {}
                     delay.new(function()
@@ -1325,12 +1333,22 @@ ArenaGameplay = {
 
             print("Profiler result: "..tostring(profile:time()) .. "ms")]]
 
+            local upgrades_system = data.upgrade_system
+            local cards = {}
+            if(upgrades_system ~= nil)then
+                for k, v in pairs(upgrades_system.upgrades)do
+                    table.insert(cards, v.id)
+                end
+            end
+
 
             local match_data = {
                 round = ArenaGameplay.GetNumRounds(lobby),
                 reroll_count = GlobalsGetValue("TEMPLE_PERK_REROLL_COUNT", "0"),
                 picked_health = GameHasFlagRun("picked_health"),
                 picked_perk = GameHasFlagRun("picked_perk"),
+                picked_card = GameHasFlagRun("card_picked"),
+                cards = cards,
                 shop_platforms = {},
                 floor_items = {},
             }
@@ -1555,19 +1573,23 @@ ArenaGameplay = {
 
 
             if (not data.client.player_loaded_from_data) then
-                if GameHasFlagRun("upgrades_system") then
-                    RunWhenPlayerExists(function()
-                        if(GameHasFlagRun("pick_upgrade"))then
-                            data.upgrade_system = upgrade_system.create(3, function(upgrade)
-                                data.upgrade_system = nil
-                            end)
-
-                            networking.send.card_list(lobby, data)
-                        end
-                    end)
-                end
+                GameRemoveFlagRun("card_picked")
                 GameRemoveFlagRun("picked_health")
                 GameRemoveFlagRun("picked_perk")
+                data.client.cards = nil
+            end
+
+
+            if GameHasFlagRun("upgrades_system") and not GameHasFlagRun("card_picked") then
+                RunWhenPlayerExists(function()
+                    if(GameHasFlagRun("pick_upgrade") or data.client.cards)then
+                        data.upgrade_system = upgrade_system.create(data.client.cards or 3, function(upgrade)
+                            data.upgrade_system = nil
+                        end)
+
+                        networking.send.card_list(lobby, data)
+                    end
+                end)
             end
         end
 
@@ -1750,6 +1772,8 @@ ArenaGameplay = {
         return math.floor(num * mult + 0.5) / mult
     end,
     LoadArena = function(lobby, data, show_message, map)
+        GameRemoveFlagRun("card_picked")
+        data.client.cards = nil
         ArenaGameplay.GracefulReset(lobby, data)
 
         data.network_entity_cache = {}

@@ -25,7 +25,7 @@ RegisterSpawnFunction( 0xffc5529d, "spawn_item_shop_item")
 RegisterSpawnFunction( 0xffd8b950, "spawn_wardrobe")
 
 function spawn_card_pick ( x, y )
-	if(GameHasFlagRun("pick_upgrade"))then
+	if(GameHasFlagRun("pick_upgrade") and not GameHasFlagRun("card_picked"))then
 		EntityLoad( "mods/evaisa.arena/files/entities/misc/card_pick.xml", x, y - 6 )
 	end
 end
