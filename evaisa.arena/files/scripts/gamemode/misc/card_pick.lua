@@ -17,10 +17,15 @@ local x, y = EntityGetTransform(entity)
 local px, py = EntityGetTransform(player)
 
 if(math.abs(x - px) > max_distance or math.abs(y - py) > max_distance)then
-    GameRemoveFlagRun("card_menu_open")
-    --print("too far!!")
-    GameRemoveFlagRun("chat_bind_disabled")
-    GameAddFlagRun("update_card_menu_state")
+
+    if(GameHasFlagRun("card_menu_open"))then
+        GameAddFlagRun("update_card_menu_state")
+        GameRemoveFlagRun("card_menu_open")
+        GameRemoveFlagRun("chat_bind_disabled")
+    end
+
+
+    
 end
 
 if(GameHasFlagRun("card_menu_open"))then
