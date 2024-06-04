@@ -2309,17 +2309,26 @@ networking = {
                 return
             end
 
+            if(message == nil)then
+                print("Received nil message (card list state), destroying")
+                data.upgrade_system:clean()
+                data.upgrade_system = nil
+            end
+
             local open = message[1]
             local selected = message[2]
             
             if(open)then
+                print("Opening card menu.")
                 GameAddFlagRun("card_menu_open")
             else
+                print("Closing card menu.")
                 GameRemoveFlagRun("card_menu_open")
             end
 
             if(data.upgrade_system)then
                 data.upgrade_system.selected_index = selected
+                print("Setting selected index to "..tostring(selected))
             end
         end,
     },
@@ -3148,6 +3157,11 @@ networking = {
         card_list_state = function(lobby, data, user)
             local upgrades_system = data.upgrade_system
             if(upgrades_system == nil)then
+                if(user)then
+                    steamutils.sendToPlayer("card_list_state", nil, user, true)
+                else
+                    steamutils.send("card_list_state", nil, steamutils.messageTypes.Spectators, lobby, true, true)
+                end
                 return
             end
 

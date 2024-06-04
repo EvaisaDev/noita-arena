@@ -3590,6 +3590,7 @@ ArenaGameplay = {
         end
 
         if(GameHasFlagRun("update_card_menu_state"))then
+            print("Sending card list state")
             networking.send.card_list_state(lobby, data)
             GameRemoveFlagRun("update_card_menu_state")
         end
