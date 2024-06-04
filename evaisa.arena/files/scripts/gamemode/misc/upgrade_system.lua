@@ -152,10 +152,7 @@ local upgrade_system = {
         end
 
         self.draw = function(self, is_spectator)
-            if(self.selected_index ~= self.last_selected_index and not is_spectator)then
-                print("selected index changed!")
-                GameAddFlagRun("update_card_menu_state")
-            end
+            self.last_selected_index = self.selected_index
             GuiStartFrame(self.gui)
 
             if(GameGetIsGamepadConnected())then
@@ -386,7 +383,10 @@ local upgrade_system = {
                     end
                 end
             end
-            self.last_selected_index = self.selected_index
+            if(self.selected_index ~= self.last_selected_index and not is_spectator)then
+                print("selected index changed!")
+                GameAddFlagRun("update_card_menu_state")
+            end
         end
 
         
