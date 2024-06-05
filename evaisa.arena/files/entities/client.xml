@@ -1,4 +1,4 @@
-<Entity name="client" tags="client,mortal,human,hittable,peasant,prey,polymorphable_NOT,enemy,spectator_no_clear">
+<Entity name="client" tags="client,mortal,human,hittable,peasant,polymorphable_NOT,enemy,spectator_no_clear,homing_target">
   <HotspotComponent
     _tags="hat"
     sprite_hotspot_name="hat"
@@ -116,16 +116,6 @@
     velocity_min_y="-200"
     velocity_max_y="350"
   ></CharacterPlatformingComponent>
-
-  <HitboxComponent 
-    aabb_max_x="0" 
-    aabb_max_y="-20" 
-    aabb_min_x="0" 
-    aabb_min_y="-20" 
-    is_enemy="1" 
-    is_item="0" 
-    is_player="0"
-  ></HitboxComponent>
 
   <HitboxComponent 
     aabb_max_x="3" 

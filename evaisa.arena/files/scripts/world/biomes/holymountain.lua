@@ -11,6 +11,8 @@ dofile("mods/evaisa.arena/files/scripts/gamemode/misc/seed_gen.lua")
 local smallfolk = dofile("mods/evaisa.arena/lib/smallfolk.lua")
 
 RegisterSpawnFunction( 0xff6d934c, "spawn_hp" )
+RegisterSpawnFunction( 0xff5b8b31, "spawn_refresh" )
+RegisterSpawnFunction( 0xff4090e1, "spawn_card_pick" )
 
 RegisterSpawnFunction( 0xff03fade, "spawn_spell_visualizer" )
 RegisterSpawnFunction( 0xff33934c, "spawn_all_shopitems" )
@@ -22,6 +24,12 @@ RegisterSpawnFunction( 0xffd14158, "spawn_target_dummy")
 RegisterSpawnFunction( 0xffc5529d, "spawn_item_shop_item")
 RegisterSpawnFunction( 0xffd8b950, "spawn_wardrobe")
 
+function spawn_card_pick ( x, y )
+	if(GameHasFlagRun("pick_upgrade") and not GameHasFlagRun("card_picked"))then
+		EntityLoad( "mods/evaisa.arena/files/entities/misc/card_pick.xml", x, y - 6 )
+	end
+end
+
 function spawn_workshop( x, y )
 	--EntityLoad( "data/entities/buildings/workshop.xml", x, y )
 end
@@ -31,7 +39,7 @@ function spawn_ready_point( x, y )
 end
 
 function spawn_workshop_extra( x, y )
-	EntityLoad( "mods/evaisa.arena/files/entities/misc/workshop_allow_mods.xml", x, y )
+	EntityLoad( "mods/evaisa.arena/files/entities/misc/workshop_allow_mods.xml", x - 230, y )
 end
 
 function spawn_spell_visualizer( x, y )
@@ -43,7 +51,7 @@ function spawn_hp( x, y )
 
 	GameAddFlagRun("in_hm")
     if(not GameHasFlagRun("DeserializedHolyMountain"))then
-		local hp = EntityLoad( "mods/evaisa.arena/files/entities/misc/heart_fullhp.xml", x-16, y )
+		local hp = EntityLoad( "mods/evaisa.arena/files/entities/misc/heart_fullhp.xml", x, y )
 
 		if(not EntityHasTag(hp, "synced_once"))then
 			EntitySetName(hp, EntityGetName(hp).."_"..tostring((GameGetFrameNum() % 100000) + hp))
@@ -58,16 +66,22 @@ function spawn_hp( x, y )
 	end
 	
 	EntityLoad( "data/entities/buildings/music_trigger_temple.xml", x-16, y )
-	EntityLoad( "mods/evaisa.arena/files/entities/misc/spell_refresh.xml", x+16, y )
+	
+	
 	EntityLoad( "data/entities/buildings/coop_respawn.xml", x, y )
-	local chunk_loader = EntityLoad("mods/evaisa.arena/files/entities/chunk_loader.xml", 0, 0)
-	EntitySetTransform(chunk_loader, 1500, 0)
+	--local chunk_loader = EntityLoad("mods/evaisa.arena/files/entities/chunk_loader.xml", 0, 0)
+	--EntitySetTransform(chunk_loader, 1500, 0)
 	--[[EntityApplyTransform(chunk_loader, 300, 0)
 	EntitySetTransform(chunk_loader, 300, 0)
 	EntityApplyTransform(chunk_loader, 600, 0)
 	EntitySetTransform(chunk_loader, 600, 0)]]
 	GameAddFlagRun("should_save_player")
 end
+
+function spawn_refresh( x, y )
+	EntityLoad( "mods/evaisa.arena/files/entities/misc/spell_refresh.xml", x, y )
+end
+
 
 function spawn_all_shopitems( x, y )
 
@@ -85,13 +99,6 @@ function spawn_all_shopitems( x, y )
 
 	local rounds = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0
 
-
-	--local random = rng.new(random_seed)
-
-	--[[local spawn_shop, spawn_perks = temple_random( x, y )
-	if( spawn_shop == "0" ) then
-		return
-	end]]
 
 	-- how many rounds it takes for the shop level to increment
 	local shop_scaling = tonumber(GlobalsGetValue("shop_scaling", "2"))
@@ -278,11 +285,6 @@ function spawn_item_shop_item( x, y )
 	local random_seed_x, random_seed_y = get_new_seed(x, y, GameHasFlagRun("shop_sync"))
 	
 	SetRandomSeed( random_seed_x, random_seed_y )
-
-	--[[local spawn_shop, spawn_perks = temple_random( x, y )
-	if( spawn_shop == "0" ) then
-		return
-	end]]
 
 	-- how many rounds it takes for the shop level to increment
 	local shop_scaling = tonumber(GlobalsGetValue("shop_scaling", "2"))

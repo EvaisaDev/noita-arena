@@ -29,25 +29,17 @@ end
 
 
 local ffi = require("ffi")
+-- cdef memcmp
+ffi.cdef[[
+    int memcmp(const void *s1, const void *s2, size_t n);
+]]
+local memcmp = ffi.C.memcmp
 
--- Controls struct
+
+-- Keyboard struct
 ffi.cdef([[
 #pragma pack(push, 1)
 typedef struct A {
-    float aim_x;
-    float aim_y;
-    float aimNormal_x;
-    float aimNormal_y;
-    float aimNonZero_x;
-    float aimNonZero_y;
-    float mouse_x;
-    float mouse_y;
-    float mouseRaw_x;
-    float mouseRaw_y;
-    float mouseRawPrev_x;
-    float mouseRawPrev_y;
-    float mouseDelta_x;
-    float mouseDelta_y;
     bool kick:1;
     bool fire:1;
     bool fire2:1;
@@ -62,14 +54,29 @@ typedef struct A {
     bool fly:1;
     bool leftClick:1;
     bool rightClick:1;
-} Controls;
+} Keyboard;
 #pragma pack(pop)
 ]])
+
+-- Mouse struct
+ffi.cdef([[
+#pragma pack(push, 1)
+typedef struct B {
+    float aim_x;
+    float aim_y;
+    float mouse_x;
+    float mouse_y;
+    float mouseRaw_x;
+    float mouseRaw_y;
+} Mouse;
+#pragma pack(pop)
+]])
+
 
 -- Zone Update Struct
 ffi.cdef([[
 #pragma pack(push, 1)
-typedef struct B {
+typedef struct C {
     float zone_size;
     float shrink_time;
 } ZoneUpdate;
@@ -79,7 +86,7 @@ typedef struct B {
 -- Physics Update
 ffi.cdef([[
 #pragma pack(push, 1)
-typedef struct C {
+typedef struct D {
     int id;
     float x;
     float y;
@@ -95,7 +102,7 @@ typedef struct C {
 -- character pos
 ffi.cdef([[
 #pragma pack(push, 1)
-typedef struct D {
+typedef struct E {
     int frames_in_air;
     float x;
     float y;
@@ -118,7 +125,7 @@ typedef struct D {
 ]]
 ffi.cdef([[
 #pragma pack(push, 1)
-typedef struct E {
+typedef struct F {
     float x;
     float y;
     float r;
@@ -144,7 +151,7 @@ typedef struct E {
 ]]
 ffi.cdef([[
 #pragma pack(push, 1)
-typedef struct F {
+typedef struct G {
     float mFlyingTimeLeft;
     float fly_time_max;
     float air_in_lungs;
@@ -171,7 +178,7 @@ local msg_data = {
 ]]
 ffi.cdef([[
 #pragma pack(push, 1)
-typedef struct G {
+typedef struct H {
     float mana;
     int cast_delay_start_frame;
     int reload_frames_left;
@@ -195,7 +202,7 @@ typedef struct G {
 ]]
 ffi.cdef([[
 #pragma pack(push, 1)
-typedef struct H {
+typedef struct I {
     int ragdoll_fx;
     int damage_types;
     float knockback_force;
@@ -211,8 +218,20 @@ typedef struct H {
 #pragma pack(pop)
 ]])
 
+-- item switch
+ffi.cdef([[
+#pragma pack(push, 1)
+typedef struct J {
+    int slot_x;
+    int slot_y;
+    bool is_wand:1;
+} ItemSwitch;
+#pragma pack(pop)
+]])
 
-local Controls = ffi.typeof("Controls")
+
+local Keyboard = ffi.typeof("Keyboard")
+local Mouse = ffi.typeof("Mouse")
 local ZoneUpdate = ffi.typeof("ZoneUpdate")
 local PhysicsUpdate = ffi.typeof("PhysicsUpdate")
 local CharacterPos = ffi.typeof("CharacterPos")
@@ -220,6 +239,7 @@ local FireWand = ffi.typeof("FireWand")
 local PlayerStats = ffi.typeof("PlayerStats")
 local WandStats = ffi.typeof("WandStats")
 local DamageDetails = ffi.typeof("DamageDetails")
+local ItemSwitch = ffi.typeof("ItemSwitch")
 
 
 
@@ -284,8 +304,8 @@ networking = {
 
             if(GameHasFlagRun("lock_ready_state"))then
                 data.players[tostring(user)].ready = true
-                if (steamutils.IsOwner(lobby)) then
-                    steam.matchmaking.setLobbyData(lobby, tostring(user) .. "_ready", "true")
+                if (steam_utils.IsOwner()) then
+                    steam_utils.TrySetLobbyData(lobby, tostring(user) .. "_ready", "true")
                 end
                 return
             end
@@ -297,9 +317,9 @@ networking = {
                     GamePrint(tostring(username) .. " is ready.")
                 end
 
-                if (steamutils.IsOwner(lobby)) then
+                if (steam_utils.IsOwner()) then
                     arena_log:print(tostring(user) .. "_ready: " .. tostring(message[1]))
-                    steam.matchmaking.setLobbyData(lobby, tostring(user) .. "_ready", "true")
+                    steam_utils.TrySetLobbyData(lobby, tostring(user) .. "_ready", "true")
                 end
             else
                 data.players[tostring(user)].ready = false
@@ -308,8 +328,8 @@ networking = {
                     GamePrint(tostring(username) .. " is no longer ready.")
                 end
 
-                if (steamutils.IsOwner(lobby)) then
-                    steam.matchmaking.setLobbyData(lobby, tostring(user) .. "_ready", "false")
+                if (steam_utils.IsOwner()) then
+                    steam_utils.TrySetLobbyData(lobby, tostring(user) .. "_ready", "false")
                 end
             end
         end,
@@ -317,13 +337,13 @@ networking = {
             networking.send.ready(lobby, data.client.ready, true)
         end,
         --[[allow_round_end = function(lobby, message, user, data)
-            if(steamutils.IsOwner(lobby, user))then
+            if(steam_utils.IsOwner( user))then
                 data.allow_round_end = true
                 print("Allowing round to end.")
             end
         end,]]
         round_end = function(lobby, message, user, data)
-            if(steamutils.IsOwner(lobby, user))then
+            if(steam_utils.IsOwner( user))then
                 local winner_string = message[1]
                 local win_condition_user = message[2]
                 local winner = ArenaGameplay.FindUser(lobby, winner_string)
@@ -332,8 +352,9 @@ networking = {
                     GamePrintImportant(GameTextGetTranslatedOrNot("$arena_tie_text"), GameTextGetTranslatedOrNot("$arena_round_end_text"))
                     
                     GameAddFlagRun("round_finished")
+                    print("No winner! Loading lobby..")
 
-                    delay.new(5 * 60, function()
+                    delay.new(300, function()
                         ArenaGameplay.LoadLobby(lobby, data, false)
                     end, function(frames)
                         if (frames % 60 == 0) then
@@ -342,14 +363,14 @@ networking = {
                     end)
                 else
 
-                    if(not data.spectator_mode and winner == steam.user.getSteamID())then
+                    if(not data.spectator_mode and winner == steam_utils.getSteamID())then
                         GameAddFlagRun("arena_winner")
                         local catchup_mechanic = GlobalsGetValue("perk_catchup", "losers")
                         if(catchup_mechanic == "winner")then
                             GameAddFlagRun("first_death")
                             GamePrint(GameTextGetTranslatedOrNot("$arena_compensation_winner"))
                         end
-                        if(GlobalsGetValue("upgrades_system", "false") == "true")then
+                        if(GameHasFlagRun("upgrades_system"))then
                             local catchup_mechanic_upgrades = GlobalsGetValue("upgrades_catchup", "losers")
                             if(catchup_mechanic_upgrades == "winner")then
                                 GameAddFlagRun("pick_upgrade")
@@ -366,8 +387,8 @@ networking = {
                     end
         
                     if(win_condition_user == nil or not GameHasFlagRun("win_condition_end_match"))then
-
-                        delay.new(5 * 60, function()
+                        print("Win condition not met, loading lobby..")
+                        delay.new(300, function()
                             ArenaGameplay.LoadLobby(lobby, data, false)
                         end, function(frames)
                             if (frames % 60 == 0) then
@@ -375,7 +396,8 @@ networking = {
                             end
                         end)
                     else
-                        delay.new(10 * 60, function()
+                        print("Win condition met! ending match..")
+                        delay.new(600, function()
                             StopGame()
                         end, function(frames)
                             if (frames % 60 == 0) then
@@ -396,12 +418,12 @@ networking = {
             GamePrint(username .. " has loaded the arena.")
             arena_log:print(username .. " has loaded the arena.")
 
-            if (steamutils.IsOwner(lobby)) then
-                steam.matchmaking.setLobbyData(lobby, tostring(user) .. "_loaded", "true")
+            if (steam_utils.IsOwner()) then
+                steam_utils.TrySetLobbyData(lobby, tostring(user) .. "_loaded", "true")
             end
         end,
         enter_arena = function(lobby, message, user, data)
-            if (not steamutils.IsOwner(lobby, user))then
+            if (not steam_utils.IsOwner( user))then
                 return
             end
             if(data.ready_counter)then
@@ -412,7 +434,7 @@ networking = {
             gameplay_handler.LoadArena(lobby, data, true, arena)
         end,
         start_countdown = function(lobby, message, user, data)
-            if (not steamutils.IsOwner(lobby, user))then
+            if (not steam_utils.IsOwner( user))then
                 return
             end
 
@@ -425,7 +447,7 @@ networking = {
     
         end,
         sync_countdown = function(lobby, message, user, data)
-            if (not steamutils.IsOwner(lobby, user))then
+            if (not steam_utils.IsOwner( user))then
                 return
             end
             if(data.state == "arena" and data.countdown ~= nil)then
@@ -434,7 +456,7 @@ networking = {
             end
         end,
         check_can_unlock = function(lobby, message, user, data)
-            if (not steamutils.IsOwner(lobby, user))then
+            if (not steam_utils.IsOwner( user))then
                 return
             end
             
@@ -457,7 +479,7 @@ networking = {
             end
         end,
         unlock = function(lobby, message, user, data)
-            if (not steamutils.IsOwner(lobby, user))then
+            if (not steam_utils.IsOwner( user))then
                 return
             end
             RunWhenPlayerExists(function()
@@ -555,6 +577,7 @@ networking = {
                 local force = message[2]
                 local unlimited_spells = message[3]
                 local spells = message[4] or {}
+                local frame = message[5] or 0
 
                 --print("Received item update")
 
@@ -572,7 +595,7 @@ networking = {
                 local spectator_pickupper = nil
 
                 -- if we are in spectator mode
-                if (data.selected_client == user and data.spectator_entity ~= nil and EntityGetIsAlive(data.spectator_entity)) then
+                if (data.spectated_player == user and data.spectator_entity ~= nil and EntityGetIsAlive(data.spectator_entity)) then
                     local items = GameGetAllInventoryItems(data.spectator_entity) or {}
                     for i, item_id in ipairs(items) do
                         GameKillInventoryItem(data.spectator_entity, item_id)
@@ -608,6 +631,13 @@ networking = {
                             if(has_spectator)then
                                 spectator_item = EntityCreateNew()
                                 np.DeserializeEntity(spectator_item, itemInfo.data, x, y)
+                                
+                                local material_inventory_comp = EntityGetFirstComponentIncludingDisabled(spectator_item, "MaterialInventoryComponent")
+                                if(material_inventory_comp)then
+                                    local last_frame_drank = ComponentGetValue2(material_inventory_comp, "last_frame_drank")
+                                    local frame_offset = last_frame_drank - frame
+                                    ComponentSetValue2(material_inventory_comp, "last_frame_drank", GameGetFrameNum() + frame_offset)
+                                end
                             end
                         end
             
@@ -642,16 +672,6 @@ networking = {
                             end
                         end
 
-                        if(has_spectator)then
-                            local inventoryGuiComp = EntityGetFirstComponentIncludingDisabled(data.spectator_entity, "InventoryGuiComponent")
-                            --[[if (inventoryGuiComp ~= nil) then
-                                if(ComponentGetValue2(inventoryGuiComp, "mActive"))then
-                                    ComponentSetValue2(inventoryGuiComp, "mActive", false)
-                                    data.force_open_inventory = true
-                                end
-                            end]]
-                        end
-                        
                         local itemComp = EntityGetFirstComponentIncludingDisabled(item_entity, "ItemComponent")
                         if (itemComp ~= nil) then
                             ComponentSetValue2(itemComp, "inventory_slot", itemInfo.slot_x, itemInfo.slot_y)
@@ -660,6 +680,12 @@ networking = {
                         if (itemInfo.active) then
                             game_funcs.SetActiveHeldEntity(data.players[tostring(user)].entity, item_entity, false,
                                 false)
+
+                            if (has_spectator) then
+                                game_funcs.SetActiveHeldEntity(data.spectator_entity, spectator_item_entity, false,
+                                    false)
+                                data.spectator_selected_item = spectator_item_entity
+                            end
                         end
 
                         EntityHelper.SetVariable(item_entity, "arena_entity_id", itemInfo.id)
@@ -717,14 +743,6 @@ networking = {
 
                         end
 
-                        --[[local inventoryGuiComp = EntityGetFirstComponentIncludingDisabled(data.spectator_entity, "InventoryGuiComponent")
-                        if (inventoryGuiComp ~= nil) then
-                            if(ComponentGetValue2(inventoryGuiComp, "mActive"))then
-                                ComponentSetValue2(inventoryGuiComp, "mActive", false)
-                                data.force_open_inventory = true
-                            end
-                        end]]
-            
 
                     end
 
@@ -733,24 +751,6 @@ networking = {
                 end
 
                 if(has_spectator)then
-                    --[[local controls_comp = EntityGetFirstComponentIncludingDisabled(data.spectator_entity, "ControlsComponent")
-
-                    if (controls_comp ~= nil) then
-                        print("Refresh??")
-                        ComponentSetValue2(controls_comp, "enabled", false)
-                        delay.new(2, function()
-                            print("allow inputs!!")
-                            ComponentSetValue2(controls_comp, "enabled", true)
-                        end)
-                        delay.new(1, function()
-                            ComponentSetValue2(controls_comp, "mButtonDownChangeItemR", true)
-                            ComponentSetValue2(controls_comp, "mButtonFrameChangeItemR", GameGetFrameNum() + 1)
-                            ComponentSetValue2(controls_comp, "mButtonCountChangeItemR", 3)
-    
-                        end)
-
-                    end]]
-
                     local inventory2_comp = EntityGetFirstComponent( data.spectator_entity, "Inventory2Component" )
                     if( inventory2_comp ) then
                         delay.new(0, function()
@@ -761,21 +761,12 @@ networking = {
                                 end
                             end
                         end)
-                        ComponentSetValue2( inventory2_comp, "mActualActiveItem", 0 )
+                        --ComponentSetValue2( inventory2_comp, "mActualActiveItem", 0 )
                         --print("attempting refresh??")
                     end
                 end
                 
             end
-        end,
-        request_wand_update = function(lobby, message, user, data)
-           --[[ if(data.spectator_mode)then
-                return
-            end
-            data.client.previous_wand = nil
-            networking.send.wand_update(lobby, data, user, true)
-            networking.send.switch_item(lobby, data, user, true)
-            ]]
         end,
         request_item_update = function(lobby, message, user, data)
             if(data.spectator_mode)then
@@ -786,7 +777,7 @@ networking = {
             networking.send.switch_item(lobby, data, user, true)
         end,
        
-        input = function(lobby, message, user, data)
+        keyboard = function(lobby, message, user, data)
             if(data.state ~= "arena" and not data.spectator_mode)then
                 return
             end
@@ -960,24 +951,40 @@ networking = {
                         controls_data.rightClick = false
                     end
 
+                end
+            end
+        end,
+        mouse = function(lobby, message, user, data)
+            if(data.state ~= "arena" and not data.spectator_mode)then
+                return
+            end
 
-                    --[[
-                    local aim_x, aim_y = ComponentGetValue2(controls, "mAimingVector") -- float, float
-                    local aimNormal_x, aimNormal_y = ComponentGetValue2(controls, "mAimingVectorNormalized") -- float, float
-                    local aimNonZero_x, aimNonZero_y = ComponentGetValue2(controls, "mAimingVectorNonZeroLatest") -- float, float
-                    local mouse_x, mouse_y = ComponentGetValue2(controls, "mMousePosition") -- float, float
-                    local mouseRaw_x, mouseRaw_y = ComponentGetValue2(controls, "mMousePositionRaw") -- float, float
-                    local mouseRawPrev_x, mouseRawPrev_y = ComponentGetValue2(controls, "mMousePositionRawPrev") -- float, float
-                    local mouseDelta_x, mouseDelta_y = ComponentGetValue2(controls, "mMouseDelta") -- float, float
-                    ]]
-    
+            if (not gameplay_handler.CheckPlayer(lobby, user, data)) then
+                return
+            end
+
+            -- check which inputs have changed
+            if (data.spectator_mode or (GameHasFlagRun("player_is_unlocked") and (not GameHasFlagRun("no_shooting")))) then
+                if (data.players[tostring(user)] ~= nil and data.players[tostring(user)].entity ~= nil and EntityGetIsAlive(data.players[tostring(user)].entity)) then
+                    local controlsComp = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity, "ControlsComponent")
+
                     ComponentSetValue2(controlsComp, "mAimingVector", message.aim_x, message.aim_y)
-                    ComponentSetValue2(controlsComp, "mAimingVectorNormalized", message.aimNormal_x, message.aimNormal_y)
-                    ComponentSetValue2(controlsComp, "mAimingVectorNonZeroLatest", message.aimNonZero_x, message.aimNonZero_y)
+
+                    -- get length of aiming vector
+                    local length = math.sqrt(message.aim_x * message.aim_x + message.aim_y * message.aim_y)
+                    local normalized_x, normalized_y = message.aim_x / length, message.aim_y / length
+
+                    ComponentSetValue2(controlsComp, "mAimingVectorNormalized", normalized_x, normalized_y)
+     
                     ComponentSetValue2(controlsComp, "mMousePosition", message.mouse_x, message.mouse_y)
+
+                    local mouse_raw_x_prev, mouse_raw_y_prev = ComponentGetValue2(controlsComp, "mMousePositionRawPrev")
+
+                    local dx, dy = message.mouseRaw_x - mouse_raw_x_prev, message.mouseRaw_y - mouse_raw_y_prev
+
                     ComponentSetValue2(controlsComp, "mMousePositionRaw", message.mouseRaw_x, message.mouseRaw_y)
-                    ComponentSetValue2(controlsComp, "mMousePositionRawPrev", message.mouseRawPrev_x, message.mouseRawPrev_y)
-                    ComponentSetValue2(controlsComp, "mMouseDelta", message.mouseDelta_x, message.mouseDelta_y)
+                    ComponentSetValue2(controlsComp, "mMousePositionRawPrev", message.mouseRaw_x, message.mouseRaw_y)
+                    ComponentSetValue2(controlsComp, "mMouseDelta", dx, dy)
 
                     local children = EntityGetAllChildren(data.players[tostring(user)].entity) or {}
                     for i, child in ipairs(children) do
@@ -986,7 +993,6 @@ networking = {
                             EntityApplyTransform(child, message.mouse_x, message.mouse_y)
                         end
                     end
-
                 end
             end
         end,
@@ -1020,13 +1026,14 @@ networking = {
                 return
             end
             
-            delay.new(5, function()
+            -- idk why i am delaying item switching by 5 frames
+            --delay.new(5, function()
                 if (not gameplay_handler.CheckPlayer(lobby, user, data)) then
                     return
                 end
 
                 --GlobalsSetValue(tostring(wand.entity_id).."_wand", wandInfo.id)
-                local is_wand, slot_x, slot_y = message[1], message[2], message[3]
+                local is_wand, slot_x, slot_y = message.is_wand, message.slot_x, message.slot_y
                 -- GamePrint("Switching item to slot: " .. tostring(slot_x) .. ", " .. tostring(slot_y))
                 if (data.players[tostring(user)].entity and EntityGetIsAlive(data.players[tostring(user)].entity)) then
                     local items = GameGetAllInventoryItems(data.players[tostring(user)].entity) or {}
@@ -1058,7 +1065,7 @@ networking = {
     
  
                     -- if we are in spectator mode
-                    if (data.selected_client == user and data.spectator_entity ~= nil and EntityGetIsAlive(data.spectator_entity)) then
+                    if (data.spectated_player == user and data.spectator_entity ~= nil and EntityGetIsAlive(data.spectator_entity)) then
                         has_spectator = true
                     end
     
@@ -1092,7 +1099,7 @@ networking = {
                         end
                     end
                 end
-            end)
+            --end)
 
         
         end,
@@ -1120,44 +1127,6 @@ networking = {
                     local mActiveItem = ComponentGetValue2(inventory2Comp, "mActiveItem")
 
                     if (mActiveItem ~= nil) then
-                        --[[
-                            local msg_data = {
-                                mana,
-                                GameGetFrameNum() - cast_delay_start_frame,
-                                mReloadFramesLeft = reload_frames_left,
-                                mReloadNextFrameUsable = reload_next_frame_usable - GameGetFrameNum(),
-                                mNextChargeFrame = next_charge_frame - GameGetFrameNum(),
-                            }
-                        ]]
-
-                        --[[local children = EntityGetAllChildren(mActiveItem) or {}
-                        for k, v in ipairs(children)do
-                            if(EntityHasTag(v, "card_action"))then
-                                --GamePrint("found card action")
-                                local item_comp = EntityGetFirstComponentIncludingDisabled(v, "ItemComponent")
-                                if(item_comp ~= nil)then
-                                    local slot = ComponentGetValue2(item_comp, "inventory_slot")
-                                    -- ComponentSetValue2(item_comp, "uses_remaining", 1)
-                                    --GamePrint("card in slot: " .. tostring(slot))
-                                    --print("card in slot: " .. tostring(slot))
-                                    if(message[6][tostring(slot)] ~= nil)then
-                                        print(json.stringify(message[6][tostring(slot)]))
-                                        --ComponentSetValue2(item_comp, "uses_remaining", message[6][tostring(slot)])
-                                        --print("wand uses updated!")
-                                    end
-                                end
-                            end
-                        end]]
-
-                        --[[
-                        WandStats{
-                            mana = mana,
-                            cast_delay_start_frame = GameGetFrameNum() - cast_delay_start_frame,
-                            reload_frames_left = reload_frames_left,
-                            reload_next_frame_usable = reload_next_frame_usable - GameGetFrameNum(),
-                            next_charge_frame = next_charge_frame - GameGetFrameNum(),
-                        }
-                        ]]
                         
                         local mana = message.mana
                         local mCastDelayStartFrame = GameGetFrameNum() - message.cast_delay_start_frame
@@ -1174,61 +1143,6 @@ networking = {
                             ComponentSetValue2(abilityComp, "mNextChargeFrame", mNextChargeFrame)
                         end
 
-                        -- This was removed because really spectator UI should be handled locally.
-                        --[[
-                        local has_spectator = false
-
-                        if(data.spectator_active_player == nil)then
-                            data.spectator_active_player = user
-                            data.selected_client = user
-                            data.selected_player = data.players[tostring(user)].entity
-                        end
-        
-                        -- if we are in spectator mode
-                        if (data.selected_client == user and data.spectator_entity ~= nil and EntityGetIsAlive(data.spectator_entity)) then
-                            has_spectator = true
-                        end
-    
-    
-                        if(has_spectator)then
-                            local spectator_inventory2Comp = EntityGetFirstComponentIncludingDisabled(data.spectator_entity, "Inventory2Component")
-
-                            -- if no inventory2Comp, return
-                            if (spectator_inventory2Comp == nil) then
-                                return
-                            end
-
-                            print("syncing spectator wand stats")
-
-                            mActiveItem = ComponentGetValue2(spectator_inventory2Comp, "mActiveItem")
-
-                            if (mActiveItem ~= nil) then
-
-    
-                                local mana = message[1]
-                                local mCastDelayStartFrame = GameGetFrameNum() - message[2]
-                                local mReloadFramesLeft = message[3]
-                                local mReloadNextFrameUsable = message[4] + GameGetFrameNum()
-                                local mNextChargeFrame = message[5] + GameGetFrameNum()
-        
-                                local abilityComp = EntityGetFirstComponentIncludingDisabled(mActiveItem, "AbilityComponent")
-                                if (abilityComp ~= nil) then
-                                    ComponentSetValue2(abilityComp, "mana", mana)
-                                    ComponentSetValue2(abilityComp, "mCastDelayStartFrame", mCastDelayStartFrame)
-                                    ComponentSetValue2(abilityComp, "mReloadFramesLeft", mReloadFramesLeft)
-                                    ComponentSetValue2(abilityComp, "mReloadNextFrameUsable", mReloadNextFrameUsable)
-                                    ComponentSetValue2(abilityComp, "mNextChargeFrame", mNextChargeFrame)
-
-                                    print("SO SYNCED!!!!")
-                                end
-
-                                
-                            end
-
-                        end
-                        ]]
-
-
                     end
                 end
             end
@@ -1237,10 +1151,13 @@ networking = {
             local health = message[1]
             local maxHealth = message[2]
             local damage_details = message[3]
+            local damage = message[4]
+            local invincibility_frames = message[5]
 
             if (health ~= nil and maxHealth ~= nil) then
-                if (data.players[tostring(user)].entity ~= nil) then
-                    if(not EntityGetIsAlive(data.players[tostring(user)].entity))then
+                local client_entity = data.players[tostring(user)].entity
+                if (client_entity ~= nil) then
+                    if(not EntityGetIsAlive(client_entity))then
                         return
                     end
 
@@ -1253,8 +1170,16 @@ networking = {
 
                    -- print("last health: " .. tostring(last_health) .. ", new health: " .. tostring(health) .. ", max health: " .. tostring(maxHealth))
 
-                    if (health < last_health) then
-                        local damage = last_health - health
+                    if (health < last_health or damage) then
+                        if(damage == nil)then
+                            damage = last_health - health
+                        end
+
+                        if(invincibility_frames)then
+                            local effect = GetGameEffectLoadTo(client_entity, "PROTECTION_ALL", true)
+    
+                            ComponentSetValue2( effect, "frames", invincibility_frames )
+                        end
 
                         --[[
                             int ragdoll_fx;
@@ -1294,7 +1219,7 @@ networking = {
 
                             local blood_multiplier = damage_details.blood_multiplier
 
-                            local damage_model_comp = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity, "DamageModelComponent")
+                            local damage_model_comp = EntityGetFirstComponentIncludingDisabled(client_entity, "DamageModelComponent")
 
                             if(damage_model_comp == nil)then
                                 return
@@ -1307,7 +1232,7 @@ networking = {
 
                             for i, damage_type in ipairs(damage_types) do
                                 --print("inflicting damage: " .. tostring(damage_per_type) .. " of type: " .. tostring(damage_type))
-                                EntityInflictDamage(data.players[tostring(user)].entity, 
+                                EntityInflictDamage(client_entity, 
                                 damage_per_type, 
                                 damage_type, 
                                 "damage_fake",
@@ -1323,7 +1248,7 @@ networking = {
                                 ComponentSetValue2(damage_model_comp, "blood_multiplier", old_blood_multiplier)
                             end
                         else
-                            EntityInflictDamage(data.players[tostring(user)].entity, 
+                            EntityInflictDamage(client_entity, 
                             damage, 
                             "DAMAGE_DROWNING", 
                             "damage_fake",
@@ -1338,7 +1263,7 @@ networking = {
 
                     end
 
-                    local DamageModelComp = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity,
+                    local DamageModelComp = EntityGetFirstComponentIncludingDisabled(client_entity,
                         "DamageModelComponent")
 
                     if (DamageModelComp ~= nil) then
@@ -1392,8 +1317,9 @@ networking = {
             local rng = message[1]
             local message = message[2]
 
+            local client_entity = data.players[tostring(user)].entity
 
-            if (data.spectator_mode or (GameHasFlagRun("player_is_unlocked") and (not GameHasFlagRun("no_shooting"))) and data.players[tostring(user)].entity ~= nil and EntityGetIsAlive(data.players[tostring(user)].entity)) then
+            if (data.spectator_mode or (GameHasFlagRun("player_is_unlocked") and (not GameHasFlagRun("no_shooting"))) and client_entity ~= nil and EntityGetIsAlive(client_entity)) then
                 data.players[tostring(user)].can_fire = true
 
                 --print("Received fire wand message!")
@@ -1405,11 +1331,11 @@ networking = {
 
                 data.players[tostring(user)].projectile_rng_stack = rng
 
-                local controlsComp = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity,
+                local controlsComp = EntityGetFirstComponentIncludingDisabled(client_entity,
                     "ControlsComponent")
 
                 if (controlsComp ~= nil) then
-                    local inventory2Comp = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity,
+                    local inventory2Comp = EntityGetFirstComponentIncludingDisabled(client_entity,
                         "Inventory2Component")
 
                     if (inventory2Comp == nil) then
@@ -1439,14 +1365,14 @@ networking = {
                         local target_x = x + aim_x
                         local target_y = y + aim_y
 
-                        EntityHelper.BlockFiring(data.players[tostring(user)].entity, false)
+                        EntityHelper.BlockFiring(client_entity, false)
 
                         -- Add player_unit tag to fix physics projectile lob strength
-                        EntityAddTag(data.players[tostring(user)].entity, "player_unit")
-                        np.UseItem(data.players[tostring(user)].entity, mActiveItem, true, true, true, x, y, target_x, target_y)
-                        EntityRemoveTag(data.players[tostring(user)].entity, "player_unit")
+                        EntityAddTag(client_entity, "player_unit")
+                        np.UseItem(client_entity, mActiveItem, true, true, true, x, y, target_x, target_y)
+                        EntityRemoveTag(client_entity, "player_unit")
 
-                        EntityHelper.BlockFiring(data.players[tostring(user)].entity, true)
+                        EntityHelper.BlockFiring(client_entity, true)
 
                         ComponentSetValue2(controlsComp, "mButtonDownFire", firing)
                     end
@@ -1491,7 +1417,7 @@ networking = {
                     end
                 end
 
-                if(steamutils.IsOwner(lobby))then
+                if(steam_utils.IsOwner())then
                     gameplay_handler.WinnerCheck(lobby, data)
                 end
                 
@@ -1504,7 +1430,7 @@ networking = {
                 return
             end
 
-            if (not steamutils.IsOwner(lobby, user))then
+            if (not steam_utils.IsOwner( user))then
                 return
             end
 
@@ -1534,10 +1460,11 @@ networking = {
             if (not gameplay_handler.CheckPlayer(lobby, user, data)) then
                 return
             end
+            local client_entity = data.players[tostring(user)].entity
 
-            if (data.spectator_mode or (GameHasFlagRun("player_is_unlocked")) and data.players[tostring(user)].entity ~= nil and EntityGetIsAlive(data.players[tostring(user)].entity)) then
-                local player = data.players[tostring(user)].entity
-                local character_data_comp = EntityGetFirstComponentIncludingDisabled(player, "CharacterDataComponent")
+            if (data.spectator_mode or (GameHasFlagRun("player_is_unlocked")) and client_entity ~= nil and EntityGetIsAlive(client_entity)) then
+                
+                local character_data_comp = EntityGetFirstComponentIncludingDisabled(client_entity, "CharacterDataComponent")
                 if (character_data_comp ~= nil) then
                     local player_data = {
                         status_list = message[1],
@@ -1550,9 +1477,9 @@ networking = {
                         if(not data.players[tostring(user)].cosmetics[id])then
                             -- add cosmetic
                             data.players[tostring(user)].cosmetics[id] = true
-                            if(player)then
+                            if(client_entity)then
                                 print("Loading client cosmetic: " .. tostring(id))
-                                ArenaGameplay.UpdateCosmetics(lobby, data, "load", player, true)
+                                ArenaGameplay.UpdateCosmetics(lobby, data, "load", client_entity, true)
                             end
                         end
                     end
@@ -1561,8 +1488,8 @@ networking = {
                         if(not loaded_cosmetics[k])then
                             -- remove cosmetic
                             data.players[tostring(user)].cosmetics[k] = nil
-                            if(player)then
-                                ArenaGameplay.UpdateCosmetics(lobby, data, "unload", player, true)
+                            if(client_entity)then
+                                ArenaGameplay.UpdateCosmetics(lobby, data, "unload", client_entity, true)
                             end
                         end
                     end
@@ -1588,7 +1515,7 @@ networking = {
                         local effect = GetStatusElement(id, value)
 
                         --[[if(effect ~= nil and data.players[tostring(user)].status_effect_comps[id] == nil)then
-                            data.players[tostring(user)].status_effect_comps[id] = EntityAddComponent2( player, "SpriteComponent",
+                            data.players[tostring(user)].status_effect_comps[id] = EntityAddComponent2( client_entity, "SpriteComponent",
                             {
                                 image_file = effect.ui_icon,
                                 offset_x = offset,
@@ -1604,7 +1531,7 @@ networking = {
 
                         if(effect ~= nil and data.players[tostring(user)].status_effect_entities[id] == nil)then
                             if(effect.effect_entity)then
-                                data.players[tostring(user)].status_effect_entities[id] = LoadGameEffectEntityTo( player, effect.effect_entity )
+                                data.players[tostring(user)].status_effect_entities[id] = LoadGameEffectEntityTo( client_entity, effect.effect_entity )
                                 --GamePrint("Loaded effect of id: "..tostring(effect.id))
                             else
                                 data.players[tostring(user)].status_effect_entities[id] = EntityCreateNew("effect")
@@ -1613,7 +1540,7 @@ networking = {
                                     effect = id,
                                     frames = -1,
                                 })
-                                EntityAddChild(player, data.players[tostring(user)].status_effect_entities[id])
+                                EntityAddChild(client_entity, data.players[tostring(user)].status_effect_entities[id])
                             end
 
                             if(data.players[tostring(user)].status_effect_entities[id] ~= 0 and data.players[tostring(user)].status_effect_entities[id] ~= nil)then
@@ -1621,6 +1548,7 @@ networking = {
                                 EntityAddComponent2(data.players[tostring(user)].status_effect_entities[id], "UIIconComponent", {
                                     name = effect.ui_name,
                                     icon_sprite_file = effect.ui_icon,
+                                    description = effect.ui_description,
                                     display_above_head = true,
                                     display_in_hud = false,
                                     is_perk = false,
@@ -1682,7 +1610,7 @@ networking = {
                     local has_spectator = false
 
                     -- if we are in spectator mode
-                    if (data.selected_client == user and data.spectator_entity ~= nil and EntityGetIsAlive(data.spectator_entity)) then
+                    if (data.spectated_player == user and data.spectator_entity ~= nil and EntityGetIsAlive(data.spectator_entity)) then
                         has_spectator = true
                     end
 
@@ -1711,7 +1639,7 @@ networking = {
         end,
         lock_ready_state = function(lobby, message, user, data)
             -- check if user is lobby owner
-            if (not steamutils.IsOwner(lobby, user)) then
+            if (not steam_utils.IsOwner( user)) then
                 return
             end
             
@@ -1725,7 +1653,7 @@ networking = {
             GameAddFlagRun("ready_check")
             GameRemoveFlagRun("player_unready")
         end,
-        request_spectate_data = function(lobby, message, user, data)
+        --[[request_spectate_data = function(lobby, message, user, data)
            networking.send.spectate_data(lobby, data, user, true)
         end,
         spectate_data = function(lobby, message, user, data)
@@ -1740,7 +1668,7 @@ networking = {
                 local heart = EntityLoad("data/entities/animals/heart.xml", message.heart[1], message.heart[2])
                 EntityAddTag(heart, "spectator_simulated")
             end
-        end,
+        end,]]
         item_picked_up = function(lobby, message, user, data)
             if(data.state ~= "arena" and not data.spectator_mode)then
                 return
@@ -1780,11 +1708,65 @@ networking = {
             if(data.state ~= "arena" and not data.spectator_mode)then
                 return
             end
+            data.network_entity_cache = data.network_entity_cache or {}
 
-            local entities = EntityGetInRadiusWithTag(0, 0, 1000000000, "does_physics_update")
-            local item_id = message.id
+            local item_id = math.floor(message.id)
             local x, y, r, vx, vy, vr = message.x, message.y, message.r, message.vel_x, message.vel_y, message.vel_a
+
+            
             local takes_control = message.takes_control
+
+            local entities_cleanup = EntityGetInRadiusWithTag(0, 0, 1000, "does_physics_update")
+            
+            local has_found = {}
+            for k, v in ipairs(entities_cleanup)do
+                local entity_id = EntityHelper.GetVariable(v, "arena_entity_id")
+                if(entity_id ~= nil and entity_id == item_id)then
+                    if(has_found[entity_id])then
+                        EntityKill(v)
+                        return
+                    end
+
+                    has_found[entity_id] = true
+                end
+            end
+
+
+            -- check cache
+            for k = #data.network_entity_cache, 1, -1 do
+                local v = data.network_entity_cache[k]
+                if not EntityGetIsAlive(v[2]) then
+                    table.remove(data.network_entity_cache, k)
+                else
+                    if(v[1] == item_id)then
+                        local entity_id = v[2]
+
+                        if(takes_control)then
+                            for i = #data.controlled_physics_entities, 1, -1 do
+                                if(data.controlled_physics_entities[i] == entity_id)then
+                                    table.remove(data.controlled_physics_entities, i)
+    
+                                    --GamePrint("No longer in control")
+    
+                                end
+                            end
+                        end
+    
+                        local body_ids = PhysicsBodyIDGetFromEntity( entity_id )
+                        if(body_ids ~= nil and #body_ids > 0)then
+                            local body_id = body_ids[1]
+
+                            PhysicsBodyIDSetTransform(body_id, x, y, r, vx, vy, vr)
+                            
+                        end
+                        return
+                    end
+                end
+            end
+            
+            local entities = EntityGetInRadiusWithTag(0, 0, 1000000000, "does_physics_update")
+
+
             for k, v in ipairs(entities)do
                 --if(EntityGetFirstComponentIncludingDisabled(v, "ItemComponent") ~= nil)then
                 local entity_id = EntityHelper.GetVariable(v, "arena_entity_id")
@@ -1800,6 +1782,8 @@ networking = {
                             end
                         end
                     end
+
+                    table.insert(data.network_entity_cache, {item_id, v})
 
                     local body_ids = PhysicsBodyIDGetFromEntity( v )
                     if(body_ids ~= nil and #body_ids > 0)then
@@ -1920,7 +1904,7 @@ networking = {
             end
         end,
         start_map_vote = function(lobby, message, user, data)
-            if (not steamutils.IsOwner(lobby, user))then
+            if (not steam_utils.IsOwner( user))then
                 return
             end
             GamePrint("starting map vote")
@@ -1959,7 +1943,7 @@ networking = {
 
         end,
         map_vote_timer_update = function(lobby, message, user, data)
-            if (not steamutils.IsOwner(lobby, user))then
+            if (not steam_utils.IsOwner( user))then
                 return
             end
             local frames = message
@@ -1968,7 +1952,7 @@ networking = {
             end
         end,
         map_vote_finish = function(lobby, message, user, data)
-            if (not steamutils.IsOwner(lobby, user))then
+            if (not steam_utils.IsOwner( user))then
                 return
             end
             if(data.vote_loop ~= nil)then
@@ -1978,19 +1962,19 @@ networking = {
             end
         end,
         load_lobby = function(lobby, message, user, data)
-            if (not steamutils.IsOwner(lobby, user))then
+            if (not steam_utils.IsOwner( user))then
                 return
             end
             ArenaGameplay.LoadLobby(lobby, data, false)
         end,
         update_round = function(lobby, message, user, data)
-            if (not steamutils.IsOwner(lobby, user))then
+            if (not steam_utils.IsOwner( user))then
                 return
             end
             GlobalsSetValue("holyMountainCount", tostring(message))
         end,
         update_world_seed = function(lobby, message, user, data)
-            if (not steamutils.IsOwner(lobby, user))then
+            if (not steam_utils.IsOwner( user))then
                 return
             end
             SetWorldSeed( message )
@@ -1998,6 +1982,10 @@ networking = {
         send_skin = function(lobby, message, user, data)
             if data.players[tostring(user)] then
                 data.players[tostring(user)].skin_data = message
+
+                if(skin_system and lobby)then
+                    skin_system.update_client_skin(lobby, data.players[tostring(user)].entity, user, data)
+                end
 
                 if(data.players[tostring(user)].entity)then
                     if(skin_system and lobby)then
@@ -2036,7 +2024,7 @@ networking = {
             end
 
             -- if user is not spectated player, return
-            if(user ~= data.selected_client)then
+            if(user ~= data.spectated_player)then
                 return
             end
 
@@ -2051,19 +2039,40 @@ networking = {
             -- destroy all applicable entities
             SpectatorMode.ClearHM()
 
-            data.last_synced_entity_count = #message
+
+            local entities = message[2]
+
+            data.last_synced_entity_count = #entities
             
-            networking.send.request_second_row(lobby, user)
+            --networking.send.request_second_row(lobby, user)
 
-            delay.new(2, function()
+            --delay.new(2, function()
 
-                for k, v in ipairs(message)do
-                    local ent = EntityCreateNew()
-                    local x, y, entity_data, uid = unpack(v)
-                    np.DeserializeEntity(ent, entity_data, x, y)
-                    
-                end
-            end)
+            local second_row_entities = EntityGetWithTag("hm_platform")
+            for k, v in ipairs(second_row_entities)do
+                EntityKill(v)
+            end
+
+            local second_row_spots = message[1]
+            
+            for k, v in ipairs(second_row_spots)do
+                local x, y = unpack(v)
+                --print("Spawning second row at: " .. tostring(x) .. ", " .. tostring(y))
+                --LoadPixelScene( "data/biome_impl/temple/shop_second_row.png", "data/biome_impl/temple/shop_second_row_visual.png", x, y, "", true )
+                EntityLoad("mods/evaisa.arena/files/entities/misc/hm_shop_platform.xml", x, y)
+            end
+
+
+            for k, v in ipairs(entities)do
+                local ent = EntityCreateNew()
+                local x, y, entity_data, uid = unpack(v)
+                np.DeserializeEntity(ent, entity_data, x, y)
+                local name = EntityGetFilename(ent)
+            end
+
+
+
+            --end)
             
         end,
         pick_hm_entity = function(lobby, message, user, data)
@@ -2098,7 +2107,11 @@ networking = {
 
                         elseif(EntityGetFilename(entity) == "mods/evaisa.arena/files/entities/misc/spell_refresh.xml")then
                             was_refresh = true
-                            EntityLoad("data/entities/particles/image_emitters/spell_refresh_effect.xml", entity_x, entity_y-12)
+                            data.last_refreshed = data.last_refreshed or 0
+                            if(GameGetFrameNum() - data.last_refreshed > 60)then
+                                data.last_refreshed = GameGetFrameNum()
+                                EntityLoad("data/entities/particles/image_emitters/spell_refresh_effect.xml", entity_x, entity_y-12)
+                            end
                         elseif(EntityHasTag(entity, "heart"))then
                             EntityLoad("data/entities/particles/image_emitters/heart_fullhp_effect.xml", entity_x, entity_y-12)
                             EntityLoad("data/entities/particles/heart_out.xml", entity_x, entity_y-8)
@@ -2121,8 +2134,10 @@ networking = {
                             EntityKill(entity)
                         end
 
-                        networking.send.request_item_update(lobby, user)
-                        networking.send.request_spectate_data(lobby, user)
+                        if(not was_refresh)then
+                            networking.send.request_item_update(lobby, user)
+                        end
+                        --networking.send.request_spectate_data(lobby, user)
                     end
                 end
             end
@@ -2138,7 +2153,7 @@ networking = {
         end,
         second_row_spots = function(lobby, message, user, data)
 
-            if(user ~= data.lobby_spectated_player or data.state ~= "lobby")then
+            if(user ~= data.spectated_player or data.state ~= "lobby")then
                 return
             end
 
@@ -2165,7 +2180,7 @@ networking = {
                 end
                 return
             end
-            if(not steamutils.IsOwner(lobby, user))then
+            if(not steam_utils.IsOwner( user))then
                 return
             end
 
@@ -2176,8 +2191,12 @@ networking = {
                 
                 local timer_frames = tonumber(hm_timer_time) * 60
                 data.hm_timer = delay.new(timer_frames, function()
-                    if(steamutils.IsOwner(lobby))then
+                    if(steam_utils.IsOwner())then
                         ArenaGameplay.ForceReady(lobby, data)
+                    end
+                    if(data.hm_timer_gui)then
+                        GuiDestroy(data.hm_timer_gui)
+                        data.hm_timer_gui = nil
                     end
                 end, function(frame)
                     --print("HM Tick: "..tostring(frame))
@@ -2216,7 +2235,7 @@ networking = {
             if(data.state ~= "lobby")then
                 return
             end
-            if(not steamutils.IsOwner(lobby, user))then
+            if(not steam_utils.IsOwner( user))then
                 return
             end
             if(data.hm_timer)then
@@ -2236,8 +2255,138 @@ networking = {
             end
         end,
         set_map = function(lobby, message, user, data)
-            steam.matchmaking.setLobbyData(lobby, "current_map", message)
+            steam_utils.TrySetLobbyData(lobby, "current_map", message)
             print("Setting current map to "..tostring(message))
+        end,
+        request_character_position = function(lobby, message, user, data)
+            networking.send.character_position(lobby, data, false, user)
+        end,
+        request_dummy_target = function(lobby, message, user, data)
+            networking.send.dummy_target(lobby, data.target_dummy_player, user)
+        end,
+        dummy_target = function(lobby, message, user, data)
+            if(not data.spectator_mode or user ~= data.spectated_player or data.state ~= "lobby")then
+                return
+            end
+
+            local player = ArenaGameplay.FindUser(lobby, message)
+
+            if(player)then
+                data.target_dummy_player = player
+                GameAddFlagRun("refresh_dummy")
+            end
+        end,
+        request_card_list = function(lobby, message, user, data)
+            if(data.state ~= "lobby")then
+                return
+            end
+            if(data.spectator_mode)then
+                return
+            end
+            networking.send.card_list(lobby, data, user)
+        end,
+        card_list = function(lobby, message, user, data)
+            if(not data.spectator_mode or user ~= data.spectated_player or data.state ~= "lobby")then
+                return
+            end
+
+            print("Received card list.")
+
+            if( data.upgrade_system == nil )then
+                data.upgrade_system = upgrade_system.create(message, function(upgrade)
+                    data.upgrade_system = nil
+                end)
+                print("Created upgrade system.")
+            else
+                data.upgrade_system:clean()
+                data.upgrade_system = upgrade_system.create(message, function(upgrade)
+                    data.upgrade_system = nil
+                end)
+                print("Updated upgrade system.")
+            end
+
+            networking.send.request_card_list_state(lobby, user)
+        end,
+        request_card_list_state = function(lobby, message, user, data)
+            if(data.state ~= "lobby")then
+                return
+            end
+            if(data.spectator_mode)then
+                return
+            end
+
+            networking.send.card_list_state(lobby, data, user)
+        end,
+        card_list_state = function(lobby, message, user, data)
+            if(not data.spectator_mode or user ~= data.spectated_player or data.state ~= "lobby")then
+                return
+            end
+
+            if(message[1] == nil)then
+                print("Received nil message (card list state), destroying")
+                local card = data.upgrade_system.upgrades[data.upgrade_system.selected_index]
+                
+                GamePrintImportant(GameTextGetTranslatedOrNot(card.ui_name), GameTextGetTranslatedOrNot(card.ui_description))
+
+                data.upgrade_system:clean()
+                data.upgrade_system = nil
+
+                local card_entity = EntityGetWithTag("card_pick")
+                for k, v in ipairs(card_entity) do
+                    EntityKill(v)
+                    --print("killed card entity")
+                end
+
+                GamePlaySound("data/audio/Desktop/ui.bank", "ui/button_click", 0, 0)
+            end
+
+            local open = message[1]
+            local selected = message[2]
+            
+            if(open)then
+                print("Opening card menu.")
+                GameAddFlagRun("card_menu_open")
+            else
+                print("Closing card menu.")
+                GameRemoveFlagRun("card_menu_open")
+            end
+
+            if(data.upgrade_system)then
+                data.upgrade_system.selected_index = selected
+                GamePlaySound("data/audio/Desktop/ui.bank", "ui/button_select", 0, 0)
+                print("Setting selected index to "..tostring(selected))
+            end
+        end,
+        swap_positions = function(lobby, message, user, data)
+            if(data.state ~= "arena")then
+                return
+            end
+            if(data.spectator_mode)then
+                return
+            end
+
+            local target = data.players[tostring(user)]
+            if(target == nil)then
+                return
+            end
+
+            local target_entity = target.entity
+            if(target_entity == nil or not EntityGetIsAlive(target_entity))then
+                return
+            end
+
+            local target_x, target_y = message[1], message[2]
+            local player_entity = player_helper.Get()
+            if(player_entity == nil or not EntityGetIsAlive(player_entity))then
+                return
+            end
+
+            local x, y = EntityGetTransform(player_entity)
+
+            EntityLoad("data/entities/particles/teleportation_source.xml", x, y)
+            EntityLoad("data/entities/particles/teleportation_target.xml", target_x, target_y)
+
+            EntityApplyTransform(player_entity, target_x, target_y)
         end,
     },
     send = {
@@ -2246,8 +2395,6 @@ networking = {
                 steamutils.messageTypes.OtherPlayers, lobby, true, true)
         end,
         request_perk_update = function(lobby, user)
-            arena_log:print("Requesting perk update")
-
             if(user == nil)then
                 steamutils.send("request_perk_update", {}, steamutils.messageTypes.OtherPlayers, lobby, true)
             else
@@ -2279,7 +2426,14 @@ networking = {
         check_can_unlock = function(lobby)
             steamutils.send("check_can_unlock", {}, steamutils.messageTypes.OtherPlayers, lobby, true)
         end,
-        character_position = function(lobby, data, to_spectators)
+        request_character_position = function(lobby, user)
+            if(user == nil)then
+                steamutils.send("request_character_position", {}, steamutils.messageTypes.OtherPlayers, lobby, true)
+            else
+                steamutils.sendToPlayer("request_character_position", {}, user, true)
+            end
+        end,
+        character_position = function(lobby, data, to_spectators, user)
             local t = GameGetRealWorldTimeSinceStarted()
             local min_framerate = 30 -- Minimum acceptable framerate
             local frame_delay = 60 / min_framerate -- Calculate frame delay based on minimum framerate
@@ -2303,18 +2457,34 @@ networking = {
                     is_on_ground = ComponentGetValue2(characterData, "is_on_ground"),
                     is_on_slippery_ground = ComponentGetValue2(characterData, "is_on_slippery_ground"),
                 }
+
+                if(data.client.last_character_pos == nil)then
+                    data.client.last_character_pos = c
+                end
+
+                -- use ffi.C.memcmp() to check if the character state has changed
+                local memcmp_result = memcmp(ffi.new("CharacterPos", data.client.last_character_pos), ffi.new("CharacterPos", c), ffi.sizeof("CharacterPos"))
+
+                -- if same, return
+                if(memcmp_result == 0 and user ~= nil)then
+                    return
+                end
         
                 -- Check if it's time to send an update based on frame delay
                 if current_frame - last_update_frame >= frame_delay then
                     -- Update last_update_frame to current frame
                     last_update_frame = current_frame
         
-                    if to_spectators then
-                        steamutils.send("character_position", c, steamutils.messageTypes.Spectators, lobby, false, true)
+                    if(user ~= nil)then
+                        steamutils.sendToPlayer("character_position", c, user, true)
+                    elseif to_spectators then
+                        steamutils.send("character_position", c, steamutils.messageTypes.Spectators, lobby, true, true)
                     else
                         steamutils.send("character_position", c, steamutils.messageTypes.OtherPlayers, lobby, false, true)
                     end
                 end
+
+                data.client.last_character_pos = c
             end
         end,
         item_update = function(lobby, data, user, force, to_spectators)
@@ -2325,32 +2495,17 @@ networking = {
             end
 
             local item_data, spell_data = player_helper.GetItemData()
-            if(item_data ~= nil)then
-                local data = { item_data, force, GameHasFlagRun( "arena_unlimited_spells" ) }
 
-                
-                if (user ~= nil) then
-                    table.insert(data, spell_data)
-                    steamutils.sendToPlayer("item_update", data, user, true)
-                else
-                    if(to_spectators)then
-                        table.insert(data, spell_data)
-                        steamutils.send("item_update", data, steamutils.messageTypes.Spectators, lobby, true, true)
-                    else
-                        steamutils.send("item_update", data, steamutils.messageTypes.OtherPlayers, lobby, true, true)
-                    end
-                end
+
+            local message = { item_data or {}, force, GameHasFlagRun( "arena_unlimited_spells" ), spell_data or {}, GameGetFrameNum() }
+
+            if (user ~= nil) then
+                steamutils.sendToPlayer("item_update", message, user, true)
             else
-                if (user ~= nil) then
-                    table.insert(data, spell_data)
-                    steamutils.sendToPlayer("item_update", {}, user, true)
+                if(to_spectators)then
+                    steamutils.send("item_update", message, steamutils.messageTypes.Spectators, lobby, true, true)
                 else
-                    if(to_spectators)then
-                        table.insert(data, spell_data)
-                        steamutils.send("item_update", {}, steamutils.messageTypes.Spectators, lobby, true, true)
-                    else
-                        steamutils.send("item_update", {}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
-                    end
+                    steamutils.send("item_update", message, steamutils.messageTypes.OtherPlayers, lobby, true, true)
                 end
             end
         end,
@@ -2361,7 +2516,7 @@ networking = {
                 steamutils.sendToPlayer("request_item_update", {}, user, true)
             end
         end,
-        input = function(lobby, data, to_spectators)
+        keyboard = function(lobby, data, to_spectators)
             local player = player_helper.Get()
             if (player == nil) then
                 return
@@ -2384,6 +2539,56 @@ networking = {
                 local fly = ComponentGetValue2(controls, "mButtonDownFly") -- boolean
                 local leftClick = ComponentGetValue2(controls, "mButtonDownLeftClick") -- boolean
                 local rightClick = ComponentGetValue2(controls, "mButtonDownRightClick") -- boolean
+
+                local c = Keyboard{
+                    kick = kick,
+                    fire = fire,
+                    fire2 = fire2,
+                    action = action,
+                    throw = throw,
+                    interact = interact,
+                    left = left,
+                    right = right,
+                    up = up,
+                    down = down,
+                    jump = jump,
+                    fly = fly,
+                    leftClick = leftClick,
+                    rightClick = rightClick,
+                }
+
+                -- memcmp previous keyboard state to current state
+                if(data.client.previous_keyboard == nil)then
+                    data.client.previous_keyboard = c
+                end
+
+                -- use ffi.C.memcmp() to check if the keyboard state has changed
+      
+                local memcmp_result = memcmp(ffi.new("Keyboard", data.client.previous_keyboard), ffi.new("Keyboard", c), ffi.sizeof("Keyboard"))
+                
+                -- if same, return
+                if(memcmp_result == 0)then
+                    return
+                end
+                
+                if(to_spectators)then
+                    steamutils.send("keyboard", c, steamutils.messageTypes.Spectators, lobby, true, true)
+                else
+                    steamutils.send("keyboard", c, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+                end
+
+                data.client.previous_keyboard = c
+            end
+        end,
+        mouse = function(lobby, data, to_spectators)
+            local player = player_helper.Get()
+            if (player == nil) then
+                return
+            end
+            local controls = EntityGetFirstComponentIncludingDisabled(player, "ControlsComponent")
+
+            
+            if (controls ~= nil) then
                 local aim_x, aim_y = ComponentGetValue2(controls, "mAimingVector") -- float, float
                 local aimNormal_x, aimNormal_y = ComponentGetValue2(controls, "mAimingVectorNormalized") -- float, float
                 local aimNonZero_x, aimNonZero_y = ComponentGetValue2(controls, "mAimingVectorNonZeroLatest") -- float, float
@@ -2392,134 +2597,33 @@ networking = {
                 local mouseRawPrev_x, mouseRawPrev_y = ComponentGetValue2(controls, "mMousePositionRawPrev") -- float, float
                 local mouseDelta_x, mouseDelta_y = ComponentGetValue2(controls, "mMouseDelta") -- float, float
 
-                local c = Controls{
-                    kick = kick,
-                    fire = fire,
-                    fire2 = fire2,
-                    action = action,
-                    throw = throw,
-                    interact = interact,
-                    left = left,
-                    right = right,
-                    up = up,
-                    down = down,
-                    jump = jump,
-                    fly = fly,
-                    leftClick = leftClick,
-                    rightClick = rightClick,
+                local c = Mouse{
                     aim_x = aim_x,
                     aim_y = aim_y,
-                    aimNormal_x = aimNormal_x,
-                    aimNormal_y = aimNormal_y,
-                    aimNonZero_x = aimNonZero_x,
-                    aimNonZero_y = aimNonZero_y,
                     mouse_x = mouse_x,
                     mouse_y = mouse_y,
                     mouseRaw_x = mouseRaw_x,
                     mouseRaw_y = mouseRaw_y,
-                    mouseRawPrev_x = mouseRawPrev_x,
-                    mouseRawPrev_y = mouseRawPrev_y,
-                    mouseDelta_x = mouseDelta_x,
-                    mouseDelta_y = mouseDelta_y,
                 }
 
+                if(data.client.previous_mouse == nil)then
+                    data.client.previous_mouse = c
+                end
+      
+                local memcmp_result = memcmp(ffi.new("Mouse", data.client.previous_mouse), ffi.new("Mouse", c), ffi.sizeof("Mouse"))
+                
+                -- if same, return
+                if(memcmp_result == 0)then
+                    return
+                end
+                
                 if(to_spectators)then
-                    steamutils.send("input", c, steamutils.messageTypes.Spectators, lobby, false, true)
+                    steamutils.send("mouse", c, steamutils.messageTypes.Spectators, lobby, true, true)
                 else
-                    steamutils.send("input", c, steamutils.messageTypes.OtherPlayers, lobby, false, true)
+                    steamutils.send("mouse", c, steamutils.messageTypes.OtherPlayers, lobby, true, true)
                 end
 
-                --[[
-                local inputs = {
-                    kick = kick,
-                    fire = fire,
-                    fire2 = fire2,
-                    action = action,
-                    throw = throw,
-                    interact = interact,
-                    left = left,
-                    right = right,
-                    up = up,
-                    down = down,
-                    jump = jump,
-                    fly = fly,
-                    leftClick = leftClick,
-                    rightClick = rightClick,
-                    aim_x = round_to_decimal(aim_x, 2),
-                    aim_y = round_to_decimal(aim_y, 2),
-                    aimNormal_x = round_to_decimal(aimNormal_x, 2),
-                    aimNormal_y = round_to_decimal(aimNormal_y, 2),
-                    aimNonZero_x = round_to_decimal(aimNonZero_x, 2),
-                    aimNonZero_y = round_to_decimal(aimNonZero_y, 2),
-                    mouse_x = round_to_decimal(mouse_x, 2),
-                    mouse_y = round_to_decimal(mouse_y, 2),
-                    mouseRaw_x = round_to_decimal(mouseRaw_x, 2),
-                    mouseRaw_y = round_to_decimal(mouseRaw_y, 2),
-                    mouseRawPrev_x = round_to_decimal(mouseRawPrev_x, 2),
-                    mouseRawPrev_y = round_to_decimal(mouseRawPrev_y, 2),
-                    mouseDelta_x = round_to_decimal(mouseDelta_x, 2),
-                    mouseDelta_y = round_to_decimal(mouseDelta_y, 2),
-                }
-
-                local input_map = {
-                    kick = 1,
-                    fire = 2,
-                    fire2 = 3,
-                    action = 4,
-                    throw = 5,
-                    interact = 6,
-                    left = 7,
-                    right = 8,
-                    up = 9,
-                    down = 10,
-                    jump = 11,
-                    fly = 12,
-                    leftClick = 13,
-                    rightClick = 14,
-                    aim_x = 15,
-                    aim_y = 16,
-                    aimNormal_x = 17,
-                    aimNormal_y = 18,
-                    aimNonZero_x = 19,
-                    aimNonZero_y = 20,
-                    mouse_x = 21,
-                    mouse_y = 22,
-                    mouseRaw_x = 23,
-                    mouseRaw_y = 24,
-                    mouseRawPrev_x = 25,
-                    mouseRawPrev_y = 26,
-                    mouseDelta_x = 27,
-                    mouseDelta_y = 28,
-                }
-                if(data.client.previous_input == nil)then
-                    data.client.previous_input = {}
-                end
-
-                local changed_inputs = {}
-                for k, v in pairs(input_map)do
-
-                    if(data.client.previous_input[k] ~= nil)then
-                        if(data.client.previous_input[k] ~= inputs[k])then
-                           
-                            table.insert( changed_inputs, { v, inputs[k] })
-                        end
-                    end
-                end
-
-
-
-                -- send changed inputs to spectators and store current inputs
-                if(#changed_inputs > 0)then
-                    local to_send = changed_inputs
-
-                    if(to_spectators)then
-                        steamutils.send("input", to_send, steamutils.messageTypes.Spectators, lobby, false, true)
-                    else
-                        steamutils.send("input", to_send, steamutils.messageTypes.OtherPlayers, lobby, false, true)
-                    end
-                end
-
-                data.client.previous_input = inputs]]
+                data.client.previous_mouse = c
             end
         end,
         player_stats_update = function(lobby, data, to_spectators)
@@ -2542,11 +2646,25 @@ networking = {
                         money = ComponentGetValue2(wallet_comp, "money"),
                     }
 
+                    -- memcmp
+                    if(data.client.last_player_stats == nil)then
+                        data.client.last_player_stats = message
+                    end
+
+                    local memcmp_result = memcmp(ffi.new("PlayerStats", data.client.last_player_stats), ffi.new("PlayerStats", message), ffi.sizeof("PlayerStats"))
+                    
+                    -- if same, return
+                    if(memcmp_result == 0)then
+                        return
+                    end
+
                     if(to_spectators)then
                         steamutils.send("player_stats_update", message, steamutils.messageTypes.Spectators, lobby, true, true)
                     else
                         steamutils.send("player_stats_update", message, steamutils.messageTypes.OtherPlayers, lobby, true, true)
                     end
+
+                    data.client.last_player_stats = message
                 end
             end
         end,
@@ -2595,6 +2713,7 @@ networking = {
             local held_item = player_helper.GetActiveHeldItem()
             if (held_item ~= nil and held_item ~= 0) then
                 if (force or user ~= nil or held_item ~= data.client.previous_selected_item) then
+
                     --local wand_id = tonumber(GlobalsGetValue(tostring(held_item) .. "_item")) or -1
                     --if (wand_id ~= -1) then
                     local item_comp = EntityGetFirstComponentIncludingDisabled(held_item, "ItemComponent")
@@ -2612,16 +2731,23 @@ networking = {
                         is_wand = true
                     end
 
+                    local item = ItemSwitch{
+                        is_wand = is_wand,
+                        slot_x = slot_x,
+                        slot_y = slot_y,
+                    }
+
                     if (user == nil) then
                         if(to_spectators)then
-                            steamutils.send("switch_item", { is_wand, slot_x, slot_y }, steamutils.messageTypes.Spectators, lobby, true, true)
+                            steamutils.send("switch_item", item, steamutils.messageTypes.Spectators, lobby, true, true)
                         else
-                            steamutils.send("switch_item", { is_wand, slot_x, slot_y }, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+                            steamutils.send("switch_item", item, steamutils.messageTypes.OtherPlayers, lobby, true, true)
                         end
                         data.client.previous_selected_item = held_item
                     else
-                        steamutils.sendToPlayer("switch_item", { is_wand, slot_x, slot_y }, user, true)
+                        steamutils.sendToPlayer("switch_item", item, user, true)
                     end
+                    
                     --end
                 end
             end
@@ -2726,12 +2852,19 @@ networking = {
                         GlobalsSetValue("last_damage_details", "")
                     end
 
+                    local damage = nil
+                    local invincibility_frames = nil
                     --print(json.stringify(damage_details))
-
-                    steamutils.send("health_update", { health, max_health, damage_details }, steamutils.messageTypes.OtherPlayers, lobby,
-                        true, true)
                     data.client.max_hp = max_health
                     data.client.hp = health
+
+                    if(force and GameHasFlagRun("prepared_damage"))then
+                        damage = 0.04
+                        invincibility_frames = tonumber(GlobalsGetValue("invincibility_frames", "5"))
+                    end
+
+                    steamutils.send("health_update", { health, max_health, damage_details, damage, invincibility_frames }, steamutils.messageTypes.OtherPlayers, lobby,
+                        true, true)
                 end
             end
         end,
@@ -2762,7 +2895,6 @@ networking = {
 
             local perk_string = bitser.dumps(perk_info)
             if (user ~= nil or perk_string ~= data.client.previous_perk_string) then
-                arena_log:print("Sent perk update!!")
                 if(user)then
                     steamutils.sendToPlayer("perk_update", perk_info, user, true, true)
                 else
@@ -2827,7 +2959,7 @@ networking = {
         lock_ready_state = function(lobby)
             steamutils.send("lock_ready_state", {}, steamutils.messageTypes.OtherPlayers, lobby, true)
         end,
-        request_spectate_data = function(lobby, user)
+        --[[request_spectate_data = function(lobby, user)
             steamutils.sendToPlayer("request_spectate_data", {}, user, true)
         end,
         spectate_data = function(lobby, data, user, force)
@@ -2852,7 +2984,7 @@ networking = {
                 end
             end
 
-        end,
+        end,]]
         --[[allow_round_end = function(lobby)
             steamutils.send("allow_round_end", {}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
         end,]]
@@ -2928,6 +3060,7 @@ networking = {
             end
 
             
+            
 
             delay.new(function()
                 local valid = #(EntityGetWithTag("workshop") or {}) > 0
@@ -2945,6 +3078,11 @@ networking = {
                     "projectile",
                 }
 
+                local illegal_file_matches = {
+                    "verlet_chains",
+                    "particles",
+                }
+
                 local to_sync = {}
                 local filtered = {}
 
@@ -2956,7 +3094,13 @@ networking = {
                     for _, tag in ipairs(illegal_sync_tags)do
                         if(EntityHasTag(v, tag))then
                             goto continue
-                            break
+                        end
+                    end
+                    
+                    local file = EntityGetFilename(v)
+                    for _, match in ipairs(illegal_file_matches)do
+                        if(file:match(match) )then
+                            goto continue
                         end
                     end
 
@@ -2997,9 +3141,9 @@ networking = {
 
                 
                 if(user)then
-                    steamutils.sendToPlayer("sync_hm", to_sync, user, true, true)
+                    steamutils.sendToPlayer("sync_hm", {smallfolk.loads(GlobalsGetValue("temple_second_row_spots", "{}")), to_sync}, user, true, true)
                 else
-                    steamutils.send("sync_hm", to_sync, steamutils.messageTypes.Spectators, lobby, true, true)
+                    steamutils.send("sync_hm", { smallfolk.loads(GlobalsGetValue("temple_second_row_spots", "{}")), to_sync}, steamutils.messageTypes.Spectators, lobby, true, true)
                 end
             end)
           
@@ -3025,6 +3169,67 @@ networking = {
         end,
         set_map = function(lobby, map)
             steamutils.send("set_map", map, steamutils.messageTypes.Host, lobby, true, true)
+        end,
+        request_dummy_target = function(lobby, user)
+            steamutils.sendToPlayer("request_dummy_target", {}, user, true)
+        end,
+        dummy_target = function(lobby, target, user)
+            if(user)then
+                steamutils.sendToPlayer("dummy_target", tostring(target), user, true)
+            else
+                steamutils.send("dummy_target", tostring(target), steamutils.messageTypes.Spectators, lobby, true, true)
+            end
+        end,
+        request_card_list = function(lobby, user)
+            print("card list request wawa")
+            if(user)then
+                print("requesting card list")
+                steamutils.sendToPlayer("request_card_list", {}, user, true)
+            else
+                steamutils.send("request_card_list", {}, steamutils.messageTypes.OtherPlayers, lobby, true)
+            end
+        end,
+        card_list = function(lobby, data, user)
+            local upgrades_system = data.upgrade_system
+            if(upgrades_system == nil)then
+                return
+            end
+            local cards = {}
+            for k, v in pairs(upgrades_system.upgrades)do
+                table.insert(cards, v.id)
+            end
+            if(user)then
+                steamutils.sendToPlayer("card_list", cards, user, true)
+            else
+                steamutils.send("card_list", cards, steamutils.messageTypes.Spectators, lobby, true, true)
+            end
+        end,
+        request_card_list_state = function(lobby, user)
+            if(user)then
+                steamutils.sendToPlayer("request_card_list_state", {}, user, true)
+            else
+                steamutils.send("request_card_list_state", {}, steamutils.messageTypes.OtherPlayers, lobby, true)
+            end
+        end,
+        card_list_state = function(lobby, data, user)
+            local upgrades_system = data.upgrade_system
+            if(upgrades_system == nil or GameHasFlagRun("card_picked"))then
+                if(user)then
+                    steamutils.sendToPlayer("card_list_state", {}, user, true)
+                else
+                    steamutils.send("card_list_state", {}, steamutils.messageTypes.Spectators, lobby, true, true)
+                end
+                return
+            end
+
+            if(user)then
+                steamutils.sendToPlayer("card_list_state", {GameHasFlagRun("card_menu_open"), upgrades_system.selected_index}, user, true)
+            else
+                steamutils.send("card_list_state", {GameHasFlagRun("card_menu_open"), upgrades_system.selected_index}, steamutils.messageTypes.Spectators, lobby, true, true)
+            end
+        end,
+        swap_positions = function(user, x, y)
+            steamutils.sendToPlayer("swap_positions", {x, y}, user, true)
         end,
     },
 }

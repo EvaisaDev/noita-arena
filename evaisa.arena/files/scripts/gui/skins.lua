@@ -779,13 +779,13 @@ skins.init = function()
         -- loop through uv map pixels
         for y = 0, uv_map_img.h - 1 do
             for x = 0, uv_map_img.w - 1 do
-                local r, g, b, a = getPixel(uv_map_img, x, y)
-                if(a == 255)then
-                    local uv_x, uv_y = r, g
+                local uv_pixel = getPixel2(uv_map_img, x, y)
+                if(uv_pixel[4] == 255)then
+                    local uv_x, uv_y = uv_pixel[1], uv_pixel[2]
                     -- check if uv_x and uv_y are within bounds of player_modified_img
                     if(uv_x >= 0 and uv_x < skin_texture_img.w and uv_y >= 0 and uv_y < skin_texture_img.h)then
-                        local p_r, p_g, p_b, p_a = getPixel(skin_texture_img, uv_x, uv_y)
-                        setPixel(uv_map_img, x, y, p_r, p_g, p_b, p_a)
+                        local pixel = getPixel2(skin_texture_img, uv_x, uv_y)
+                        setPixel(uv_map_img, x, y, pixel[1], pixel[2], pixel[3], uv_pixel[4])
                     end
                 end
             end
@@ -797,13 +797,13 @@ skins.init = function()
         -- loop through uv map pixels
         for y = 0, arm_uv_map_img.h - 1 do
             for x = 0, arm_uv_map_img.w - 1 do
-                local r, g, b, a = getPixel(arm_uv_map_img, x, y)
-                if(a == 255)then
-                    local uv_x, uv_y = r, g
+                local uv_pixel = getPixel2(arm_uv_map_img, x, y)
+                if(uv_pixel[4] == 255)then
+                    local uv_x, uv_y = uv_pixel[1], uv_pixel[2]
                     -- check if uv_x and uv_y are within bounds of player_modified_img
                     if(uv_x >= 0 and uv_x < skin_texture_img.w and uv_y >= 0 and uv_y < skin_texture_img.h)then
-                        local p_r, p_g, p_b, p_a = getPixel(skin_texture_img, uv_x, uv_y)
-                        setPixel(arm_uv_map_img, x, y, p_r, p_g, p_b, p_a)
+                        local pixel = getPixel2(skin_texture_img, uv_x, uv_y)
+                        setPixel(arm_uv_map_img, x, y, pixel[1], pixel[2], pixel[3], uv_pixel[4])
                     end
                 end
             end
@@ -815,15 +815,15 @@ skins.init = function()
 
 
         -- get cape pixels, top left and pixel below that
-        local cape_r, cape_g, cape_b, cape_a = getPixel(skin_texture_img, 0, 0)
-        local cape_edge_r, cape_edge_g, cape_edge_b, cape_edge_a = getPixel(skin_texture_img, 0, 1)
+        local cape_c = getPixel2(skin_texture_img, 0, 0)
+        local cape_edge_c = getPixel2(skin_texture_img, 0, 1)
 
-        if(cape_a > 0)then
-            cape = make_verlet_color(cape_r, cape_g, cape_b)
+        if(cape_c[4] > 0)then
+            cape = make_verlet_color(cape_c[1], cape_c[2], cape_c[3])
         end
 
-        if(cape_edge_a > 0)then
-            cape_edge = make_verlet_color(cape_edge_r, cape_edge_g, cape_edge_b)
+        if(cape_edge_c[4] > 0)then
+            cape_edge = make_verlet_color(cape_edge_c[1], cape_edge_c[2], cape_edge_c[3])
         end
 
         -- save uv_map_img to cache
@@ -837,14 +837,13 @@ skins.init = function()
 
     end
 
-    self.apply_skin_to_entity = function(lobby, entity, user, data)
-
+    self.update_client_skin = function(lobby, entity, user, data)
         if user then
-            if(not data.players[tostring(user)])then
+            if(not data.players or not data.players[tostring(user)])then
                 return
             end
-            local data = data.players[tostring(user)].skin_data
-            if not data or data == "" then
+            local skin_data = data.players[tostring(user)].skin_data
+            if not skin_data or skin_data == "" then
                 return
             end
             if self.last_player_skins[tostring(user)] then
@@ -857,7 +856,7 @@ skins.init = function()
             end
 
             -- generate skin
-            local temp_path, arm_path, path_name, cape, cape_edge = self.generate_skin(data, true)
+            local temp_path, arm_path, path_name, cape, cape_edge = self.generate_skin(skin_data, true)
             if(temp_path == nil)then
                 return
             end
@@ -869,10 +868,44 @@ skins.init = function()
             local texture_file_arm = string.format(get_content("mods/evaisa.arena/files/gfx/skins/player_arm.xml"), arm_path)
             local texture_file_name_arm = "data/evaisa.arena/cache/skin_arm_"..tostring(user).."_"..path_name..".xml"
             set_content(texture_file_name_arm, texture_file_arm)
+
+            data.players[tostring(user)].generated_skin = {
+                texture_file_name = texture_file_name,
+                texture_file_name_arm = texture_file_name_arm,
+                cape = cape,
+                cape_edge = cape_edge
+            }
+
+            
+            self.last_player_skins[tostring(user)] = {path = temp_path, xml_path = texture_file_name, arm_path = arm_path, arm_xml_path = texture_file_name_arm, cape = cape, cape_edge = cape_edge}
+            
+            return true
+        end
+    end
+
+    self.apply_skin_to_entity = function(lobby, entity, user, data)
+
+        if user then
+            if(not data.players[tostring(user)])then
+                return
+            end
+
+            local generated_skin = data.players[tostring(user)].generated_skin
+            if(generated_skin == nil)then
+                -- generate skin
+                local success = self.update_client_skin(lobby, entity, user, data)
+
+                if(not success)then
+                    return
+                end
+
+                generated_skin = data.players[tostring(user)].generated_skin
+                
+            end
             
             local comp = EntityGetFirstComponentIncludingDisabled(entity, "SpriteComponent", "skin_root")
             if(comp)then
-                ComponentSetValue2(comp, "image_file", texture_file_name)
+                ComponentSetValue2(comp, "image_file", generated_skin.texture_file_name)
             end
 
             local children = EntityGetAllChildren(entity) or {}
@@ -880,21 +913,19 @@ skins.init = function()
                 if(EntityHasTag(child, "player_arm_r"))then
                     local comp = EntityGetFirstComponent(child, "SpriteComponent")
                     if(comp)then
-                        ComponentSetValue2(comp, "image_file", texture_file_name_arm)
+                        ComponentSetValue2(comp, "image_file", generated_skin.texture_file_name_arm)
                     end
                 end
                 if(EntityGetName(child) == "cape")then
                     local verlet_comp = EntityGetFirstComponent(child, "VerletPhysicsComponent")
 
                     if(verlet_comp)then
-                        ComponentSetValue2(verlet_comp, "cloth_color", cape)
-                        ComponentSetValue2(verlet_comp, "cloth_color_edge", cape_edge)
+                        ComponentSetValue2(verlet_comp, "cloth_color", generated_skin.cape)
+                        ComponentSetValue2(verlet_comp, "cloth_color_edge", generated_skin.cape_edge)
                     end
                 end
             end
 
-            self.last_player_skins[tostring(user)] = {path = temp_path, xml_path = texture_file_name, arm_path = arm_path, arm_xml_path = texture_file_name_arm, cape = cape, cape_edge = cape_edge}
-            
         elseif(self.last_player_skins["self"])then
             local comp = EntityGetFirstComponentIncludingDisabled(entity, "SpriteComponent", "skin_root")
             if(comp)then

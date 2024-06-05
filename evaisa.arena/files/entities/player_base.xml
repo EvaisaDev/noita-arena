@@ -1,6 +1,6 @@
 <Entity 
   name="DEBUG_NAME:player"
-  tags="mortal,human,hittable,peasant,prey,player_unit,teleportable,polymorphable_NOT,spectator_no_clear" >
+  tags="mortal,human,hittable,peasant,player_unit,teleportable,polymorphable_NOT,spectator_no_clear,homing_target" >
   
   <HotspotComponent
       _tags="hand"
@@ -160,6 +160,7 @@
     blood_spray_material="blood"
     physics_objects_damage="1"
     critical_damage_resistance="0.2"
+    wait_for_kill_flag_on_death="1"
     ><damage_multipliers
       explosion="0.35" >
     </damage_multipliers>

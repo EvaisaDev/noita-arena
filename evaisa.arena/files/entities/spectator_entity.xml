@@ -4,7 +4,7 @@
         aabb_min_x="-500"
         aabb_min_y="-500"
         aabb_max_x="500"
-        aabb_max_y="500"
+        aabb_max_y="500" 
     ></HitboxComponent>
 
     <Entity>
@@ -25,12 +25,12 @@
     <InventoryGuiComponent />
 
     <Entity name="arm_r">
-        <InheritTransformComponent><Transform position.x="5000" position.y="5000" /></InheritTransformComponent>
+        <InheritTransformComponent></InheritTransformComponent>
         
         <HotspotComponent
         _tags="hand"
         sprite_hotspot_name="hand"
-        transform_with_scale="1"
+        transform_with_scale="0"
         ></HotspotComponent>
     </Entity>
 
@@ -45,26 +45,34 @@
         falling_damage_height_min="70" 
         falling_damages="0" 
         fire_damage_amount="0" 
-        invincibility_frames="60"
+        invincibility_frames="0"
         fire_probability_of_ignition="0"
         fire_how_much_fire_generates="0"
         hp="4" 
         is_on_fire="0" 
-        materials_damage="1" 
+        materials_damage="0" 
         materials_that_damage="acid,lava,blood_cold_vapour,blood_cold,poison,radioactive_gas,radioactive_gas_static,rock_static_radioactive,rock_static_poison,ice_radioactive_static,ice_radioactive_glass,ice_acid_static,ice_acid_glass,rock_static_cursed,magic_gas_hp_regeneration,gold_radioactive,gold_static_radioactive,rock_static_cursed_green,cursed_liquid,poo_gas"  
         materials_how_much_damage="0.005,0.003,0.0006,0.0009,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.001,0.005,-0.005,0.0002,0.0002,0.004,0.0005,0.00001" 
         ragdoll_filenames_file="data/ragdolls/player/filenames.txt" 
         ragdoll_offset_y="-5"
+        wait_for_kill_flag_on_death="1"
         ragdollify_child_entity_sprites="1"
         blood_spray_material="blood"
         physics_objects_damage="0"
         drop_items_on_death="0"
-        critical_damage_resistance="0"
+        critical_damage_resistance="1"
         ui_report_damage="0"
         ><damage_multipliers
         explosion="0.35" >
         </damage_multipliers>
     </DamageModelComponent>
+
+    <LuaComponent
+      script_damage_about_to_be_received = "mods/evaisa.arena/files/scripts/gamemode/misc/immortal_client.lua"
+      script_damage_received = "mods/evaisa.arena/files/scripts/gamemode/misc/immortal_client.lua"
+        >
+    </LuaComponent>
+
 
     <PlatformShooterPlayerComponent
         center_camera_on_this_entity="0"
@@ -167,6 +175,12 @@
     <Entity
         name="inventory_full" >
     </Entity>
+
+    <LuaComponent
+        script_source_file="mods/evaisa.arena/files/scripts/gamemode/misc/spectator_entity_update.lua"
+        execute_on_added="1"
+        execute_every_n_frame="1"
+    />
 
     <ItemPickUpperComponent
         drop_items_on_death="0"

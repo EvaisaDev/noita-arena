@@ -51,7 +51,7 @@ arena_list = {
 
         end,
         load = function(self, lobby, data) -- called when the arena is loaded, can be used for setting up the arena.
-            --LoadBackgroundSprite(steam_utils.getUserAvatar(steam.user.getSteamID()), 0, 0)
+            --LoadBackgroundSprite(steam_utils.getUserAvatar(steam_utils.getSteamID()), 0, 0)
 
             -- custom parallax stuff!!
             if(Parallax)then
@@ -156,7 +156,7 @@ arena_list = {
             "mods/evaisa.arena/content/arenas/stadium/parallax/sky_colors.png",
         }, -- insert parallax textures into here, you will not be able to use custom parallax textures without this, note parallax works across all arenas so no need to reregister.
         load = function(self, lobby, data) -- called when the arena is loaded, can be used for setting up the arena.
-            --LoadBackgroundSprite(steam_utils.getUserAvatar(steam.user.getSteamID()), 0, 0)
+            --LoadBackgroundSprite(steam_utils.getUserAvatar(steam_utils.getSteamID()), 0, 0)
 
             -- custom parallax stuff!!
             if(Parallax)then

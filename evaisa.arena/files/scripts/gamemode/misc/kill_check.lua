@@ -1,6 +1,53 @@
 local helpers = dofile("mods/evaisa.mp/files/scripts/helpers.lua")
+
+local function serialize_damage_details(tbl)
+    --[[
+        tbl.ragdoll_fx,
+        tbl.damage_types,
+        tbl.knockback_force,
+        tbl.impulse[1],
+        tbl.impulse[2],
+        tbl.world_pos[1],
+        tbl.world_pos[2],
+        tbl.smash_explosion and 1 or 0,
+        tbl.explosion_x or 0,
+        tbl.explosion_y or 0
+    ]]
+    return string.format("%d,%d,%f,%f,%f,%f,%f,%f,%d,%f,%f", tbl.ragdoll_fx, tbl.damage_types, tbl.knockback_force, tbl.blood_multiplier, tbl.impulse[1], tbl.impulse[2], tbl.world_pos[1], tbl.world_pos[2], tbl.smash_explosion and 1 or 0, tbl.explosion_x or 0, tbl.explosion_y or 0)
+end
+
+
+
 function damage_about_to_be_received( damage, x, y, entity_thats_responsible, critical_hit_chance )
     local entity_id = GetUpdatedEntityID()
+
+    
+    local damage_details = GetDamageDetails()
+
+    local projectile = damage_details.projectile_thats_responsible
+
+    local skip_block = false
+
+    local special_projectile_handlers = {
+        ["data/entities/projectiles/deck/swapper.xml"] = function()
+            damage = 0
+            skip_block = true
+            CrossCall("Swap", entity_thats_responsible)
+        end
+    }
+
+    if(projectile ~= nil)then
+        for i, v in ipairs(EntityGetComponent(projectile, "VariableStorageComponent") or {})do
+            local name = ComponentGetValue2(v, "name")
+            local value_string = ComponentGetValue2(v, "value_string")
+            if(name == "projectile_file")then
+                local handler = special_projectile_handlers[value_string]
+                if(handler)then
+                    handler()
+                end
+            end
+        end
+    end
 
 
     if(GameHasFlagRun("smash_mode"))then
@@ -31,25 +78,20 @@ function damage_about_to_be_received( damage, x, y, entity_thats_responsible, cr
         end
     end
 
+    GameAddFlagRun("prepared_damage")
+    GameRemoveFlagRun("finished_damage")
+
+    if(skip_block)then
+        GameAddFlagRun("finished_damage")
+    end
+
+
+   
+
+    GlobalsSetValue("last_damage_details", tostring(serialize_damage_details(damage_details)))
     --critical_hit_chance = 50
 
     return damage, critical_hit_chance
-end
-
-local function serialize_damage_details(tbl)
-    --[[
-        tbl.ragdoll_fx,
-        tbl.damage_types,
-        tbl.knockback_force,
-        tbl.impulse[1],
-        tbl.impulse[2],
-        tbl.world_pos[1],
-        tbl.world_pos[2],
-        tbl.smash_explosion and 1 or 0,
-        tbl.explosion_x or 0,
-        tbl.explosion_y or 0
-    ]]
-    return string.format("%d,%d,%f,%f,%f,%f,%f,%f,%d,%f,%f", tbl.ragdoll_fx, tbl.damage_types, tbl.knockback_force, tbl.blood_multiplier, tbl.impulse[1], tbl.impulse[2], tbl.world_pos[1], tbl.world_pos[2], tbl.smash_explosion and 1 or 0, tbl.explosion_x or 0, tbl.explosion_y or 0)
 end
 
 
@@ -136,7 +178,10 @@ function damage_received( damage, message, entity_thats_responsible, is_fatal, p
     --print(json.stringify(damage_details))
     -- check if would kill
     GameAddFlagRun("took_damage")
+    GameAddFlagRun("finished_damage")
+    GameRemoveFlagRun("prepared_damage")
     GlobalsSetValue("last_damage_details", tostring(serialize_damage_details(damage_details)))
+    local invincibility_frames = 0
 
     local damageModelComponent = EntityGetFirstComponentIncludingDisabled( entity_id, "DamageModelComponent" )
     if damageModelComponent ~= nil then
@@ -145,33 +190,53 @@ function damage_received( damage, message, entity_thats_responsible, is_fatal, p
             ComponentSetValue2( damageModelComponent, "hp", hp + damage )
         else
             if(is_fatal)then
-                local died = false
-
+                local died = true
                 local respawn_count = tonumber( GlobalsGetValue( "RESPAWN_COUNT", "0" ) )
-                if(respawn_count > 0)then
+
+                if(GameHasFlagRun( "saving_grace" ))then
+                    local hp = ComponentGetValue2( damageModelComponent, "hp" )
+                    if(math.floor(hp * 25) > 1)then
+                        ComponentSetValue2( damageModelComponent, "hp", damage + 0.04 )
+
+                        --ComponentSetValue2( damageModelComponent, "invincibility_frames", 60 )
+                        local effect = GetGameEffectLoadTo( entity_id, "PROTECTION_ALL", true)
+
+                        ComponentSetValue2( effect, "frames", 60 )
+
+                        invincibility_frames = 60
+                        
+                        print("$log_gamefx_savinggrace")
+                        GamePrint("$log_gamefx_savinggrace")
+
+                        died = false
+                    end
+                end
+
+                if(respawn_count > 0 and died)then
+                    local extra_respawn_count = tonumber(GlobalsGetValue("EXTRA_RESPAWN_COUNT", "0"))
                     respawn_count = respawn_count - 1
+
+                    extra_respawn_count = extra_respawn_count + 1
+
                     GlobalsSetValue( "RESPAWN_COUNT", tostring(respawn_count) )
+                    GlobalsSetValue( "EXTRA_RESPAWN_COUNT", tostring(extra_respawn_count) )
+
                     print("$logdesc_gamefx_respawn")
                     GamePrint("$logdesc_gamefx_respawn")
 
                     GamePrintImportant("$log_gamefx_respawn", "$logdesc_gamefx_respawn")
 
-                    ComponentSetValue2( damageModelComponent, "hp", damage + 4 )
-                else
-                    if(GameHasFlagRun( "saving_grace" ))then
-                        local hp = ComponentGetValue2( damageModelComponent, "hp" )
-                        if(math.floor(hp * 25) > 1)then
-                            ComponentSetValue2( damageModelComponent, "hp", damage + 0.04 )
-                            
-                            print("$log_gamefx_savinggrace")
-                            GamePrint("$log_gamefx_savinggrace")
+                    --ComponentSetValue2( damageModelComponent, "invincibility_frames", 30 )
+                    
+                    local effect = GetGameEffectLoadTo( entity_id, "PROTECTION_ALL", true)
 
-                        else
-                            died = true
-                        end
-                    else
-                        died = true
-                    end
+                    ComponentSetValue2( effect, "frames", 30 )
+
+                    invincibility_frames = 30
+
+                    ComponentSetValue2( damageModelComponent, "hp", damage + 4 )
+
+                    died = false
                 end
 
                 if(died)then
@@ -179,9 +244,10 @@ function damage_received( damage, message, entity_thats_responsible, is_fatal, p
                     if(entity_thats_responsible ~= nil)then
                         GlobalsSetValue("killer", EntityGetName(entity_thats_responsible) or "")
                     end
-                    GameAddFlagRun("player_unloaded")
                 end
             end
         end
     end
+
+    GlobalsSetValue("invincibility_frames", tostring(invincibility_frames))
 end

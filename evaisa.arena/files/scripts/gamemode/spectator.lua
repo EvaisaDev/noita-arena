@@ -55,15 +55,17 @@ SpectatorMode = {
 
     end,
     HandleSpectatorSync = function(lobby, data)
-        if(data.selected_client == nil)then
+        if(data.spectated_player == nil)then
+            print("No spectated player")
             return
         end
-        local player = data.players[tostring(data.selected_client)]
+        local player = data.players[tostring(data.spectated_player)]
         if(player == nil)then
+            print("No player")
             return
         end
 
-        if(player.entity and EntityGetIsAlive(player.entity) and data.spectator_entity and EntityGetIsAlive(data.spectator_entity))then
+        if(GameGetFrameNum() % 30 == 0 and player.entity and EntityGetIsAlive(player.entity) and data.spectator_entity and EntityGetIsAlive(data.spectator_entity))then
             -- We will sync wand stats and stuff.
             local inventory2_comp = EntityGetFirstComponentIncludingDisabled(player.entity, "Inventory2Component")
             local spectator_inventory2_comp = EntityGetFirstComponentIncludingDisabled(data.spectator_entity, "Inventory2Component")
@@ -122,47 +124,105 @@ SpectatorMode = {
             local perk_string = bitser.dumps(player.perks)
 
    
-            if(data.last_selected_perk_string == perk_string)then
-                return
+            -- ahh need to clear this when switching scene duhh
+            if(data.last_selected_perk_string ~= perk_string)then
+                local children = EntityGetChildrenWithTag(data.spectator_entity, "perk") or {}
+
+                for i, child in ipairs(children) do
+                    EntityRemoveFromParent(child)
+                    EntityKill(child)
+                end
+    
+                for i, perk in ipairs(perk_data) do
+                    local perk_id = perk[1]
+                    local perk_stack = perk[2]
+    
+                    local perk_info = all_perks[perk_id]
+    
+                    
+    
+                    if(perk_info ~= nil)then
+                        
+                        for i = 1, perk_stack do
+                            local child = EntityCreateNew()
+                            EntityAddTag(child, "perk")
+                            EntityAddChild(data.spectator_entity, child)
+    
+                            --print("Adding perk: " .. tostring(perk_info.ui_name))
+                            local perk_comp = EntityAddComponent2(child, "UIIconComponent", {
+                                icon_sprite_file = perk_info.ui_icon,
+                                name = perk_info.ui_name,
+                                description = perk_info.ui_description,
+                                display_in_hud = true,
+                                is_perk = true
+                            })
+    
+                            ComponentAddTag(perk_comp, "perk")
+                        end
+                    end
+                end    
             end
 
             data.last_selected_perk_string = perk_string
 
-            local children = EntityGetChildrenWithTag(data.spectator_entity, "perk") or {}
+            --[[
+            local effects = {}
+            local effect_names = {}
+
+            local children = EntityGetAllChildren(player.entity) or {}
 
             for i, child in ipairs(children) do
-                EntityRemoveFromParent(child)
-                EntityKill(child)
-            end
-
-            for i, perk in ipairs(perk_data) do
-                local perk_id = perk[1]
-                local perk_stack = perk[2]
-
-                local perk_info = all_perks[perk_id]
-
-                
-
-                if(perk_info ~= nil)then
-                    
-                    for i = 1, perk_stack do
-                        local child = EntityCreateNew()
-                        EntityAddTag(child, "perk")
-                        EntityAddChild(data.spectator_entity, child)
-
-                        --print("Adding perk: " .. tostring(perk_info.ui_name))
-                        local perk_comp = EntityAddComponent2(child, "UIIconComponent", {
-                            icon_sprite_file = perk_info.ui_icon,
-                            name = perk_info.ui_name,
-                            description = perk_info.ui_description,
-                            display_in_hud = true,
-                            is_perk = true
-                        })
-
-                        ComponentAddTag(perk_comp, "perk")
+                local ui_icon_comp = EntityGetFirstComponentIncludingDisabled(child, "UIIconComponent")
+                if(ui_icon_comp ~= nil)then
+                    local is_perk = ComponentGetValue2(ui_icon_comp, "is_perk")
+                    if(not is_perk)then
+                        local icon_sprite_file = ComponentGetValue2(ui_icon_comp, "icon_sprite_file")
+                        local name = ComponentGetValue2(ui_icon_comp, "name")
+                        local description = ComponentGetValue2(ui_icon_comp, "description")
+                        table.insert(effects, {icon_sprite_file, name, description})
+                        table.insert(effect_names, name)
                     end
                 end
             end
+
+            effect_string = table.concat(effect_names, ",")
+
+            data.last_effect_string = data.last_effect_string or ""
+
+            if(data.last_effect_string ~= effect_string)then
+                local children = EntityGetChildrenWithTag(data.spectator_entity, "effect") or {}
+
+                for i, child in ipairs(children) do
+                    EntityRemoveFromParent(child)
+                    EntityKill(child)
+                end
+
+                for i, effect in ipairs(effects) do
+                    local icon_sprite_file = effect[1]
+                    local name = effect[2]
+                    local description = effect[3]
+
+                    local child = EntityCreateNew()
+                    EntityAddTag(child, "effect")
+                    EntityAddChild(data.spectator_entity, child)
+
+                    local effect_comp = EntityAddComponent2(child, "UIIconComponent", {
+                        icon_sprite_file = icon_sprite_file,
+                        name = name,
+                        description = description,
+                        display_in_hud = true,
+                        is_perk = false
+                    })
+
+                    ComponentAddTag(effect_comp, "effect")
+                end
+            end
+
+            data.last_effect_string = effect_string
+
+            ]]
+
+
 
         end
     end,
@@ -190,18 +250,24 @@ SpectatorMode = {
 
             local screen_width, screen_height = GuiGetScreenDimensions(data.spectator_gui)
 
-            if(data.last_selected_player ~= nil and data.players[tostring(data.last_selected_player)] ~= nil and data.selected_client == nil)then
+            --[[if(data.last_selected_player ~= nil and data.players[tostring(data.last_selected_player)] ~= nil and data.spectated_player == nil)then
                 if(data.players[tostring(data.last_selected_player)].entity ~= nil and EntityGetIsAlive(data.players[tostring(data.last_selected_player)].entity))then
                     data.selected_player = data.players[tostring(data.last_selected_player)].entity
-                    data.selected_client = data.last_selected_player
+                    data.spectated_player = data.last_selected_player
                     data.selected_player_name = steamutils.getTranslatedPersonaName(data.last_selected_player)
                     data.last_selected_player = nil
                 end
             else
                 data.last_selected_player = nil
-            end
+            end]]
 
             --GamePrint("Spectator mode")
+
+            if(data.spectated_player ~= nil and data.players[tostring(data.spectated_player)] ~= nil and EntityGetIsAlive(data.players[tostring(data.spectated_player)].entity))then
+                data.selected_player = data.players[tostring(data.spectated_player)].entity
+                data.selected_player_name = steamutils.getTranslatedPersonaName(data.spectated_player)
+            end
+
             if (data.selected_player ~= nil) then
                 local client_entity = data.selected_player
                 if (client_entity ~= nil and EntityGetIsAlive(client_entity)) then
@@ -216,17 +282,7 @@ SpectatorMode = {
                         local camera_x_new = camera_x + camera_x_diff * camera_speed
                         local camera_y_new = camera_y + camera_y_diff * camera_speed
                         GameSetCameraPos(camera_x_new, camera_y_new)
-                    else
-                        data.selected_player = nil
-                        data.selected_client = nil
-                        data.selected_player_name = nil
-                        print("Cleared selected player 1")
                     end
-                else
-                    data.selected_player = nil
-                    data.selected_client = nil
-                    data.selected_player_name = nil
-                    print("Cleared selected player 2")
                 end
             end
 
@@ -284,7 +340,7 @@ SpectatorMode = {
 
                 if (keys_pressed.w or keys_pressed.a or keys_pressed.s or keys_pressed.d or stick_average >= 0.1 or stick_average <= -0.1) then
                     data.selected_player = nil
-                    data.selected_client = nil
+                    data.spectated_player = nil
                     data.selected_player_name = nil
                     
                     if(data.spectator_entity ~= nil)then
@@ -318,10 +374,13 @@ SpectatorMode = {
                         data.selected_player_name = "Unknown Player"
                         if (player ~= nil) then
                             data.selected_player_name = steamutils.getTranslatedPersonaName(player)
-                            data.selected_client = player
+                            data.spectated_player = player
                             data.spectator_active_player = player
 
                             networking.send.request_item_update(lobby, player)
+                            networking.send.request_character_position(lobby, player)
+                            networking.send.request_dummy_target(lobby, player)
+                            networking.send.request_card_list(lobby, user)
                         end
                     end
                 end
@@ -352,10 +411,13 @@ SpectatorMode = {
                         data.selected_player_name = "Unknown Player"
                         if (player ~= nil) then
                             data.selected_player_name = steamutils.getTranslatedPersonaName(player)
-                            data.selected_client = player
+                            data.spectated_player = player
                             data.spectator_active_player = player
 
                             networking.send.request_item_update(lobby, player)
+                            networking.send.request_character_position(lobby, player)
+                            networking.send.request_dummy_target(lobby, player)
+                            networking.send.request_card_list(lobby, user)
                         end
                     end
                 end
@@ -433,10 +495,13 @@ SpectatorMode = {
                                 data.selected_player_name = "Unknown Player"
                                 if (player ~= nil) then
                                     data.selected_player_name = steamutils.getTranslatedPersonaName(player)
-                                    data.selected_client = player
+                                    data.spectated_player = player
                                     data.spectator_active_player = player
 
                                     networking.send.request_item_update(lobby, player)
+                                    networking.send.request_character_position(lobby, player)
+                                    networking.send.request_dummy_target(lobby, player)
+                                    networking.send.request_card_list(lobby, user)
                                 end
                             end
                         end
@@ -448,23 +513,23 @@ SpectatorMode = {
         end
     end,
     SpawnSpectatedPlayer = function(lobby, data)
-        if(data.lobby_spectated_player ~= nil)then
+        if(data.spectated_player ~= nil)then
   
-            if(data.players[tostring(data.lobby_spectated_player)] == nil)then
+            if(data.players[tostring(data.spectated_player)] == nil)then
                 return
             end
-            if (data.lobby_spectated_player ~= steam.user.getSteamID() and (data.players[tostring(data.lobby_spectated_player)].entity == nil or not EntityGetIsAlive(data.players[tostring(data.lobby_spectated_player)].entity))) then
+            if (data.spectated_player ~= steam_utils.getSteamID() and (data.players[tostring(data.spectated_player)].entity == nil or not EntityGetIsAlive(data.players[tostring(data.spectated_player)].entity))) then
 
                 --GamePrint("Loading player " .. tostring(member.id))
-                ArenaGameplay.SpawnClientPlayer(lobby, data.lobby_spectated_player, data, 0, 0)
+                ArenaGameplay.SpawnClientPlayer(lobby, data.spectated_player, data, 0, 0)
 
                 --[[delay.new(5, function()
 
-                    networking.send.request_item_update(lobby, data.lobby_spectated_player)
-                    networking.send.request_spectate_data(lobby, data.lobby_spectated_player)
-                    networking.send.request_sync_hm(lobby, data.lobby_spectated_player)
-                    networking.send.request_second_row(lobby, data.lobby_spectated_player)
-                    networking.send.request_skin(lobby, data.lobby_spectated_player)
+                    networking.send.request_item_update(lobby, data.spectated_player)
+                    networking.send.request_spectate_data(lobby, data.spectated_player)
+                    networking.send.request_sync_hm(lobby, data.spectated_player)
+                    networking.send.request_second_row(lobby, data.spectated_player)
+                    networking.send.request_skin(lobby, data.spectated_player)
                     networking.send.request_perk_update(lobby)
                 end)]]
             end
@@ -513,14 +578,14 @@ SpectatorMode = {
     end,
     LobbySpectateUpdate = function(lobby, data)
         local members = steamutils.getLobbyMembers(lobby)
-        local lobby_spectated_player = data.lobby_spectated_player
+        local spectated_player = data.spectated_player
 
-        if(lobby_spectated_player == nil and members ~= nil and #members > 0)then
-            data.lobby_spectated_player = members[1].id
-            data.selected_player_name = steamutils.getTranslatedPersonaName(data.lobby_spectated_player)
+        if(spectated_player == nil and members ~= nil and #members > 0)then
+            data.spectated_player = members[1].id
+            data.selected_player_name = steamutils.getTranslatedPersonaName(data.spectated_player)
             data.spectator_lobby_loaded = false
 
-            delay.new(5, function()
+            --delay.new(5, function()
                 data.last_hm_switch = data.last_hm_switch or 1
                 if(GameGetFrameNum() - data.last_hm_switch < 30)then
                     return
@@ -528,17 +593,13 @@ SpectatorMode = {
 
                 data.last_hm_switch = GameGetFrameNum()
 
-                --[[
-                    data.lobby_spectated_player = 
-                    data.selected_player_name = 
-                ]]
-                local lobby_spectated_player = data.lobby_spectated_player
+                local spectated_player = data.spectated_player
                 data.last_hm_sync = nil
 
-                if(lobby_spectated_player ~= nil and members ~= nil and #members > 0)then
+                if(spectated_player ~= nil and members ~= nil and #members > 0)then
                     local index = 1
                     for k, v in ipairs(members)do
-                        if(v.id == lobby_spectated_player)then
+                        if(v.id == spectated_player)then
                             index = k
                             break
                         end
@@ -556,19 +617,18 @@ SpectatorMode = {
     
                     SpectatorMode.ClearHM()
 
-                    data.lobby_spectated_player = members[index].id
+                    data.spectated_player = members[index].id
                     data.spectator_active_player = members[index].id
-                    data.selected_client = members[index].id
-                    data.selected_player_name = steamutils.getTranslatedPersonaName(data.lobby_spectated_player)
+                    data.selected_player_name = steamutils.getTranslatedPersonaName(data.spectated_player)
                     data.spectator_lobby_loaded = false
                     data.selected_player = nil
                 end
-            end)
+            --end)
             
         end
 
         for k, v in pairs(data.players)do
-            if(k ~= tostring(data.lobby_spectated_player))then
+            if(k ~= tostring(data.spectated_player))then
                 v:Destroy()
             end
         end
@@ -591,17 +651,17 @@ SpectatorMode = {
                     GameSetCameraPos(camera_x_new, camera_y_new)
                 else
                     data.selected_player = nil
-                    data.selected_client = nil
+                    data.spectated_player = nil
                     data.selected_player_name = nil
-                    data.lobby_spectated_player = nil
                     data.spectator_active_player = nil
                 end
             else
                 data.selected_player = nil
-                data.selected_client = nil
+                data.spectated_player = nil
                 data.selected_player_name = nil
-                data.lobby_spectated_player = nil
                 data.spectator_active_player = nil
+
+                print("Deselected player!!")
             end
         end
 
@@ -678,16 +738,16 @@ SpectatorMode = {
                 data.last_hm_switch = GameGetFrameNum()
 
                 --[[
-                    data.lobby_spectated_player = 
+                    data.spectated_player = 
                     data.selected_player_name = 
                 ]]
-                local lobby_spectated_player = data.lobby_spectated_player
+                local spectated_player = data.spectated_player
                 data.last_hm_sync = nil
 
-                if(lobby_spectated_player ~= nil and members ~= nil and #members > 0)then
+                if(spectated_player ~= nil and members ~= nil and #members > 0)then
                     local index = 1
                     for k, v in ipairs(members)do
-                        if(v.id == lobby_spectated_player)then
+                        if(v.id == spectated_player)then
                             index = k
                             break
                         end
@@ -705,10 +765,9 @@ SpectatorMode = {
     
                     SpectatorMode.ClearHM()
 
-                    data.lobby_spectated_player = members[index].id
+                    data.spectated_player = members[index].id
                     data.spectator_active_player = members[index].id
-                    data.selected_client = members[index].id
-                    data.selected_player_name = steamutils.getTranslatedPersonaName(data.lobby_spectated_player)
+                    data.selected_player_name = steamutils.getTranslatedPersonaName(data.spectated_player)
                     data.spectator_lobby_loaded = false
                     data.selected_player = nil
                 end
@@ -726,14 +785,14 @@ SpectatorMode = {
 
                 data.last_hm_switch = GameGetFrameNum()
 
-                local lobby_spectated_player = data.lobby_spectated_player
+                local spectated_player = data.spectated_player
 
                 data.last_hm_sync = nil
 
-                if(lobby_spectated_player ~= nil and members ~= nil and #members > 0)then
+                if(spectated_player ~= nil and members ~= nil and #members > 0)then
                     local index = 1
                     for k, v in ipairs(members)do
-                        if(v.id == lobby_spectated_player)then
+                        if(v.id == spectated_player)then
                             index = k
                             break
                         end
@@ -789,10 +848,9 @@ SpectatorMode = {
                         end
                     end
 
-                    data.lobby_spectated_player = members[index].id
+                    data.spectated_player = members[index].id
                     data.spectator_active_player = members[index].id
-                    data.selected_client = members[index].id
-                    data.selected_player_name = steamutils.getTranslatedPersonaName(data.lobby_spectated_player)
+                    data.selected_player_name = steamutils.getTranslatedPersonaName(data.spectated_player)
                     data.spectator_lobby_loaded = false
                     data.selected_player = nil
                 end

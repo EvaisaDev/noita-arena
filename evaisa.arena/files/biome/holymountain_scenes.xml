@@ -1,9 +1,4 @@
 <PixelScenes>
-<!--
-    <mBufferedPixelScenes>
-        <PixelScene background_filename="mods/evaisa.arena/files/pixelscenes/holymountain/temple_background.png" colors_filename="mods/evaisa.arena/files/pixelscenes/holymountain/temple_visual.png" material_filename="mods/evaisa.arena/files/pixelscenes/holymountain/temple.png" pos_x="0" pos_y="0" skip_biome_checks="1" clean_area_before="1" ></PixelScene>
-    </mBufferedPixelScenes>
-    -->
     <mBufferedPixelScenes>
 
         <PixelScene DEBUG_RELOAD_ME="1" clean_area_before="1" background_filename="mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/0_background.png" clean_area_before="1" colors_filename="mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/0_visual.plz" material_filename="mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/0.plz" pos_x="-174" pos_y="-133" skip_biome_checks="1" >

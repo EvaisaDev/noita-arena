@@ -10,6 +10,10 @@ local function get_health_bar_color(health, max_health)
     return {r = r, g = g, b = b}
 end
 
+local round = function(num)
+    return math.floor(num + 0.5)
+end
+
 local playerinfo_menu = {}
 
 function playerinfo_menu:New()
@@ -30,7 +34,7 @@ function playerinfo_menu:New()
 
     o.gui = GuiCreate()
 
-    local player_id = steam.user.getSteamID()
+    local player_id = steam_utils.getSteamID()
     local self_name = steamutils.getTranslatedPersonaName(player_id)
 
     o.Destroy = function(self)
@@ -505,10 +509,11 @@ function playerinfo_menu:New()
             GuiEndAutoBoxNinePiece(self.gui, 1)
         end
 
+
         if(draw_hp_info)then
             GuiBeginAutoBox(self.gui)
             GuiZSetForNextWidget(self.gui, 800)
-            GuiText(self.gui, perk_draw_x - 35, draw_pos + 3, tostring(math.floor(hovered_hp * 25)).."/"..tostring(math.floor(hovered_max_hp * 25)))
+            GuiText(self.gui, perk_draw_x - 35, draw_pos + 3, tostring(round(hovered_hp * 25)).."/"..tostring(round(hovered_max_hp * 25)))
             GuiZSetForNextWidget(self.gui, 850)
             GuiEndAutoBoxNinePiece(self.gui, 1)
         end

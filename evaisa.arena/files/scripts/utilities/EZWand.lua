@@ -657,7 +657,7 @@ function wand:new(from, rng_seed_x, rng_seed_y, refresh)
     setmetatable(o, self)
     if type(from) == "table" or from == nil then
         -- Just load some existing wand that we alter later instead of creating one from scratch
-        protected.entity_id = EntityLoad("data/entities/items/wand_level_04.xml", rng_seed_x or 0, rng_seed_y or 0)
+        protected.entity_id = EntityLoad("mods/evaisa.arena/files/entities/misc/wand_ezwand.xml", rng_seed_x or 0, rng_seed_y or 0)
         protected.ability_component = EntityGetFirstComponentIncludingDisabled(protected.entity_id, "AbilityComponent")
         protected.item_component = EntityGetFirstComponentIncludingDisabled(protected.entity_id, "ItemComponent")
         -- Copy all validated props over or initialize with defaults
@@ -674,7 +674,7 @@ function wand:new(from, rng_seed_x, rng_seed_y, refresh)
     else
         if starts_with(from, "EZW") then
         local values = deserialize_wand(from)
-        protected.entity_id = EntityLoad("data/entities/items/wand_level_04.xml", rng_seed_x or 0, rng_seed_y or 0)
+        protected.entity_id = EntityLoad("mods/evaisa.arena/files/entities/misc/wand_ezwand.xml", rng_seed_x or 0, rng_seed_y or 0)
         protected.ability_component = EntityGetFirstComponentIncludingDisabled(protected.entity_id, "AbilityComponent")
         protected.item_component = EntityGetFirstComponentIncludingDisabled(protected.entity_id, "ItemComponent")
         validate_wand_properties(values.props)

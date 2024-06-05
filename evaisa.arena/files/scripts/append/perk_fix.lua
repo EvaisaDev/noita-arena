@@ -64,7 +64,7 @@ local allow_on_clients = {
 }   
 
 local skip_function_list = {
-    
+    GAMBLE = true,
 }
 
 local rewrites = {
@@ -192,7 +192,6 @@ local rewrites = {
 		perk_icon = "data/items_gfx/perks/respawn.png",
         --game_effect = "RESPAWN",
         skip_functions_on_load = true,
-		do_not_remove = true,
 		stackable = STACKABLE_YES,
 		stackable_is_rare = true,
 		func = function( entity_perk_item, entity_who_picked, item_name )
@@ -238,8 +237,14 @@ local rewrites = {
 		perk_icon = "data/items_gfx/perks/always_cast.png",
 		stackable = STACKABLE_YES,
 		one_off_effect = true,
+		skip_functions_on_load = true,
 		func = function( entity_perk_item, entity_who_picked, item_name )
+			local x,y = EntityGetTransform( entity_perk_item )
+			local rounds = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0
 
+			local seed_x, seed_y = get_new_seed( x + rounds, y + rounds, GameHasFlagRun("perk_sync") )
+			SetRandomSeed( seed_x, seed_y )
+			
 			dofile("mods/evaisa.arena/files/scripts/misc/random_action.lua")
 			GetRandomActionWithType = function( x, y, level, type, i)
 				--print("Custom get action called!")
@@ -264,31 +269,17 @@ local rewrites = {
 
 			local card = good_cards[ Random( 1, #good_cards ) ] or RandomAction(level)
 
-
-
 			if( r <= 50 ) then
 				local p = Random(1,100)
 
-				-- NOTE( Petri ): 8.3.2023 - The varied types didn't work, because we were missing dofile_once("data/scripts/gun/gun_enums.lua")				
-				--[[
-				Arvi (9.12.2020): DRAW_MANY cards were causing odd behaviour as always casts, so testing a different set of always_cast cards
-				if( p <= 80 ) then
-					card = GetRandomActionWithType( x, y, level, ACTION_TYPE_MODIFIER, 666 )
-				elseif( p <= 95 ) then
-					card = GetRandomActionWithType( x, y, level, ACTION_TYPE_DRAW_MANY, 666 )
-				else 
-					card = GetRandomActionWithType( x, y, level, ACTION_TYPE_PROJECTILE, 666 )
-				end
-				]]--
-				
 				if( p <= 86 ) then
-					card = GetRandomActionWithType( x, y, level, ACTION_TYPE_MODIFIER, 666 )
+					card = GetRandomActionWithType( x + Random(-1000, 1000), y + Random(-1000, 1000), level, ACTION_TYPE_MODIFIER, 666 )
 				elseif( p <= 93 ) then
-					card = GetRandomActionWithType( x, y, level, ACTION_TYPE_STATIC_PROJECTILE, 666 )
+					card = GetRandomActionWithType( x + Random(-1000, 1000), y + Random(-1000, 1000), level, ACTION_TYPE_STATIC_PROJECTILE, 666 )
 				elseif ( p < 100 ) then
-					card = GetRandomActionWithType( x, y, level, ACTION_TYPE_PROJECTILE, 666 )
+					card = GetRandomActionWithType( x + Random(-1000, 1000), y + Random(-1000, 1000), level, ACTION_TYPE_PROJECTILE, 666 )
 				else
-					card = GetRandomActionWithType( x, y, level, ACTION_TYPE_UTILITY, 666 )
+					card = GetRandomActionWithType( x + Random(-1000, 1000), y + Random(-1000, 1000), level, ACTION_TYPE_UTILITY, 666 )
 				end
 			end
 

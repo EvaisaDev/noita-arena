@@ -167,7 +167,7 @@ ArenaGameplay = {
             table.insert(player_ids, tostring(member.id))
         end
         table.sort(player_ids, function(a, b) return a < b end)
-        local local_player = tostring(steam.user.getSteamID())
+        local local_player = tostring(steam_utils.getSteamID())
         for i, player_id in ipairs(player_ids) do
             if(player_id == local_player)then
                 return i
@@ -176,7 +176,7 @@ ArenaGameplay = {
         return 1
     end,
     AddRound = function(lobby)
-        if(steamutils.IsOwner(lobby))then
+        if(steam_utils.IsOwner())then
             local rounds = ArenaGameplay.GetNumRounds(lobby)
             rounds = tonumber(rounds) or 0
             rounds = rounds + 1
@@ -184,7 +184,7 @@ ArenaGameplay = {
                 networking.send.update_round(lobby, rounds)
             end
             GlobalsSetValue("holyMountainCount", tostring(rounds))
-            steam.matchmaking.setLobbyData(lobby, "holyMountainCount", tostring(rounds))
+            steam_utils.TrySetLobbyData(lobby, "holyMountainCount", tostring(rounds))
         elseif(GlobalsGetValue("arena_gamemode", "ffa") == "continuous")then
             local rounds = ArenaGameplay.GetNumRounds(lobby)
             rounds = tonumber(rounds) or 0
@@ -237,6 +237,7 @@ ArenaGameplay = {
                 local members = steamutils.getLobbyMembers(lobby)
                 for k, member in pairs(members) do
                     local wins = ArenaGameplay.GetWins(lobby, member.id, data)
+                    print("Checking wins ["..tostring(member.id).."] : " .. wins .. " - " .. value)
                     if(wins >= value)then
                         return member.id
                     end
@@ -282,13 +283,13 @@ ArenaGameplay = {
         local ready_players = {}
         local members = steamutils.getLobbyMembers(lobby)
         for k, member in pairs(members) do
-            if (member.id ~= steam.user.getSteamID()) then
+            if (member.id ~= steam_utils.getSteamID()) then
                 if (data.players[tostring(member.id)] ~= nil and data.players[tostring(member.id)].ready) then
                     table.insert(ready_players, tostring(member.id))
                 end
             end
         end
-        steam.matchmaking.setLobbyData(lobby, "ready_players", bitser.dumps(ready_players))
+        steam_utils.TrySetLobbyData(lobby, "ready_players", bitser.dumps(ready_players))
     end,
     GetGameData = function(lobby, data)
         local mountainCount = tonumber(steamutils.GetLobbyData( "holyMountainCount"))
@@ -301,7 +302,7 @@ ArenaGameplay = {
             data.client.first_spawn_gold = goldCount
             arena_log:print("Gold count: " .. goldCount)
         end
-        local playerData = steamutils.GetLocalLobbyData(lobby, "player_data") --steam.matchmaking.getLobbyMemberData(lobby, steam.user.getSteamID(), "player_data")
+        local playerData = steamutils.GetLocalLobbyData(lobby, "player_data") --steam.matchmaking.getLobbyMemberData(lobby, steam_utils.getSteamID(), "player_data")
         --local rerollCount = tonumber(steamutils.GetLocalLobbyData(lobby, "reroll_count") or 0)
 
         --[[
@@ -338,6 +339,14 @@ ArenaGameplay = {
                     end
                     if(match_data.picked_perk)then
                         GameAddFlagRun("picked_perk")
+                    end
+                    if(match_data.picked_card)then
+                        GameAddFlagRun("card_picked")
+                    end
+                    if(match_data.cards and match_data.cards[1] ~= nil)then
+                        data.client.cards = match_data.cards
+                    else
+                        data.client.cards = nil
                     end
                     local floor_items = match_data.floor_items or {}
                     local shop_platforms = match_data.shop_platforms or {}
@@ -407,7 +416,7 @@ ArenaGameplay = {
         local members = steamutils.getLobbyMembers(lobby)
 
         for k, member in pairs(members) do
-            if (member.id ~= steam.user.getSteamID()) then
+            if (member.id ~= steam_utils.getSteamID()) then
                 local user = member.id
                 local wins = tonumber(steamutils.GetLobbyData( tostring(user) .. "_wins")) or 0
                 local winstreak = tonumber(steamutils.GetLobbyData( tostring(user) .. "_winstreak")) or 0
@@ -420,7 +429,7 @@ ArenaGameplay = {
 
         if (ready_players ~= nil) then
             for k, member in pairs(members) do
-                if (member.id ~= steam.user.getSteamID()) then
+                if (member.id ~= steam_utils.getSteamID()) then
                     if (data.players[tostring(member.id)] ~= nil and data.players[tostring(member.id)].ready) then
                         data.players[tostring(member.id)].ready = false
                     end
@@ -527,13 +536,14 @@ ArenaGameplay = {
         GlobalsSetValue("smash_knockback", "1" )
         GlobalsSetValue("smash_knockback_dummy", "1")
 
+        print("Resetting everything!!!")
 
 
-        if (steamutils.IsOwner(lobby)) then
+        if (steam_utils.IsOwner()) then
             steam.matchmaking.deleteLobbyData(lobby, "holyMountainCount")
             steam.matchmaking.deleteLobbyData(lobby, "total_gold")
             steam.matchmaking.deleteLobbyData(lobby, "ready_players")
-            steam.matchmaking.setLobbyData(lobby, "custom_lobby_string", "( round 0 )")
+            steam_utils.TrySetLobbyData(lobby, "custom_lobby_string", "( round 0 )")
 
             -- loop through all players and remove their data
             local members = steamutils.getLobbyMembers(lobby)
@@ -572,7 +582,7 @@ ArenaGameplay = {
 
         local members = steamutils.getLobbyMembers(lobby)
         for k, member in pairs(members) do
-            if (member.id ~= steam.user.getSteamID()) then
+            if (member.id ~= steam_utils.getSteamID()) then
                 if (data.players[tostring(member.id)] ~= nil and data.players[tostring(member.id)].ready) then
                     amount = amount + 1
                 end
@@ -585,7 +595,7 @@ ArenaGameplay = {
 
         local members = steamutils.getLobbyMembers(lobby)
         for k, member in pairs(members) do
-            if (member.id ~= steam.user.getSteamID()) then
+            if (member.id ~= steam_utils.getSteamID()) then
                 if (data.players[tostring(member.id)] ~= nil) then
                     data.players[tostring(member.id)].ready = true
                 end
@@ -598,7 +608,7 @@ ArenaGameplay = {
     CheckFiringBlock = function(lobby, data)
         local members = steamutils.getLobbyMembers(lobby)
         for k, member in pairs(members) do
-            if (member.id ~= steam.user.getSteamID()) then
+            if (member.id ~= steam_utils.getSteamID()) then
                 if (data.players[tostring(member.id)] ~= nil and data.players[tostring(member.id)].entity ~= nil) then
                     local player_entity = data.players[tostring(member.id)].entity
                     if (EntityGetIsAlive(player_entity)) then
@@ -708,7 +718,7 @@ ArenaGameplay = {
                     -- set mNextFrameUsable to false
                     ComponentSetValue2(abilityComponent, "mNextFrameUsable", GameGetFrameNum() + 10)
                     -- set mReloadFramesLeft
-                    ComponentSetValue2(abilityComponent, "mReloadFramesLeft", 10)
+                    --ComponentSetValue2(abilityComponent, "mReloadFramesLeft", 10)
                     -- set mReloadNextFrameUsable to false
                     ComponentSetValue2(abilityComponent, "mReloadNextFrameUsable", GameGetFrameNum() + 10)
                 end
@@ -724,7 +734,7 @@ ArenaGameplay = {
                         -- set mNextFrameUsable to false
                         ComponentSetValue2(abilityComponent, "mNextFrameUsable", GameGetFrameNum() + 10)
                         -- set mReloadFramesLeft
-                        ComponentSetValue2(abilityComponent, "mReloadFramesLeft", 10)
+                        --ComponentSetValue2(abilityComponent, "mReloadFramesLeft", 10)
                         -- set mReloadNextFrameUsable to false
                         ComponentSetValue2(abilityComponent, "mReloadNextFrameUsable", GameGetFrameNum() + 10)
                     end
@@ -819,7 +829,7 @@ ArenaGameplay = {
                 end
 
 
-                if (data.zone_size ~= nil and can_shrink and steamutils.IsOwner(lobby)) then
+                if (data.zone_size ~= nil and can_shrink and steam_utils.IsOwner()) then
                     local zone_shrink_time = 0;
 
                     local last_zone_size = data.zone_size
@@ -939,7 +949,7 @@ ArenaGameplay = {
                     -- GamePrint("Zone size: " .. data.zone_size .. " (" .. last_zone_size .. " -> " .. data.zone_size .. ")")
                 end
 
-                if ((not steamutils.IsOwner(lobby)) and (not IsPaused()) and data.zone_size ~= nil) then
+                if ((not steam_utils.IsOwner()) and (not IsPaused()) and data.zone_size ~= nil) then
                     if (data.zone_gui == nil) then
                         data.zone_gui = GuiCreate()
                     end
@@ -1020,10 +1030,18 @@ ArenaGameplay = {
         if(data.players[tostring(user)] ~= nil and data.players[tostring(user)].wins ~= nil)then
             return data.players[tostring(user)].wins or 0
         end
+        -- if is localplayer
+        if(user == steam_utils.getSteamID())then
+            return data.wins or 0
+        end
+
         local wins = tonumber(steamutils.GetLobbyData( tostring(user) .. "_wins")) or 0
         if(data.players[tostring(user)] ~= nil)then 
             data.players[tostring(user)].wins = wins
             print("Updated wins for " .. tostring(user) .. " to " .. tostring(wins))
+        elseif(user == steam_utils.getSteamID())then
+            data.wins = wins
+            print("Updated local wins to " .. tostring(wins))
         end
         return wins
     end,
@@ -1050,7 +1068,7 @@ ArenaGameplay = {
         end
 
         local alive = (not data.spectator_mode and data.client.alive) and 1 or 0
-        local winner = data.spectator_mode and nil or steam.user.getSteamID() 
+        local winner = data.spectator_mode and nil or steam_utils.getSteamID() 
         for k, v in pairs(data.players) do
             if (v.alive) then
                 alive = alive + 1
@@ -1078,21 +1096,21 @@ ArenaGameplay = {
             for k, v in pairs(winner_keys) do
                 if (tostring(v) ~= tostring(winner_key)) then
                     --print(v .. "treak")
-                    steam.matchmaking.setLobbyData(lobby, v .. "treak", "0")
+                    steam_utils.TrySetLobbyData(lobby, v .. "treak", "0")
                 end
             end
 
 
             if (not table.contains(winner_keys, winner_key)) then
                 table.insert(winner_keys, winner_key)
-                steam.matchmaking.setLobbyData(lobby, "winner_keys", bitser.dumps(winner_keys))
+                steam_utils.TrySetLobbyData(lobby, "winner_keys", bitser.dumps(winner_keys))
             end
 
 
             for k, v in pairs(data.players) do
                 local id = v.id
                 if (tostring(id) ~= tostring(winner)) then
-                    steam.matchmaking.setLobbyData(lobby, tostring(id) .. "_winstreak", "0")
+                    steam_utils.TrySetLobbyData(lobby, tostring(id) .. "_winstreak", "0")
                 end
             end
 
@@ -1100,23 +1118,26 @@ ArenaGameplay = {
             local current_winstreak = tonumber(tonumber(steamutils.GetLobbyData( winstreak_key)) or "0")
 
             print("incrementing win count for "..tostring(winner).." to "..tostring(current_wins + 1))
-            steam.matchmaking.setLobbyData(lobby, winner_key, tostring(current_wins + 1))
-            steam.matchmaking.setLobbyData(lobby, winstreak_key, tostring(current_winstreak + 1))
+            steam_utils.TrySetLobbyData(lobby, winner_key, tostring(current_wins + 1))
+            steam_utils.TrySetLobbyData(lobby, winstreak_key, tostring(current_winstreak + 1))
 
-            if(winner ~= steam.user.getSteamID())then
+            if(winner ~= steam_utils.getSteamID())then
                 data.players[tostring(winner)].winstreak = current_winstreak + 1
                 data.players[tostring(winner)].wins = current_wins + 1
+            else
+                data.winstreak = current_winstreak + 1
+                data.wins = current_wins + 1
             end
 
 
-            if(not data.spectator_mode and winner == steam.user.getSteamID())then
+            if(not data.spectator_mode and winner == steam_utils.getSteamID())then
                 GameAddFlagRun("arena_winner")
                 local catchup_mechanic = GlobalsGetValue("perk_catchup", "losers")
                 if(catchup_mechanic == "winner")then
                     GameAddFlagRun("first_death")
                     GamePrint(GameTextGetTranslatedOrNot("$arena_compensation_winner"))
                 end
-                if(GlobalsGetValue("upgrades_system", "false") == "true")then
+                if(GameHasFlagRun("upgrades_system"))then
                     local catchup_mechanic_upgrades = GlobalsGetValue("upgrades_catchup", "losers")
                     if(catchup_mechanic_upgrades == "winner")then
                         GameAddFlagRun("pick_upgrade")
@@ -1130,9 +1151,11 @@ ArenaGameplay = {
             if(win_condition_user ~= nil)then
                 GamePrintImportant(string.format(GameTextGetTranslatedOrNot("$arena_win_condition_text"), steamutils.getTranslatedPersonaName(winner)), GameTextGetTranslatedOrNot("$arena_win_condition_description"))
                 networking.send.round_end(lobby, winner, true)
+                print("Sent win condition message")
             else
                 GamePrintImportant(string.format(GameTextGetTranslatedOrNot("$arena_winner_text"), steamutils.getTranslatedPersonaName(winner)), GameTextGetTranslatedOrNot("$arena_round_end_text"))
                 networking.send.round_end(lobby, winner)
+                print("Sent round end message")
             end
 
             print("Win condition: "..tostring(win_condition_user))
@@ -1145,7 +1168,7 @@ ArenaGameplay = {
 
                 print("Loading lobby in 5 seconds")
 
-                delay.new(5 * 60, function()
+                delay.new(300, function()
                     ArenaGameplay.LoadLobby(lobby, data, false)
                     
                 end, function(frames)
@@ -1154,7 +1177,7 @@ ArenaGameplay = {
                     end
                 end)
             else
-                delay.new(10 * 60, function()
+                delay.new(600, function()
                     StopGame()
                 end, function(frames)
                     if (frames % 60 == 0) then
@@ -1177,7 +1200,7 @@ ArenaGameplay = {
 
             print("Loading lobby in 5 seconds")
             
-            delay.new(5 * 60, function()
+            delay.new(300, function()
                 ArenaGameplay.LoadLobby(lobby, data, false)
             end, function(frames)
                 if (frames % 60 == 0) then
@@ -1188,13 +1211,13 @@ ArenaGameplay = {
         end
     end,
     KillCheck = function(lobby, data)
-        if (GameHasFlagRun("player_died")) then
+        if (GameHasFlagRun("player_died") and not GameHasFlagRun("killcheck_finished")) then
            
             local killer = GlobalsGetValue("killer", "");
 
             if(GlobalsGetValue("arena_gamemode", "ffa") == "continuous")then
                 ArenaGameplay.AddRound(lobby)
-                delay.new(5 * 60, function()
+                delay.new(300, function()
                     ArenaGameplay.LoadLobby(lobby, data, false)
                 end, function(frames)
                     if (frames % 60 == 0) then
@@ -1207,7 +1230,7 @@ ArenaGameplay = {
                 killer = nil
             end
 
-            local username = steamutils.getTranslatedPersonaName(steam.user.getSteamID())
+            local username = steamutils.getTranslatedPersonaName(steam_utils.getSteamID())
 
             if (killer == nil) then
                 GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_other_player_died"), tostring(username)))
@@ -1237,9 +1260,20 @@ ArenaGameplay = {
                 
                 GamePrint(GameTextGetTranslatedOrNot("$arena_compensation"))
             end
-            if(GlobalsGetValue("upgrades_system", "false") == "true")then
+            if(GameHasFlagRun("upgrades_system"))then
                 local catchup_mechanic_upgrades = GlobalsGetValue("upgrades_catchup", "losers")
-                if(catchup_mechanic_upgrades == "losers" or (data.deaths == 0 and catchup_mechanic_upgrades == "first_death"))then
+
+                -- check if we were the last to die
+                local alive = (not data.spectator_mode and data.client.alive) and 1 or 0
+                for k, v in pairs(data.players) do
+                    if (v.alive) then
+                        alive = alive + 1
+                    end
+                end
+
+                local last = alive == 1
+
+                if((catchup_mechanic_upgrades == "losers" and not last) or (data.deaths == 0 and catchup_mechanic_upgrades == "first_death"))then
                     GameAddFlagRun("pick_upgrade")
                 end
             end
@@ -1250,11 +1284,11 @@ ArenaGameplay = {
             --message_handler.send.Death(lobby, killer)
             networking.send.death(lobby, killer)
 
-            GameRemoveFlagRun("player_died")
-
             GamePrintImportant(GameTextGetTranslatedOrNot("$arena_player_died"))
 
             GameSetCameraFree(true)
+
+            GameAddFlagRun("killcheck_finished")
 
             if(not data.spectator_mode)then
                 data.is_spectating = true
@@ -1263,7 +1297,7 @@ ArenaGameplay = {
             --player.Immortal(true)
             --player.Move(-3000, -3000)
 
-            if(steamutils.IsOwner(lobby))then
+            if(steam_utils.IsOwner())then
                 ArenaGameplay.WinnerCheck(lobby, data)
             end
         end
@@ -1299,12 +1333,22 @@ ArenaGameplay = {
 
             print("Profiler result: "..tostring(profile:time()) .. "ms")]]
 
+            local upgrades_system = data.upgrade_system
+            local cards = {}
+            if(upgrades_system ~= nil)then
+                for k, v in pairs(upgrades_system.upgrades)do
+                    table.insert(cards, v.id)
+                end
+            end
+
 
             local match_data = {
                 round = ArenaGameplay.GetNumRounds(lobby),
                 reroll_count = GlobalsGetValue("TEMPLE_PERK_REROLL_COUNT", "0"),
                 picked_health = GameHasFlagRun("picked_health"),
                 picked_perk = GameHasFlagRun("picked_perk"),
+                picked_card = GameHasFlagRun("card_picked"),
+                cards = cards,
                 shop_platforms = {},
                 floor_items = {},
             }
@@ -1344,8 +1388,23 @@ ArenaGameplay = {
         end
     end,
     LoadLobby = function(lobby, data, show_message, first_entry)
-        networking.send.update_state(lobby, "lobby")
         
+        GameRemoveFlagRun("player_died")
+        GameRemoveFlagRun("killcheck_finished")
+
+        data.projectiles_hit = {}
+        
+        local respawn_count = tonumber( GlobalsGetValue( "RESPAWN_COUNT", "0" ) )
+        local extra_respawn_count = tonumber(GlobalsGetValue("EXTRA_RESPAWN_COUNT", "0"))
+
+        if(respawn_count < extra_respawn_count)then
+            respawn_count = respawn_count + extra_respawn_count
+            GlobalsSetValue("RESPAWN_COUNT", tostring(respawn_count))
+            GlobalsSetValue("EXTRA_RESPAWN_COUNT", "0")
+        end
+
+        networking.send.update_state(lobby, "lobby")
+        data.network_entity_cache = {}
         if(data.unstuck_ui)then
             GuiDestroy(data.unstuck_ui)
             data.unstuck_ui = nil
@@ -1363,7 +1422,7 @@ ArenaGameplay = {
             data.hm_timer.clear()
             data.hm_timer = nil
         end
-        local has_picked_heart = steamutils.HasLobbyFlag(lobby, tostring(steam.user.getSteamID()).."picked_heart")
+        local has_picked_heart = steamutils.HasLobbyFlag(lobby, tostring(steam_utils.getSteamID()).."picked_heart")
 
         if(has_picked_heart)then
             GameAddFlagRun("picked_health")
@@ -1383,8 +1442,6 @@ ArenaGameplay = {
 
         GameAddFlagRun("refresh_dummy")
 
-        data.lobby_spectated_player = nil
-
         -- get rounds
         local rounds = ArenaGameplay.GetNumRounds(lobby)
 
@@ -1393,9 +1450,13 @@ ArenaGameplay = {
             if(catchup_mechanic == "everyone")then
                 GameAddFlagRun("first_death")
             end
-            if(GlobalsGetValue("upgrades_system", "false") == "true")then
+            if(GameHasFlagRun("upgrades_system"))then
                 local catchup_mechanic_upgrades = GlobalsGetValue("upgrades_catchup", "losers")
+
+                print("Card catchup: "..tostring(catchup_mechanic_upgrades))
+
                 if(catchup_mechanic_upgrades == "everyone")then
+                    print("Okay player should pick card!")
                     GameAddFlagRun("pick_upgrade")
                 end
             end
@@ -1405,9 +1466,6 @@ ArenaGameplay = {
 
         ArenaGameplay.GracefulReset(lobby, data)
 
-        data.selected_player = nil
-        data.selected_player_name = nil
-        data.client.previous_spectate_data = nil
         data.allow_round_end = false
         data.controlled_physics_entities = {}
         GameRemoveFlagRun("lock_ready_state")
@@ -1419,6 +1477,7 @@ ArenaGameplay = {
         GameRemoveFlagRun("no_shooting")
         GlobalsSetValue("smash_knockback", "1" )
         GlobalsSetValue("smash_knockback_dummy", "1")
+        data.last_selected_perk_string = nil
         show_message = show_message or false
         first_entry = first_entry or false
 
@@ -1429,7 +1488,7 @@ ArenaGameplay = {
 
         local members = steamutils.getLobbyMembers(lobby)
         for k, member in pairs(members) do
-            if (member.id ~= steam.user.getSteamID()) then
+            if (member.id ~= steam_utils.getSteamID()) then
                 local user = member.id
                 local wins = tonumber(steamutils.GetLobbyData( tostring(user) .. "_wins")) or 0
                 local winstreak = tonumber(steamutils.GetLobbyData( tostring(user) .. "_winstreak")) or 0
@@ -1440,6 +1499,7 @@ ArenaGameplay = {
             end
         end
 
+        
         if(not data.spectator_mode)then
             if (not first_entry) then
                 ArenaGameplay.SavePlayerData(lobby, data, true)
@@ -1453,10 +1513,18 @@ ArenaGameplay = {
             player.Immortal(true)
 
             RunWhenPlayerExists(function()
+                -- update local wins
+                local wins = tonumber(steamutils.GetLobbyData( tostring(steam_utils.getSteamID()) .. "_wins")) or 0
+                local winstreak = tonumber(steamutils.GetLobbyData( tostring(steam_utils.getSteamID()) .. "_winstreak")) or 0
+                data.wins = wins
+                data.winstreak = winstreak
+
                 if (first_entry and player.Get()) then
                     GameDestroyInventoryItems(player.Get())
                 end
             end)
+
+
         else
             ArenaGameplay.ClearWorld()
         end
@@ -1505,13 +1573,23 @@ ArenaGameplay = {
 
 
             if (not data.client.player_loaded_from_data) then
-                if(GlobalsGetValue("upgrades_system", "false") == "true" and GameHasFlagRun("pick_upgrade"))then
-                    data.upgrade_system = upgrade_system.create(3, function(upgrade)
-                        data.upgrade_system = nil
-                    end)
-                end
+                GameRemoveFlagRun("card_picked")
                 GameRemoveFlagRun("picked_health")
                 GameRemoveFlagRun("picked_perk")
+                data.client.cards = nil
+            end
+
+
+            if GameHasFlagRun("upgrades_system") and not GameHasFlagRun("card_picked") then
+                RunWhenPlayerExists(function()
+                    if(GameHasFlagRun("pick_upgrade") or data.client.cards)then
+                        data.upgrade_system = upgrade_system.create(data.client.cards or 3, function(upgrade)
+                            data.upgrade_system = nil
+                        end)
+
+                        networking.send.card_list(lobby, data)
+                    end
+                end)
             end
         end
 
@@ -1551,23 +1629,23 @@ ArenaGameplay = {
 
             RunWhenPlayerExists(function()
                 -- if we are the owner of the lobby
-                if (steamutils.IsOwner(lobby)) then
+                if (steam_utils.IsOwner()) then
                     -- get the gold count from the lobby
                     local gold = tonumber(steamutils.GetLobbyData( "total_gold")) or 0
                     -- add the new gold
                     gold = gold + extra_gold
                     -- set the new gold count
-                    steam.matchmaking.setLobbyData(lobby, "total_gold", tostring(gold))
+                    steam_utils.TrySetLobbyData(lobby, "total_gold", tostring(gold))
                 end
             end)
         else
-            if (steamutils.IsOwner(lobby)) then
+            if (steam_utils.IsOwner()) then
                 -- get the gold count from the lobby
                 local gold = tonumber(steamutils.GetLobbyData( "total_gold")) or 0
                 -- add the new gold
                 gold = gold + extra_gold
                 -- set the new gold count
-                steam.matchmaking.setLobbyData(lobby, "total_gold", tostring(gold))
+                steam_utils.TrySetLobbyData(lobby, "total_gold", tostring(gold))
             end
         end
 
@@ -1650,11 +1728,11 @@ ArenaGameplay = {
             -- load map
             if(GameHasFlagRun("item_shop"))then
                 BiomeMapLoad_KeepPlayer("mods/evaisa.arena/files/scripts/world/map_lobby.lua",
-                "mods/evaisa.arena/files/biome/holymountain_itemshop_scenes.xml")
+                "mods/evaisa.arena/files/biome/pixelscenes/temple_itemshop.xml")
             else
                 BiomeMapLoad_KeepPlayer("mods/evaisa.arena/files/scripts/world/map_lobby.lua",
-                "mods/evaisa.arena/files/biome/holymountain_scenes.xml")
-                
+                "mods/evaisa.arena/files/biome/pixelscenes/temple.xml")
+                 
             end
 
 
@@ -1667,10 +1745,10 @@ ArenaGameplay = {
             -- load map
             if(GameHasFlagRun("item_shop"))then
                 BiomeMapLoad_KeepPlayer("mods/evaisa.arena/files/scripts/world/map_lobby_spectator.lua",
-                "mods/evaisa.arena/files/biome/holymountain_itemshop_scenes.xml")
+                "mods/evaisa.arena/files/biome/pixelscenes/temple_itemshop.xml")
             else
                 BiomeMapLoad_KeepPlayer("mods/evaisa.arena/files/scripts/world/map_lobby_spectator.lua",
-                "mods/evaisa.arena/files/biome/holymountain_scenes.xml")
+                "mods/evaisa.arena/files/biome/pixelscenes/temple.xml")
                 
             end
 
@@ -1694,6 +1772,12 @@ ArenaGameplay = {
         return math.floor(num * mult + 0.5) / mult
     end,
     LoadArena = function(lobby, data, show_message, map)
+        GameRemoveFlagRun("card_picked")
+        data.client.cards = nil
+        ArenaGameplay.GracefulReset(lobby, data)
+
+        data.network_entity_cache = {}
+        data.last_selected_perk_string = nil
         networking.send.update_state(lobby, "arena")
         
 
@@ -1714,10 +1798,10 @@ ArenaGameplay = {
             data.hm_timer.clear()
             data.hm_timer = nil
         end
-        if(not steamutils.IsOwner(lobby))then
+        if(not steam_utils.IsOwner())then
             networking.send.picked_heart(lobby, false)
         else
-            steamutils.RemoveLobbyFlag(lobby, tostring(steam.user.getSteamID()).."picked_heart")
+            steamutils.RemoveLobbyFlag(lobby, tostring(steam_utils.getSteamID()).."picked_heart")
         end
         if(not data.spectator_mode)then
             ArenaGameplay.SavePlayerData(lobby, data, true)
@@ -1725,10 +1809,8 @@ ArenaGameplay = {
             GameRemoveFlagRun("can_save_player")
         end
 
-        data.last_selected_player = data.lobby_spectated_player
-        data.lobby_spectated_player = nil
-        data.selected_player_name = nil
-        data.selected_player = nil
+
+
         
         GameRemoveFlagRun("DeserializedHolyMountain")
         GameRemoveFlagRun("player_is_unlocked")
@@ -1773,7 +1855,7 @@ ArenaGameplay = {
         local members = steamutils.getLobbyMembers(lobby)
 
         for _, member in pairs(members) do
-            if (member.id ~= steam.user.getSteamID() and data.players[tostring(member.id)] ~= nil) then
+            if (member.id ~= steam_utils.getSteamID() and data.players[tostring(member.id)] ~= nil) then
                 data.players[tostring(member.id)].alive = true
             end
         end
@@ -1856,9 +1938,9 @@ ArenaGameplay = {
             return
         end
 
-        if(steamutils.IsOwner(lobby))then
+        if(steam_utils.IsOwner())then
             print("Setting current map to "..tostring(arena.id))
-            steam.matchmaking.setLobbyData(lobby, "current_map", arena.id)
+            steam_utils.TrySetLobbyData(lobby, "current_map", arena.id)
         else
             networking.send.set_map(lobby, arena.id)
         end
@@ -1929,7 +2011,7 @@ ArenaGameplay = {
 
             if(not ArenaGameplay.IsArenaLoaded(lobby, data))then
                 current_map = nil
-                if(steamutils.IsOwner(lobby))then
+                if(steam_utils.IsOwner())then
                     steam.matchmaking.deleteLobbyData(lobby, "current_map")
                 end
             end
@@ -1941,7 +2023,7 @@ ArenaGameplay = {
                     map_picker = "random"
                 end
 
-                if(steamutils.IsOwner(lobby))then
+                if(steam_utils.IsOwner())then
                     local new_seed = GameGetFrameNum() + tonumber(GlobalsGetValue("world_seed", "0"));
 
                     networking.send.update_world_seed(lobby, new_seed)
@@ -1976,15 +2058,15 @@ ArenaGameplay = {
             GameAddFlagRun("was_last_ready")
         end
 
-        if (steamutils.IsOwner(lobby)) then
-            steam.matchmaking.setLobbyData(lobby, tostring(steam.user.getSteamID()) .. "_ready", tostring(ready))
+        if (steam_utils.IsOwner()) then
+            steam_utils.TrySetLobbyData(lobby, tostring(steam_utils.getSteamID()) .. "_ready", tostring(ready))
         end
     end,
     CleanMembers = function(lobby, data)
         local members = steamutils.getLobbyMembers(lobby)
 
         for _, member in pairs(members) do
-            if (member.id ~= steam.user.getSteamID() and data.players[tostring(member.id)] ~= nil) then
+            if (member.id ~= steam_utils.getSteamID() and data.players[tostring(member.id)] ~= nil) then
                 data.players[tostring(member.id)]:Clean(lobby)
             end
         end
@@ -2015,7 +2097,7 @@ ArenaGameplay = {
         end
     end,
     RunReadyCheck = function(lobby, data)
-        if (steamutils.IsOwner(lobby)) then
+        if (steam_utils.IsOwner()) then
             --print("we are owner!")
             -- check if all players are ready
 
@@ -2034,7 +2116,7 @@ ArenaGameplay = {
                     GameAddFlagRun("lock_ready_state")
                     networking.send.lock_ready_state(lobby)
                     -- kill any entity with workshop tag to prevent wand edits
-                    if(not data.spectator_mode and steam.matchmaking.getNumLobbyMembers(lobby) == 1)then
+                    if(not data.spectator_mode and steam_utils.getNumLobbyMembers() == 1)then
                         local all_entities = EntityGetWithTag("workshop")
                         for k, v in pairs(all_entities) do
                             EntityKill(v)
@@ -2124,7 +2206,7 @@ ArenaGameplay = {
 
         data.vote_loop = delay.new(vote_length + finish_time, function()
             -- finish
-            if(steamutils.IsOwner(lobby))then
+            if(steam_utils.IsOwner())then
                 -- find highest vote, if there is a tie, pick random
                 
                 ArenaGameplay.LoadArena(lobby, data, true, data.vote_loop.winner)
@@ -2133,7 +2215,7 @@ ArenaGameplay = {
             GuiDestroy(vote_gui)
         end, function(frames)
             --print("Current game frame: "..tostring(GameGetFrameNum()))
-            if(steamutils.IsOwner(lobby))then
+            if(steam_utils.IsOwner())then
                 --print("Sending map vote timer update")
                 networking.send.map_vote_timer_update(lobby, frames)
             end
@@ -2151,7 +2233,7 @@ ArenaGameplay = {
             end
             --GamePrint("Voting ends in "..tostring(math.floor(frames / 60)).." seconds")
 
-            if(steamutils.IsOwner(lobby))then
+            if(steam_utils.IsOwner())then
                 if(frames_left <= 0 )then
                     if(not data.vote_loop.vote_finished)then
                         local highest_vote = 0
@@ -2554,31 +2636,31 @@ ArenaGameplay = {
 
         if(ModSettingGet("evaisa.arena.lag_detection") and #(EntityGetWithTag("workshop") or {}) > 0 and framerate < 10 and not data.low_framerate_popup)then
 
-            np.ComponentUpdatesSetEnabled("ProjectileSystem", false)
+            --[[np.ComponentUpdatesSetEnabled("ProjectileSystem", false)
             np.ComponentUpdatesSetEnabled("CellEaterSystem", false)
             np.ComponentUpdatesSetEnabled("LooseGroundSystem", false)
             np.ComponentUpdatesSetEnabled("BlackHoleSystem", false)
             np.ComponentUpdatesSetEnabled("MagicConvertMaterialSystem", false)
-            np.ComponentUpdatesSetEnabled("PhysicsBodySystem", false)
+            np.ComponentUpdatesSetEnabled("PhysicsBodySystem", false)]]
 
             local entities = EntityGetInRadius(0, 0, 10000000)
 
             for k, v in pairs(entities)do
                 local projectile_comp = EntityGetFirstComponentIncludingDisabled(v, "ProjectileComponent")
-                if(projectile_comp ~= nil)then
+                if(projectile_comp ~= nil and EntityGetRootEntity(v) == v)then
                     EntityRemoveComponent(v, projectile_comp)
                     EntityKill(v)
                 end
             end
 
-            delay.new(15, function()
+            --[[delay.new(15, function()
                 np.ComponentUpdatesSetEnabled("ProjectileSystem", true)
                 np.ComponentUpdatesSetEnabled("CellEaterSystem", true)
                 np.ComponentUpdatesSetEnabled("LooseGroundSystem", true)
                 np.ComponentUpdatesSetEnabled("BlackHoleSystem", true)
                 np.ComponentUpdatesSetEnabled("MagicConvertMaterialSystem", true)
                 np.ComponentUpdatesSetEnabled("PhysicsBodySystem", true)
-            end)
+            end)]]
 
             --[[
             data.low_framerate_popup = popup.create("low_framerate", GameTextGetTranslatedOrNot("$arena_lag_detected_name"),{
@@ -2640,8 +2722,12 @@ ArenaGameplay = {
             
                 local timer_frames = tonumber(hm_timer_time) * 60
                 data.hm_timer = delay.new(timer_frames, function()
-                    if(steamutils.IsOwner(lobby))then
+                    if(steam_utils.IsOwner())then
                         ArenaGameplay.ForceReady(lobby, data)
+                    end
+                    if(data.hm_timer_gui)then
+                        GuiDestroy(data.hm_timer_gui)
+                        data.hm_timer_gui = nil
                     end
                 end, function(frame)
                     --print("HM Tick: "..tostring(frame))
@@ -2659,7 +2745,7 @@ ArenaGameplay = {
 
                     local message = string.format(GameTextGetTranslatedOrNot("$arena_hm_timer_string"), time_string)
   
-                    if(steamutils.IsOwner(lobby))then
+                    if(steam_utils.IsOwner())then
                         networking.send.hm_timer_update(lobby, frame)
                     end
 
@@ -2676,44 +2762,17 @@ ArenaGameplay = {
                 end)
             end
         else
-            if(steamutils.IsOwner(lobby))then
-                networking.send.hm_timer_clear(lobby)
-            end
             if(data.hm_timer ~= nil)then
+                if(steam_utils.IsOwner())then
+                    networking.send.hm_timer_clear(lobby)
+                end
                 data.hm_timer.clear()
                 data.hm_timer = nil
             end
         end
 
-        -- was trying to repair the HM but thats duplicating entities so nvm
-        --[[if(GameGetFrameNum() % 120 == 0)then
-            if(not data.spectator_mode)then
-                -- load map
-                if(GameHasFlagRun("item_shop"))then
-                    LoadPixelScene("mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple_itemshop/0.plz", "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple_itemshop/0_visual.plz", -174, -133, "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple_itemshop/0_background.png", true, false, nil, nil, true)
-                    LoadPixelScene("mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple_itemshop/1.plz", "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple_itemshop/1_visual.plz", 338, -133, "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple_itemshop/1_background.png", true, false, nil, nil, true)
-                    LoadPixelScene("mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple_itemshop/2.plz", "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple_itemshop/2_visual.plz", 850, -133, "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple_itemshop/2_background.png", true, false, nil, nil, true)
-                else
-                    LoadPixelScene("mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/0.plz", "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/0_visual.plz", -174, -133, "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/0_background.png", true, false, nil, nil, true)
-                    LoadPixelScene("mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/1.plz", "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/1_visual.plz", 338, -133, "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/1_background.png", true, false, nil, nil, true)
-                    LoadPixelScene("mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/2.plz", "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/2_visual.plz", 850, -133, "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/2_background.png", true, false, nil, nil, true)
-                end
-            else
-                -- load map
-                if(GameHasFlagRun("item_shop"))then
-                    LoadPixelScene("mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple_itemshop/0.plz", "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple_itemshop/0_visual.plz", -174, -133, "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple_itemshop/0_background.png", true, false, nil, nil, true)
-                    LoadPixelScene("mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple_itemshop/1.plz", "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple_itemshop/1_visual.plz", 338, -133, "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple_itemshop/1_background.png", true, false, nil, nil, true)
-                    LoadPixelScene("mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple_itemshop/2.plz", "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple_itemshop/2_visual.plz", 850, -133, "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple_itemshop/2_background.png", true, false, nil, nil, true)
-                else
-                    LoadPixelScene("mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/0.plz", "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/0_visual.plz", -174, -133, "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/0_background.png", true, false, nil, nil, true)
-                    LoadPixelScene("mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/1.plz", "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/1_visual.plz", 338, -133, "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/1_background.png", true, false, nil, nil, true)
-                    LoadPixelScene("mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/2.plz", "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/2_visual.plz", 850, -133, "mods/evaisa.arena/files/biome/pixelscenes/holymountain/temple/2_background.png", true, false, nil, nil, true)
-                end
-            end
-        end]]
 
-
-        if(not IsPaused() and not (data.spectator_mode and data.lobby_spectated_player == nil))then
+        if(not IsPaused() and not (data.spectator_mode and data.spectated_player == nil))then
             ArenaGameplay.UpdateDummy(lobby, data, true)
         end
 
@@ -2731,15 +2790,16 @@ ArenaGameplay = {
                 ArenaGameplay.RunReadyCheck(lobby, data)
             end
 
-            if(data.lobby_spectated_player ~= nil and GameGetFrameNum() % 120 == 0)then
-                networking.send.request_sync_hm(lobby, data.lobby_spectated_player, data.last_synced_entity_count)
+            if(data.spectated_player ~= nil and GameGetFrameNum() % 120 == 0)then
+                networking.send.request_sync_hm(lobby, data.spectated_player, data.last_synced_entity_count)
             end
         else
 
             networking.send.character_position(lobby, data, true)
 
         -- networking.send.wand_update(lobby, data, nil, nil, true)
-            networking.send.input(lobby, data, true)
+            networking.send.keyboard(lobby, data, true)
+            networking.send.mouse(lobby, data, true)
             --networking.send.animation_update(lobby, data, true)
             if(GameGetFrameNum() % 15 == 0)then
                 networking.send.player_data_update(lobby, data, true)
@@ -2750,7 +2810,7 @@ ArenaGameplay = {
                 end
             end
             networking.send.player_stats_update(lobby, data, true)
-            networking.send.spectate_data(lobby, data, nil, false)
+            --networking.send.spectate_data(lobby, data, nil, false)
 
             GameAddFlagRun("Immortal")
 
@@ -2845,7 +2905,7 @@ ArenaGameplay = {
             networking.send.request_item_update(lobby)
         end, function(frame, index) 
             -- if we are host
-            if (steamutils.IsOwner(lobby)) then
+            if (steam_utils.IsOwner()) then
                 networking.send.sync_countdown(lobby, frame, index)
             end
         end)
@@ -2857,9 +2917,6 @@ ArenaGameplay = {
             print("skipped spawn!!")
             return
         end
-
-
-
 
         local client = EntityLoad("mods/evaisa.arena/files/entities/client.xml", x or -1000, y or -1000)
         EntitySetName(client, tostring(user))
@@ -2891,14 +2948,17 @@ ArenaGameplay = {
 
         networking.send.request_sync_hm(lobby, user)
         networking.send.request_item_update(lobby, user)
-        networking.send.request_spectate_data(lobby, user)
+        --networking.send.request_spectate_data(lobby, user)
         networking.send.request_skin(lobby, user)
         networking.send.request_perk_update(lobby, user)
         
         --print(debug.traceback())
 
-        if(data.spectator_mode and data.state == "lobby" and data.lobby_spectated_player == user)then
+        if(data.spectator_mode and data.state == "lobby" and data.spectated_player == user)then
             data.selected_player = client
+            networking.send.request_character_position(lobby, user)
+            networking.send.request_dummy_target(lobby, user)
+            networking.send.request_card_list(lobby, user)
         end
 
         return client
@@ -2913,7 +2973,7 @@ ArenaGameplay = {
         end
 
         -- if we are in lobby and player is not being spectated
-        if(data.spectator_mode and data.state == "lobby" and data.lobby_spectated_player ~= user)then
+        if(data.spectator_mode and data.state == "lobby" and data.spectated_player ~= user)then
             return false
         end
 
@@ -2988,7 +3048,7 @@ ArenaGameplay = {
 
 
         local players = {
-            [tostring(steam.user.getSteamID())] = {
+            [tostring(steam_utils.getSteamID())] = {
                 perks = data.client.perks or {},
                 health = data.client.hp or 100,
                 max_health = data.client.max_hp or 100,
@@ -3052,7 +3112,7 @@ ArenaGameplay = {
     end,
     SwitchDummy = function(dummy, lobby, data)
 
-        local dummy_target = data.target_dummy_player or steam.user.getSteamID()
+        local dummy_target = data.target_dummy_player or steam_utils.getSteamID()
         local new_target = nil
         -- check if target is in lobby
         local next_is_target = false
@@ -3069,7 +3129,7 @@ ArenaGameplay = {
 
         if(not data.spectator_mode)then
             player_count = player_count + 1
-            players[tostring(steam.user.getSteamID())] = {
+            players[tostring(steam_utils.getSteamID())] = {
                 perks = data.client.perks or {},
                 health = data.client.hp or 100,
                 max_health = data.client.max_hp or 100,
@@ -3115,6 +3175,8 @@ ArenaGameplay = {
         end
 
         data.target_dummy_player = new_target
+
+        networking.send.dummy_target(lobby, new_target)
 
         ArenaGameplay.UpdateDummyData(dummy, lobby, data)
 
@@ -3177,14 +3239,14 @@ ArenaGameplay = {
 
         for _, member in pairs(members) do
 
-            if (member.id ~= steam.user.getSteamID() and data.players[tostring(member.id)].entity) then
+            if (member.id ~= steam_utils.getSteamID() and data.players[tostring(member.id)].entity) then
                 data.players[tostring(member.id)]:Clean(lobby)
             end
 
-            --[[if(member.id ~= steam.user.getSteamID())then
+            --[[if(member.id ~= steam_utils.getSteamID())then
                 print(json.stringify(data.players[tostring(member.id)]))
             end]]
-            if (member.id ~= steam.user.getSteamID() and data.players[tostring(member.id)].entity == nil) then
+            if (member.id ~= steam_utils.getSteamID() and data.players[tostring(member.id)].entity == nil) then
 
                 if(not (GlobalsGetValue("arena_gamemode", "ffa") == "continuous" and not data.spectator_mode and data.players[tostring(member.id)].state ~= "arena"))then
                     --GamePrint("Loading player " .. tostring(member.id))
@@ -3288,7 +3350,7 @@ ArenaGameplay = {
                         if(not data.spectator_mode)then
                             ArenaGameplay.LoadPlayer(lobby, data, x, y)
 
-                            if (not steamutils.IsOwner(lobby)) then
+                            if (not steam_utils.IsOwner()) then
                                 RunWhenPlayerExists(function()
                                     networking.send.arena_loaded(lobby)
                                 end)
@@ -3327,7 +3389,8 @@ ArenaGameplay = {
         if(not data.spectator_mode)then
             player_entity = player.Get()
         end
-        if (steamutils.IsOwner(lobby) and GlobalsGetValue("arena_gamemode", "ffa") ~= "continuous") then
+
+        if (steam_utils.IsOwner() and GlobalsGetValue("arena_gamemode", "ffa") ~= "continuous") then
 
             if ((data.spectator_mode or player_entity ~= nil) and (not data.players_loaded and ArenaGameplay.CheckAllPlayersLoaded(lobby, data))) then
                 data.players_loaded = true
@@ -3350,6 +3413,21 @@ ArenaGameplay = {
         if(not data.spectator_mode)then
             networking.send.character_position(lobby, data)
 
+            if(player_entity and GameHasFlagRun("player_died") and not GameHasFlagRun("player_unloaded"))then
+                local damage_model = EntityGetFirstComponentIncludingDisabled(player_entity, "DamageModelComponent")
+
+                
+
+                if(damage_model)then
+                    ComponentSetValue2(damage_model, "hp", 0.04)
+                    ArenaGameplay.SavePlayerData(lobby, data)
+                    ComponentSetValue2(damage_model, "hp", -5)
+                    ComponentSetValue2(damage_model, "kill_now", true)
+                    GameAddFlagRun("player_unloaded")
+                end
+                
+            end
+
             if (GameHasFlagRun("took_damage")) then
                 GameRemoveFlagRun("took_damage")
                 networking.send.health_update(lobby, data, true)
@@ -3361,7 +3439,8 @@ ArenaGameplay = {
                 end
                 networking.send.player_stats_update(lobby, data)
 
-                networking.send.input(lobby, data)
+                networking.send.keyboard(lobby, data)
+                networking.send.mouse(lobby, data)
 
                 --ArenaGameplay.CheckFiringBlock(lobby, data)
             end
@@ -3403,7 +3482,7 @@ ArenaGameplay = {
 
                 -- if we are the last player, unready
                 if(not data.spectator_mode)then
-                    if (steam.matchmaking.getNumLobbyMembers(lobby) == 1) then
+                    if (steam_utils.getNumLobbyMembers() == 1) then
                         GameRemoveFlagRun("lock_ready_state")
                         GameAddFlagRun("player_unready")
                         GameRemoveFlagRun("ready_check")
@@ -3411,14 +3490,14 @@ ArenaGameplay = {
                     end
                 end
 
-                --[[if (steamutils.IsOwner(lobby)) then
+                --[[if (steam_utils.IsOwner()) then
                     local winner_key = tostring(k) .. "_wins"
                     steam.matchmaking.deleteLobbyData(lobby, winner_key)
                 end
                 ]]
                 lobby_member_names[k] = nil
                 if (data.state == "arena" and GlobalsGetValue("arena_gamemode", "ffa") ~= "continuous") then
-                    if(steamutils.IsOwner(lobby))then
+                    if(steam_utils.IsOwner())then
                         ArenaGameplay.WinnerCheck(lobby, data)
                     end
                 end
@@ -3458,6 +3537,18 @@ ArenaGameplay = {
 
     end,
     Update = function(lobby, data)
+
+        -- remove homing targets from non targets!!!
+        if(GameGetFrameNum() % 25 == 0)then
+            local targets = EntityGetWithTag("homing_target")
+
+            for k, v in ipairs(targets or {})do
+                if(not EntityHasTag(v, "enemy") and not EntityHasTag(v, "player_unit"))then
+                    EntityRemoveTag(v, "homing_target")
+                end
+            end
+        end
+
 
 
         if(data.low_framerate_popup ~= nil and data.low_framerate_popup.destroyed)then
@@ -3503,7 +3594,7 @@ ArenaGameplay = {
             if(GameGetFrameNum() % 60 == 0)then
                 local InventoryGuiComponent = EntityGetFirstComponentIncludingDisabled(data.spectator_entity, "InventoryGuiComponent")
                 if(InventoryGuiComponent ~= nil)then
-                    EntitySetComponentIsEnabled(data.spectator_entity, InventoryGuiComponent, data.selected_client ~= nil)
+                    EntitySetComponentIsEnabled(data.spectator_entity, InventoryGuiComponent, data.spectated_player ~= nil)
                 end
             end
 
@@ -3511,17 +3602,11 @@ ArenaGameplay = {
             local inventory2Comp = EntityGetFirstComponentIncludingDisabled(data.spectator_entity, "Inventory2Component")
 
             if(inventory2Comp ~= nil)then
-                --ComponentSetValue2(inventory2Comp, "mItemHolstered", true)
-                --ComponentSetValue2(inventory2Comp, "mActiveItem", -1)
-                --ComponentSetValue2(inventory2Comp, "mActualActiveItem", -1)
-                --ComponentSetValue2(inventory2Comp, "mForceRefresh", true)
 
                 if(data.spectator_selected_item ~= nil and EntityGetIsAlive(data.spectator_selected_item ))then
                     game_funcs.SetActiveHeldEntity(data.spectator_entity, data.spectator_selected_item, false, false)
-                    ComponentSetValue2(inventory2Comp, "mItemHolstered", true)
                 else
                     data.spectator_selected_item = nil
-                    ComponentSetValue2(inventory2Comp, "mItemHolstered", true)
                     ComponentSetValue2(inventory2Comp, "mActiveItem", -1)
                     ComponentSetValue2(inventory2Comp, "mActualActiveItem", -1)
                 end
@@ -3541,8 +3626,15 @@ ArenaGameplay = {
         end
 
         if(data.upgrade_system ~= nil and not IsPaused())then
-            data.upgrade_system:draw()
+            data.upgrade_system:draw(data.is_spectating)
         end
+
+        if(GameHasFlagRun("update_card_menu_state") and not data.spectator_mode)then
+            print("Sending card list state")
+            networking.send.card_list_state(lobby, data)
+            GameRemoveFlagRun("update_card_menu_state")
+        end
+        
 
         np.SetInventoryCursorEnabled(not data.is_spectating)
         if(data.is_spectating)then
@@ -3665,10 +3757,10 @@ ArenaGameplay = {
                 if(GameHasFlagRun("picked_up_new_heart"))then
                     GameRemoveFlagRun("picked_up_new_heart")
 
-                    if(not steamutils.IsOwner(lobby))then
+                    if(not steam_utils.IsOwner())then
                         networking.send.picked_heart(lobby, true)
                     else
-                        steamutils.AddLobbyFlag(lobby, tostring(steam.user.getSteamID()).."picked_heart")
+                        steamutils.AddLobbyFlag(lobby, tostring(steam_utils.getSteamID()).."picked_heart")
 
                     end
 
@@ -3701,7 +3793,6 @@ ArenaGameplay = {
                 if (inventoryGuiComp ~= nil) then
                     ComponentSetValue2(inventoryGuiComp, "mActive", true)
                     ComponentSetValue2(inventoryGuiComp, "mLastFrameActionsVisible", GameGetFrameNum())
-                    ComponentSetValue2(inventoryGuiComp, "mLastFrameActionsVisible", GameGetFrameNum())
 
                 end
             end
@@ -3709,7 +3800,7 @@ ArenaGameplay = {
         end
 
         if(data.state == "lobby")then
-            if(not IsPaused() and not (data.spectator_mode and data.lobby_spectated_player == nil))then
+            if(not IsPaused() and not (data.spectator_mode and data.spectated_player == nil))then
                 ArenaGameplay.UpdateDummy(lobby, data)
                 for k, v in pairs(data.players) do
                     if (v.entity ~= nil and EntityGetIsAlive(v.entity)) then
@@ -3846,6 +3937,14 @@ ArenaGameplay = {
                         was_wand[v] = true
                         last_edited_times[v] = edited_times
                     end
+                    local material_inventory_comp = EntityGetFirstComponentIncludingDisabled(v, "MaterialInventoryComponent")
+                    if(material_inventory_comp)then
+                        local last_frame_drank = ComponentGetValue2(material_inventory_comp, "last_frame_drank")
+                        if(last_frame_drank == GameGetFrameNum())then
+                            networking.send.item_update(lobby, data, nil, true, false)
+                            networking.send.switch_item(lobby, data, nil, true, false)
+                        end
+                    end
                 end
 
                 for k, v in pairs(last_edited_times)do
@@ -3896,7 +3995,7 @@ ArenaGameplay = {
                 if (data.state == "arena") then
                     networking.send.switch_item(lobby, data)
                 else
-                    networking.send.switch_item(lobby, data, nil, true, true)
+                    networking.send.switch_item(lobby, data, nil, false, true)
                 end
             end
 
@@ -3953,11 +4052,18 @@ ArenaGameplay = {
                 player.Move(0, 0)
                 GameRemoveFlagRun("in_hm")
             end
+
+            if(GameHasFlagRun("prepared_damage") and not GameHasFlagRun("finished_damage"))then
+                -- damage was blocked
+                print("Damage was blocked, sending update")
+                networking.send.health_update(lobby, data, true)
+                GameRemoveFlagRun("prepared_damage")
+            end
         end
 
         if (GameGetFrameNum() % 5 == 0) then
             -- if we are host
-            if (steamutils.IsOwner(lobby)) then
+            if (steam_utils.IsOwner()) then
                 ArenaGameplay.SendGameData(lobby, data)
             end
         end
@@ -4155,7 +4261,7 @@ ArenaGameplay = {
                     local entity_that_shot  = ComponentGetValue2(projectileComponent, "mEntityThatShot")
 
                     if(entity_that_shot == 0)then
-                        --math.randomseed( tonumber(tostring(steam.user.getSteamID())) + ((os.time() + GameGetFrameNum()) / 2))
+                        --math.randomseed( tonumber(tostring(steam_utils.getSteamID())) + ((os.time() + GameGetFrameNum()) / 2))
                         local rand = data.random.range(0, 100000)
                         local rng = math.floor(rand)
                         --GamePrint("Setting RNG: "..tostring(rng))
@@ -4211,80 +4317,51 @@ ArenaGameplay = {
     end,
     OnProjectileFiredPost = function(lobby, data, shooter_id, projectile_id, rng, position_x, position_y, target_x,
                                      target_y, send_message, unknown1, multicast_index, unknown3)
+        
+        local homing_mult = tonumber(GlobalsGetValue("homing_mult", "100")) or 100
 
-
-        --[[local projectileComp = EntityGetFirstComponentIncludingDisabled(projectile_id, "ProjectileComponent")
-        if(projectileComp ~= nil)then
-            local who_shot = ComponentGetValue2(projectileComp, "mWhoShot")
-            --GamePrint("who_shot: "..tostring(who_shot))
-        end]]
-        local homingComponents = EntityGetComponentIncludingDisabled(projectile_id, "HomingComponent")
-
-        local shooter_x, shooter_y = EntityGetTransform(shooter_id)
-
-        if(shooter_id == nil or shooter_x == nil)then
+        if(math.ceil(homing_mult) == 100)then
             return
         end
+
+        local homingComponents = EntityGetComponentIncludingDisabled(projectile_id, "HomingComponent")
 
         if (homingComponents ~= nil) then
             for k, v in pairs(homingComponents) do
                 local target_who_shot = ComponentGetValue2(v, "target_who_shot")
+                
                 if (target_who_shot == false) then
-                    if (EntityHasTag(shooter_id, "client")) then
-                        -- find closest player which isn't us
-                        local closest_player = nil
-                        local distance = 9999999
-                        local clients = EntityGetWithTag("client") or {}
-                        -- add local player to list
-                        if (player.Get()) then
-                            table.insert(clients, player.Get())
-                        end
+                    local coeff = ComponentGetValue2(v, "homing_targeting_coeff")
+                    local velocity_mult = ComponentGetValue2(v, "homing_velocity_multiplier")
+                    local max_turn_rate = ComponentGetValue2(v, "max_turn_rate")
+                    local detect_distance = ComponentGetValue2(v, "detect_distance")
+                    coeff = coeff * (homing_mult / 100)
+                    max_turn_rate = max_turn_rate * (homing_mult / 100)
+                    detect_distance = detect_distance * (homing_mult / 100)
+                    local velocity_mult_diff = 1 - velocity_mult
 
+                    velocity_mult = velocity_mult + (velocity_mult_diff * (1 - (homing_mult / 100)))
 
-                        for k, v in pairs(clients) do
-                            if (v ~= shooter_id) then
-                                if (closest_player == nil) then
-                                    closest_player = v
-                                else
-                                    local x, y = EntityGetTransform(v)
-                                    local dist = math.abs(x - shooter_x) + math.abs(y - shooter_y)
-                                    if (dist < distance) then
-                                        distance = dist
-                                        closest_player = v
-                                    end
-                                end
-                            end
-                        end
+                    ComponentSetValue2(v, "homing_targeting_coeff", coeff)
+                    ComponentSetValue2(v, "homing_velocity_multiplier", velocity_mult)
+                    ComponentSetValue2(v, "max_turn_rate", max_turn_rate)
+                    ComponentSetValue2(v, "detect_distance", detect_distance)
+                elseif(GameHasFlagRun("homing_mult_self"))then
+                    local coeff = ComponentGetValue2(v, "homing_targeting_coeff")
+                    local velocity_mult = ComponentGetValue2(v, "homing_velocity_multiplier")
+                    local max_turn_rate = ComponentGetValue2(v, "max_turn_rate")
+                    local detect_distance = ComponentGetValue2(v, "detect_distance")
+                    coeff = coeff * (homing_mult / 100)
+                    max_turn_rate = max_turn_rate * (homing_mult / 100)
+                    detect_distance = detect_distance * (homing_mult / 100)
+                    local velocity_mult_diff = 1 - velocity_mult
 
-                        if (closest_player) then
-                            ComponentSetValue2(v, "predefined_target", closest_player)
-                            ComponentSetValue2(v, "target_tag", "mortal")
-                        end
-                    else
-                        local closest_player = nil
-                        local distance = 9999999
-                        local clients = EntityGetWithTag("client") or {}
+                    velocity_mult = velocity_mult + (velocity_mult_diff * (1 - (homing_mult / 100)))
 
-                        for k, v in pairs(clients) do
-                            if (v ~= shooter_id) then
-                                if (closest_player == nil) then
-                                    closest_player = v
-                                else
-                                    local x, y = EntityGetTransform(v)
-                                    local dist = math.abs(x - shooter_x) + math.abs(y - shooter_y)
-                                    if (dist < distance) then
-                                        distance = dist
-                                        closest_player = v
-                                    end
-                                end
-                            end
-                        end
-
-                        if (closest_player) then
-                            ComponentSetValue2(v, "predefined_target", closest_player)
-                            ComponentSetValue2(v, "target_tag", "mortal")
-                        end
-                    end
+                    ComponentSetValue2(v, "homing_targeting_coeff", coeff)
+                    ComponentSetValue2(v, "homing_velocity_multiplier", velocity_mult)
+                    ComponentSetValue2(v, "max_turn_rate", max_turn_rate)
+                    ComponentSetValue2(v, "detect_distance", detect_distance)
                 end
             end
         end

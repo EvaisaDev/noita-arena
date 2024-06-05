@@ -15,6 +15,11 @@ function getPixel(img, x, y)
     return img.data[index], img.data[index + 1], img.data[index + 2], img.data[index + 3]
 end
 
+function getPixel2(img, x, y)
+    local index = (y * img.w + x) * 4
+    return {img.data[index], img.data[index + 1], img.data[index + 2], img.data[index + 3]}
+end
+
 
 function loadImage(file)
 	local f = assert(fs.open(file))
