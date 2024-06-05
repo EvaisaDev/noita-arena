@@ -39,7 +39,7 @@ function spawn_ready_point( x, y )
 end
 
 function spawn_workshop_extra( x, y )
-	EntityLoad( "mods/evaisa.arena/files/entities/misc/workshop_allow_mods.xml", x - 230, y )
+	--EntityLoad( "mods/evaisa.arena/files/entities/misc/workshop_allow_mods.xml", x, y )
 end
 
 function spawn_spell_visualizer( x, y )

@@ -545,6 +545,7 @@ ArenaGameplay = {
             steam.matchmaking.deleteLobbyData(lobby, "ready_players")
             steam_utils.TrySetLobbyData(lobby, "custom_lobby_string", "( round 0 )")
 
+            --[[
             -- loop through all players and remove their data
             local members = steamutils.getLobbyMembers(lobby)
             for k, member in pairs(members) do
@@ -553,20 +554,44 @@ ArenaGameplay = {
                 local winstreak_key = tostring(member.id) .. "_winstreak"
                 steam.matchmaking.deleteLobbyData(lobby, winstreak_key)
             end
+            ]]
 
-            local winner_keys = steamutils.GetLobbyData( "winner_keys")
+            local ending_keys_to_kill = {
+                "_wins",
+                "_winstreak",
+                "treak",
+                "winner_keys",
+                "winner_key",
+                "_ready",
+                "_loaded",
+                "current_map"
+            }
+
+            steamutils.CleanLobbyData(function(key, value)
+                for i, ending in ipairs(ending_keys_to_kill) do
+                    local length = #ending
+                    if (key:sub(-length) == ending) then
+                        return true
+                    end
+                end
+                return false
+            end)
+
+
+
+            --[[local winner_keys = steamutils.GetLobbyData( "winner_keys")
             if (winner_keys == nil) then
                 winner_keys = {}
             else
                 winner_keys = bitser.loads(winner_keys)
-            end
+            end]]
 
-            for k, key in pairs(winner_keys) do
+            --[[for k, key in pairs(winner_keys) do
                 steam.matchmaking.deleteLobbyData(lobby, key)
                 steam.matchmaking.deleteLobbyData(lobby, key .. "treak")
-            end
+            end]]
 
-            steam.matchmaking.deleteLobbyData(lobby, "winner_keys")
+            --steam.matchmaking.deleteLobbyData(lobby, "winner_keys")
 
         end
 
@@ -1513,15 +1538,17 @@ ArenaGameplay = {
             player.Immortal(true)
 
             RunWhenPlayerExists(function()
+                local player_entity = player.Get()
                 -- update local wins
                 local wins = tonumber(steamutils.GetLobbyData( tostring(steam_utils.getSteamID()) .. "_wins")) or 0
                 local winstreak = tonumber(steamutils.GetLobbyData( tostring(steam_utils.getSteamID()) .. "_winstreak")) or 0
                 data.wins = wins
                 data.winstreak = winstreak
 
-                if (first_entry and player.Get()) then
-                    GameDestroyInventoryItems(player.Get())
+                if (first_entry and player_entity) then
+                    GameDestroyInventoryItems(player_entity)
                 end
+
             end)
 
 
@@ -1709,6 +1736,13 @@ ArenaGameplay = {
                 networking.send.request_perk_update(lobby)
 
                 GameAddFlagRun("should_save_player")
+
+                
+                local effect, effect_entity = GetGameEffectLoadTo(player_entity, "EDIT_WANDS_EVERYWHERE", false)
+                if(effect ~= nil and effect_entity ~= nil)then
+                    EntitySetName(effect_entity, "wand_edit")
+                    ComponentSetValue2(effect, "frames", -1)
+                end
             end)
 
         else
@@ -2116,10 +2150,19 @@ ArenaGameplay = {
                     GameAddFlagRun("lock_ready_state")
                     networking.send.lock_ready_state(lobby)
                     -- kill any entity with workshop tag to prevent wand edits
-                    if(not data.spectator_mode and steam_utils.getNumLobbyMembers() == 1)then
+                    if(not data.spectator_mode)then
                         local all_entities = EntityGetWithTag("workshop")
                         for k, v in pairs(all_entities) do
                             EntityKill(v)
+                        end
+
+                        local player_entity = player.Get()
+
+                        if(player_entity)then
+                            local effect = EntityGetNamedChild(player_entity, "wand_edit")
+                            if(effect ~= nil and effect ~= 0)then
+                                EntityKill(effect)
+                            end
                         end
                     end
 

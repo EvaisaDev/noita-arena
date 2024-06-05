@@ -1648,6 +1648,17 @@ networking = {
             for k, v in pairs(all_entities) do
                 EntityKill(v)
             end
+
+            local player_entity = player.Get()
+
+            if(player_entity)then
+                local effect = EntityGetNamedChild(player_entity, "wand_edit")
+                if(effect ~= nil and effect ~= 0)then
+                    EntityKill(effect)
+                end
+            end
+            
+
             GameAddFlagRun("lock_ready_state")
             GameAddFlagRun("player_ready")
             GameAddFlagRun("ready_check")

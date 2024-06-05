@@ -351,6 +351,19 @@ local function TryUpdateData(lobby)
     
 end
 
+function EntityGetNamedChild( entity_id, name )
+    local children = EntityGetAllChildren( entity_id ) or {};
+	if children ~= nil then
+		for index,child_entity in pairs( children ) do
+			local child_entity_name = EntityGetName( child_entity );
+			
+			if child_entity_name == name then
+				return child_entity;
+            end
+        end
+    end
+end
+
 local function SendLobbyData(lobby)
 
     if(sorted_perk_list_ids)then
@@ -414,7 +427,7 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 167,
+    version = 168,
     required_online_version = 357,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
