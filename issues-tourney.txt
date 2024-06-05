@@ -1,3 +1,4 @@
+TO INVESTIGATE:
 - inventory flashes when players edit in spectator mode (cannot fix)
 
 - spectators load shop items into the arena sometimes
@@ -5,7 +6,6 @@
 - Tab button locks up sometimes for spectators occasionally(?
  - Probably related to spectator entity dying bug
 
-- Swapper desyncs and teleports you to players
 - shops desync with extra item(?
 
 - swapping players sometimes causes clients to drop their spells?? (this may have been the spectator dropping the spells.)
@@ -47,3 +47,4 @@ CHANGES:
 - Cards are serialized with the player, so when you re-join and didn't pick a card you get to pick one.
 - Fixed alt-tabbing making items disappear on Linux (and maybe Windows)
 - Fixed flasks turning white for spectators when player drinks from it.
+- Swapper now only teleports players if it hit on the target side.

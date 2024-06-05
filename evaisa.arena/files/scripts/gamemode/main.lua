@@ -49,25 +49,6 @@ dofile_once("mods/evaisa.arena/content/data.lua")
 
 local applied_seed = 0
 
---[[
-np.CrossCallAdd("ProjectileHit", function(entity_id, shooter_id, do_request)
-    if(data ~= nil and data.projectile_seeds[entity_id] ~= nil)then
-        local seed = data.projectile_seeds[entity_id]
-        if(data.projectiles_hit == nil)then
-            data.projectiles_hit = {}
-        end
-        data.projectiles_hit[seed] = true
-
-        local user = gameplay_handler.FindUser(lobby_code, shooter_id)
-
-        if(do_request)then
-            networking.send.check_projectile_hit(user, seed)
-        end
-    end
-end)
-]]
-
-
 perks_sorted = {}
 perk_enum = {}
 all_perks = {}
@@ -125,6 +106,27 @@ local player_mods = "";
 function RunWhenPlayerExists(func)
     table.insert(playerRunQueue, func)
 end
+
+np.CrossCallAdd("Swap", function(shooter_id)
+    if(data ~= nil and lobby_code)then
+        local user = gameplay_handler.FindUser(lobby_code, EntityGetName(shooter_id))
+
+        local shooter_x, shooter_y = EntityGetTransform(shooter_id)
+
+        local player_entity = player.Get()
+
+        if(player_entity and user)then
+            local x, y = EntityGetTransform(player_entity)
+
+            EntityLoad("data/entities/particles/teleportation_source.xml", shooter_x, shooter_y)
+            EntityLoad("data/entities/particles/teleportation_target.xml", x, y)
+
+            networking.send.swap_positions(user, x, y)
+            EntityApplyTransform(player_entity, shooter_x, shooter_y)
+        end
+    end
+end)
+
 
 lobby_member_names = {}
 
@@ -1796,9 +1798,9 @@ ArenaMode = {
         GlobalsSetValue("holyMountainCount", "0")
         GameAddFlagRun("player_unloaded")
 
-        local player = player.Get()
-        if (player ~= nil) then
-            EntityKill(player)
+        local player_ent = player.Get()
+        if (player_ent ~= nil) then
+            EntityKill(player_ent)
         end
         
         print("Game mode deterministic? "..tostring(GameIsModeFullyDeterministic()))

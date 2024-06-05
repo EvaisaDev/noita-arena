@@ -26,10 +26,28 @@ function damage_about_to_be_received( damage, x, y, entity_thats_responsible, cr
 
     local projectile = damage_details.projectile_thats_responsible
 
-    --[[if(projectile ~= nil and EntityHasTag(projectile, "requires_handshake"))then
-        damage = 0
-        CrossCall("ProjectileHit", projectile, entity_thats_responsible, true)
-    end]]
+    local skip_block = false
+
+    local special_projectile_handlers = {
+        ["data/entities/projectiles/deck/swapper.xml"] = function()
+            damage = 0
+            skip_block = true
+            CrossCall("Swap", entity_thats_responsible)
+        end
+    }
+
+    if(projectile ~= nil)then
+        for i, v in ipairs(EntityGetComponent(projectile, "VariableStorageComponent") or {})do
+            local name = ComponentGetValue2(v, "name")
+            local value_string = ComponentGetValue2(v, "value_string")
+            if(name == "projectile_file")then
+                local handler = special_projectile_handlers[value_string]
+                if(handler)then
+                    handler()
+                end
+            end
+        end
+    end
 
 
     if(GameHasFlagRun("smash_mode"))then
@@ -62,6 +80,10 @@ function damage_about_to_be_received( damage, x, y, entity_thats_responsible, cr
 
     GameAddFlagRun("prepared_damage")
     GameRemoveFlagRun("finished_damage")
+
+    if(skip_block)then
+        GameAddFlagRun("finished_damage")
+    end
 
 
    

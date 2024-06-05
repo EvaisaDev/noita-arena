@@ -2357,6 +2357,37 @@ networking = {
                 print("Setting selected index to "..tostring(selected))
             end
         end,
+        swap_positions = function(lobby, message, user, data)
+            if(data.state ~= "arena")then
+                return
+            end
+            if(data.spectator_mode)then
+                return
+            end
+
+            local target = data.players[tostring(user)]
+            if(target == nil)then
+                return
+            end
+
+            local target_entity = target.entity
+            if(target_entity == nil or not EntityGetIsAlive(target_entity))then
+                return
+            end
+
+            local target_x, target_y = message[1], message[2]
+            local player_entity = player_helper.Get()
+            if(player_entity == nil or not EntityGetIsAlive(player_entity))then
+                return
+            end
+
+            local x, y = EntityGetTransform(player_entity)
+
+            EntityLoad("data/entities/particles/teleportation_source.xml", x, y)
+            EntityLoad("data/entities/particles/teleportation_target.xml", target_x, target_y)
+
+            EntityApplyTransform(player_entity, target_x, target_y)
+        end,
     },
     send = {
         handshake = function(lobby)
@@ -3196,6 +3227,9 @@ networking = {
             else
                 steamutils.send("card_list_state", {GameHasFlagRun("card_menu_open"), upgrades_system.selected_index}, steamutils.messageTypes.Spectators, lobby, true, true)
             end
+        end,
+        swap_positions = function(user, x, y)
+            steamutils.sendToPlayer("swap_positions", {x, y}, user, true)
         end,
     },
 }
