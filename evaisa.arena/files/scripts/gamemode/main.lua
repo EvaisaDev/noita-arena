@@ -421,6 +421,10 @@ local function SendLobbyData(lobby)
     steam.matchmaking.sendLobbyChatMsg(lobby, "refresh")
 end
 
+function DestroyDataTable()
+    data = nil
+end
+
 
 np.SetGameModeDeterministic(true)
 
@@ -428,7 +432,7 @@ ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
     version = 168,
-    required_online_version = 357,
+    required_online_version = 358,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
     end,
@@ -1867,7 +1871,7 @@ ArenaMode = {
         delay.reset()
         wait.reset()
         if (data ~= nil) then
-            ArenaGameplay.GracefulReset(lobby, data)
+            ArenaGameplay.GracefulReset(lobby, data) 
         end
 
         ArenaMode.refresh(lobby)
@@ -1878,6 +1882,7 @@ ArenaMode = {
 
         steamutils.RemoveLocalLobbyData(lobby, "player_data")
         steamutils.RemoveLocalLobbyData(lobby, "reroll_count")
+        steamutils.RemoveLocalLobbyData(lobby, "match_data")
 
         BiomeMapLoad_KeepPlayer("mods/evaisa.arena/files/scripts/world/map_arena.lua")
     end,
@@ -1912,15 +1917,22 @@ ArenaMode = {
 
         GameRemoveFlagRun("DeserializedHolyMountain")
         
+        gameplay_handler.ResetEverything(lobby)
+
         ArenaMode.refresh(lobby)
 
         data = data_holder:New()
         data.state = "lobby"
         data.spectator_mode = steamutils.IsSpectator(lobby)
+
+        if(data.frame_spawned ~= nil)then
+            print("NEW DATA TABLE, SPAWNED FRAME: " .. tostring(data.frame_spawned))
+            print("CURR FRAME: " .. tostring(GameGetFrameNum()))
+            print("WINS: " .. tostring(data.wins))
+        end
+
         data:DefinePlayers(lobby)
 
-        
-        gameplay_handler.ResetEverything(lobby)
 
         if (not was_in_progress or data.spectator_mode) then
             steamutils.RemoveLocalLobbyData(lobby, "player_data")
@@ -2066,10 +2078,6 @@ ArenaMode = {
 
         --delay.update()
         wait.update()
-
-        if (data == nil) then
-            return
-        end
 
         if(steam_utils.IsOwner() and data.last_state ~= data.state)then
             data.last_state = data.state

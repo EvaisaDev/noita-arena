@@ -5,6 +5,7 @@ local data = {}
 
 function data:New()
     local o = {
+        frame_spawned = GameGetFrameNum(),
         players = {},
         tweens = {},
         projectile_seeds = {},

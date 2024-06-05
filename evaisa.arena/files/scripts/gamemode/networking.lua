@@ -1644,11 +1644,12 @@ networking = {
             end
             
             -- kill any entity with workshop tag to prevent wand edits
-            local all_entities = EntityGetWithTag("workshop")
+            --[[local all_entities = EntityGetWithTag("workshop")
             for k, v in pairs(all_entities) do
                 EntityKill(v)
-            end
+            end]]
 
+            -- no more wand editting
             local player_entity = player.Get()
 
             if(player_entity)then

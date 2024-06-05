@@ -540,9 +540,9 @@ ArenaGameplay = {
 
 
         if (steam_utils.IsOwner()) then
-            steam.matchmaking.deleteLobbyData(lobby, "holyMountainCount")
-            steam.matchmaking.deleteLobbyData(lobby, "total_gold")
-            steam.matchmaking.deleteLobbyData(lobby, "ready_players")
+            steam_utils.DeleteLobbyData(lobby, "holyMountainCount")
+            steam_utils.DeleteLobbyData(lobby, "total_gold")
+            steam_utils.DeleteLobbyData(lobby, "ready_players")
             steam_utils.TrySetLobbyData(lobby, "custom_lobby_string", "( round 0 )")
 
             --[[
@@ -550,11 +550,13 @@ ArenaGameplay = {
             local members = steamutils.getLobbyMembers(lobby)
             for k, member in pairs(members) do
                 local winner_key = tostring(member.id) .. "_wins"
-                steam.matchmaking.deleteLobbyData(lobby, winner_key)
+                steam_utils.DeleteLobbyData(lobby, winner_key)
                 local winstreak_key = tostring(member.id) .. "_winstreak"
-                steam.matchmaking.deleteLobbyData(lobby, winstreak_key)
+                steam_utils.DeleteLobbyData(lobby, winstreak_key)
             end
             ]]
+
+            print("Resetting player data!!!")
 
             local ending_keys_to_kill = {
                 "_wins",
@@ -568,6 +570,7 @@ ArenaGameplay = {
             }
 
             steamutils.CleanLobbyData(function(key, value)
+                print("Checking key: " .. key)
                 for i, ending in ipairs(ending_keys_to_kill) do
                     local length = #ending
                     if (key:sub(-length) == ending) then
@@ -577,6 +580,7 @@ ArenaGameplay = {
                 return false
             end)
 
+            DestroyDataTable()
 
 
             --[[local winner_keys = steamutils.GetLobbyData( "winner_keys")
@@ -587,11 +591,11 @@ ArenaGameplay = {
             end]]
 
             --[[for k, key in pairs(winner_keys) do
-                steam.matchmaking.deleteLobbyData(lobby, key)
-                steam.matchmaking.deleteLobbyData(lobby, key .. "treak")
+                steam_utils.DeleteLobbyData(lobby, key)
+                steam_utils.DeleteLobbyData(lobby, key .. "treak")
             end]]
 
-            --steam.matchmaking.deleteLobbyData(lobby, "winner_keys")
+            --steam_utils.DeleteLobbyData(lobby, "winner_keys")
 
         end
 
@@ -1056,8 +1060,8 @@ ArenaGameplay = {
             return data.players[tostring(user)].wins or 0
         end
         -- if is localplayer
-        if(user == steam_utils.getSteamID())then
-            return data.wins or 0
+        if(user == steam_utils.getSteamID() and data.wins ~= nil)then
+            return data.wins
         end
 
         local wins = tonumber(steamutils.GetLobbyData( tostring(user) .. "_wins")) or 0
@@ -1074,10 +1078,18 @@ ArenaGameplay = {
         if(data.players[tostring(user)] ~= nil and data.players[tostring(user)].winstreak ~= nil)then
             return data.players[tostring(user)].winstreak or 0
         end
+        -- if is localplayer
+        if(user == steam_utils.getSteamID() and data.winstreak ~= nil)then
+            return data.winstreak
+        end
+
         local winstreak = tonumber(steamutils.GetLobbyData( tostring(user) .. "_winstreak")) or 0
         if(data.players[tostring(user)] ~= nil)then 
             data.players[tostring(user)].winstreak = winstreak
             print("Updated winstreak for " .. tostring(user) .. " to " .. tostring(winstreak))
+        elseif(user == steam_utils.getSteamID())then
+            data.winstreak = winstreak
+            print("Updated local winstreak to " .. tostring(winstreak))
         end
         return winstreak
     end,
@@ -2046,7 +2058,7 @@ ArenaGameplay = {
             if(not ArenaGameplay.IsArenaLoaded(lobby, data))then
                 current_map = nil
                 if(steam_utils.IsOwner())then
-                    steam.matchmaking.deleteLobbyData(lobby, "current_map")
+                    steam_utils.DeleteLobbyData(lobby, "current_map")
                 end
             end
 
@@ -2151,10 +2163,10 @@ ArenaGameplay = {
                     networking.send.lock_ready_state(lobby)
                     -- kill any entity with workshop tag to prevent wand edits
                     if(not data.spectator_mode)then
-                        local all_entities = EntityGetWithTag("workshop")
+                        --[[local all_entities = EntityGetWithTag("workshop")
                         for k, v in pairs(all_entities) do
                             EntityKill(v)
-                        end
+                        end]]
 
                         local player_entity = player.Get()
 
@@ -3535,7 +3547,7 @@ ArenaGameplay = {
 
                 --[[if (steam_utils.IsOwner()) then
                     local winner_key = tostring(k) .. "_wins"
-                    steam.matchmaking.deleteLobbyData(lobby, winner_key)
+                    steam_utils.DeleteLobbyData(lobby, winner_key)
                 end
                 ]]
                 lobby_member_names[k] = nil
