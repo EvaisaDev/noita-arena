@@ -6,10 +6,6 @@ dofile("mods/evaisa.arena/files/scripts/gamemode/misc/seed_gen.lua")
 
 
 function generate_shop_item( x, y, cheap_item, biomeid_, is_stealable, sync )
-	
-	local seed_x, seed_y = get_new_seed( x, y, GameHasFlagRun("shop_sync") )
-	SetRandomSeed( seed_x, seed_y )
-
 
 	local biomes =
 	{
@@ -187,9 +183,6 @@ end
 ------------ generate shop wand -----------------------------------------------
 
 function generate_shop_wand( x, y, cheap_item, biomeid_ )
-	local seed_x, seed_y = get_new_seed( x, y, GameHasFlagRun("shop_sync") )
-	SetRandomSeed( seed_x, seed_y )
-
 	local biomes =
 	{
 		[1] = 0,

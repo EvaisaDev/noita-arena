@@ -86,8 +86,8 @@ function RandomAction(max_level, x, y)
             print("new seed: "..tostring(seed))
         end]]
 
-        local seed_x, seed_y = get_new_seed( x, y, GameHasFlagRun("shop_sync") )
-        SetRandomSeed( seed_x, seed_y )
+        --local seed_x, seed_y = get_new_seed( x, y, GameHasFlagRun("shop_sync") )
+        --SetRandomSeed( seed_x, seed_y )
     --end
 
     local spell_list = generate_spell_list()

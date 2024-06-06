@@ -91,9 +91,9 @@ function spawn_all_shopitems( x, y )
 
 	--local rng = dofile_once("mods/evaisa.arena/lib/rng.lua")
 
-	local a, b, c, d, e, f = GameGetDateAndTimeLocal()
-	
 	local random_seed_x, random_seed_y = get_new_seed(x, y, GameHasFlagRun("shop_sync"))
+
+	print("Shop seed: "..tostring(random_seed_x)..", "..tostring(random_seed_y))
 
 	SetRandomSeed( random_seed_x, random_seed_y )
 
@@ -127,11 +127,6 @@ function spawn_all_shopitems( x, y )
 	
 	print("Generated shop items for mountain #"..tostring(rounds))
 
-	local seed_x, seed_y = (x * 3256) + rounds * 765 + (GameGetFrameNum() / 30), (y * 5326) + rounds * 123 + (GameGetFrameNum() / 20)
-	if(GameHasFlagRun("shop_sync"))then
-        seed_x, seed_y = (x * 3256) + rounds * 765, (y * 5326) + rounds * 123
-	end
-	SetRandomSeed( seed_x, seed_y )
 	local count = tonumber( GlobalsGetValue( "TEMPLE_SHOP_ITEM_COUNT", "5" ) )
 	local width = 132
 	local item_width = width / count

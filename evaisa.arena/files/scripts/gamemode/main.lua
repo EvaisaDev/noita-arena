@@ -127,6 +127,11 @@ np.CrossCallAdd("Swap", function(shooter_id)
     end
 end)
 
+local oldSetWorldSeed = SetWorldSeed
+SetWorldSeed = function(seed)
+    GlobalsSetValue("world_seed", tostring(seed))
+    oldSetWorldSeed(seed)
+end
 
 lobby_member_names = {}
 
@@ -431,7 +436,7 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 168,
+    version = 169,
     required_online_version = 358,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
@@ -1955,6 +1960,8 @@ ArenaMode = {
 
         GameAddFlagRun("player_unloaded")
 
+        GlobalsSetValue("original_seed", tostring(applied_seed))
+
         SetWorldSeed(applied_seed)
 
 
@@ -2157,7 +2164,7 @@ ArenaMode = {
             end
         end
 
-        --[[if(input:WasKeyPressed("f10"))then
+        if(input:WasKeyPressed("f10"))then
             if(steam_utils.IsOwner())then
                 ArenaGameplay.AddRound(lobby)
                 delay.new(5, function()
@@ -2165,7 +2172,8 @@ ArenaMode = {
                     networking.send.load_lobby(lobby)
                 end)
             end
-        elseif(input:WasKeyPressed("f9"))then
+        end
+        --[[elseif(input:WasKeyPressed("f9"))then
             EntityKill(GameGetWorldStateEntity())
         elseif(input:WasKeyPressed("f6"))then
             local player_entity = EntityGetWithTag("player_unit")[1]

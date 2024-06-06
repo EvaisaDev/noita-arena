@@ -535,6 +535,8 @@ ArenaGameplay = {
         GameRemoveFlagRun("arena_first_death")
         GlobalsSetValue("smash_knockback", "1" )
         GlobalsSetValue("smash_knockback_dummy", "1")
+        GlobalsSetValue( "RESPAWN_COUNT", "0" )
+        GlobalsSetValue( "EXTRA_RESPAWN_COUNT", "0" )
 
         print("Resetting everything!!!")
 
@@ -1198,7 +1200,7 @@ ArenaGameplay = {
             print("Win condition: "..tostring(win_condition_user))
 
             if(win_condition_user == nil or not GameHasFlagRun("win_condition_end_match"))then
-                local new_seed = GameGetFrameNum() + tonumber(GlobalsGetValue("world_seed", "0"));
+                local new_seed = tonumber(GlobalsGetValue("original_seed", "1"))
 
                 networking.send.update_world_seed(lobby, new_seed)
                 SetWorldSeed(new_seed)
@@ -1230,7 +1232,7 @@ ArenaGameplay = {
 
             networking.send.round_end(lobby, nil)
             GamePrintImportant(GameTextGetTranslatedOrNot("$arena_tie_text"), GameTextGetTranslatedOrNot("$arena_round_end_text"))
-            local new_seed = GameGetFrameNum() + tonumber(GlobalsGetValue("world_seed", "0"));
+            local new_seed = tonumber(GlobalsGetValue("original_seed", "1"))
 
             networking.send.update_world_seed(lobby, new_seed)
             SetWorldSeed(new_seed)
@@ -2070,10 +2072,11 @@ ArenaGameplay = {
                 end
 
                 if(steam_utils.IsOwner())then
-                    local new_seed = GameGetFrameNum() + tonumber(GlobalsGetValue("world_seed", "0"));
+                    local new_seed = ((tonumber(GlobalsGetValue("original_seed", "1")) + (GameGetFrameNum() * 12)) % 4294967294)
 
                     networking.send.update_world_seed(lobby, new_seed)
                     SetWorldSeed(new_seed)
+    
                 end
 
                 ArenaGameplay.LoadArena(lobby, data, true)
@@ -2152,7 +2155,11 @@ ArenaGameplay = {
 
                 if(ArenaLoadCountdown == nil)then
 
-                    local new_seed = GameGetFrameNum() + tonumber(GlobalsGetValue("world_seed", "0"));
+                    local rounds = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0
+                    local new_seed = ((tonumber(GlobalsGetValue("original_seed", "1")) + ((rounds + 1) * 1225)) % 4294967294)
+
+
+                    print("New world seed: "..tostring(new_seed))
 
                     networking.send.update_world_seed(lobby, new_seed)
                     SetWorldSeed(new_seed)
