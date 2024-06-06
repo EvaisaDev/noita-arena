@@ -1931,6 +1931,7 @@ ArenaMode = {
         if (not was_in_progress or data.spectator_mode) then
             steamutils.RemoveLocalLobbyData(lobby, "player_data")
             steamutils.RemoveLocalLobbyData(lobby, "reroll_count")
+            steamutils.RemoveLocalLobbyData(lobby, "match_data")
         else
             local unique_game_id_server = steam.matchmaking.getLobbyData(lobby, "unique_game_id") or "0"
             local unique_game_id_client = steamutils.GetLocalLobbyData(lobby, "unique_game_id") or "1523523"
@@ -1940,9 +1941,11 @@ ArenaMode = {
                 GlobalsSetValue("TEMPLE_PERK_REROLL_COUNT", "0")
                 steamutils.RemoveLocalLobbyData(lobby, "player_data")
                 steamutils.RemoveLocalLobbyData(lobby, "reroll_count")
-            else
-                gameplay_handler.GetGameData(lobby, data)
+                steamutils.RemoveLocalLobbyData(lobby, "match_data")
             end
+            gameplay_handler.GetGameData(lobby, data)
+
+            
         end
 
 
