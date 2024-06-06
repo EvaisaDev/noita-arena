@@ -1655,15 +1655,16 @@ ArenaGameplay = {
         end
 
         --GamePrint("You were granted " ..tostring(extra_gold) .. " gold for this round. (Rounds: " .. tostring(rounds) .. ")")
-        GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_round_gold"), tostring(extra_gold), tostring(rounds)))
+
 
         if(not data.spectator_mode)then
             arena_log:print("Loaded from data: " .. tostring(data.client.player_loaded_from_data))
 
             RunWhenPlayerExists(function()
-                if (not data.client.player_loaded_from_data) then
+                if (not data.client.player_loaded_from_data and not GameHasFlagRun("DeserializedHolyMountain")) then
                     arena_log:print("Giving gold: " .. tostring(extra_gold))
                     player.GiveGold(extra_gold)
+                    GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_round_gold"), tostring(extra_gold), tostring(rounds)))
                 end
             end)
 
