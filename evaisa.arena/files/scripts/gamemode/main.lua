@@ -8,6 +8,7 @@ if(not debugging)then
 	arena_log.enabled = false
 end
 
+dofile("mods/evaisa.arena/files/scripts/utilities/utils.lua")
 
 mp_helpers = dofile("mods/evaisa.mp/files/scripts/helpers.lua")
 local steamutils = dofile_once("mods/evaisa.mp/lib/steamutils.lua")
@@ -356,18 +357,6 @@ local function TryUpdateData(lobby)
     
 end
 
-function EntityGetNamedChild( entity_id, name )
-    local children = EntityGetAllChildren( entity_id ) or {};
-	if children ~= nil then
-		for index,child_entity in pairs( children ) do
-			local child_entity_name = EntityGetName( child_entity );
-			
-			if child_entity_name == name then
-				return child_entity;
-            end
-        end
-    end
-end
 
 local function SendLobbyData(lobby)
 
@@ -2166,6 +2155,7 @@ ArenaMode = {
 
         if(input:WasKeyPressed("f10"))then
             if(steam_utils.IsOwner())then
+                steamutils.RemoveLocalLobbyData(lobby, "match_data")
                 ArenaGameplay.AddRound(lobby)
                 delay.new(5, function()
                     ArenaGameplay.LoadLobby(lobby, data, false)
