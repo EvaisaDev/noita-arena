@@ -1751,6 +1751,8 @@ ArenaGameplay = {
 
                 GameAddFlagRun("should_save_player")
 
+                GameRemoveFlagRun("DeserializedHolyMountain")
+
                 
                 local effect, effect_entity = GetGameEffectLoadTo(player_entity, "EDIT_WANDS_EVERYWHERE", false)
                 if(effect ~= nil and effect_entity ~= nil)then

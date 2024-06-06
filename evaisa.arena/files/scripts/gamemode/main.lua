@@ -2155,7 +2155,7 @@ ArenaMode = {
 
         if(input:WasKeyPressed("f10"))then
             if(steam_utils.IsOwner())then
-                steamutils.RemoveLocalLobbyData(lobby, "match_data")
+                GameRemoveFlagRun("DeserializedHolyMountain")
                 ArenaGameplay.AddRound(lobby)
                 delay.new(5, function()
                     ArenaGameplay.LoadLobby(lobby, data, false)
