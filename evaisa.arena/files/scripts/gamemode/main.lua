@@ -2156,7 +2156,7 @@ ArenaMode = {
             end
         end
 
-        if(input:WasKeyPressed("f10"))then
+        --[[if(input:WasKeyPressed("f10"))then
             if(steam_utils.IsOwner())then
                 GameRemoveFlagRun("DeserializedHolyMountain")
                 ArenaGameplay.AddRound(lobby)
@@ -2165,7 +2165,7 @@ ArenaMode = {
                     networking.send.load_lobby(lobby)
                 end)
             end
-        end
+        end]]
         --[[elseif(input:WasKeyPressed("f9"))then
             EntityKill(GameGetWorldStateEntity())
         elseif(input:WasKeyPressed("f6"))then
