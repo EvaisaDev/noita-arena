@@ -523,6 +523,15 @@ skins.init = function()
         local previous_name = self.selected_skin.name
         self.selected_skin.name = GuiTextInput(self.gui, new_id(), 0, 0, self.selected_skin.name, 80, 16)
 
+        local _, _, hovered = GuiGetPreviousWidgetInfo(self.gui)
+
+        if(hovered)then
+            GameAddFlagRun("wardrobe_locked_2")
+        else
+            GameRemoveFlagRun("wardrobe_locked_2")
+        end
+
+
         if(previous_name ~= self.selected_skin.name)then
             self.selected_skin.path = nil
         end

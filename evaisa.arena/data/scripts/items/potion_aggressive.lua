@@ -1,6 +1,6 @@
- dofile_once("data/scripts/lib/utilities.lua")
+dofile_once("data/scripts/lib/utilities.lua")
 
-potions = 
+flask_materials = 
 {
 	{
 		material="lava",
@@ -69,7 +69,10 @@ function init(entity_id)
 	local seed_x, seed_y = get_new_seed( x, y, true )
 	SetRandomSeed(seed_x, seed_y)
 
-	local potion_material = random_from_weighted_table(materials)
+	local item = random_from_weighted_table(flask_materials, function(item)
+		return GameHasFlagRun("material_blacklist_"..item.material)
+	end)
+	local potion_material = item.material
 
 	AddMaterialInventoryMaterial(entity_id, potion_material, 1000)
 end

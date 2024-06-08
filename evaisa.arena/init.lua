@@ -19,12 +19,12 @@ ModTextFileSetContent("data/shaders/post_final.frag", post_final)
 ModMaterialsFileAdd("mods/evaisa.arena/files/materials.xml")
 ModMagicNumbersFileAdd("mods/evaisa.arena/files/magic.xml")
 ModLuaFileAppend("data/scripts/gun/procedural/gun_procedural.lua", "mods/evaisa.arena/files/scripts/append/gun_procedural.lua")
+ModLuaFileAppend("data/scripts/gun/procedural/gun_procedural_better.lua", "mods/evaisa.arena/files/scripts/append/gun_procedural.lua")
 ModLuaFileAppend("data/scripts/gun/gun.lua", "mods/evaisa.arena/files/scripts/append/gun.lua")
 ModLuaFileAppend("data/scripts/perks/perk_list.lua", "mods/evaisa.arena/files/scripts/append/perk_fix.lua")
 ModLuaFileAppend("data/scripts/perks/perk.lua", "mods/evaisa.arena/files/scripts/append/perk.lua")
 ModLuaFileAppend("data/scripts/gun/gun_actions.lua", "mods/evaisa.arena/files/scripts/append/action_fix.lua")
 ModLuaFileAppend("data/scripts/magic/fungal_shift.lua", "mods/evaisa.arena/files/scripts/append/fungal_shift.lua")
-ModLuaFileAppend("data/scripts/item_spawnlists.lua", "mods/evaisa.arena/files/scripts/append/custom_item_spawns.lua")
 ModLuaFileAppend("data/scripts/perks/perk_reroll.lua", "mods/evaisa.arena/files/scripts/append/perk_reroll.lua")
 
 --[[

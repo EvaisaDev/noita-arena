@@ -50,7 +50,7 @@ end
 function spawn_hp( x, y )
 
 	GameAddFlagRun("in_hm")
-    if(not GameHasFlagRun("DeserializedHolyMountain"))then
+    if(not GameHasFlagRun("DeserializedHolyMountain") and not GameHasFlagRun("instant_health"))then
 		local hp = EntityLoad( "mods/evaisa.arena/files/entities/misc/heart_fullhp.xml", x, y )
 
 		if(not EntityHasTag(hp, "synced_once"))then

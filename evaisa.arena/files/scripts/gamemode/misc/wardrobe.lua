@@ -17,6 +17,8 @@ local x, y = EntityGetTransform(entity)
 local px, py = EntityGetTransform(player)
 
 if(math.abs(x - px) > max_distance or math.abs(y - py) > max_distance)then
+    GameRemoveFlagRun("wardrobe_locked")
+    GameRemoveFlagRun("wardrobe_locked_2")
     GameRemoveFlagRun("wardrobe_open")
     GameRemoveFlagRun("chat_bind_disabled")
 end
@@ -28,6 +30,10 @@ else
 end
 
 function interacting( entity_who_interacted, entity_interacted, interactable_name )
+
+    if(GameHasFlagRun("wardrobe_locked") or GameHasFlagRun("wardrobe_locked_2"))then
+        return
+    end
 
     if(GameHasFlagRun("wardrobe_open"))then
         if(GameHasFlagRun("no_wardrobe_close"))then

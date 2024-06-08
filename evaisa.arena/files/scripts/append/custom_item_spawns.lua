@@ -1,4 +1,4 @@
-local function register_item(listname, weight, entity, offset) -- use this to register an item in spawn table
+local function register_item(weight, entity, offset) -- use this to register an item in spawn table
     if ( type( listname ) == "string" ) then
         local newmin = spawnlists[listname].rnd_max + 1
         local newmax = newmin + weight

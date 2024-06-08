@@ -3,7 +3,7 @@
 -- NOTE( Petri ): 
 -- There is a mods/nightmare potion.lua which overwrites this one.
 
-local materials = {
+flask_materials = {
 	-- Standard Materials (75% chance)
 	{ material = "sand", weight = 7.5 },
 	{ material = "soil", weight = 7.5 },
@@ -32,7 +32,10 @@ function init(entity_id)
 	local seed_x, seed_y = get_new_seed( x, y, GameHasFlagRun("shop_sync") )
 	SetRandomSeed(seed_x, seed_y)
 
-	local potion_material = random_from_weighted_table(materials)
+	local item = random_from_weighted_table(flask_materials, function(item)
+		return GameHasFlagRun("material_blacklist_"..item.material)
+	end)
+	local potion_material = item.material
 
 	local total_capacity = tonumber(GlobalsGetValue("EXTRA_POTION_CAPACITY_LEVEL", "1000")) or 1000
 	if total_capacity > 1000 then

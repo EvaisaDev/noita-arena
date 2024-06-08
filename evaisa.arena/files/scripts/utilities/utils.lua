@@ -1,23 +1,32 @@
 -- Function to randomly select material from a weighted list with special handlers
-function random_from_weighted_table(weighted_table)
+function random_from_weighted_table(weighted_table, filter_func)
+
+	if not filter_func then
+		filter_func = function(item) return false end
+	end
+
 	-- Check for any handler that forces selection
 	for _, item in ipairs(weighted_table) do
-		if item.handler and item.handler() then
-			return item.material
+		if not filter_func(item) and item.handler and item.handler() then
+			return item
 		end
 	end
 
 	-- Calculate total weight for normal selection
 	local total_weight = 0
 	for _, item in ipairs(weighted_table) do
-		total_weight = total_weight + item.weight
+		if( not filter_func(item) )then
+			total_weight = total_weight + item.weight
+		end
 	end
 
 	local random_weight = Random(1, total_weight * 1000000) / 1000000
 	for _, item in ipairs(weighted_table) do
-		random_weight = random_weight - item.weight
-		if random_weight <= 0 then
-			return item.material
+		if( not filter_func(item) )then
+			random_weight = random_weight - item.weight
+			if random_weight <= 0 then
+				return item
+			end
 		end
 	end
 end

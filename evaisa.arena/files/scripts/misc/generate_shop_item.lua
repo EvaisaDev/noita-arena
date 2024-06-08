@@ -74,9 +74,17 @@ function generate_shop_item( x, y, cheap_item, biomeid_, is_stealable, sync )
 
 	cardcost = 0
 
+	local scaling_type = GlobalsGetValue("gold_scaling_type", "none")
+
 	for i,thisitem in ipairs( actions ) do
 		if ( string.lower( thisitem.id ) == string.lower( item ) ) then
 			price = math.max(math.floor( ( (thisitem.price * 0.30) + (70 * biomeid) ) / 10 ) * 10, 10)
+
+			if(scaling_type == "none")then
+				price = math.max(math.floor( ( (thisitem.price * 0.50) ) / 10 ) * 10, 10)
+			end
+
+
 			cardcost = price
 			
 			if ( thisitem.spawn_requires_flag ~= nil ) then
@@ -262,6 +270,12 @@ function generate_shop_wand( x, y, cheap_item, biomeid_ )
 	biomeid = (0.5 * biomeid) + ( 0.5 * biomeid * biomeid )
 	local wandcost = ( 50 + biomeid * 210 ) + ( Random( -15, 15 ) * 10 )
 
+	local scaling_type = GlobalsGetValue("gold_scaling_type", "none")
+
+	if(scaling_type == "none")then
+		wandcost = 260 + (Random( -15, 15 ) * 10)
+	end
+
 	if( cheap_item ) then
 		wandcost = 0.5 * wandcost
 	end
@@ -334,7 +348,7 @@ function generate_shop_potion( x, y, biome_id )
 
 	local offsetx = 6
 
-	local eid = spawn_from_list("potion_spawnlist", x, y)
+	local eid = spawn_from_list("potion_spawnlist", x, y, GameHasFlagRun("shop_sync"))
 
 	print(tostring(eid))
 
@@ -348,6 +362,12 @@ function generate_shop_potion( x, y, biome_id )
 	end
 
 	local itemcost = math.max(math.floor( ( (Random(150, 400) * 0.30) + (70 * biome_id) ) / 10 ) * 10, 10)
+
+	local scaling_type = GlobalsGetValue("gold_scaling_type", "none")
+
+	if(scaling_type == "none")then
+		itemcost = math.max(math.floor( ( (Random(150, 400) * 0.30) ) / 10 ) * 10, 10)
+	end
 
 	--itemcost = math.floor( itemcost * 0.7 )
 

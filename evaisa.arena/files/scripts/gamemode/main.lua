@@ -2,6 +2,7 @@ arena_log = logger.init("noita-arena.log")
 perk_log = logger.init("noita-arena-perk.log")
 perk_info_saved = logger.init("perk_info_saved.lua")
 perk_info_loaded = logger.init("perk_info_loaded.lua")
+arena_data_file = logger.init("arena_data.log")
 
 
 if(not debugging)then
@@ -147,6 +148,10 @@ map_blacklist_data = map_blacklist_data or {}
 map_blacklist_string = map_blacklist_string or ""
 card_blacklist_data = card_blacklist_data or {}
 card_blacklist_string = card_blacklist_string or ""
+material_blacklist_data = material_blacklist_data or {}
+material_blacklist_string = material_blacklist_string or ""
+item_blacklist_data = item_blacklist_data or {}
+item_blacklist_string = item_blacklist_string or ""
 
 
 sorted_spell_list = sorted_spell_list or nil
@@ -155,6 +160,11 @@ sorted_perk_list = sorted_perk_list or nil
 sorted_perk_list_ids = sorted_perk_list_ids or nil
 sorted_map_list = sorted_map_list or nil
 sorted_map_list_ids = sorted_map_list_ids or nil
+sorted_item_list = sorted_item_list or nil
+sorted_item_list_ids = sorted_item_list_ids or nil
+sorted_material_list = sorted_material_list or nil
+sorted_material_list_ids = sorted_material_list_ids or nil
+
 checksum_materials_done = false
 
 
@@ -162,9 +172,49 @@ local function ifind(s, pattern, init, plain)
     return string.find(s:lower(), pattern:lower(), init, plain)
 end
 
+local function search(id, name, term, blacklist_func)
+
+    local blacklisted = blacklist_func(id)
+
+    local flags = {}
+
+    -- get any words starting with #
+    for word in string.gmatch(term, "#%w+") do
+        flags[word] = true
+        -- remove the word from the search term
+        term = term:gsub(word, "")
+    end
+
+    local valid = false
+
+    if(flags["#blacklisted"] and blacklisted)then
+        valid = true
+    end
+
+    if(flags["#whitelisted"] and not blacklisted)then
+        valid = true
+    end
+
+    -- trim string and check if it's empty
+    term = term:match("^%s*(.-)%s*$")
+    if(term == "")then
+        return valid
+    end
+
+    if(ifind(string.lower(id), string.lower(term), 1, true))then
+        return true
+    end
+
+    if(ifind(string.lower(name), string.lower(term), 1, true))then
+        return true
+    end
+end
+
 dofile("data/scripts/perks/perk_list.lua")
 dofile("data/scripts/gun/gun_actions.lua")
 dofile("mods/evaisa.arena/files/scripts/gamemode/misc/upgrades.lua")
+dofile("data/scripts/item_spawnlists.lua")
+local materials = {}
 
 local function SetNewSeed(lobby)
     local seed = 0
@@ -180,6 +230,38 @@ local function SetNewSeed(lobby)
     end
     print("Setting seed to " .. tostring(seed))
     return seed
+end
+
+local function UpdateMaterials()
+    materials = {}
+    local materials_added = {}
+
+    local tryAddMaterial = function(v)
+        if(not materials_added[v.material])then
+            v.id = v.material
+            v.type = CellFactory_GetType(v.material)
+            v.ui_name = CellFactory_GetUIName(v.type)
+            table.insert(materials, v)
+            materials_added[v.material] = true
+        end
+    end
+
+    dofile("data/scripts/items/potion_aggressive.lua")
+    for i, v in ipairs(flask_materials) do
+        tryAddMaterial(v)
+    end
+    dofile("data/scripts/items/potion_starting.lua")
+    for i, v in ipairs(flask_materials) do
+        tryAddMaterial(v)
+    end
+    dofile("data/scripts/items/powder_stash.lua")
+    for i, v in ipairs(flask_materials) do
+        tryAddMaterial(v)
+    end
+    dofile("data/scripts/items/potion.lua")
+    for i, v in ipairs(flask_materials) do
+        tryAddMaterial(v)
+    end
 end
 
 local function TryUpdateData(lobby)
@@ -286,6 +368,51 @@ local function TryUpdateData(lobby)
         end)
     end
 
+    if(sorted_item_list == nil)then
+        -- sort item list blah
+        sorted_item_list = {}
+        sorted_item_list_ids = {}
+        for _, item in pairs(item_spawnlist)do
+            table.insert(sorted_item_list, item)
+            table.insert(sorted_item_list_ids, item)
+            content_hash = content_hash + string.bytes(item.id)
+            content_string = content_string .. item.id .. "\n"
+        end
+
+        table.sort(sorted_item_list, function(a, b)
+            return GameTextGetTranslatedOrNot(a.ui_name) < GameTextGetTranslatedOrNot(b.ui_name)
+        end)
+
+        table.sort(sorted_item_list_ids, function(a, b)
+            return GameTextGetTranslatedOrNot(a.id) < GameTextGetTranslatedOrNot(b.id)
+        end)
+    end
+
+    if(sorted_material_list == nil)then
+        -- sort material list blah
+        sorted_material_list = {}
+        sorted_material_list_ids = {}
+        
+        UpdateMaterials()
+
+        
+        for _, material in pairs(materials)do
+            table.insert(sorted_material_list, material)
+            table.insert(sorted_material_list_ids, material)
+            content_hash = content_hash + string.bytes(material.id)
+            content_string = content_string .. material.id .. "\n"
+        end
+
+        table.sort(sorted_material_list, function(a, b)
+            return GameTextGetTranslatedOrNot(a.ui_name) < GameTextGetTranslatedOrNot(b.ui_name)
+        end)
+
+        table.sort(sorted_material_list_ids, function(a, b)
+            return GameTextGetTranslatedOrNot(a.id) < GameTextGetTranslatedOrNot(b.id)
+        end)
+        
+    end
+
 
     GlobalsSetValue("content_string", tostring(content_string))
 
@@ -354,6 +481,38 @@ local function TryUpdateData(lobby)
             end
         end
     end
+
+    -- item blacklist
+    if(cached_lobby_data["item_blacklist_data"] ~= nil and item_blacklist_string ~= cached_lobby_data["item_blacklist_data"])then
+        print("Updating item blacklist data")
+        -- split byte string into table
+        item_blacklist_data = {}
+        item_blacklist_string = cached_lobby_data["item_blacklist_data"]
+        for i = 1, #item_blacklist_string do
+            local enabled = item_blacklist_string:sub(i, i) == "1"
+            if(enabled)then
+                item_blacklist_data[sorted_item_list_ids[i].id] = enabled
+            else
+                item_blacklist_data[sorted_item_list_ids[i].id] = nil
+            end
+        end
+    end
+
+    -- material blacklist
+    if(cached_lobby_data["material_blacklist_data"] ~= nil and material_blacklist_string ~= cached_lobby_data["material_blacklist_data"])then
+        print("Updating material blacklist data")
+        -- split byte string into table
+        material_blacklist_data = {}
+        material_blacklist_string = cached_lobby_data["material_blacklist_data"]
+        for i = 1, #material_blacklist_string do
+            local enabled = material_blacklist_string:sub(i, i) == "1"
+            if(enabled)then
+                material_blacklist_data[sorted_material_list_ids[i].id] = enabled
+            else
+                material_blacklist_data[sorted_material_list_ids[i].id] = nil
+            end
+        end
+    end
     
 end
 
@@ -411,6 +570,19 @@ local function SendLobbyData(lobby)
         --print(card_blacklist_string_temp)
         steam_utils.TrySetLobbyData(lobby, "card_blacklist_data", card_blacklist_string_temp)
     end
+
+    if(sorted_item_list_ids)then
+        local item_blacklist_string_temp = ""
+        for _, item in pairs(sorted_item_list_ids)do
+            if(item_blacklist_data[item.id] == nil)then
+                item_blacklist_string_temp = item_blacklist_string_temp .. "0"
+            else
+                item_blacklist_string_temp = item_blacklist_string_temp .. (item_blacklist_data[item.id] and "1" or "0")
+            end
+        end
+        --print(item_blacklist_string_temp)
+        steam_utils.TrySetLobbyData(lobby, "item_blacklist_data", item_blacklist_string_temp)
+    end
         
     steam.matchmaking.sendLobbyChatMsg(lobby, "refresh")
 end
@@ -425,8 +597,8 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 169,
-    required_online_version = 358,
+    version = 170,
+    required_online_version = 359,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
     end,
@@ -514,7 +686,57 @@ ArenaMode = {
                 ["upgrades_system"] = true,         
             }
         }
-    }, 
+    },
+    preset_registry = function()
+        local presets = {}
+
+        local default_preset_folder = "mods/evaisa.arena/content/default_presets"
+
+        local files = {}
+        local pfile = io.popen([[dir "]] .. default_preset_folder .. [[" /b]])
+
+        for filename in pfile:lines() do
+
+            -- if filename ends in .mp_preset
+            if(filename:sub(-10) == ".mp_preset")then
+                local preset_data = {}
+                local file = io.open(default_preset_folder .. "\\" .. filename, "r")
+                if(file ~= nil)then
+                    local data = file:read("*all")
+                    file:close()
+                    filename = filename:gsub(".mp_preset", "")
+                    local valid, preset_data = pcall(bitser.loads, data)
+                    if(valid and preset_data ~= nil)then
+                        table.insert(presets, {name = filename, extension = ".mp_preset", data = preset_data})
+                    else
+                        table.insert(presets, {name = filename, extension = ".mp_preset",	corrupt = true, data = {
+                            version = MP_PRESET_VERSION,
+                            settings = {}
+                        }})
+                    end
+                end
+            elseif(filename:sub(-5) == ".json")then
+                local preset_data = {}
+                local file = io.open(default_preset_folder .. "\\" .. filename, "r")
+                if(file ~= nil)then
+                    local data = file:read("*all")
+                    file:close()
+                    filename = filename:gsub(".json", "")
+                    local valid, preset_data = pcall(json.parse, data)
+                    if(valid and preset_data ~= nil)then
+                        table.insert(presets, {name = filename, extension = ".json", data = preset_data})
+                    else
+                        table.insert(presets, {name = filename, extension = ".json", corrupt = true, data = {
+                            version = MP_PRESET_VERSION,
+                            settings = {}
+                        }})
+                    end
+                end
+            end
+        end
+
+        return presets
+    end,
     settings = {
         {
             id = "random_seed",
@@ -899,6 +1121,65 @@ ArenaMode = {
             type = "bool",
             default = false
         }, 
+        {
+            id = "health_scaling_type",
+            name = "$arena_settings_health_scaling_type_name",
+            description = "$arena_settings_health_scaling_type_description",
+            type = "enum",
+            options = { { "flat", "$arena_settings_health_scaling_enum_flat" }, { "mult", "$arena_settings_health_scaling_enum_mult" }},
+            default = "mult"
+        },
+        {
+            id = "health_scaling_mult_amount",
+            require = function(setting_self)
+                return GlobalsGetValue("setting_next_health_scaling_type", "mult") == "mult"
+            end,
+			name = "$arena_settings_health_scaling_multiplier_amount_name",
+			description = "$arena_settings_health_scaling_multiplier_amount_description",
+			type = "slider",
+			min = 10,
+			max = 100,
+			default = 15;
+            formatting_func = function(value)
+                value = math.floor(value)
+
+                value = value / 10
+                
+                return " "..tostring(value).."x"
+            end,
+			display_multiplier = 1,
+			width = 100
+        },
+        {
+            id = "health_scaling_flat_amount",
+            require = function(setting_self)
+                return GlobalsGetValue("setting_next_health_scaling_type", "mult") == "flat"
+            end,
+            name = "$arena_settings_health_scaling_flat_amount_name",
+            description = "$arena_settings_health_scaling_flat_amount_description",
+            type = "slider",
+            min = 0,
+            max = 1000,
+            default = 50;
+            display_multiplier = 1,
+            formatting_string = " $0",
+            width = 100
+        },
+        {
+            id = "instant_health",
+            name = "$arena_settings_instant_health_name",
+            description = "$arena_settings_instant_health_description",
+            type = "bool",
+            default = false
+        }, 
+        {
+            id = "gold_scaling_type",
+            name = "$arena_settings_gold_scaling_type_name",
+            description = "$arena_settings_gold_scaling_type_description",
+            type = "enum",
+            options = { { "none", "$arena_settings_gold_scaling_type_none" }, { "exponential", "$arena_settings_gold_scaling_type_exponential" }, { "old", "$arena_settings_gold_scaling_type_old" }},
+            default = "none"
+        },
     },
     lobby_menus = {
 
@@ -941,7 +1222,10 @@ ArenaMode = {
                 end
                 local iteration = 0
                 for i, perk in ipairs(sorted_perk_list)do
-                    if(perk_search_content == "" or ifind(string.lower(GameTextGetTranslatedOrNot(perk.ui_name)), string.lower(perk_search_content), 1, true)) then
+
+
+
+                    if(perk_search_content == "" or search(perk.id, perk.ui_name, perk_search_content, function() return perk_blacklist_data[perk.id] end)) then
                         iteration = iteration + 1
                         GuiLayoutBeginHorizontal(gui, 0, -((iteration - 1) * 2), true)
                         local is_blacklisted = perk_blacklist_data[perk.id]--steam.matchmaking.getLobbyData(lobby,"perk_blacklist_"..perk.id) == "true"
@@ -971,6 +1255,9 @@ ArenaMode = {
                         end
                         local text_width, text_height = GuiGetTextDimensions(gui, perk.ui_name)
                         GuiZSetForNextWidget(gui, -5600)
+                        if(is_blacklisted)then
+                            GuiColorSetForNextWidget(gui, 0.5, 0.5, 0.5, 1)
+                        end
                         if(GuiButton(gui, new_id(), offset, ((icon_height / 2) - (text_height / 2)), perk.ui_name))then
                             if(steam_utils.IsOwner())then
                                 perk_blacklist_data[perk.id] = not is_blacklisted
@@ -1038,7 +1325,7 @@ ArenaMode = {
 
                 for i, spell in ipairs(sorted_spell_list)do
                     
-                    if(spell_search_content == "" or ifind(string.lower(GameTextGetTranslatedOrNot(spell.name)), string.lower(spell_search_content), 1, true)) then
+                    if(spell_search_content == "" or search(spell.id, spell.name, spell_search_content, function() return spell_blacklist_data[spell.id] end)) then
                         iteration = iteration + 1
                         GuiLayoutBeginHorizontal(gui, 0, -((iteration - 1) * 2), true)
                         local is_blacklisted = spell_blacklist_data[spell.id] --steam.matchmaking.getLobbyData(lobby,"spell_blacklist_"..spell.id) == "true"
@@ -1068,6 +1355,9 @@ ArenaMode = {
                         end
                         local text_width, text_height = GuiGetTextDimensions(gui, spell.name)
                         --GuiText(gui, offset, ((icon_height / 2) - (text_height / 2)), spell.name)
+                        if(is_blacklisted)then
+                            GuiColorSetForNextWidget(gui, 0.5, 0.5, 0.5, 1)
+                        end
                         GuiZSetForNextWidget(gui, -5600)
                         if(GuiButton(gui, new_id(), offset, ((icon_height / 2) - (text_height / 2)), spell.name))then
                             if(steam_utils.IsOwner())then
@@ -1130,7 +1420,7 @@ ArenaMode = {
                 end
                 local iteration = 0
                 for i, card in ipairs(sorted_card_list)do
-                    if(card_search_content == "" or ifind(string.lower(GameTextGetTranslatedOrNot(card.ui_name)), string.lower(card_search_content), 1, true)) then
+                    if(card_search_content == "" or search(card.id, card.ui_name, card_search_content, function() return card_blacklist_data[card.id] end)) then
                         iteration = iteration + 1
                         GuiLayoutBeginHorizontal(gui, 0, -((iteration - 1) * 2), true)
                         local is_blacklisted = card_blacklist_data[card.id]--steam.matchmaking.getLobbyData(lobby,"card_blacklist_"..card.id) == "true"
@@ -1161,6 +1451,9 @@ ArenaMode = {
                         end
                         local text_width, text_height = GuiGetTextDimensions(gui, card.ui_name)
                         GuiZSetForNextWidget(gui, -5600)
+                        if(is_blacklisted)then
+                            GuiColorSetForNextWidget(gui, 0.5, 0.5, 0.5, 1)
+                        end
                         if(GuiButton(gui, new_id(), offset, ((icon_height / 2) - (text_height / 2)), card.ui_name))then
                             if(steam_utils.IsOwner())then
                                 card_blacklist_data[card.id] = not is_blacklisted
@@ -1180,7 +1473,193 @@ ArenaMode = {
 
             end
         },
-        
+        {
+            id = "item_blacklist",
+            name = "$arena_settings_item_blacklist_name",
+            button_text = "$arena_settings_item_blacklist_name",
+            draw = function(lobby, gui, new_id)
+                GuiLayoutBeginVertical(gui, 0, 0, true, 0, 0)
+                
+                TryUpdateData(lobby)
+
+                local id = new_id("item_search_input")
+                GuiZSetForNextWidget(gui, -5600)
+                item_search_content = GuiTextInput(gui, id, 0, 0, item_search_content or "", 140, 20)
+
+                local _, _, hover = GuiGetPreviousWidgetInfo(gui)
+
+                if(hover)then
+                    GameAddFlagRun("chat_bind_disabled")
+                end
+
+                if(steam_utils.IsOwner())then
+                    GuiZSetForNextWidget(gui, -5600)
+                    if GuiButton(gui, new_id(), 0, 0, "$arena_disable_all") then
+                        for i, item in ipairs(sorted_item_list)do
+  
+                            item_blacklist_data[item.id] = true
+                        end
+                        SendLobbyData(lobby)
+                    end
+                    GuiZSetForNextWidget(gui, -5600)
+                    if GuiButton(gui, new_id(), 0, 0, "$arena_enable_all") then
+                        for i, item in ipairs(sorted_item_list)do
+ 
+                            item_blacklist_data[item.id] = false
+                        end
+                        SendLobbyData(lobby)
+                    end
+                end
+                local iteration = 0
+                for i, item in ipairs(sorted_item_list)do
+                    if(item_search_content == "" or search(item.id, item.ui_name, item_search_content, function() return item_blacklist_data[item.id] end)) then
+                        iteration = iteration + 1
+                        GuiLayoutBeginHorizontal(gui, 0, -((iteration - 1) * 2), true)
+                        local is_blacklisted = item_blacklist_data[item.id]--steam.matchmaking.getLobbyData(lobby,"item_blacklist_"..item.id) == "true"
+                        GuiZSetForNextWidget(gui, -5600)
+                        GuiImage(gui, new_id(), 0, 0, item.sprite, is_blacklisted and 0.4 or 1, 1, 1)
+                        local visible, clicked, _, hovered = get_widget_info(gui)
+
+                        if(visible and clicked)then
+                            if(steam_utils.IsOwner())then
+                                GamePlaySound( "data/audio/Desktop/ui.bank", "ui/button_click", GameGetCameraPos() )
+                                item_blacklist_data[item.id] = not is_blacklisted
+                                SendLobbyData(lobby)
+                            end
+                        end
+                        if(visible and hovered)then
+                            GuiTooltip(gui, steamutils.IsOwner() and GameTextGetTranslatedOrNot("$arena_settings_hover_tooltip_blacklist") or "", item.ui_description)
+                        end
+                        local icon_width, icon_height = GuiGetImageDimensions(gui, item.sprite)
+                        SetRandomSeed(iteration * 21, iteration * 245)
+                        local strike_out = "mods/evaisa.arena/files/sprites/ui/strikeout/small_"..tostring(Random(1, 4))..".png"
+                        local offset = 0
+                        if(is_blacklisted)then
+                            GuiZSetForNextWidget(gui, -5610)
+                            GuiOptionsAddForNextWidget(gui, GUI_OPTION.NonInteractive)
+                            GuiImage(gui, new_id(), -(icon_width - 1), 2, strike_out, 1, 1, 1)
+                            offset = 2
+                        end
+                        local text_width, text_height = GuiGetTextDimensions(gui, item.ui_name)
+                        GuiZSetForNextWidget(gui, -5600)
+                        if(is_blacklisted)then
+                            GuiColorSetForNextWidget(gui, 0.5, 0.5, 0.5, 1)
+                        end
+                        if(GuiButton(gui, new_id(), offset, ((icon_height / 2) - (text_height / 2)), item.ui_name))then
+                            if(steam_utils.IsOwner())then
+                                item_blacklist_data[item.id] = not is_blacklisted
+                                SendLobbyData(lobby)
+                            end
+                        end
+                        local _, _, hovered = GuiGetPreviousWidgetInfo(gui)
+                        if(visible and hovered)then
+                            GuiTooltip(gui, steamutils.IsOwner() and GameTextGetTranslatedOrNot("$arena_settings_hover_tooltip_blacklist") or "", item.ui_description)
+                        end
+                        GuiLayoutEnd(gui)
+                    end
+                end
+                GuiLayoutEnd(gui)
+            end,
+            close = function()
+
+            end
+        },
+        {
+            id = "material_blacklist",
+            name = "$arena_settings_material_blacklist_name",
+            button_text = "$arena_settings_material_blacklist_name",
+            draw = function(lobby, gui, new_id)
+                GuiLayoutBeginVertical(gui, 0, 0, true, 0, 0)
+                
+                TryUpdateData(lobby)
+
+                local id = new_id("material_search_input")
+                GuiZSetForNextWidget(gui, -5600)
+                material_search_content = GuiTextInput(gui, id, 0, 0, material_search_content or "", 140, 20)
+
+                local _, _, hover = GuiGetPreviousWidgetInfo(gui)
+
+                if(hover)then
+                    GameAddFlagRun("chat_bind_disabled")
+                end
+
+                if(steam_utils.IsOwner())then
+                    GuiZSetForNextWidget(gui, -5600)
+                    if GuiButton(gui, new_id(), 0, 0, "$arena_disable_all") then
+                        for i, material in ipairs(sorted_material_list)do
+  
+                            material_blacklist_data[material.id] = true
+                        end
+                        SendLobbyData(lobby)
+                    end
+                    GuiZSetForNextWidget(gui, -5600)
+                    if GuiButton(gui, new_id(), 0, 0, "$arena_enable_all") then
+                        for i, material in ipairs(sorted_material_list)do
+ 
+                            material_blacklist_data[material.id] = false
+                        end
+                        SendLobbyData(lobby)
+                    end
+                end
+                local iteration = 0
+                for i, material in ipairs(sorted_material_list)do
+                    local sprite_path = "data/generated/material_icons/"..material.id..".png"
+                    if(not ModImageDoesExist(sprite_path))then
+                        sprite_path = "data/generated/material_icons/trailer_text.png"
+                    end
+                    material.sprite = sprite_path
+
+                    if(material_search_content == "" or search(material.id, material.ui_name, material_search_content, function() return material_blacklist_data[material.id] end)) then
+                        iteration = iteration + 1
+                        GuiLayoutBeginHorizontal(gui, 0, -((iteration - 1) * 2), true)
+                        local is_blacklisted = material_blacklist_data[material.id]--steam.matchmaking.getLobbyData(lobby,"material_blacklist_"..material.id) == "true"
+                        GuiZSetForNextWidget(gui, -5600)
+                        GuiImage(gui, new_id(), 0, 0, material.sprite, is_blacklisted and 0.4 or 1, 1, 1)
+                        local visible, clicked, _, hovered = get_widget_info(gui)
+
+                        if(visible and clicked)then
+                            if(steam_utils.IsOwner())then
+                                GamePlaySound( "data/audio/Desktop/ui.bank", "ui/button_click", GameGetCameraPos() )
+                                material_blacklist_data[material.id] = not is_blacklisted
+                                SendLobbyData(lobby)
+                            end
+                        end
+                        if(visible and hovered)then
+                            GuiTooltip(gui, steamutils.IsOwner() and GameTextGetTranslatedOrNot("$arena_settings_hover_tooltip_blacklist") or "", "")
+                        end
+                        local icon_width, icon_height = GuiGetImageDimensions(gui, material.sprite)
+                        SetRandomSeed(iteration * 21, iteration * 245)
+                        local strike_out = "mods/evaisa.arena/files/sprites/ui/strikeout/medium_"..tostring(Random(1, 4))..".png"
+                        local offset = 0
+                        if(is_blacklisted)then
+                            GuiZSetForNextWidget(gui, -5610)
+                            GuiOptionsAddForNextWidget(gui, GUI_OPTION.NonInteractive)
+                            GuiImage(gui, new_id(), -(icon_width + 2), 2, strike_out, 1, 1, 1)
+                        end
+                        local text_width, text_height = GuiGetTextDimensions(gui, material.ui_name)
+                        GuiZSetForNextWidget(gui, -5600)
+                        if(is_blacklisted)then
+                            GuiColorSetForNextWidget(gui, 0.5, 0.5, 0.5, 1)
+                        end
+                        if(GuiButton(gui, new_id(), offset, ((icon_height / 2) - (text_height / 2)), material.ui_name))then
+                            if(steam_utils.IsOwner())then
+                                material_blacklist_data[material.id] = not is_blacklisted
+                                SendLobbyData(lobby)
+                            end
+                        end
+                        local _, _, hovered = GuiGetPreviousWidgetInfo(gui)
+                        if(visible and hovered)then
+                            GuiTooltip(gui, steamutils.IsOwner() and GameTextGetTranslatedOrNot("$arena_settings_hover_tooltip_blacklist") or "", "")
+                        end
+                        GuiLayoutEnd(gui)
+                    end
+                end
+                GuiLayoutEnd(gui)
+            end,
+            close = function()
+
+            end
+        },
         {
             id = "map_pool",
             name = "$arena_settings_map_pool_name",
@@ -1230,7 +1709,7 @@ ArenaMode = {
                 local iteration = 0
 
                 for i, map in ipairs(sorted_map_list)do
-                    if(map_search_content == "" or ifind(string.lower(GameTextGetTranslatedOrNot(map.name)), string.lower(map_search_content), 1, true)) then
+                    if(map_search_content == "" or search(map.id, map.name, map_search_content, function() return map_blacklist_data[map.id] end)) then
                         iteration = iteration + 1
                         GuiLayoutBeginHorizontal(gui, 0, ((iteration - 1)), true)
                         local is_blacklisted = map_blacklist_data[map.id]
@@ -1386,6 +1865,8 @@ ArenaMode = {
         preset_data.spell_blacklist_data = spell_blacklist_data
         preset_data.map_blacklist_data = map_blacklist_data
         preset_data.card_blacklist_data = card_blacklist_data
+        preset_data.item_blacklist_data = item_blacklist_data
+        preset_data.material_blacklist_data = material_blacklist_data
         return preset_data
     end,
     load_preset = function(lobby, preset_data)
@@ -1393,6 +1874,8 @@ ArenaMode = {
         spell_blacklist_data = preset_data.spell_blacklist_data or {}
         map_blacklist_data = preset_data.map_blacklist_data or {}
         card_blacklist_data = preset_data.card_blacklist_data or {}
+        item_blacklist_data = preset_data.item_blacklist_data or {}
+        material_blacklist_data = preset_data.material_blacklist_data or {}
 
         --print(json.stringify(perk_blacklist_data))
 
@@ -1476,6 +1959,26 @@ ArenaMode = {
                 GameAddFlagRun("card_blacklist_"..card.id)
             else
                 GameRemoveFlagRun("card_blacklist_"..card.id)
+            end
+        end
+
+        for _, item in pairs(item_spawnlist)do
+            local is_blacklisted = item_blacklist_data[item.id]--steam.matchmaking.getLobbyData(lobby, "item_blacklist_"..item.id) == "true"
+            if(is_blacklisted)then
+                GameAddFlagRun("item_blacklist_"..item.id)
+            else
+                GameRemoveFlagRun("item_blacklist_"..item.id)
+            end
+        end
+
+        UpdateMaterials()
+
+        for _, material in pairs(materials)do
+            local is_blacklisted = material_blacklist_data[material.id]--steam.matchmaking.getLobbyData(lobby, "material_blacklist_"..material.id) == "true"
+            if(is_blacklisted)then
+                GameAddFlagRun("material_blacklist_"..material.id)
+            else
+                GameRemoveFlagRun("material_blacklist_"..material.id)
             end
         end
 
@@ -1747,6 +2250,41 @@ ArenaMode = {
         else
             GameRemoveFlagRun("homing_mult_self")
         end
+
+        local health_scaling_type = steam.matchmaking.getLobbyData(lobby, "setting_health_scaling_type")
+        if (health_scaling_type == nil) then
+            health_scaling_type = "mult"
+        end
+        GlobalsSetValue("health_scaling_type", tostring(health_scaling_type))
+
+        local health_scaling_flat_amount = tonumber(steam.matchmaking.getLobbyData(lobby, "setting_health_scaling_flat_amount"))
+        if (health_scaling_flat_amount == nil) then
+            health_scaling_flat_amount = 50
+        end
+        GlobalsSetValue("health_scaling_flat_amount", tostring(health_scaling_flat_amount))
+
+        local health_scaling_mult_amount = tonumber(steam.matchmaking.getLobbyData(lobby, "setting_health_scaling_mult_amount"))
+        if (health_scaling_mult_amount == nil) then
+            health_scaling_mult_amount = 15
+        end
+        GlobalsSetValue("health_scaling_mult_amount", tostring(health_scaling_mult_amount / 10))
+
+        local instant_health = steam.matchmaking.getLobbyData(lobby, "setting_instant_health")
+        if (instant_health == nil) then
+            instant_health = "false"
+        end
+        if(instant_health == "true")then
+            GameAddFlagRun("instant_health")
+        else
+            GameRemoveFlagRun("instant_health")
+        end
+
+        local gold_scaling_type = steam.matchmaking.getLobbyData(lobby, "setting_gold_scaling_type")
+        if (gold_scaling_type == nil) then
+            gold_scaling_type = "none"
+        end
+        GlobalsSetValue("gold_scaling_type", tostring(gold_scaling_type))
+
         
 
 
@@ -1947,6 +2485,8 @@ ArenaMode = {
 
             
         end
+
+        GameAddFlagRun("initial_player_load")
 
 
 
@@ -2156,6 +2696,18 @@ ArenaMode = {
             end
         end
 
+        
+        if (input:WasKeyPressed("f5")) then
+            
+            -- global table snapshot
+            -- json stringify global table
+            local json_string = inspect(data)
+
+            -- write to file
+            arena_data_file:print(json_string)
+
+        end
+
         --[[if(input:WasKeyPressed("f10"))then
             if(steam_utils.IsOwner())then
                 GameRemoveFlagRun("DeserializedHolyMountain")
@@ -2234,8 +2786,6 @@ ArenaMode = {
 
         local keybinds_global = GlobalsGetValue("evaisa.mp.keybinds", "{}")
         local keybinds_order_global = GlobalsGetValue("evaisa.mp.keybinds_order", "{}")
-        
-        ComponentSetValue(EntityGetFirstComponent(GameGetWorldStateEntity(), "WorldStateComponent"), "lua_globals", "")
 
         GlobalsSetValue("evaisa.mp.keybinds", keybinds_global)
         GlobalsSetValue("evaisa.mp.keybinds_order", keybinds_order_global)

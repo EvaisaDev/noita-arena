@@ -221,8 +221,20 @@ function playerinfo_menu:New()
                 GuiText(self.gui, 0, 0, string.format(GameTextGetTranslatedOrNot("$arena_playerinfo_winstreak"), tostring(winstreak)))
                 ]]
 
-                text_height_self = text_height_self + DrawTextElement("$arena_playerinfo_wins", wins)
-                text_height_self = text_height_self + DrawTextElement("$arena_playerinfo_winstreak", winstreak)
+                local wins_text = tostring(wins)
+                local winstreak_text = tostring(winstreak)
+
+                local win_condition = GlobalsGetValue("win_condition", "unlimited")
+                local value = tonumber(GlobalsGetValue("win_condition_value", "5"))
+
+                if(win_condition == "first_to")then
+                    wins_text = wins_text.."/"..value
+                elseif(win_condition == "winstreak")then
+                    winstreak_text = winstreak_text.."/"..value
+                end
+
+                text_height_self = text_height_self + DrawTextElement("$arena_playerinfo_wins", wins_text)
+                text_height_self = text_height_self + DrawTextElement("$arena_playerinfo_winstreak", winstreak_text)
 
                 local health_ratio = hp / max_hp
                 local health_bar_width = 90
@@ -361,8 +373,21 @@ function playerinfo_menu:New()
                         ]]
                         local ping_height = DrawTextElement("$arena_playerinfo_ping", v.ping)
                         local delay_height = DrawTextElement("$arena_playerinfo_delay", v.delay_frames)
-                        local wins_height = DrawTextElement("$arena_playerinfo_wins", ArenaGameplay.GetWins(lobby, playerid, data))
-                        local winstreak_height = DrawTextElement("$arena_playerinfo_winstreak", ArenaGameplay.GetWinstreak(lobby, playerid, data))
+
+                        local wins_text = tostring(ArenaGameplay.GetWins(lobby, playerid, data))
+                        local winstreak_text = tostring(ArenaGameplay.GetWinstreak(lobby, playerid, data))
+
+                        local win_condition = GlobalsGetValue("win_condition", "unlimited")
+                        local value = tonumber(GlobalsGetValue("win_condition_value", "5"))
+        
+                        if(win_condition == "first_to")then
+                            wins_text = wins_text.."/"..value
+                        elseif(win_condition == "winstreak")then
+                            winstreak_text = winstreak_text.."/"..value
+                        end
+
+                        local wins_height = DrawTextElement("$arena_playerinfo_wins", wins_text)
+                        local winstreak_height = DrawTextElement("$arena_playerinfo_winstreak", winstreak_text)
                         
                         --print("index is "..tostring(index) .. " player_index is "..tostring(self.player_index))
 

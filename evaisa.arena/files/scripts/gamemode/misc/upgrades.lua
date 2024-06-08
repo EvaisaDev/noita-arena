@@ -826,17 +826,9 @@ upgrades = {
         card_symbol = "mods/evaisa.arena/files/sprites/ui/upgrades/symbols/gold.png",
         weight = 1.0,
         func = function(entity_who_picked)
-            local rounds = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0
-            -- Give gold
-            local rounds_limited = math.max(0, math.min(math.ceil(rounds / 2), 7))
+            local gold = ArenaGameplay.GetRoundGold(entity_who_picked)
 
-            local extra_gold_count = tonumber( GlobalsGetValue( "EXTRA_MONEY_COUNT", "0" ) )
-
-            extra_gold_count = extra_gold_count + 1
-
-            local extra_gold = 400 + (extra_gold_count * (70 * (rounds_limited * rounds_limited)))
-
-            player.GiveGold( extra_gold )
+            player.GiveGold( gold )
         end,
     },
     {

@@ -78,9 +78,6 @@ local rewrites = {
         func = function( entity_perk_item, entity_who_picked, item_name )
             GameAddFlagRun( "arena_unlimited_spells" )
         end,
-		func_remove = function( entity_who_picked )
-			GameRemoveFlagRun( "arena_unlimited_spells" )
-		end
 	},
     SHIELD = {
 		id = "SHIELD",
@@ -93,15 +90,22 @@ local rewrites = {
 		stackable_maximum = 5,
 		max_in_perk_pool = 2,
 		usable_by_enemies = true,
+		on_player_load = function(entity_who_picked)
+			local name = EntityGetName( entity_who_picked )
+			print("resetting shield count for "..name..".")
+			GlobalsSetValue( "PERK_SHIELD_COUNT_"..tostring(name), "0" )
+		end,
 		func = function( entity_perk_item, entity_who_picked, item_name )
 			local x,y = EntityGetTransform( entity_who_picked )
+			local name = EntityGetName( entity_who_picked )
 			local child_id = EntityLoad( "data/entities/misc/perks/shield.xml", x, y )
 			
-			local shield_num = tonumber( GlobalsGetValue( "PERK_SHIELD_COUNT_"..tostring(entity_who_picked), "0" ) )
+			local shield_num = tonumber( GlobalsGetValue( "PERK_SHIELD_COUNT_"..tostring(name), "0" ) )
 			local shield_radius = 10 + shield_num * 2.5
 			local charge_speed = math.max( 0.22 - shield_num * 0.05, 0.02 )
 			shield_num = shield_num + 1
-			GlobalsSetValue( "PERK_SHIELD_COUNT_"..tostring(entity_who_picked), tostring( shield_num ) )
+
+			GlobalsSetValue( "PERK_SHIELD_COUNT_"..tostring(name), tostring( shield_num ) )
 			
 			local comps = EntityGetComponent( child_id, "EnergyShieldComponent" )
 			if( comps ~= nil ) then
@@ -133,10 +137,6 @@ local rewrites = {
 			local x,y = EntityGetTransform( entity_who_picked )
 			local child_id = EntityLoad( "data/entities/misc/perks/shield.xml", x, y )
 			EntityAddChild( entity_who_picked, child_id )
-		end,
-		func_remove = function( entity_who_picked )
-			local shield_num = 0
-			GlobalsSetValue( "PERK_SHIELD_COUNT", tostring( shield_num ) )
 		end,
 	},
     EXTRA_MONEY = {
@@ -237,7 +237,6 @@ local rewrites = {
 		perk_icon = "data/items_gfx/perks/always_cast.png",
 		stackable = STACKABLE_YES,
 		one_off_effect = true,
-		skip_functions_on_load = true,
 		func = function( entity_perk_item, entity_who_picked, item_name )
 			local x,y = EntityGetTransform( entity_perk_item )
 			local rounds = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0

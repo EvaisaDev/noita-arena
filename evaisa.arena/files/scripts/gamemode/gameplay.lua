@@ -350,6 +350,9 @@ ArenaGameplay = {
                     end
                     local floor_items = match_data.floor_items or {}
                     local shop_platforms = match_data.shop_platforms or {}
+                    
+                    GlobalsSetValue("temple_second_row_spots", smallfolk.dumps(shop_platforms))
+
                     delay.new(function()
                         local valid = #(EntityGetWithTag("workshop") or {}) > 0
                         --print("Valid: "..tostring(valid))
@@ -369,7 +372,7 @@ ArenaGameplay = {
                             end)
                         end
 
-                        for k, v in ipairs(floor_items)do
+                        for k, v in pairs(floor_items)do
                             local item = v.data
                             local x = v.x
                             local y = v.y
@@ -498,45 +501,6 @@ ArenaGameplay = {
             EntityKill(player_entity)
         end
 
-        GameRemoveFlagRun("Immortal")
-        GameRemoveFlagRun("no_shooting")
-        GameRemoveFlagRun("was_last_ready")
-        GameRemoveFlagRun( "arena_unlimited_spells" )
-        GameRemoveFlagRun("should_save_player")
-        GlobalsSetValue("TEMPLE_SHOP_ITEM_COUNT", "5")
-        GlobalsSetValue("TEMPLE_PERK_REROLL_COUNT", "0")
-        GlobalsSetValue("EXTRA_MONEY_COUNT", "0")
-        GlobalsSetValue("RESPAWN_COUNT", "0")
-        GlobalsSetValue("holyMountainCount", "0")
-        
-        GlobalsSetValue("HEARTS_MORE_EXTRA_HP_MULTIPLIER", "1")
-        GlobalsSetValue("PERK_SHIELD_COUNT", "0")
-        GlobalsSetValue("PERK_ATTRACT_ITEMS_RANGE", "0")
-        GlobalsSetValue("PERK_NO_MORE_SHUFFLE_WANDS", "0")
-        --[[GlobalsSetValue("TEMPLE_PERK_COUNT", "3")
-        GlobalsSetValue("TEMPLE_PERK_DESTROY_CHANCE", "100")
-        GlobalsSetValue("TEMPLE_SHOP_ITEM_COUNT", "5")]]
-        GlobalsSetValue("TEMPLE_PEACE_WITH_GODS", "0")
-        GlobalsSetValue("TEMPLE_SPAWN_GUARDIAN", "0")
-        GameRemoveFlagRun("ATTACK_FOOT_CLIMBER")
-        GameRemoveFlagRun("player_status_cordyceps")
-        GameRemoveFlagRun("player_status_mold")
-        GameRemoveFlagRun("player_status_fungal_disease")
-        GameRemoveFlagRun("player_status_angry_ghost")
-        GameRemoveFlagRun("player_status_hungry_ghost")
-        GameRemoveFlagRun("player_status_death_ghost")
-        GameRemoveFlagRun("player_status_lukki_minion")
-        GameRemoveFlagRun("exploding_gold")
-        GameRemoveFlagRun("first_death")
-        GameRemoveFlagRun("skip_perks")
-        GameRemoveFlagRun("pick_upgrade")
-        GameRemoveFlagRun("arena_winner")
-        GameRemoveFlagRun("arena_loser")
-        GameRemoveFlagRun("arena_first_death")
-        GlobalsSetValue("smash_knockback", "1" )
-        GlobalsSetValue("smash_knockback_dummy", "1")
-        GlobalsSetValue( "RESPAWN_COUNT", "0" )
-        GlobalsSetValue( "EXTRA_RESPAWN_COUNT", "0" )
 
         print("Resetting everything!!!")
 
@@ -601,8 +565,9 @@ ArenaGameplay = {
 
         end
 
-        GameRemoveFlagRun("saving_grace")
-        GameRemoveFlagRun("player_ready")
+        -- kill globals and run flags
+        ComponentSetValue(EntityGetFirstComponent(GameGetWorldStateEntity(), "WorldStateComponent"), "lua_globals", "")
+        ComponentSetValue(EntityGetFirstComponent(GameGetWorldStateEntity(), "WorldStateComponent"), "flags", "")
     end,
     ReadyAmount = function(data, lobby)
         if(data.state ~= "lobby")then
@@ -1381,16 +1346,17 @@ ArenaGameplay = {
             end
 
 
-            local match_data = {
-                round = ArenaGameplay.GetNumRounds(lobby),
-                reroll_count = GlobalsGetValue("TEMPLE_PERK_REROLL_COUNT", "0"),
-                picked_health = GameHasFlagRun("picked_health"),
-                picked_perk = GameHasFlagRun("picked_perk"),
-                picked_card = GameHasFlagRun("card_picked"),
-                cards = cards,
+            local match_data = data.client.match_data_unpacked or {
                 shop_platforms = {},
                 floor_items = {},
             }
+
+            match_data.round = ArenaGameplay.GetNumRounds(lobby)
+            match_data.reroll_count = GlobalsGetValue("TEMPLE_PERK_REROLL_COUNT", "0")
+            match_data.picked_health = GameHasFlagRun("picked_health")
+            match_data.picked_perk = GameHasFlagRun("picked_perk")
+            match_data.picked_card = GameHasFlagRun("card_picked")
+            match_data.cards = cards
 
             
             if(data.state == "lobby")then
@@ -1401,6 +1367,7 @@ ArenaGameplay = {
                 for i, v in pairs(entities) do
                     if(EntityGetRootEntity(v) == v)then
                         -- find wands
+
                         local item_comp = EntityGetFirstComponentIncludingDisabled(v, "ItemComponent")
                         if(item_comp ~= nil)then
                             --print("Saved item: "..tostring(v))
@@ -1410,7 +1377,13 @@ ArenaGameplay = {
                                 y = y,
                                 data = np.SerializeEntity(v)
                             }
-                            table.insert(match_data.floor_items, item_data)
+                            match_data.floor_items[v] = item_data
+                            --print("Saved item: "..tostring(v))
+                        end
+                    else
+                        if(match_data.floor_items[v] ~= nil)then
+                            match_data.floor_items[v] = nil
+                            --rint("Removed item: "..tostring(v))
                         end
                     end
                 end
@@ -1421,13 +1394,40 @@ ArenaGameplay = {
 
             if(data.client.match_data ~= serialized)then
                 steamutils.SetLocalLobbyData(lobby, "match_data", serialized)
-
+                data.client.match_data_unpacked = match_data
                 data.client.match_data = serialized
             end
         end
     end,
+    GetRoundGold = function(lobby, data)
+        local rounds_limited = ArenaGameplay.GetRoundTier(lobby) --math.max(0, math.min(math.ceil(rounds / 2), 7))
+
+        local extra_gold_count = tonumber( GlobalsGetValue( "EXTRA_MONEY_COUNT", "0" ) )
+
+        extra_gold_count = extra_gold_count + 1
+
+        local scaling_type = GlobalsGetValue("gold_scaling_type", "none")
+
+        print("scaling type: "..scaling_type)
+
+        local extra_gold = 400 + (extra_gold_count * (70 * (rounds_limited * rounds_limited)))
+
+        if(scaling_type == "none")then
+            extra_gold = 400
+        elseif(scaling_type == "exponential")then
+            rounds_limited = (0.5 * rounds_limited) + ( 0.5 * rounds_limited * rounds_limited )
+            extra_gold = 400 + ( 50 + rounds_limited * 210 )
+        end
+
+        return extra_gold
+    end,
     LoadLobby = function(lobby, data, show_message, first_entry)
-        
+        GameRemoveFlagRun("wardrobe_locked")
+        GameRemoveFlagRun("wardrobe_locked_2")
+        if(data.client.match_data_unpacked)then
+            data.client.match_data_unpacked.floor_items = {}
+        end
+
         GameRemoveFlagRun("player_died")
         GameRemoveFlagRun("killcheck_finished")
 
@@ -1636,13 +1636,7 @@ ArenaGameplay = {
 
 
         -- Give gold
-        local rounds_limited = ArenaGameplay.GetRoundTier(lobby) --math.max(0, math.min(math.ceil(rounds / 2), 7))
-
-        local extra_gold_count = tonumber( GlobalsGetValue( "EXTRA_MONEY_COUNT", "0" ) )
-
-        extra_gold_count = extra_gold_count + 1
-
-        local extra_gold = 400 + (extra_gold_count * (70 * (rounds_limited * rounds_limited)))
+        local extra_gold = gameplay_handler.GetRoundGold(lobby, data)
 
         --print("First spawn gold = "..tostring(data.client.first_spawn_gold))
 
@@ -1751,6 +1745,11 @@ ArenaGameplay = {
                 networking.send.request_perk_update(lobby)
 
                 GameAddFlagRun("should_save_player")
+
+                if(GameHasFlagRun("instant_health"))then
+                    dofile("mods/evaisa.arena/files/scripts/misc/heart_fullhp.lua")
+                    give_health(player_entity)
+                end
 
                 
                 local effect, effect_entity = GetGameEffectLoadTo(player_entity, "EDIT_WANDS_EVERYWHERE", false)
@@ -2778,6 +2777,12 @@ ArenaGameplay = {
         -- get ready percentage
         local ready_percentage = math.floor((ArenaGameplay.ReadyAmount(data, lobby) / ArenaGameplay.TotalPlayers(lobby)) * 100)
 
+        if(ArenaGameplay.TotalPlayers(lobby) <= 1)then
+            ready_percentage = 0
+
+        end
+        --print("Total players: "..tostring(ArenaGameplay.TotalPlayers(lobby)))
+
         local hm_timer_percentage = tonumber(GlobalsGetValue("hm_timer_count", "80"))
         local hm_timer_time = tonumber(GlobalsGetValue("hm_timer_time", "60"))
         if(hm_timer_percentage < 100 and not ArenaGameplay.ReadyCheck(lobby, data) and ready_percentage >= tonumber(hm_timer_percentage))then
@@ -3347,26 +3352,20 @@ ArenaGameplay = {
                     })
                 end
             else
-                local rng = dofile_once("mods/evaisa.arena/lib/rng.lua")
-                local world_seed = tonumber(GlobalsGetValue("world_seed", "0"))
-                local spawn_seed = world_seed + (ArenaGameplay.GetNumRounds(lobby) * 62362)
+               
+                local spawn_seed = (ArenaGameplay.GetNumRounds(lobby) * 62362)
 
                 if(GlobalsGetValue("arena_gamemode", "ffa") == "continuous")then
                     spawn_seed = spawn_seed + GameGetFrameNum()
                 end
 
 
-                local spawn_rng = rng.new(spawn_seed)
+                SetRandomSeed(spawn_seed, spawn_seed * 4)
                 local spawn_points = ArenaGameplay.GetSpawnPoints()
-                -- shuffle spawn points using spawn_rng.range(a, b)
+               
+                -- shuffle spawn points randomly
                 for i = #spawn_points, 2, -1 do
-                    local j = spawn_rng.range(1, i)
-                    spawn_points[i], spawn_points[j] = spawn_points[j], spawn_points[i]
-                end
-
-                -- shuffle again for good measure
-                for i = #spawn_points, 2, -1 do
-                    local j = spawn_rng.range(1, i)
+                    local j = Random(1, i)
                     spawn_points[i], spawn_points[j] = spawn_points[j], spawn_points[i]
                 end
 

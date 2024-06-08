@@ -237,7 +237,7 @@ player_helper.GetItemData = function(fresh)
 
         local item_id = entity.GetVariable(item, "arena_entity_id")
 
-        GlobalsSetValue(tostring(item) .. "_item", tostring(k))
+        --GlobalsSetValue(tostring(item) .. "_item", tostring(k))
         if(entity_is_wand(item))then
             local wand = EZWand(item)
             table.insert(wandData,
@@ -270,7 +270,7 @@ player_helper.GetItemData = function(fresh)
 
         local item_id = entity.GetVariable(item, "arena_entity_id")
 
-        GlobalsSetValue(tostring(item) .. "_item", tostring(k))
+        --GlobalsSetValue(tostring(item) .. "_item", tostring(k))
         if(entity_is_wand(item))then
             local wand = EZWand(item)
             table.insert(spellData,
@@ -789,9 +789,15 @@ player_helper.GivePerk = function(perk_id, amount, skip_count)
                 GameAddFlagRun(f)
             end
         end
+        
+        print("Applying perk: " .. perk_data.id)
+        print("One off? " .. tostring(perk_data.one_off_effect))
+        print("Skip functions on load? " .. tostring(perk_data.skip_functions_on_load))
+        print("Was initial player load? " .. tostring(GameHasFlagRun("initial_player_load")))
 
 
-        if (perk_data.func ~= nil and not perk_data.skip_functions_on_load) then
+        if (perk_data.func ~= nil and not perk_data.one_off_effect and ((not perk_data.skip_functions_on_load) or GameHasFlagRun("initial_player_load"))) then
+            print("Running perk function: " .. perk_data.id)
             perk_data.func(fake_perk_ent, entity_who_picked, perk_id, amount)
         end
     end
@@ -823,7 +829,7 @@ end
 
 player_helper.SetPerks = function(perks, skip_count)
 
-    perk_info_loaded:print(inspect(perks))
+    --perk_info_loaded:print(inspect(perks))
 
     local player = player_helper.Get()
     if (player == nil) then
@@ -836,6 +842,21 @@ player_helper.SetPerks = function(perks, skip_count)
     for k, v in ipairs(perks) do
         local perk_id = v.id
         local pickup_count = v.count
+
+        local entity_who_picked = player_helper.Get()
+
+        if(entity_who_picked == nil or entity_who_picked == 0 or not EntityGetIsAlive(entity_who_picked))then
+            return
+        end
+    
+        local perk_data = get_perk_with_id(perk_list, perk_id)
+        if perk_data == nil then
+            return
+        end
+
+        if(perk_data.on_player_load)then
+            perk_data.on_player_load(entity_who_picked)
+        end
 
         for i = 1, pickup_count do
             --entity.GivePerk(player, perk_id, i)
@@ -1049,6 +1070,8 @@ player_helper.Deserialize = function(data, skip_perk_count, lobby, lobby_data)
     if(skin_system and lobby)then
         skin_system.apply_skin_to_entity(lobby, player, nil, lobby_data)
     end
+
+    GameRemoveFlagRun("initial_player_load")
 end
 
 return player_helper

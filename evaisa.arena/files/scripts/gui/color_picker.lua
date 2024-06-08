@@ -179,6 +179,10 @@ color_picker.new = function()
         GuiText(self.gui, 0, 0, "Hex")
         GuiZSetForNextWidget(self.gui, -3910)
         local new_hex = GuiTextInput(self.gui, new_id(), 0, 0, self.current_hex, 44, 6, "1234567890abcdefABCDEF")
+        local _, _, hovered = GuiGetPreviousWidgetInfo(self.gui)
+
+        local any_hovered = hovered
+
         if(new_hex ~= self.current_hex)then
             self.current_hex = new_hex
             self.current_red, self.current_green, self.current_blue = hex_to_rgb(self.current_hex)
@@ -192,6 +196,8 @@ color_picker.new = function()
         GuiText(self.gui, 0, 0, "R")
         GuiZSetForNextWidget(self.gui, -3910)
         local new_red = GuiTextInput(self.gui, new_id(), 0, 0, tostring(self.current_red), 52, 3, "1234567890")
+        _, _, hovered = GuiGetPreviousWidgetInfo(self.gui)
+        any_hovered = any_hovered or hovered
         -- cap between 0 and 255
         new_red = tostring(math.max(0, math.min(255, tonumber(new_red) or 0)))
         if(new_red ~= tostring(self.current_red))then
@@ -208,6 +214,8 @@ color_picker.new = function()
         GuiText(self.gui, 0, 0, "G")
         GuiZSetForNextWidget(self.gui, -3910)
         local new_green = GuiTextInput(self.gui, new_id(), 0, 0, tostring(self.current_green), 52, 3, "1234567890")
+        _, _, hovered = GuiGetPreviousWidgetInfo(self.gui)
+        any_hovered = any_hovered or hovered
         new_green = tostring(math.max(0, math.min(255, tonumber(new_green) or 0)))
         if(new_green ~= tostring(self.current_green))then
             self.current_green = tonumber(new_green)
@@ -223,12 +231,20 @@ color_picker.new = function()
         GuiText(self.gui, 0, 0, "B")
         GuiZSetForNextWidget(self.gui, -3910)
         local new_blue = GuiTextInput(self.gui, new_id(), 0, 0, tostring(self.current_blue), 52, 3, "1234567890")
+        _, _, hovered = GuiGetPreviousWidgetInfo(self.gui)
+        any_hovered = any_hovered or hovered
         new_blue = tostring(math.max(0, math.min(255, tonumber(new_blue) or 0)))
         if(new_blue ~= tostring(self.current_blue))then
             self.current_blue = tonumber(new_blue)
             self.picked_color = color_merge(self.current_red, self.current_green, self.current_blue, 255)
             self.current_hex = rgb_to_hex(self.current_red, self.current_green, self.current_blue)
             self.calculateBarIndexAndPickerPosition()
+        end
+
+        if(any_hovered)then
+            GameAddFlagRun("wardrobe_locked")
+        else
+            GameRemoveFlagRun("wardrobe_locked")
         end
 
         GuiLayoutEnd(self.gui)
