@@ -46,8 +46,11 @@ if (frames % update_every_n_frame == 0)then
         local entities = EntityGetInRadiusWithTag(x, y, circle_radius, entities_with_tag)
         for k, v in pairs(entities) do
             local entity = v
-            if (entity ~= entity_responsible or hit_shooter) and not (never_hit_player and EntityHasTag(entity, "player_unit")) then
-                EntityInflictDamage(entity, damage_per_frame, damage_type, death_cause, "NORMAL", 0, 0, entity_responsible, x, y)
+            local ex, ey = EntityGetTransform(entity)
+            if ex >= aabb_min_x and ex <= aabb_max_x and ey >= aabb_min_y and ey <= aabb_max_y then
+                if (entity ~= entity_responsible or hit_shooter) and not (never_hit_player and EntityHasTag(entity, "player_unit")) then
+                    EntityInflictDamage(entity, damage_per_frame, damage_type, death_cause, "NORMAL", 0, 0, entity_responsible, x, y)
+                end
             end
         end
     else
