@@ -1,0 +1,22 @@
+<Entity>
+	<LuaComponent
+		script_source_file="mods/evaisa.arena/files/scripts/gamemode/misc/area_effect.lua"
+		execute_every_n_frame = "1"
+		vm_type = "ONE_PER_COMPONENT_INSTANCE"
+		/>
+
+	<!--
+	effect_radius | value_float
+	effect_entities | value_string
+	hit_shooter | value_bool
+	frame_length | value_int
+	-->
+
+	<VariableStorageComponent
+		name = "effect"
+		value_float = "28"
+		value_string = "data/entities/misc/effect_charm.xml"
+		value_bool = "1"
+		value_int = "720"
+		/>
+</Entity>

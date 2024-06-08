@@ -1,10 +1,14 @@
-<Entity name="$projectile_default" >
-	<GameAreaEffectComponent
-		radius="28" >
-	</GameAreaEffectComponent>
+<Entity 
+  name="$projectile_default" 
+   >
+  	<GameAreaEffectComponent
+      radius="28"
+	  frame_length="720"
+    />
+
 	
 	<ParticleEmitterComponent 
-		emitted_material_name="plasma_fading_pink"
+		emitted_material_name="spark_red"
 		gravity.y="0.0"
 		lifetime_min="0.5"
 		lifetime_max="1.5"
@@ -24,7 +28,7 @@
 	</ParticleEmitterComponent>
 
   	<ParticleEmitterComponent 
-		emitted_material_name="plasma_fading_pink"
+		emitted_material_name="spark_red"
 		gravity.y="0.0"
 		lifetime_min="0.5"
 		lifetime_max="1.5"
@@ -46,27 +50,25 @@
 
 	<Base file="data/entities/projectiles/deck/base_field.xml">
 		<SpriteComponent 
-			image_file="data/projectiles_gfx/blast_charm.xml" >
+			image_file="data/projectiles_gfx/blast_berserk.xml"
+			>
 		</SpriteComponent>
 
 		<SpriteParticleEmitterComponent
-			sprite_file="data/particles/charm.xml" >
+			sprite_file="data/particles/berserk_0$[1-4].xml"
+			>
 		</SpriteParticleEmitterComponent>
 
 		<ProjectileComponent 
-			damage_game_effect_entities="data/entities/misc/effect_charm.xml," 
+			damage_game_effect_entities="data/entities/misc/effect_berserk.xml,"
 			friendly_fire="1"
+			collide_with_shooter_frames="0"
 			>
 			<config_explosion
-				explosion_sprite="data/particles/blast_out_charm.xml" >
+				explosion_sprite="data/particles/blast_out_berserk.xml"
+				>
 			</config_explosion>
 		</ProjectileComponent>
 	</Base>
-	
-	<VariableStorageComponent
-		name="projectile_file"
-		value_string="data/entities/projectiles/deck/charm_field.xml"
-		>
-	</VariableStorageComponent>
 </Entity>
 

@@ -593,7 +593,7 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 171,
+    version = 172,
     required_online_version = 359,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
