@@ -8,17 +8,13 @@ if (area_damage_component == nil)then
     return
 end
 
-local circle_radius = ComponentGetValue2(area_damage_component, "circle_radius")
-local damage_per_frame = ComponentGetValue2(area_damage_component, "damage_per_frame")
+-- update rate
 local update_every_n_frame = ComponentGetValue2(area_damage_component, "update_every_n_frame")
-local entity_responsible = ComponentGetValue2(area_damage_component, "entity_responsible")
-local death_cause = ComponentGetValue2(area_damage_component, "death_cause")
-local entities_with_tag = ComponentGetValue2(area_damage_component, "entities_with_tag")
-local aabb_min_x, aabb_min_y = ComponentGetValue2(area_damage_component, "aabb_min")
-local aabb_max_x, aabb_max_y = ComponentGetValue2(area_damage_component, "aabb_max")
-local damage_type = ComponentGetValue2(area_damage_component, "damage_type")
+
+-- projectile component stuff
 local never_hit_player = false
 local collide_with_shooter_frames = 0
+local hit_shooter = false
 
 -- track frames
 frames = frames or 0
@@ -38,6 +34,14 @@ end
 
 -- implementation
 if (frames % update_every_n_frame == 0)then
+    local circle_radius = ComponentGetValue2(area_damage_component, "circle_radius")
+    local damage_per_frame = ComponentGetValue2(area_damage_component, "damage_per_frame")
+    local entity_responsible = ComponentGetValue2(area_damage_component, "entity_responsible")
+    local death_cause = ComponentGetValue2(area_damage_component, "death_cause")
+    local entities_with_tag = ComponentGetValue2(area_damage_component, "entities_with_tag")
+    local aabb_min_x, aabb_min_y = ComponentGetValue2(area_damage_component, "aabb_min")
+    local aabb_max_x, aabb_max_y = ComponentGetValue2(area_damage_component, "aabb_max")
+    local damage_type = ComponentGetValue2(area_damage_component, "damage_type")
     if circle_radius > 0 then
         local entities = EntityGetInRadiusWithTag(x, y, circle_radius, entities_with_tag)
         for k, v in pairs(entities) do
