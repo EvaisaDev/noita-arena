@@ -4382,10 +4382,6 @@ ArenaGameplay = {
         
         local homing_mult = tonumber(GlobalsGetValue("homing_mult", "100")) or 100
 
-        if(math.ceil(homing_mult) == 100)then
-            return
-        end
-
         local homingComponents = EntityGetComponentIncludingDisabled(projectile_id, "HomingComponent")
 
         if (homingComponents ~= nil) then
@@ -4393,37 +4389,46 @@ ArenaGameplay = {
                 local target_who_shot = ComponentGetValue2(v, "target_who_shot")
                 
                 if (target_who_shot == false) then
-                    local coeff = ComponentGetValue2(v, "homing_targeting_coeff")
-                    local velocity_mult = ComponentGetValue2(v, "homing_velocity_multiplier")
-                    local max_turn_rate = ComponentGetValue2(v, "max_turn_rate")
-                    local detect_distance = ComponentGetValue2(v, "detect_distance")
-                    coeff = coeff * (homing_mult / 100)
-                    max_turn_rate = max_turn_rate * (homing_mult / 100)
-                    detect_distance = detect_distance * (homing_mult / 100)
-                    local velocity_mult_diff = 1 - velocity_mult
+                    local homing_target = ComponentGetValue2(v, "target_tag")
+                    if(homing_target == "prey")then
+                        ComponentSetValue2(v, "target_tag", "enemy")
+                    end
 
-                    velocity_mult = velocity_mult + (velocity_mult_diff * (1 - (homing_mult / 100)))
+                    if(math.ceil(homing_mult) < 100)then
+                        local coeff = ComponentGetValue2(v, "homing_targeting_coeff")
+                        local velocity_mult = ComponentGetValue2(v, "homing_velocity_multiplier")
+                        local max_turn_rate = ComponentGetValue2(v, "max_turn_rate")
+                        local detect_distance = ComponentGetValue2(v, "detect_distance")
+                        coeff = coeff * (homing_mult / 100)
+                        max_turn_rate = max_turn_rate * (homing_mult / 100)
+                        detect_distance = detect_distance * (homing_mult / 100)
+                        local velocity_mult_diff = 1 - velocity_mult
 
-                    ComponentSetValue2(v, "homing_targeting_coeff", coeff)
-                    ComponentSetValue2(v, "homing_velocity_multiplier", velocity_mult)
-                    ComponentSetValue2(v, "max_turn_rate", max_turn_rate)
-                    ComponentSetValue2(v, "detect_distance", detect_distance)
+                        velocity_mult = velocity_mult + (velocity_mult_diff * (1 - (homing_mult / 100)))
+
+                        ComponentSetValue2(v, "homing_targeting_coeff", coeff)
+                        ComponentSetValue2(v, "homing_velocity_multiplier", velocity_mult)
+                        ComponentSetValue2(v, "max_turn_rate", max_turn_rate)
+                        ComponentSetValue2(v, "detect_distance", detect_distance)
+                    end
                 elseif(GameHasFlagRun("homing_mult_self"))then
-                    local coeff = ComponentGetValue2(v, "homing_targeting_coeff")
-                    local velocity_mult = ComponentGetValue2(v, "homing_velocity_multiplier")
-                    local max_turn_rate = ComponentGetValue2(v, "max_turn_rate")
-                    local detect_distance = ComponentGetValue2(v, "detect_distance")
-                    coeff = coeff * (homing_mult / 100)
-                    max_turn_rate = max_turn_rate * (homing_mult / 100)
-                    detect_distance = detect_distance * (homing_mult / 100)
-                    local velocity_mult_diff = 1 - velocity_mult
+                    if(math.ceil(homing_mult) < 100)then
+                        local coeff = ComponentGetValue2(v, "homing_targeting_coeff")
+                        local velocity_mult = ComponentGetValue2(v, "homing_velocity_multiplier")
+                        local max_turn_rate = ComponentGetValue2(v, "max_turn_rate")
+                        local detect_distance = ComponentGetValue2(v, "detect_distance")
+                        coeff = coeff * (homing_mult / 100)
+                        max_turn_rate = max_turn_rate * (homing_mult / 100)
+                        detect_distance = detect_distance * (homing_mult / 100)
+                        local velocity_mult_diff = 1 - velocity_mult
 
-                    velocity_mult = velocity_mult + (velocity_mult_diff * (1 - (homing_mult / 100)))
+                        velocity_mult = velocity_mult + (velocity_mult_diff * (1 - (homing_mult / 100)))
 
-                    ComponentSetValue2(v, "homing_targeting_coeff", coeff)
-                    ComponentSetValue2(v, "homing_velocity_multiplier", velocity_mult)
-                    ComponentSetValue2(v, "max_turn_rate", max_turn_rate)
-                    ComponentSetValue2(v, "detect_distance", detect_distance)
+                        ComponentSetValue2(v, "homing_targeting_coeff", coeff)
+                        ComponentSetValue2(v, "homing_velocity_multiplier", velocity_mult)
+                        ComponentSetValue2(v, "max_turn_rate", max_turn_rate)
+                        ComponentSetValue2(v, "detect_distance", detect_distance)
+                    end
                 end
             end
         end

@@ -1,4 +1,4 @@
-<Entity name="client" tags="client,mortal,human,hittable,peasant,polymorphable_NOT,enemy,spectator_no_clear,homing_target">
+<Entity name="client" tags="client,mortal,human,hittable,peasant,prey,polymorphable_NOT,enemy,spectator_no_clear,homing_target">
   <HotspotComponent
     _tags="hat"
     sprite_hotspot_name="hat"

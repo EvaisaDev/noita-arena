@@ -201,11 +201,7 @@ local function search(id, name, term, blacklist_func)
         return valid
     end
 
-    if(ifind(string.lower(id), string.lower(term), 1, true))then
-        return true
-    end
-
-    if(ifind(string.lower(name), string.lower(term), 1, true))then
+    if(ifind(string.lower(GameTextGetTranslatedOrNot(name)), string.lower(term), 1, true) or ifind(string.lower(id), string.lower(term), 1, true))then
         return true
     end
 end
@@ -597,7 +593,7 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 170,
+    version = 171,
     required_online_version = 359,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
