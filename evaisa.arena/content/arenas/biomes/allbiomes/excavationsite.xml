@@ -74,7 +74,7 @@
       rare_use_perlin="0" 
       rare_use_polka="1" >
     </MaterialComponent>
-
+    <!--
     <MaterialComponent 
       _enabled="1" 
       is_rare="0" 
@@ -87,7 +87,7 @@
       material_name="diamond" 
 	  >
     </MaterialComponent>
-
+    -->
     <MaterialComponent 
       _enabled="1" 
       is_rare="0" 
