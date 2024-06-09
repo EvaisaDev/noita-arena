@@ -81,7 +81,11 @@ function spawn_candles(x, y)
 end
 
 function spawn_wands(x, y)
-	EntityHelper.NetworkRegister(spawn(g_items,x-5,y,0,0))
+	local items = spawn(g_items,x-5,y,0,0)
+	for _,item in ipairs(items) do
+		EntityHelper.NetworkRegister(item, x, y)
+	end
+	
 end
 
 function spawn_potions( x, y )

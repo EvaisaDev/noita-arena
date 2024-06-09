@@ -50,7 +50,7 @@ function entity_load_camera_bound(entity_data, x, y, rand_x, rand_y)
 	if rand_x == nil then rand_x = 4 end
 	if rand_y == nil then rand_y = 4 end
 
-	local entity = 0
+	local entities = {}
 	-- load groups
 	if( entity_data.entities ~= nil ) then
 		for j,ev in ipairs(entity_data.entities) do
@@ -68,7 +68,7 @@ function entity_load_camera_bound(entity_data, x, y, rand_x, rand_y)
 					local pos_y = y + ProceduralRandom(x+j, y+i, -rand_y, rand_y)
 					if( ev.offset_y ~= nil ) then pos_y = pos_y + ev.offset_y end
 					if( ev.offset_x ~= nil ) then pos_x = pos_x + ev.offset_x end
-					entity = EntityLoad( ev.entity, pos_x, pos_y )
+					table.insert(entities, EntityLoad( ev.entity, pos_x, pos_y ))
 				end
 			else
 				if( ev ~= nil ) then
@@ -77,19 +77,19 @@ function entity_load_camera_bound(entity_data, x, y, rand_x, rand_y)
 					if( ev.offset_y ~= nil ) then pos_y = pos_y + ev.offset_y end
 					if( ev.offset_x ~= nil ) then pos_x = pos_x + ev.offset_x end
 
-					entity = EntityLoad( ev, pos_x, pos_y )
+					table.insert(entities, EntityLoad( ev, pos_x, pos_y ))
 				end
 			end
 		end
 	end
 
 	if( entity_data.entity == nil or  entity_data.entity == '' ) then
-		return entity
+		return entities
 	end
 
 	local how_many = ProceduralRandom(x,y,entity_data.min_count,entity_data.max_count)
 	if( how_many <= 0 ) then
-		return entity
+		return entities
 	end
 	
 	local pos_x = x
@@ -101,10 +101,10 @@ function entity_load_camera_bound(entity_data, x, y, rand_x, rand_y)
 		if( entity_data.offset_y ~= nil ) then pos_y = pos_y + entity_data.offset_y end
 		if( entity_data.offset_x ~= nil ) then pos_x = pos_x + entity_data.offset_x end
 
-		entity = EntityLoad( entity_data.entity, pos_x, pos_y )
+		table.insert(entities, EntityLoad( entity_data.entity, pos_x, pos_y ))
 	end
 
-	return entity
+	return entities
 end
 
 function entity_load_chest( x, y, chest_type, force_level )
