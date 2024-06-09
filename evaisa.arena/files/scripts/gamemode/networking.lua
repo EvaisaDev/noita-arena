@@ -2153,7 +2153,9 @@ networking = {
                 end
 
                 if(was_perk)then
+                    
                     for k, v in ipairs(EntityGetWithTag("client") or {})do
+                        data.client_spawn_x, data.client_spawn_y = EntityGetTransform(v)
                         EntityKill(v)
                     end
     

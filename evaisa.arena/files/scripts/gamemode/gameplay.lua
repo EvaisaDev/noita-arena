@@ -3006,6 +3006,14 @@ ArenaGameplay = {
             return
         end
 
+        if(data.client_spawn_x and data.client_spawn_y)then
+            x = data.client_spawn_x
+            y = data.client_spawn_y
+
+            data.client_spawn_x = nil
+            data.client_spawn_y = nil
+        end
+
         local client = EntityLoad("mods/evaisa.arena/files/entities/client.xml", x or -1000, y or -1000)
         EntitySetName(client, tostring(user))
         --local usernameSprite = EntityGetFirstComponentIncludingDisabled(client, "SpriteComponent", "username")
