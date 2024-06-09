@@ -1,7 +1,7 @@
 -- RegisterSpawnFunction( 0xffbf26a9, "spawn_runes" )
 -- RegisterSpawnFunction( 0xff6b26a6, "spawn_bigtorch" )
 dofile( "data/scripts/item_spawnlists.lua" )
-local EntityHelper = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/entity.lua")
+EntityHelper = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/entity.lua")
 
 function runestone_activate( entity_id )
 	local status = 0
