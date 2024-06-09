@@ -1334,16 +1334,19 @@ networking = {
                 end
 
                 if (not found) then
-                    table.insert(last_player_perk_data, {perk_id, perk_stack})
+                    table.insert(gained_perks, {perk_id, perk_stack})
                 end
             end
 
             local client = data.players[tostring(user)].entity
 
             if (client ~= nil and EntityGetIsAlive(client)) then
+                print("Giving perks to player: " .. tostring(user))
                 for k, v in ipairs(gained_perks) do
                     local perk = v[1]
                     local count = v[2]
+
+                    print("Giving perk: " .. tostring(perk) .. " with count: " .. tostring(count))
     
                     for i = 1, count do
                         EntityHelper.GivePerk(client, perk, i, true)
@@ -2202,6 +2205,8 @@ networking = {
                     end
     
                     SpectatorMode.ClearHM()]]
+
+                    print("requesting perk update")
 
                     networking.send.request_perk_update(lobby, user)
                 end
