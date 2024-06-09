@@ -72,8 +72,12 @@ GetActiveStatusEffects = function( entity_id, combined )
   if(status_effect_data_component == nil)then
     return active_effects
   end
+
+  local damage_model_component = EntityGetFirstComponentIncludingDisabled( entity_id, "DamageModelComponent" )
+
   local ingestion_effects = ComponentGetValue2(status_effect_data_component, "ingestion_effects") or {}
   local stain_effects = ComponentGetValue2(status_effect_data_component, "stain_effects") or {}
+
 
   for k,v in pairs(ingestion_effects) do
     local index = k - 1
@@ -94,6 +98,7 @@ GetActiveStatusEffects = function( entity_id, combined )
     local index = k - 1
     if(index > 0)then
       local effect = unique_status_effects[index]
+      --print(effect .. ": " .. tostring(v))
       if(v > 0.15)then
         --table.insert(active_effects.stain, effect)
         if(combined and (active_effects[effect] == nil or v > active_effects[effect]))then
@@ -101,6 +106,22 @@ GetActiveStatusEffects = function( entity_id, combined )
         elseif(not combined)then
           active_effects.stain[effect] = v
         end
+      end
+    end
+  end
+
+  if(damage_model_component)then
+    local is_on_fire = ComponentGetValue2(damage_model_component, "mIsOnFire")
+    local fire_frames_left = ComponentGetValue2(damage_model_component, "mFireFramesLeft") or 0
+    local fire_duration_frames = ComponentGetValue2(damage_model_component, "mFireDurationFrames") or 720
+    local fire_value = fire_frames_left / fire_duration_frames
+    if(is_on_fire == true)then
+      print("fire_value: " .. tostring(fire_value))
+      print("on_fire: " .. tostring(is_on_fire))
+      if(combined)then
+        active_effects["ON_FIRE"] = fire_value
+      else
+        active_effects.stain["ON_FIRE"] = fire_value
       end
     end
   end
@@ -118,6 +139,10 @@ GetStatusElement = function( id, value )
       if(threshold > last_index_threshold and value >= threshold)then
         last_index_threshold = threshold
         elem = v
+        --print(v.id)
+        if(v.id == "ON_FIRE")then
+          v.effect_entity = "mods/evaisa.arena/files/entities/misc/on_fire.xml"
+        end
       end
     end
   end

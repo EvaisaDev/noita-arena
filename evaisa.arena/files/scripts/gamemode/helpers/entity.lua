@@ -122,12 +122,15 @@ entity.GetVariable = function(ent, name)
     return nil
 end
 
-entity.PickItem = function(ent, item)
+entity.PickItem = function(ent, item, inventory)
     local item_component = EntityGetFirstComponentIncludingDisabled(item, "ItemComponent")
     local preferred_inv = "QUICK"
     if item_component then
       ComponentSetValue2(item_component, "has_been_picked_by_player", true)
       preferred_inv = ComponentGetValue2(item_component, "preferred_inventory")
+    end
+    if inventory ~= nil then
+      preferred_inv = inventory
     end
 
     local entity_children = EntityGetAllChildren(ent) or {}

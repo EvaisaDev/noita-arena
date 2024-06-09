@@ -10,6 +10,7 @@ end
 
 -- update rate
 local update_every_n_frame = ComponentGetValue2(area_damage_component, "update_every_n_frame")
+local entity_responsible = ComponentGetValue2(area_damage_component, "entity_responsible")
 
 -- projectile component stuff
 local never_hit_player = false
@@ -36,7 +37,6 @@ end
 if (frames % update_every_n_frame == 0)then
     local circle_radius = ComponentGetValue2(area_damage_component, "circle_radius")
     local damage_per_frame = ComponentGetValue2(area_damage_component, "damage_per_frame")
-    local entity_responsible = ComponentGetValue2(area_damage_component, "entity_responsible")
     local death_cause = ComponentGetValue2(area_damage_component, "death_cause")
     local entities_with_tag = ComponentGetValue2(area_damage_component, "entities_with_tag")
     local aabb_min_x, aabb_min_y = ComponentGetValue2(area_damage_component, "aabb_min")

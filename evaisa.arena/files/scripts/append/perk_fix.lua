@@ -8,9 +8,9 @@ local reapply_fix_list = {
 local remove_list = {
     PEACE_WITH_GODS = true,
     ATTRACT_ITEMS = true,
-    ABILITY_ACTIONS_MATERIALIZED = true,
+    --ABILITY_ACTIONS_MATERIALIZED = true, -- works now
     NO_WAND_EDITING = true,
-    MEGA_BEAM_STONE = true,
+    --MEGA_BEAM_STONE = true,
     GOLD_IS_FOREVER = true,
     EXPLODING_GOLD = true,
 	EXTRA_MONEY_TRICK_KILL = true,
@@ -19,7 +19,7 @@ local remove_list = {
     INVISIBILITY = true,
     GLOBAL_GORE = true,
     REMOVE_FOG_OF_WAR = true,
-    VAMPIRISM = true,
+    --VAMPIRISM = true,
     WORM_ATTRACTOR = true,
     RADAR_ENEMY = true,
     FOOD_CLOCK = true,
@@ -29,18 +29,18 @@ local remove_list = {
     MOON_RADAR = true,
     MAP = true,
     REVENGE_RATS = true,
-    ATTACK_FOOT = true,
-    LEGGY_FEET = true,
+    --ATTACK_FOOT = true, -- fixed
+    --LEGGY_FEET = true, -- fixed
     PLAGUE_RATS = true,  
     VOMIT_RATS = true,
     MOLD = true,
     WORM_SMALLER_HOLES = true,
     HOMUNCULUS = true,
-    LUKKI_MINION = true,
+    --LUKKI_MINION = true,
     GENOME_MORE_HATRED = true,
     GENOME_MORE_LOVE = true,
-    ANGRY_GHOST = true,
-    HUNGRY_GHOST = true,
+    --ANGRY_GHOST = true,
+    --HUNGRY_GHOST = true,
     DEATH_GHOST = true,
 }
 
@@ -61,6 +61,9 @@ local allow_on_clients = {
     MANA_FROM_KILLS = true,
     ANGRY_LEVITATION = true,
     LASER_AIM = true,
+	LEGGY_FEET = true,
+	ATTACK_FOOT = true,
+	LUKKI_MINION = true,
 }   
 
 local skip_function_list = {
@@ -78,6 +81,28 @@ local rewrites = {
         func = function( entity_perk_item, entity_who_picked, item_name )
             GameAddFlagRun( "arena_unlimited_spells" )
         end,
+	},
+	LUKKI_MINION = {
+		id = "LUKKI_MINION",
+		ui_name = "$perk_lukki_minion",
+		ui_description = "$perkdesc_lukki_minion",
+		ui_icon = "data/ui_gfx/perk_icons/lukki_minion.png",
+		perk_icon = "data/items_gfx/perks/lukki_minion.png",
+		stackable = false,
+		func = function( entity_perk_item, entity_who_picked, item_name )
+			local x,y = EntityGetTransform( entity_who_picked )
+			local child_id = EntityLoad( "mods/evaisa.arena/files/entities/perks/lukki_minion.xml", x, y )
+			EntityAddTag( child_id, "perk_entity" )
+			
+			EntityAddComponent( child_id, "VariableStorageComponent", 
+			{
+				name = "owner_id",
+				value_int = tostring( entity_who_picked ),
+			} )
+
+		end,
+		func_remove = function( entity_who_picked )
+		end,
 	},
     SHIELD = {
 		id = "SHIELD",
@@ -137,6 +162,161 @@ local rewrites = {
 			local x,y = EntityGetTransform( entity_who_picked )
 			local child_id = EntityLoad( "data/entities/misc/perks/shield.xml", x, y )
 			EntityAddChild( entity_who_picked, child_id )
+		end,
+	},
+	ATTACK_FOOT = 	{
+		id = "ATTACK_FOOT",
+		ui_name = "$perk_attack_foot",
+		ui_description = "$perkdesc_attack_foot",
+		ui_icon = "data/ui_gfx/perk_icons/attack_foot.png",
+		perk_icon = "data/items_gfx/perks/attack_foot.png",
+		stackable = STACKABLE_YES,
+		stackable_maximum = 3,
+		max_in_perk_pool = 2,
+		stackable_is_rare = true,
+		usable_by_enemies = true,
+		func = function( entity_perk_item, entity_who_picked, item_name, pickup_count )
+			local x,y = EntityGetTransform( entity_who_picked )
+			local child_id = 0
+			local is_stacking = EntityHasTag( entity_who_picked, "attack_foot_climber")
+
+			local limb_count = 4
+			if is_stacking then limb_count = 2 end
+			for i=1,limb_count do
+				child_id = EntityLoad( "data/entities/misc/perks/attack_foot/limb_walker.xml", x, y )
+				EntityAddTag( child_id, "perk_entity" )
+				EntityAddChild( entity_who_picked, child_id )
+			end
+			
+			child_id = EntityLoad( "mods/evaisa.arena/files/entities/perks/limb_attacker.xml", x, y )
+			EntityAddTag( child_id, "perk_entity" )
+			EntityAddChild( entity_who_picked, child_id )
+			
+			if not is_stacking then
+				-- enable climbing
+				child_id = EntityLoad( "data/entities/misc/perks/attack_foot/limb_climb.xml", x, y )
+				EntityAddTag( child_id, "perk_entity" )
+				EntityAddChild( entity_who_picked, child_id )
+				EntityAddTag( entity_who_picked, "attack_foot_climber" )
+			else
+				-- add length to limbs
+				for _,v in ipairs(EntityGetAllChildren(entity_who_picked)) do
+					if EntityHasTag(v, "attack_foot_walker") then
+						component_readwrite(EntityGetFirstComponent(v, "IKLimbComponent"), { length = 50 }, function(comp)
+							comp.length = comp.length * 1.5
+						end)
+					end
+				end
+			end
+			
+			local platformingcomponents = EntityGetComponent( entity_who_picked, "CharacterPlatformingComponent" )
+			if( platformingcomponents ~= nil ) then
+				for i,component in ipairs(platformingcomponents) do
+					local run_speed = tonumber( ComponentGetMetaCustom( component, "run_velocity" ) ) * 1.25
+					local vel_x = math.abs( tonumber( ComponentGetMetaCustom( component, "velocity_max_x" ) ) ) * 1.25
+					
+					local vel_x_min = 0 - vel_x
+					local vel_x_max = vel_x
+					
+					ComponentSetMetaCustom( component, "run_velocity", run_speed )
+					ComponentSetMetaCustom( component, "velocity_min_x", vel_x_min )
+					ComponentSetMetaCustom( component, "velocity_max_x", vel_x_max )
+				end
+			end
+			
+			--[[perk_pickup_event("LUKKI")
+			
+			if ( pickup_count <= 2 ) then
+				add_lukkiness_level(entity_who_picked)
+			end]]
+		end,
+		func_remove = function( entity_who_picked )
+			local platformingcomponents = EntityGetComponent( entity_who_picked, "CharacterPlatformingComponent" )
+			if( platformingcomponents ~= nil ) then
+				for i,component in ipairs(platformingcomponents) do
+					ComponentSetMetaCustom( component, "run_velocity", 154 )
+					ComponentSetMetaCustom( component, "velocity_min_x", -57 )
+					ComponentSetMetaCustom( component, "velocity_max_x", 57 )
+					ComponentSetValue2( component, "pixel_gravity", 350 )
+				end
+			end
+		end,
+	},
+	LEGGY_FEET = {
+		id = "LEGGY_FEET",
+		ui_name = "$perk_leggy_feet",
+		ui_description = "$perkdesc_leggy_feet",
+		ui_icon = "data/ui_gfx/perk_icons/leggy_feet.png",
+		perk_icon = "data/items_gfx/perks/leggy_feet.png",
+		stackable = STACKABLE_YES, -- Arvi: these variables don't really make sense for this perk but putting them in anyway
+		stackable_is_rare = true,
+		usable_by_enemies = true,
+		not_in_default_perk_pool = true,
+		func = function( entity_perk_item, entity_who_picked, item_name, pickup_count )
+			local x,y = EntityGetTransform( entity_who_picked )
+			local child_id = 0
+			local is_stacking = EntityHasTag( entity_who_picked, "attack_foot_climber")
+			local limb_count = 2
+			if is_stacking then limb_count = 1 end
+			
+			for i=1,limb_count do
+				child_id = EntityLoad( "data/entities/misc/perks/attack_leggy/leggy_limb_left.xml", x, y )
+				EntityAddTag( child_id, "perk_entity" )
+				EntityAddChild( entity_who_picked, child_id )
+			end
+			for i=1,limb_count do
+				child_id = EntityLoad( "data/entities/misc/perks/attack_leggy/leggy_limb_right.xml", x, y )
+				EntityAddTag( child_id, "perk_entity" )
+				EntityAddChild( entity_who_picked, child_id )
+			end
+			
+			child_id = EntityLoad( "mods/evaisa.arena/files/entities/perks/leggy_limb_attacker.xml", x, y )
+			EntityAddTag( child_id, "perk_entity" )
+			EntityAddChild( entity_who_picked, child_id )
+
+			if not is_stacking then
+				child_id = EntityLoad( "data/entities/misc/perks/attack_foot/limb_climb.xml", x, y )
+				EntityAddTag( child_id, "perk_entity" )
+				EntityAddChild( entity_who_picked, child_id )
+				EntityAddTag( entity_who_picked, "attack_foot_climber" )
+			else
+				-- add length to limbs
+				for _,v in ipairs(EntityGetAllChildren(entity_who_picked)) do
+					if EntityHasTag(v, "leggy_foot_walker") then
+						component_readwrite(EntityGetFirstComponent(v, "IKLimbComponent"), { length = 50 }, function(comp)
+							comp.length = comp.length * 1.5
+						end)
+					end
+				end
+			end
+			
+			local platformingcomponents = EntityGetComponent( entity_who_picked, "CharacterPlatformingComponent" )
+			if( platformingcomponents ~= nil ) then
+				for i,component in ipairs(platformingcomponents) do
+					local run_speed = tonumber( ComponentGetMetaCustom( component, "run_velocity" ) ) * 1.25
+					local vel_x = math.abs( tonumber( ComponentGetMetaCustom( component, "velocity_max_x" ) ) ) * 1.25
+					
+					local vel_x_min = 0 - vel_x
+					local vel_x_max = vel_x
+					
+					ComponentSetMetaCustom( component, "run_velocity", run_speed )
+					ComponentSetMetaCustom( component, "velocity_min_x", vel_x_min )
+					ComponentSetMetaCustom( component, "velocity_max_x", vel_x_max )
+				end
+			end
+			
+		end,
+		func_remove = function( entity_who_picked )
+			local platformingcomponents = EntityGetComponent( entity_who_picked, "CharacterPlatformingComponent" )
+			if( platformingcomponents ~= nil ) then
+				for i,component in ipairs(platformingcomponents) do
+					ComponentSetMetaCustom( component, "run_velocity", 154 )
+					ComponentSetMetaCustom( component, "velocity_min_x", -57 )
+					ComponentSetMetaCustom( component, "velocity_max_x", 57 )
+					-- NOTE apparently this isn't needed, since the LEGGY works differently from the LUKKI
+					-- ComponentSetValue2( component, "pixel_gravity", 350 )
+				end
+			end
 		end,
 	},
     EXTRA_MONEY = {

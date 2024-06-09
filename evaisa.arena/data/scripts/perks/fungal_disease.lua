@@ -8,7 +8,7 @@ local radius = 64
 
 local targets = {}
 
-for k, v in ipairs(EntityGetInRadiusWithTag( x, y, radius, "mortal" ) or {})do
+for k, v in ipairs(EntityGetInRadiusWithTag( x, y, radius, "homing_target" ) or {})do
     if(v ~= EntityGetRootEntity(entity_id))then
         table.insert(targets, v)
     end

@@ -660,14 +660,14 @@ networking = {
                                 --print("Adding spectator item to spectator.")
                             end
                         else
-                            EntityHelper.PickItem(data.players[tostring(user)].entity, item)
+                            EntityHelper.PickItem(data.players[tostring(user)].entity, item, "QUICK")
                             item_entity = item
 
                             if(has_spectator)then
 
                                 ComponentSetValue2(spectator_pickupper, "only_pick_this_entity", spectator_item)
 
-                                EntityHelper.PickItem(data.spectator_entity, spectator_item)
+                                EntityHelper.PickItem(data.spectator_entity, spectator_item, "QUICK")
                                 spectator_item_entity = spectator_item
                             end
                         end
@@ -738,7 +738,7 @@ networking = {
                         else
                             ComponentSetValue2(spectator_pickupper, "only_pick_this_entity", spectator_item)
 
-                            EntityHelper.PickItem(data.spectator_entity, spectator_item)
+                            EntityHelper.PickItem(data.spectator_entity, spectator_item, "FULL")
                             spectator_item_entity = spectator_item
 
                         end
@@ -970,11 +970,21 @@ networking = {
 
                     ComponentSetValue2(controlsComp, "mAimingVector", message.aim_x, message.aim_y)
 
-                    -- get length of aiming vector
-                    local length = math.sqrt(message.aim_x * message.aim_x + message.aim_y * message.aim_y)
-                    local normalized_x, normalized_y = message.aim_x / length, message.aim_y / length
+                    local vx = message.aim_x
+                    local vy = message.aim_y
+                    local CONTROLS_AIMING_VECTOR_FULL_LENGTH_PIXELS = tonumber(MagicNumbersGetValue("CONTROLS_AIMING_VECTOR_FULL_LENGTH_PIXELS"))
 
-                    ComponentSetValue2(controlsComp, "mAimingVectorNormalized", normalized_x, normalized_y)
+                    -- get length of aiming vector
+                    local aiming_vec_distance = math.sqrt(vx * vx + vy * vy)
+                    if aiming_vec_distance > CONTROLS_AIMING_VECTOR_FULL_LENGTH_PIXELS then
+                        vx = vx / aiming_vec_distance
+                        vy = vy / aiming_vec_distance
+                    else
+                        vx = vx / CONTROLS_AIMING_VECTOR_FULL_LENGTH_PIXELS
+                        vy = vy / CONTROLS_AIMING_VECTOR_FULL_LENGTH_PIXELS
+                    end
+
+                    ComponentSetValue2(controlsComp, "mAimingVectorNormalized", vx, vy)
      
                     ComponentSetValue2(controlsComp, "mMousePosition", message.mouse_x, message.mouse_y)
 
@@ -1530,22 +1540,31 @@ networking = {
                         end]]
 
                         if(effect ~= nil and data.players[tostring(user)].status_effect_entities[id] == nil)then
-                            if(effect.effect_entity)then
+                            local effect_entity = nil
+                            if(effect.effect_entity ~= nil)then
+                                print("Loading effect of id: "..tostring(effect.id))
                                 data.players[tostring(user)].status_effect_entities[id] = LoadGameEffectEntityTo( client_entity, effect.effect_entity )
-                                --GamePrint("Loaded effect of id: "..tostring(effect.id))
+                                print("New entity: " .. tostring(data.players[tostring(user)].status_effect_entities[id]))
+                                effect_entity = data.players[tostring(user)].status_effect_entities[id]
+                                local game_effect_comp = EntityGetFirstComponentIncludingDisabled(effect_entity, "GameEffectComponent")
+                                if(game_effect_comp ~= nil)then
+                                    ComponentSetValue2(game_effect_comp, "frames", -1)
+                                    print("Loaded effect of id: "..tostring(effect.id))
+                                end
                             else
                                 data.players[tostring(user)].status_effect_entities[id] = EntityCreateNew("effect")
-                                EntityAddComponent2(data.players[tostring(user)].status_effect_entities[id], "InheritTransformComponent")
-                                EntityAddComponent2(data.players[tostring(user)].status_effect_entities[id], "GameEffectComponent", {
+                                effect_entity = data.players[tostring(user)].status_effect_entities[id]
+                                EntityAddComponent2(effect_entity, "InheritTransformComponent")
+                                EntityAddComponent2(effect_entity, "GameEffectComponent", {
                                     effect = id,
                                     frames = -1,
                                 })
-                                EntityAddChild(client_entity, data.players[tostring(user)].status_effect_entities[id])
+                                EntityAddChild(client_entity, effect_entity)
                             end
 
-                            if(data.players[tostring(user)].status_effect_entities[id] ~= 0 and data.players[tostring(user)].status_effect_entities[id] ~= nil)then
+                            if(effect_entity ~= 0 and effect_entity ~= nil)then
 
-                                EntityAddComponent2(data.players[tostring(user)].status_effect_entities[id], "UIIconComponent", {
+                                EntityAddComponent2(effect_entity, "UIIconComponent", {
                                     name = effect.ui_name,
                                     icon_sprite_file = effect.ui_icon,
                                     description = effect.ui_description,

@@ -25,7 +25,13 @@
     <InventoryGuiComponent />
 
     <Entity name="arm_r">
-        <InheritTransformComponent></InheritTransformComponent>
+        <InheritTransformComponent
+        >
+        <Transform
+            position.x = "100000"
+            position.y = "100000"
+        />
+        </InheritTransformComponent>
         
         <HotspotComponent
         _tags="hand"
