@@ -1705,7 +1705,6 @@ networking = {
                 return
             end
 
-            print("pickup received.")
             local item_id = message
 
             data.picked_up_items = data.picked_up_items or {}
@@ -2088,6 +2087,8 @@ networking = {
                 return
             end
             local uid = message
+
+            print("Picking HM entity: " .. tostring(uid))
 
             local entity = EntityGetWithName(uid)
             if(entity ~= nil and entity ~= 0 and data.players[tostring(user)])then

@@ -3866,6 +3866,7 @@ ArenaGameplay = {
                 local pickup = GlobalsGetValue("hm_item_pickup", "")
                 if(pickup ~= "")then
                     networking.send.pick_hm_entity(lobby, pickup)
+                    GlobalsSetValue("arena_item_pickup", "0")
                     GlobalsSetValue("hm_item_pickup", "")
                     GameAddFlagRun("should_save_player")
                 end
