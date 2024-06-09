@@ -1304,6 +1304,7 @@ networking = {
 
 
             local perk_data = {}
+            local last_player_perk_data = data.players[tostring(user)].perks or {}
 
             for i, perk in ipairs(message) do
                 local perk_id = perks_sorted[perk[1]]
@@ -1311,6 +1312,47 @@ networking = {
 
                 table.insert(perk_data, {perk_id, perk_stack})
             end
+
+            -- find new perks or perks that gained stacks, only add stacks that it gained
+            local gained_perks = {}
+            for i, perk in ipairs(perk_data) do
+                local perk_id = perk[1]
+                local perk_stack = perk[2]
+
+                local found = false
+                for j, last_perk in ipairs(last_player_perk_data) do
+                    local last_perk_id = last_perk[1]
+                    local last_perk_stack = last_perk[2]
+
+                    if (perk_id == last_perk_id) then
+                        if (perk_stack > last_perk_stack) then
+                            table.insert(gained_perks, {perk_id, perk_stack - last_perk_stack})
+                        end
+                        found = true
+                        break
+                    end
+                end
+
+                if (not found) then
+                    table.insert(last_player_perk_data, {perk_id, perk_stack})
+                end
+            end
+
+            local client = data.players[tostring(user)].entity
+
+            if (client ~= nil and EntityGetIsAlive(client)) then
+                for k, v in ipairs(gained_perks) do
+                    local perk = v[1]
+                    local count = v[2]
+    
+                    for i = 1, count do
+                        EntityHelper.GivePerk(client, perk, i, true)
+                    end
+                end
+            end
+
+            
+            
 
             data.players[tostring(user)].perks = perk_data
 
@@ -2154,12 +2196,14 @@ networking = {
 
                 if(was_perk)then
                     
-                    for k, v in ipairs(EntityGetWithTag("client") or {})do
+                    --[[for k, v in ipairs(EntityGetWithTag("client") or {})do
                         data.client_spawn_x, data.client_spawn_y = EntityGetTransform(v)
                         EntityKill(v)
                     end
     
-                    SpectatorMode.ClearHM()
+                    SpectatorMode.ClearHM()]]
+
+                    networking.send.request_perk_update(lobby, user)
                 end
             end
         end,
