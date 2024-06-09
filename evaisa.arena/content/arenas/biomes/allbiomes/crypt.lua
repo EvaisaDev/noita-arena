@@ -1273,7 +1273,7 @@ function spawn_vines(x, y)
 end
 
 function spawn_shopitem( x, y )
-	EntityHelper.NetworkRegister(generate_shop_item( x, y, false, nil ))
+	EntityHelper.NetworkRegister(generate_shop_item( x, y, false, nil ), x, y)
 	--print("shop item spawned at " .. x .. ", " .. y)
 end
 

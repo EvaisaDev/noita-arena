@@ -1188,16 +1188,16 @@ function spawn_chest(x, y)
 	local rnd = Random(1,super_chest_spawn_rate)
 	
 	if (rnd >= super_chest_spawn_rate-1) then
-		EntityHelper.NetworkRegister(EntityLoad( "data/entities/items/pickup/chest_random_super.xml", x, y))
+		EntityHelper.NetworkRegister(EntityLoad( "data/entities/items/pickup/chest_random_super.xml", x, y), x, y)
 	else
-		EntityHelper.NetworkRegister(EntityLoad( "data/entities/items/pickup/chest_random.xml", x, y))
+		EntityHelper.NetworkRegister(EntityLoad( "data/entities/items/pickup/chest_random.xml", x, y), x, y)
 	end
 end
 
 function spawn_skulls(x, y) end
 
 function spawn_shopitem( x, y )
-	EntityHelper.NetworkRegister(generate_shop_item( x, y, false, 1 ))
+	EntityHelper.NetworkRegister(generate_shop_item( x, y, false, 1 ), x, y)
 end
 
 function spawn_trapwand(x, y)
@@ -1209,16 +1209,16 @@ function spawn_trapwand(x, y)
 	
 	local wand_id = EntityLoad( wand_to_spawn, x, y)
 	EntityAddTag( wand_id, "trap_wand" )
-	EntityHelper.NetworkRegister(wand_id)
+	EntityHelper.NetworkRegister(wand_id, x, y)
 end
 
 function spawn_bbqbox( x, y )
 	SetRandomSeed( x, y )
 	local rnd = Random( 1, 100 )
 	if( rnd <= 99 ) then
-		EntityHelper.NetworkRegister(spawn_heart( x + 10, y + 10 ))
+		EntityHelper.NetworkRegister(spawn_heart( x + 10, y + 10 ), x, y)
 	else
-		EntityHelper.NetworkRegister(EntityLoad( "data/entities/items/pickup/jar_of_urine.xml", x, y ))
+		EntityHelper.NetworkRegister(EntityLoad( "data/entities/items/pickup/jar_of_urine.xml", x, y ), x, y)
 	end
 end
 

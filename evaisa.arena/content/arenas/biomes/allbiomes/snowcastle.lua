@@ -1371,15 +1371,15 @@ function spawn_forcefield_generator(x, y)
 end
 
 function spawn_brimstone(x, y)
-	EntityHelper.NetworkRegister(EntityLoad("data/entities/items/pickup/brimstone.xml", x, y))
+	EntityHelper.NetworkRegister(EntityLoad("data/entities/items/pickup/brimstone.xml", x, y), x, y)
 	EntityLoad("data/entities/buildings/sauna_stove_heat.xml", x, y+10)
 end
 
 function spawn_vasta_or_vihta(x, y)
 	if x > 190 then
-		EntityHelper.NetworkRegister(EntityLoad("data/entities/items/wand_vasta.xml", x, y))
+		EntityHelper.NetworkRegister(EntityLoad("data/entities/items/wand_vasta.xml", x, y), x, y)
 	else
-		EntityHelper.NetworkRegister(EntityLoad("data/entities/items/wand_vihta.xml", x, y))
+		EntityHelper.NetworkRegister(EntityLoad("data/entities/items/wand_vihta.xml", x, y), x, y)
 	end
 end
 

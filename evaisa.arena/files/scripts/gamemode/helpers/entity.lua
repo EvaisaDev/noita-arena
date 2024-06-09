@@ -41,7 +41,13 @@ entity.NetworkRegister = function(item_entity, x, y, id)
     end
 
     local EntityHelper = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/entity.lua")
-    EntityHelper.SetVariable(item_entity, "arena_entity_id", id ~= nil and id or tonumber(tostring(x)..tostring(y)))
+
+    local val = EntityHelper.GetVariable(item_entity, "arena_entity_id")
+    if(val ~= nil)then
+        return
+    end
+
+    EntityHelper.SetVariable(item_entity, "arena_entity_id", id ~= nil and id or tonumber(tostring(x)..tostring(math.abs(y))))
 
     local lua_comps = EntityGetComponentIncludingDisabled(item_entity, "LuaComponent") or {}
     local has_pickup_script = false

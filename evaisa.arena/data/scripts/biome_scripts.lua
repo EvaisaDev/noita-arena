@@ -89,7 +89,7 @@ function spawn_wands(x, y)
 end
 
 function spawn_potions( x, y )
-	EntityHelper.NetworkRegister(spawn_from_list( "potion_spawnlist", x, y, true ))
+	EntityHelper.NetworkRegister(spawn_from_list( "potion_spawnlist", x, y, true ), x, y)
 end
 
 function spawn_ghostlamp(x, y)
@@ -208,7 +208,7 @@ function spawn_runes( x, y )
 end
 
 function spawn_fullhp(x, y)
-	EntityHelper.NetworkRegister(EntityLoad( "data/entities/items/pickup/heart_fullhp.xml", x, y ))
+	EntityHelper.NetworkRegister(EntityLoad( "data/entities/items/pickup/heart_fullhp.xml", x, y ), x, y)
 end
 
 function spawn_wand_trap( x, y )
@@ -237,7 +237,7 @@ function spawn_bigtorch(x, y)
 end
 
 function spawn_moon(x, y)
-	EntityHelper.NetworkRegister(EntityLoad( "data/entities/buildings/moon_altar.xml", x, y ))
+	EntityHelper.NetworkRegister(EntityLoad( "data/entities/buildings/moon_altar.xml", x, y ), x, y)
 end
 
 function spawn_collapse( x, y )
@@ -245,5 +245,5 @@ function spawn_collapse( x, y )
 end
 
 function spawn_shopitem( x, y )
-	EntityHelper.NetworkRegister(generate_shop_item( x, y, false, 10 ))
+	EntityHelper.NetworkRegister(generate_shop_item( x, y, false, 10 ), x, y)
 end

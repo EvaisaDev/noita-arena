@@ -141,7 +141,7 @@ function entity_load_stash( x, y )
 	-- LoadEntityToStash( "data/entities/items/poisonwand.xml", stash )
 	return stash]]--
 
-	EntityHelper.NetworkRegister(EntityLoad( "data/entities/items/pickup/heart.xml", x, y))
+	EntityHelper.NetworkRegister(EntityLoad( "data/entities/items/pickup/heart.xml", x, y), x, y)
 	-- return entity_load_chest( x, y, "chest_stash" )
 end
 
