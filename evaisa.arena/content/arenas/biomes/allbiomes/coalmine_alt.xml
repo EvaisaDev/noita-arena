@@ -11,7 +11,7 @@
 
 	limit_background_image="0"
     wang_template_file="data/wang_tiles/coalmine_alt.png" 
-    lua_script="data/scripts/biomes/coalmine_alt.lua"
+    lua_script="mods/evaisa.arena/content/arenas/biomes/allbiomes/coalmine_alt.lua"
     wang_map_width="256"
     wang_map_height="256"
     audio_music_2="coalmine"
