@@ -420,7 +420,7 @@ function spawn_props(x, y)
 end
 
 function spawn_fungitrap(x, y)
-	spawn(g_fungitrap,x,y)
+	--spawn(g_fungitrap,x,y)
 end
 
 function spawn_potion_altar(x, y)

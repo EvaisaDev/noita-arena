@@ -1753,9 +1753,20 @@ ArenaGameplay = {
                 networking.send.request_perk_update(lobby)
 
                 GameAddFlagRun("should_save_player")
+                dofile("mods/evaisa.arena/files/scripts/misc/heart_fullhp.lua")
+                
+                if(GameHasFlagRun("give_hp_catchup"))then
+                    local rounds = (ArenaGameplay.GetNumRounds(lobby) - 1)
+
+                    if(rounds > 0)then
+                        for i = 0, rounds do
+                            give_health(player_entity)
+                        end
+                    end
+                end
 
                 if(GameHasFlagRun("instant_health"))then
-                    dofile("mods/evaisa.arena/files/scripts/misc/heart_fullhp.lua")
+                    
                     give_health(player_entity)
                 end
 

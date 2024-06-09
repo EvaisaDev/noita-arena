@@ -1135,7 +1135,7 @@ ArenaMode = {
 			type = "slider",
 			min = 10,
 			max = 100,
-			default = 15;
+			default = 12;
             formatting_func = function(value)
                 value = math.floor(value)
 
@@ -2476,6 +2476,8 @@ ArenaMode = {
                 steamutils.RemoveLocalLobbyData(lobby, "player_data")
                 steamutils.RemoveLocalLobbyData(lobby, "reroll_count")
                 steamutils.RemoveLocalLobbyData(lobby, "match_data")
+
+                GameAddFlagRun("give_hp_catchup")
             end
             gameplay_handler.GetGameData(lobby, data)
 
