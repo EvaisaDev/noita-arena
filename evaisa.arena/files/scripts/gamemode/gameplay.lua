@@ -1757,16 +1757,18 @@ ArenaGameplay = {
                 
                 if(GameHasFlagRun("give_hp_catchup"))then
                     local rounds = (ArenaGameplay.GetNumRounds(lobby) - 1)
+                    print("Rounds: "..tostring(rounds))
 
                     if(rounds > 0)then
                         for i = 0, rounds do
                             give_health(player_entity)
                         end
                     end
+                    GameRemoveFlagRun("give_hp_catchup")
                 end
 
                 if(GameHasFlagRun("instant_health"))then
-                    
+                    print("Rounds: "..tostring(rounds))
                     give_health(player_entity)
                 end
 
