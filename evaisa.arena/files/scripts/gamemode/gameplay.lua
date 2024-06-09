@@ -1741,6 +1741,7 @@ ArenaGameplay = {
                 end
                 
                 -- give starting gear if first entry
+                dofile("mods/evaisa.arena/files/scripts/misc/heart_fullhp.lua")
                 if (first_entry) then
                     player.GiveStartingGear()
                     local rounds = (ArenaGameplay.GetNumRounds(lobby) - 1)
@@ -1758,7 +1759,7 @@ ArenaGameplay = {
                 networking.send.request_perk_update(lobby)
 
                 GameAddFlagRun("should_save_player")
-                dofile("mods/evaisa.arena/files/scripts/misc/heart_fullhp.lua")
+             
           
                 if(not GameHasFlagRun("DeserializedHolyMountain") and GameHasFlagRun("instant_health"))then
                     print("Rounds: "..tostring(rounds))
