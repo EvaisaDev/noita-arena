@@ -14,6 +14,10 @@ function give_health(entity_who_picked, x, y)
 	local multiplier = tonumber(GlobalsGetValue("health_scaling_mult_amount", "2"))
 
 
+	print("HP Scaling type: " .. scaling_type)
+	print("HP Flat amount: " .. flat_amount)
+	print("HP Multiplier: " .. multiplier)
+
 	local hp_gained = 0
 
 	local damagemodels = EntityGetComponent( entity_who_picked, "DamageModelComponent" )
@@ -24,13 +28,16 @@ function give_health(entity_who_picked, x, y)
 			local hp = tonumber( ComponentGetValue( damagemodel, "hp" ) )
 			
 			local old_max_hp = max_hp
+			print("Old max hp: " .. old_max_hp)
 			if(scaling_type == "flat")then
 				max_hp = max_hp + (flat_amount / 25)
 			elseif(scaling_type == "mult")then
 				max_hp = max_hp * multiplier
 			end
+			print("New max hp: " .. max_hp)
 
 			hp_gained = max_hp - old_max_hp
+			print("HP gained: " .. hp_gained)
 			
 			
 			if ( max_hp_cap > 0 ) then

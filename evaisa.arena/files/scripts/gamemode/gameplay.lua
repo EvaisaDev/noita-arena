@@ -1767,9 +1767,10 @@ ArenaGameplay = {
                     GameRemoveFlagRun("give_hp_catchup")
                 end
 
-                if(GameHasFlagRun("instant_health"))then
+                if(not GameHasFlagRun("picked_health") and not GameHasFlagRun("DeserializedHolyMountain") and GameHasFlagRun("instant_health"))then
                     print("Rounds: "..tostring(rounds))
                     give_health(player_entity)
+                    GameAddFlagRun("picked_health")
                 end
 
                 
