@@ -1705,35 +1705,12 @@ networking = {
                 return
             end
 
-            --GamePrint("pickup received.")
-            local entities = EntityGetInRadius(0, 0, 1000000000)
+            print("pickup received.")
             local item_id = message
-            for k, v in ipairs(entities)do
-                if(EntityGetFirstComponentIncludingDisabled(v, "ItemComponent") ~= nil)then
-                    local entity_id = EntityHelper.GetVariable(v, "arena_entity_id")
-                    if(entity_id ~= nil and entity_id == item_id)then
-                        local entity_x, entity_y = EntityGetTransform(v)
 
-                
-                        local comps = EntityGetAllComponents(v)
-    
-                        for k2, v2 in ipairs(comps)do
-                            EntitySetComponentIsEnabled(v, v2, false)
-                        end
+            data.picked_up_items = data.picked_up_items or {}
 
-                        local material_storage = EntityGetFirstComponentIncludingDisabled(v, "MaterialInventoryComponent")
-                        if(material_storage ~= nil)then
-                            EntityRemoveComponent(v, material_storage)
-                        end
-                  
-
-                        EntityKill(v)
-
-                        EntityLoad("data/entities/particles/image_emitters/shop_effect.xml", entity_x, entity_y - 8)
-                        return
-                    end
-                end
-            end
+            table.insert(data.picked_up_items, item_id)
         end,
         physics_update = function(lobby, message, user, data)
             if(data.state ~= "arena" and not data.spectator_mode)then
