@@ -2089,6 +2089,7 @@ networking = {
             local uid = message
 
             print("Picking HM entity: " .. tostring(uid))
+            local was_refresh = false
 
             local entity = EntityGetWithName(uid)
             if(entity ~= nil and entity ~= 0 and data.players[tostring(user)])then
@@ -2107,7 +2108,6 @@ networking = {
                     end
                     ]]
                     if(EntityGetIsAlive(entity))then
-                        local was_refresh = false
 
                         local entity_x, entity_y = EntityGetTransform(entity)
                         if(EntityHasTag(entity, "perk"))then
@@ -2142,13 +2142,12 @@ networking = {
 
                             EntityKill(entity)
                         end
-
-                        if(not was_refresh)then
-                            networking.send.request_item_update(lobby, user)
-                        end
                         --networking.send.request_spectate_data(lobby, user)
                     end
                 end
+            end
+            if(not was_refresh)then
+                networking.send.request_item_update(lobby, user)
             end
         end,
         request_second_row = function(lobby, message, user, data)
