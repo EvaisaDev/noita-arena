@@ -4,7 +4,8 @@ CHEST_LEVEL = 1
 dofile_once("data/scripts/director_helpers.lua")
 dofile_once("data/scripts/biome_scripts.lua")
 dofile_once("data/scripts/biome_modifiers.lua")
-dofile( "data/scripts/items/generate_shop_item.lua" )
+dofile( "mods/evaisa.arena/files/scripts/misc/generate_shop_item.lua" )
+
 
 RegisterSpawnFunction( 0xff0000ff, "spawn_nest" )
 RegisterSpawnFunction( 0xffFF50FF, "spawn_hanger" )
@@ -1113,7 +1114,7 @@ function spawn_ladder(x, y)
 end
 
 function spawn_shopitem( x, y )
-	EntityHelper.NetworkRegister(generate_shop_item( x, y, false, 2 ))
+	EntityHelper.NetworkRegister(generate_shop_item( x, y, false, 2 ), x, y)
 end
 
 function spawn_meditation_cube( x, y )

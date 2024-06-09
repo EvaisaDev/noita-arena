@@ -1422,6 +1422,13 @@ ArenaGameplay = {
         return extra_gold
     end,
     LoadLobby = function(lobby, data, show_message, first_entry)
+
+        if(GameHasFlagRun("shop_sync"))then
+            GameAddFlagRun("sync_wand_generation")
+        else
+            GameRemoveFlagRun("sync_wand_generation")
+        end
+
         GameRemoveFlagRun("wardrobe_locked")
         GameRemoveFlagRun("wardrobe_locked_2")
         if(data.client.match_data_unpacked)then
@@ -1820,6 +1827,9 @@ ArenaGameplay = {
         return math.floor(num * mult + 0.5) / mult
     end,
     LoadArena = function(lobby, data, show_message, map)
+
+        GameAddFlagRun("sync_wand_generation")
+
         GameRemoveFlagRun("card_picked")
         data.client.cards = nil
         ArenaGameplay.GracefulReset(lobby, data)

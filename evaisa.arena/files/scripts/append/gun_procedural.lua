@@ -213,7 +213,7 @@ function generate_gun( cost, level, force_unshuffle )
 
 	local entity_id = GetUpdatedEntityID()
 	local x, y = EntityGetTransform( entity_id )
-	local seed_x, seed_y = get_new_seed( x + cost + level, y, GameHasFlagRun("shop_sync") )
+	local seed_x, seed_y = get_new_seed( x + cost + level, y, GameHasFlagRun("sync_wand_generation") )
 	SetRandomSeed( seed_x, seed_y )
 
 	print("generate_gun", tostring(cost), tostring(level), tostring(force_unshuffle), tostring(seed_x), tostring(seed_y))

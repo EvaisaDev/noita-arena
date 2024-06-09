@@ -5,7 +5,8 @@ dofile_once("data/scripts/director_helpers.lua")
 dofile_once("data/scripts/biome_scripts.lua")
 dofile_once("data/scripts/lib/utilities.lua")
 dofile_once("data/scripts/biome_modifiers.lua")
-dofile( "data/scripts/items/generate_shop_item.lua" )
+dofile( "mods/evaisa.arena/files/scripts/misc/generate_shop_item.lua" )
+
 
 RegisterSpawnFunction( 0xffffeedd, "init" )
 RegisterSpawnFunction( 0xff00AC33, "load_pixel_scene3" )
