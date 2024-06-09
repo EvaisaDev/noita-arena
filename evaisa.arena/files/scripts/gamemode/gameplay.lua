@@ -1422,6 +1422,7 @@ ArenaGameplay = {
         return extra_gold
     end,
     LoadLobby = function(lobby, data, show_message, first_entry)
+        data.picked_up_items = {}
 
         if(GameHasFlagRun("shop_sync"))then
             GameAddFlagRun("sync_wand_generation")
@@ -1827,7 +1828,8 @@ ArenaGameplay = {
         return math.floor(num * mult + 0.5) / mult
     end,
     LoadArena = function(lobby, data, show_message, map)
-
+        data.picked_up_items = {}
+        
         GameAddFlagRun("sync_wand_generation")
 
         GameRemoveFlagRun("card_picked")
