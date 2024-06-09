@@ -1743,8 +1743,13 @@ ArenaGameplay = {
                 -- give starting gear if first entry
                 if (first_entry) then
                     player.GiveStartingGear()
-                    if (((rounds - 1) > 0)) then
-                        player.GiveMaxHealth(0.4 * (rounds - 1))
+                    local rounds = (ArenaGameplay.GetNumRounds(lobby) - 1)
+                    print("Rounds: "..tostring(rounds))
+
+                    if(rounds > 0)then
+                        for i = 0, rounds do
+                            give_health(player_entity)
+                        end
                     end
                 end
 
@@ -1754,20 +1759,8 @@ ArenaGameplay = {
 
                 GameAddFlagRun("should_save_player")
                 dofile("mods/evaisa.arena/files/scripts/misc/heart_fullhp.lua")
-                
-                if(GameHasFlagRun("give_hp_catchup"))then
-                    local rounds = (ArenaGameplay.GetNumRounds(lobby) - 1)
-                    print("Rounds: "..tostring(rounds))
-
-                    if(rounds > 0)then
-                        for i = 0, rounds do
-                            give_health(player_entity)
-                        end
-                    end
-                    GameRemoveFlagRun("give_hp_catchup")
-                end
-
-                if(not GameHasFlagRun("picked_health") and not GameHasFlagRun("DeserializedHolyMountain") and GameHasFlagRun("instant_health"))then
+          
+                if(not GameHasFlagRun("DeserializedHolyMountain") and GameHasFlagRun("instant_health"))then
                     print("Rounds: "..tostring(rounds))
                     give_health(player_entity)
                     GameAddFlagRun("picked_health")
