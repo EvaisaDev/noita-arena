@@ -75,7 +75,6 @@
       rare_use_polka="1" >
     </MaterialComponent>
 
-  <!--
     <MaterialComponent 
       _enabled="1" 
       is_rare="0" 
@@ -88,7 +87,7 @@
       material_name="diamond" 
 	  >
     </MaterialComponent>
--->
+
     <MaterialComponent 
       _enabled="1" 
       is_rare="0" 
@@ -266,7 +265,6 @@
       material_on_top_of="wood_static"
     ></VegetationComponent>
 
-  <!--
     <VegetationComponent 
       _enabled="1" 
       is_visual="1" 
@@ -358,7 +356,7 @@
       visual_offset_x="15" 
       visual_offset_y="32" 
 	  >
-    </VegetationComponent>-->
+    </VegetationComponent>
     
   </Materials>
 

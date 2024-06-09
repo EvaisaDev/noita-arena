@@ -133,6 +133,7 @@
       rare_use_polka="1" >
     </MaterialComponent>
 
+<!--
     <VegetationComponent 
       _enabled="1" 
       is_visual="1" 
@@ -169,7 +170,7 @@
       is_ceiling_plant="1"
       >
     </VegetationComponent>
-	
+	-->
 	<VegetationComponent 
       _enabled="1" 
       is_visual="0" 

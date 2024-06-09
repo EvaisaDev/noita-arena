@@ -5,7 +5,7 @@ dofile_once("data/scripts/director_helpers_design.lua")
 dofile_once("data/scripts/biome_scripts.lua")
 dofile_once("data/scripts/lib/utilities.lua")
 dofile_once("data/scripts/biome_modifiers.lua")
-dofile( "data/scripts/items/generate_shop_item.lua" )
+dofile( "mods/evaisa.arena/files/scripts/misc/generate_shop_item.lua" )
 
 RegisterSpawnFunction( 0xff692e94, "load_pixel_scene_wide" )
 RegisterSpawnFunction( 0xff822e5b, "load_pixel_scene_tall" )
@@ -1079,19 +1079,25 @@ end
 -- actual functions that get called from the wang generator
 
 function spawn_small_enemies(x, y)
-	local spawn_points = EntityGetInRadiusWithTag( x, y, 150, "spawn_point" )
 	local distance = math.sqrt(x*x + y*y)
-	if(distance < 600 and #spawn_points == 0)then
+	if(distance < 600)then
 		EntityLoad( "mods/evaisa.arena/files/entities/misc/spawn_point.xml", x, y )
 	end
+	--[[if safe( x, y ) then
+		spawn(g_small_enemies,x,y)
+	end]]
+	-- spawn_hp_mult(g_small_enemies,x,y,0,0,4,"vault")
 end
 
 function spawn_big_enemies(x, y)
-	local spawn_points = EntityGetInRadiusWithTag( x, y, 150, "spawn_point" )
 	local distance = math.sqrt(x*x + y*y)
-	if(distance < 600 and #spawn_points == 0)then
+	if(distance < 600)then
 		EntityLoad( "mods/evaisa.arena/files/entities/misc/spawn_point.xml", x, y )
 	end
+	--[[if safe( x, y ) then
+		spawn(g_big_enemies,x,y)
+	end]]
+	-- spawn_hp_mult(g_big_enemies,x,y,0,0,4,"vault")
 end
 
 function spawn_items(x, y)
@@ -1103,15 +1109,15 @@ function spawn_items(x, y)
 end
 
 function spawn_lamp(x, y)
-	if safe( x, y ) then
+	--[[if safe( x, y ) then
 		spawn(g_lamp,x,y,0,0)
-	end
+	end]]
 end
 
 function spawn_props(x, y)
-	if safe( x, y ) then
+	--[[if safe( x, y ) then
 		spawn(g_props,x,y)
-	end
+	end]
 end
 
 function spawn_hanging_prop(x, y)
@@ -1122,9 +1128,9 @@ end
 
 
 function spawn_turret(x, y)
-	if safe( x, y ) then
+	--[[if safe( x, y ) then
 		spawn(g_turret,x,y,0,0)
-	end
+	end]]
 	-- spawn_hp_mult(g_turret,x,y,0,0,4,"vault")
 end
 
@@ -1156,7 +1162,7 @@ function spawn_vines(x, y)
 end
 
 function spawn_machines(x, y)
-	spawn(g_machines,x+5,y+5,0,0)
+	--spawn(g_machines,x+5,y+5,0,0)
 end
 
 function spawn_stains( x, y )
@@ -1198,11 +1204,11 @@ function spawn_laser_trap(x, y)
 end
 
 function spawn_shopitem( x, y )
-	generate_shop_item( x, y, false, nil )
+	generate_shop_item( x, y, false, 6 )
 end
 
 function spawn_lab_puzzle(x, y)
-	SetRandomSeed(x, y)
+	--[[SetRandomSeed(x, y)
 	local type_a = random_from_array({
 		"poly",
 		"tele",
@@ -1216,7 +1222,7 @@ function spawn_lab_puzzle(x, y)
 		"speed",
 	})
 	EntityLoad("data/entities/buildings/vault_lab_puzzle_" .. type_a .. ".xml", x - 10, y)
-	EntityLoad("data/entities/buildings/vault_lab_puzzle_" .. type_b .. ".xml", x + 11, y)
+	EntityLoad("data/entities/buildings/vault_lab_puzzle_" .. type_b .. ".xml", x + 11, y)]]
 end
 
 

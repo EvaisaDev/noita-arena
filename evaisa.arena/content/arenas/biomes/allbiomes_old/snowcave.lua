@@ -5,7 +5,7 @@ dofile_once("data/scripts/director_helpers.lua")
 dofile_once("data/scripts/biome_scripts.lua")
 dofile_once("data/scripts/lib/utilities.lua")
 dofile_once("data/scripts/biome_modifiers.lua")
-dofile( "data/scripts/items/generate_shop_item.lua" )
+dofile( "mods/evaisa.arena/files/scripts/misc/generate_shop_item.lua" )
 
 RegisterSpawnFunction( 0xffffeedd, "init" )
 RegisterSpawnFunction( 0xff00AC33, "load_pixel_scene3" )
@@ -1069,7 +1069,7 @@ function init(x, y, w, h)
 	-- figure out positions for 8 statues within the biome
 	-- and spawn them if a position is within the bounds of this function call
 	-- NOTE: only 3 statues need to be destroyed to complete sequence
-	for i=1,8 do
+	--[[for i=1,8 do
 		local biome_x_min = -2350
 		local biome_x_max = 2350
 		local biome_y_min = 3140
@@ -1084,35 +1084,45 @@ function init(x, y, w, h)
 			--print("spawned statue " .. i .. " at " .. pos_x .. ", " .. pos_y)
 			LoadPixelScene( "data/biome_impl/snowcave/statue_hand.png", "", pos_x-22, pos_y-22, "", true )
 		end	
-	end
+	end]]
 end
 
 function spawn_small_enemies(x, y)
-	local spawn_points = EntityGetInRadiusWithTag( x, y, 150, "spawn_point" )
 	local distance = math.sqrt(x*x + y*y)
-	if(distance < 600 and #spawn_points == 0)then
+	if(distance < 600)then
 		EntityLoad( "mods/evaisa.arena/files/entities/misc/spawn_point.xml", x, y )
 	end
+	--[[if safe( x, y ) then
+		spawn(g_small_enemies,x,y)
+	end]]
 end
 
 function spawn_big_enemies(x, y)
-	local spawn_points = EntityGetInRadiusWithTag( x, y, 150, "spawn_point" )
 	local distance = math.sqrt(x*x + y*y)
-	if(distance < 600 and #spawn_points == 0)then
+	if(distance < 600)then
 		EntityLoad( "mods/evaisa.arena/files/entities/misc/spawn_point.xml", x, y )
 	end
+	--[[if safe( x, y ) then
+		spawn(g_big_enemies,x,y)
+	end]]
 end
 
 function spawn_unique_enemy(x, y)
-
+	--[[if safe( x, y ) then
+		spawn(g_unique_enemy,x,y)
+	end]]
 end
 
 function spawn_unique_enemy2(x, y)
-
+	--[[if safe( x, y ) then
+		spawn(g_unique_enemy2,x,y)
+	end]]
 end
 
 function spawn_scavenger_party(x,y)
-
+	--[[if safe( x, y ) then
+		spawn(g_scavenger_party, x, y)
+	end]]
 end
 
 function spawn_items(x, y)
@@ -1211,7 +1221,7 @@ function spawn_shopitem( x, y )
 end
 
 function spawn_vines(x, y)
-	spawn(g_vines,x+5,y+5)
+	--spawn(g_vines,x+5,y+5)
 end
 
 function spawn_electricity_trap(x, y)
@@ -1225,7 +1235,7 @@ function spawn_burning_barrel(x, y)
 end
 
 function spawn_fish(x, y)
-	spawn(g_fish,x,y)
+	--spawn(g_fish,x,y)
 end
 
 function spawn_buried_eye_teleporter(x, y)
@@ -1233,7 +1243,7 @@ function spawn_buried_eye_teleporter(x, y)
 end
 
 function spawn_statue_hand(x, y)
-	EntityLoad("data/entities/buildings/statue_hand_1.xml", x, y)
+	--EntityLoad("data/entities/buildings/statue_hand_1.xml", x, y)
 end
 
 function spawn_receptacle( x, y )

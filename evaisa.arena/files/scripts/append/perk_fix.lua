@@ -394,20 +394,20 @@ local rewrites = {
 		usable_by_enemies = true,
 		func = function( entity_perk_item, entity_who_picked, item_name )
 			local x,y = EntityGetTransform( entity_who_picked )
-			local child_id = EntityLoad( "data/entities/misc/perks/contact_damage.xml", x, y )
+			local child_id = EntityLoad( "mods/evaisa.arena/files/entities/perks/contact_damage.xml", x, y )
 			EntityAddTag( child_id, "perk_entity" )
 			EntityAddChild( entity_who_picked, child_id )
 		end,
 		func_enemy = function( entity_perk_item, entity_who_picked )
 			local x,y = EntityGetTransform( entity_who_picked )
-			local child_id = EntityLoad( "data/entities/misc/perks/contact_damage_enemy.xml", x, y )
+			local child_id = EntityLoad( "mods/evaisa.arena/files/entities/perks/contact_damage.xml", x, y )
 			EntityAddChild( entity_who_picked, child_id )
 		end,
-		func_client = function( entity_perk_item, entity_who_picked, item_name, amount )
+		--[[func_client = function( entity_perk_item, entity_who_picked, item_name, amount )
 			local x,y = EntityGetTransform( entity_who_picked )
 			local child_id = EntityLoad( "data/entities/misc/perks/contact_damage_enemy.xml", x, y )
 			EntityAddChild( entity_who_picked, child_id )
-		end,
+		end,]]
 	},
 	ALWAYS_CAST = {
 		id = "ALWAYS_CAST",

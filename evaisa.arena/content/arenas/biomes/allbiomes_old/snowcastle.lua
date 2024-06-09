@@ -4,6 +4,7 @@ CHEST_LEVEL = 3
 dofile_once("data/scripts/director_helpers.lua")
 dofile_once("data/scripts/biome_scripts.lua")
 dofile_once("data/scripts/biome_modifiers.lua")
+dofile( "mods/evaisa.arena/files/scripts/misc/generate_shop_item.lua" )
 
 RegisterSpawnFunction( 0xffC8C800, "spawn_lamp2" )
 RegisterSpawnFunction( 0xff01a1fa, "spawn_turret" )
@@ -1211,46 +1212,48 @@ g_furniture =
 	},
 }
 
-function safe( x, y )
-	if ( x >= 125 ) and ( x <= 249 ) and ( y >= 5118 ) and ( y <= 5259 ) then
-		return false -- close to entrance
-	end
+-- actual functions that get called from the wang generator
 
-	if y > 6100 then return false end -- close to portal
-	
+local safe = function(x, y)
 	return true
 end
 
--- actual functions that get called from the wang generator
-
 function spawn_small_enemies(x, y)
-	local spawn_points = EntityGetInRadiusWithTag( x, y, 150, "spawn_point" )
 	local distance = math.sqrt(x*x + y*y)
-	if(distance < 600 and #spawn_points == 0)then
+	if(distance < 600)then
 		EntityLoad( "mods/evaisa.arena/files/entities/misc/spawn_point.xml", x, y )
 	end
+	--[[if safe( x, y ) then
+		spawn(g_small_enemies,x,y)
+	end]]
 end
 
 function spawn_big_enemies(x, y)
-	local spawn_points = EntityGetInRadiusWithTag( x, y, 150, "spawn_point" )
 	local distance = math.sqrt(x*x + y*y)
-	if(distance < 600 and #spawn_points == 0)then
+	if(distance < 600)then
 		EntityLoad( "mods/evaisa.arena/files/entities/misc/spawn_point.xml", x, y )
 	end
+	--[[if safe( x, y ) then
+		spawn(g_big_enemies,x,y)
+	end]]
 end
 
 function spawn_unique_enemy(x, y)
-
+	--[[if safe( x, y ) then
+		spawn(g_unique_enemy,x,y)
+	end]]
 end
 
 function spawn_unique_enemy2(x, y)
-
+	--[[if safe( x, y ) then
+		spawn(g_unique_enemy2,x,y)
+	end]]
 end
 
 function spawn_turret(x, y)
-	if safe( x, y ) then
+	--[[if safe( x, y ) then
 		spawn(g_turret,x,y,0,0)
-	end
+	end]]
 end
 
 function spawn_items(x, y)
@@ -1350,7 +1353,7 @@ function load_panel_09(x, y)
 end
 
 function spawn_vines(x, y)
-	spawn(g_vines,x+5,y+5)
+	--spawn(g_vines,x+5,y+5)
 end
 
 function spawn_potion_altar(x, y)
@@ -1371,15 +1374,15 @@ function spawn_forcefield_generator(x, y)
 end
 
 function spawn_brimstone(x, y)
-	EntityHelper.NetworkRegister(EntityLoad("data/entities/items/pickup/brimstone.xml", x, y))
+	EntityLoad("data/entities/items/pickup/brimstone.xml", x, y)
 	EntityLoad("data/entities/buildings/sauna_stove_heat.xml", x, y+10)
 end
 
 function spawn_vasta_or_vihta(x, y)
 	if x > 190 then
-		EntityHelper.NetworkRegister(EntityLoad("data/entities/items/wand_vasta.xml", x, y))
+		EntityLoad("data/entities/items/wand_vasta.xml", x, y)
 	else
-		EntityHelper.NetworkRegister(EntityLoad("data/entities/items/wand_vihta.xml", x, y))
+		EntityLoad("data/entities/items/wand_vihta.xml", x, y)
 	end
 end
 
@@ -1487,5 +1490,5 @@ function spawn_drill_laser(x, y)
 end
 
 function spawn_cook(x, y)
-
+	--EntityLoad( "data/entities/animals/miner_chef.xml", x, y )
 end

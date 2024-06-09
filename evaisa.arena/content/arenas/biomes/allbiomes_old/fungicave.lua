@@ -5,6 +5,7 @@ dofile_once("data/scripts/director_helpers.lua")
 dofile_once("data/scripts/biome_scripts.lua")
 dofile_once("data/scripts/biome_modifiers.lua")
 dofile_once("data/scripts/biomes/summon_portal_util.lua")
+dofile( "mods/evaisa.arena/files/scripts/misc/generate_shop_item.lua" )
 
 RegisterSpawnFunction( 0xffffeedd, "init" )
 RegisterSpawnFunction( 0xff400000, "spawn_robots" )
@@ -422,36 +423,21 @@ g_potions =
 -- actual functions that get called from the wang generator
 
 function init(x, y, w, h)
-	-- rain forest area secret portal spawn check
-	-- NOTE: copied from rainforest.lua. Make sure random seeds/positions match!
-	local function is_inside_tile(pos_x, pos_y)
-		return pos_x >= x and pos_x <= x+w 
-		and pos_y >= y and pos_y <= y+h
-	end
 
-	local portal_x, portal_y = get_portal_position()
-	-- portal target
-	if is_inside_tile(portal_x, portal_y) then
-		-- spawn
-		--print("spawned portal target at " .. portal_x .. ", " .. portal_y)
-		EntityLoad( "data/entities/misc/summon_portal_target.xml", portal_x, portal_y )
-		-- add some empty for the return teleporter target
-		LoadPixelScene( "data/biome_impl/hole.png", "", portal_x-22, portal_y-22, "", true )
-	end
 end
 
 function spawn_small_enemies(x, y)
-	local spawn_points = EntityGetInRadiusWithTag( x, y, 150, "spawn_point" )
+	--spawn(g_small_enemies,x,y)
 	local distance = math.sqrt(x*x + y*y)
-	if(distance < 600 and #spawn_points == 0)then
+	if(distance < 600)then
 		EntityLoad( "mods/evaisa.arena/files/entities/misc/spawn_point.xml", x, y )
 	end
 end
 
 function spawn_big_enemies(x, y)
-	local spawn_points = EntityGetInRadiusWithTag( x, y, 150, "spawn_point" )
+	--spawn(g_big_enemies,x,y)
 	local distance = math.sqrt(x*x + y*y)
-	if(distance < 600 and #spawn_points == 0)then
+	if(distance < 600)then
 		EntityLoad( "mods/evaisa.arena/files/entities/misc/spawn_point.xml", x, y )
 	end
 end
@@ -465,15 +451,15 @@ function spawn_items(x, y)
 end
 
 function spawn_nest(x, y)
-	spawn(g_nest,x,y)
+	--spawn(g_nest,x,y)
 end
 
 function spawn_robots(x, y)
-
+	--spawn(g_robots,x,y)
 end
 
 function spawn_props(x, y)
-	spawn(g_props,x,y)
+	--spawn(g_props,x,y)
 end
 
 function spawn_potion_altar(x, y)
@@ -482,7 +468,7 @@ function spawn_potion_altar(x, y)
 end
 
 function spawn_physics_fungus(x, y)
-	spawn(g_physics_fungi,x,y)
+	--spawn(g_physics_fungi,x,y)
 end
 
 function spawn_lamp(x, y) end

@@ -4,7 +4,7 @@ dofile_once("data/scripts/director_helpers.lua")
 dofile_once("data/scripts/director_helpers_design.lua")
 dofile_once("data/scripts/biome_scripts.lua")
 dofile_once("data/scripts/biome_modifiers.lua")
-dofile( "data/scripts/items/generate_shop_item.lua" )
+dofile( "mods/evaisa.arena/files/scripts/misc/generate_shop_item.lua" )
 
 RegisterSpawnFunction( 0xffffeedd, "init" )
 RegisterSpawnFunction( 0xff808000, "spawn_statues" )
@@ -1142,19 +1142,21 @@ g_vines =
 -- actual functions that get called from the wang generator
 
 function spawn_small_enemies(x, y)
-	local spawn_points = EntityGetInRadiusWithTag( x, y, 150, "spawn_point" )
 	local distance = math.sqrt(x*x + y*y)
-	if(distance < 600 and #spawn_points == 0)then
+	if(distance < 600)then
 		EntityLoad( "mods/evaisa.arena/files/entities/misc/spawn_point.xml", x, y )
 	end
+	--spawn(g_small_enemies,x,y)
+	-- spawn_hp_mult(g_small_enemies,x,y,0,0,8,"crypt")
 end
 
 function spawn_big_enemies(x, y)
-	local spawn_points = EntityGetInRadiusWithTag( x, y, 150, "spawn_point" )
 	local distance = math.sqrt(x*x + y*y)
-	if(distance < 600 and #spawn_points == 0)then
+	if(distance < 600)then
 		EntityLoad( "mods/evaisa.arena/files/entities/misc/spawn_point.xml", x, y )
 	end
+	--spawn(g_big_enemies,x,y)
+	-- spawn_hp_mult(g_big_enemies,x,y,0,0,8,"crypt")
 end
 
 function spawn_items(x, y)
@@ -1194,15 +1196,16 @@ function spawn_props(x, y)
 end
 
 function spawn_unique_enemy(x, y)
-
+	--spawn(g_unique_enemy,x-1,y,0,0)
 end
 
 function spawn_large_enemies(x, y)
-
+	--spawn(g_large_enemies,x-1,y,0,0)
+	-- spawn_hp_mult(g_large_enemies,x,y,0,0,8,"crypt")
 end
 
 function spawn_ghost_crystal(x, y)
-
+	--spawn(g_ghost_crystal,x-1,y,0,0)
 end
 
 function spawn_crawlers(x, y) end
@@ -1240,12 +1243,12 @@ function load_pixel_scene5b( x, y )
 end
 
 function spawn_scavengers(x, y)
-
+	--spawn(g_scavengers,x,y,0,0)
 	-- spawn_hp_mult(g_scavengers,x,y,0,0,8,"crypt")
 end
 
 function spawn_scorpions(x, y)
-	spawn(g_scorpions,x,y)
+	--spawn(g_scorpions,x,y)
 end
 
 function spawn_bones(x, y)
@@ -1269,11 +1272,11 @@ function load_small_background_scene( x, y )
 end
 
 function spawn_vines(x, y)
-	spawn(g_vines,x+5,y+5)
+	--spawn(g_vines,x+5,y+5)
 end
 
 function spawn_shopitem( x, y )
-	EntityHelper.NetworkRegister(generate_shop_item( x, y, false, nil ))
+	generate_shop_item( x, y, false, 7 )
 	--print("shop item spawned at " .. x .. ", " .. y)
 end
 

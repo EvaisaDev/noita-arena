@@ -1,6 +1,6 @@
 <Biome>
   <Topology 
-    name="$biome_coalmine_alt"
+    name="$biome_coalmine"
     type="BIOME_WANG_TILE"
     background_image="data/weather_gfx/background_coalmine.png"
     background_edge_left="data/weather_gfx/edges/background_coalmine_left.png"
@@ -10,12 +10,20 @@
     background_edge_priority="10"     
 
 	limit_background_image="0"
-    wang_template_file="data/wang_tiles/coalmine_alt.png" 
-    lua_script="data/scripts/biomes/coalmine_alt.lua"
+	noise_biome_edges="1"
+    wang_template_file="data/wang_tiles/coalmine.png" 
+    lua_script="mods/evaisa.arena/content/arenas/biomes/allbiomes/coalmine.lua"
     wang_map_width="256"
     wang_map_height="256"
     audio_music_2="coalmine"
-    audio_ambience="wandcave">
+    audio_ambience="cave"
+	>
+  <RandomMaterials>
+    <RandomColor input_color="FF00BBEE" output_colors="FF000000,FFFFFFFF" />
+    <RandomColor input_color="FF12BBEE" output_colors="FF000000,FFFFFFFF" />
+  </RandomMaterials>
+
+
 	<BitmapCaves 
       size_x="512"
       size_y="256"
@@ -248,6 +256,7 @@
       >
     </VegetationComponent>
 
+  <!--
     <VegetationComponent 
       _enabled="1" 
       is_visual="1" 
@@ -359,8 +368,8 @@
       visual_offset_y="32"
 	  material_on_top_of="sand_static"
 	  >
-    </VegetationComponent>
-    
+    </VegetationComponent> -->
+   
   </Materials>
 
 </Biome>

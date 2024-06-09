@@ -16,6 +16,8 @@ local biomes = {
 	0xFFE1926E,
 	0xFFE16E6E,
 	0xFFC94C4C,
+	0xFF566D91,
+	0xFFBB54A5
 }
 
 local biome = biomes[Random( 1, #biomes )]

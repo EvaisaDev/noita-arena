@@ -132,7 +132,7 @@ function bone2( x, y )
 end
 
 function orb( x, y )
-	local entity = EntityLoad( "mods/evaisa.arena/content/arenas/bureon/entities/potion.xml", x, y )
+	local entity = EntityLoad( "data/entities/items/pickup/potion.xml", x, y )
 	EntityAddComponent2(entity, "LuaComponent", {
 		_tags = "enabled_in_world,enabled_in_hand,enabled_in_inventory",
 		script_item_picked_up = "mods/evaisa.arena/files/scripts/gamemode/misc/item_pickup.lua",

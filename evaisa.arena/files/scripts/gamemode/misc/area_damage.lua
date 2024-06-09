@@ -22,6 +22,10 @@ frames = frames or 0
 
 EntitySetComponentIsEnabled(entity_id, area_damage_component, false)
 
+if(entity_responsible == 0 or not EntityGetIsAlive(entity_responsible))then
+    entity_responsible = EntityGetRootEntity(entity_id)
+end
+
 if(projectile_component ~= nil)then
     local shooter = ComponentGetValue2(projectile_component, "mWhoShot")
     if(shooter ~= 0)then
@@ -31,6 +35,7 @@ if(projectile_component ~= nil)then
     never_hit_player = ComponentGetValue2(projectile_component, "never_hit_player")
     collide_with_shooter_frames = ComponentGetValue2(projectile_component, "collide_with_shooter_frames")
 end
+
 
 
 -- implementation

@@ -256,7 +256,6 @@
       >
     </VegetationComponent>
 
-  <!--
     <VegetationComponent 
       _enabled="1" 
       is_visual="1" 
@@ -368,8 +367,8 @@
       visual_offset_y="32"
 	  material_on_top_of="sand_static"
 	  >
-    </VegetationComponent> -->
-   
+    </VegetationComponent>
+    
   </Materials>
 
 </Biome>

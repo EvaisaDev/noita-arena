@@ -1,27 +1,56 @@
 <Biome>
   <Topology 
-    name="$biome_fungicave"
+    name="$biome_vault"
     type="BIOME_WANG_TILE"
-    background_image="data/weather_gfx/background_fungicave_01.png"
-    background_edge_left="data/weather_gfx/edges/background_fungicave_01_left.png"
-    background_edge_right="data/weather_gfx/edges/background_fungicave_01_right.png"
-    background_edge_top="data/weather_gfx/edges/background_fungicave_01_top.png"
-    background_edge_bottom="data/weather_gfx/edges/background_fungicave_01_bottom.png"
-    background_edge_priority="9"
-
+    background_image="data/weather_gfx/background_vault.png"
+    background_edge_left="data/weather_gfx/edges/background_vault_left.png"
+    background_edge_right="data/weather_gfx/edges/background_vault_right.png"
+    background_edge_top="data/weather_gfx/edges/background_vault_top.png"
+    background_edge_bottom="data/weather_gfx/edges/background_vault_bottom.png"
+    background_edge_priority="10"     
     limit_background_image="0"
 
-    wang_template_file="data/wang_tiles/fungicave.png" 
-    lua_script="mods/evaisa.arena/content/arenas/biomes/allbiomes/fungicave.lua"
-    wang_map_width="260"
-    wang_map_height="260"
-    audio_music_2="fungicave"
-    audio_ambience="fungicave"
+    wang_template_file="data/wang_tiles/vault.png" 
+    lua_script="mods/evaisa.arena/content/arenas/biomes/allbiomes/vault.lua"
+    wang_map_width="256"
+    wang_map_height="256"
+    limit_background_image="0"
+    audio_music_2="vault"
+    audio_music_energy_coeff="1"
+    audio_music_forced_quietness_duration_seconds="4"
+    audio_ambience="vault"
   >
+  <BitmapCaves 
+      size_x="512"
+      size_y="256"
+      spawn_percent="0"
+      blob_caves_count_min="1"
+      blob_caves_count_max="4"
+      blob_caves_radius_min="1"
+      blob_caves_radius_max="5"
+      blob_caves_strength_min="0.5"
+      blob_caves_strength_max="1.5"
+      cave_childs_min="0"
+      cave_childs_max="2"
+      cave_count_min="3"
+      cave_count_max="5"
+      cave_strength_min="0.2"
+      cave_strength_max="0.9"
+      mountain_count_min="0"
+      mountain_count_max="0"
+      mountain_size_min="1"
+      mountain_size_max="10"
+      surface_cave_childs_min="1"
+      surface_cave_childs_max="3"
+      surface_caves_count_min="1" 
+      surface_caves_count_max="3" 
+      DEBUG_output_image=""
+      >
+    </BitmapCaves>
   </Topology>
 
   <Materials 
-    name="fungicave" 
+    name="vault" 
      >
     <MaterialComponent 
       _enabled="1" 
@@ -50,11 +79,11 @@
       is_rare="0" 
       limit_max_y="424.229" 
       limit_min_y="-1024" 
-      limit_y="0" 
+      limit_y="1" 
       material_index="10" 
-      material_max="0.66" 
-      material_min="0.57" 
-      material_name="fungisoil" 
+      material_max="0.53" 
+      material_min="0.45" 
+      material_name="soil" 
       rare_polka_is_boxed="1" 
       rare_polka_probability="0.2" 
       rare_polka_radius_high="0.65" 
@@ -75,8 +104,8 @@
       limit_y="0" 
       material_index="10" 
       material_max="0.95" 
-      material_min="0.66" 
-      material_name="sand_static" 
+      material_min="0.53" 
+      material_name="rock_vault" 
       rare_polka_is_boxed="1" 
       rare_polka_probability="0.2" 
       rare_polka_radius_high="0.65" 
@@ -98,11 +127,11 @@
       material_index="10" 
       material_max="1.2" 
       material_min="1.1" 
-      material_name="gold" 
+      material_name="radioactive_liquid" 
       rare_polka_is_boxed="1" 
       rare_polka_probability="0.357143" 
       rare_polka_radius_high="0.464286" 
-      rare_polka_radius_low="0.0428571" 
+      rare_polka_radius_low="0.2428571" 
       rare_required_max="10" 
       rare_required_min="0.371429" 
       rare_scale_x="0.0214286" 
@@ -133,6 +162,28 @@
       rare_use_polka="1" >
     </MaterialComponent>
 
+    <!-- this is for the FREEZING biome modifier. tree_probability should initially be 0 -->
+    <VegetationComponent 
+      _enabled="1" 
+      is_visual="1" 
+      rand_seed="8376.86" 
+      tree_extra_y="0" 
+      tree_image_file="" 
+      tree_image_visual="" 
+      tree_material="snow" 
+      tree_probability="0" 
+      tree_radius_high="0.414286" 
+      tree_radius_low="0.228571" 
+      tree_width="76.1143" 
+      visual_color="0xffb89f6c" 
+      visual_offset_x="3" 
+      visual_offset_y="7.5" 
+      is_grass="1"
+      grass_requires_neighbors="1"
+      material_on_top_of="steelmoss_static"
+    ></VegetationComponent>
+
+  <!--
     <VegetationComponent 
       _enabled="1" 
       is_visual="1" 
@@ -164,48 +215,31 @@
       tree_radius_low="0.146757" 
       tree_width="11.123" 
       visual_color="0x00b89f6c" 
-      visual_offset_x="3" 
+      visual_offset_x="0" 
       visual_offset_y="0" 
       is_ceiling_plant="1"
       >
     </VegetationComponent>
-	
 	<VegetationComponent 
       _enabled="1" 
-      is_visual="0" 
-      rand_seed="12376.86" 
-      tree_extra_y="14" 
-      tree_image_file="data/vegetation/mushroom_big_$[1-3].png" 
+      is_visual="1" 
+      rand_seed="315" 
+      tree_extra_y="0" 
+      tree_image_file="data/vegetation/hanger_$[1-4].png" 
       tree_image_visual="" 
-      tree_material="fungus_loose" 
-      tree_probability="0.228571" 
-      tree_radius_high="0.414286" 
-      tree_radius_low="0.228571" 
-      tree_width="76.1143" 
-      visual_color="0xffb89f6c" 
-      visual_offset_x="3" 
-      visual_offset_y="7.5" 
-	  >
-    </VegetationComponent>
-	
-	<VegetationComponent 
-      _enabled="1" 
-      is_visual="0" 
-      rand_seed="1245.86" 
-      tree_extra_y="14" 
-      tree_image_file="data/vegetation/mushroom_big_$[4-6].png" 
-      tree_image_visual="" 
-      tree_material="fungus_loose" 
-      tree_probability="0.128571" 
-      tree_radius_high="0.414286" 
-      tree_radius_low="0.228571" 
-      tree_width="76.1143" 
-      visual_color="0xffb89f6c" 
-      visual_offset_x="3" 
-      visual_offset_y="7.5" 
-	  >
+      tree_material="ceiling_plant_material" 
+      tree_probability="0.84571" 
+      tree_radius_high="0.335286" 
+      tree_radius_low="0.146757" 
+      tree_width="6.123" 
+      visual_color="0x00b89f6c" 
+      visual_offset_x="0" 
+      visual_offset_y="0" 
+      is_ceiling_plant="1"
+      >
     </VegetationComponent>
     
+    -->
   </Materials>
 
 </Biome>

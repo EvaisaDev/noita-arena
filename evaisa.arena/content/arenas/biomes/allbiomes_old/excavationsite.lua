@@ -4,7 +4,7 @@ CHEST_LEVEL = 1
 dofile_once("data/scripts/director_helpers.lua")
 dofile_once("data/scripts/biome_scripts.lua")
 dofile_once("data/scripts/biome_modifiers.lua")
-dofile( "data/scripts/items/generate_shop_item.lua" )
+dofile( "mods/evaisa.arena/files/scripts/misc/generate_shop_item.lua" )
 
 RegisterSpawnFunction( 0xff0000ff, "spawn_nest" )
 RegisterSpawnFunction( 0xffFF50FF, "spawn_hanger" )
@@ -997,19 +997,29 @@ end
 
 
 function spawn_small_enemies(x, y)
-	local spawn_points = EntityGetInRadiusWithTag( x, y, 150, "spawn_point" )
 	local distance = math.sqrt(x*x + y*y)
-	if(distance < 600 and #spawn_points == 0)then
+	if(distance < 600)then
 		EntityLoad( "mods/evaisa.arena/files/entities/misc/spawn_point.xml", x, y )
 	end
+	--[[local r = ProceduralRandom( x, y )
+	local spawn_percent = BiomeMapGetVerticalPositionInsideBiome( x, y )
+	spawn_percent = ( 2.5 * spawn_percent ) + 0.35
+	if( r > spawn_percent ) then return end
+
+	spawn(g_small_enemies,x,y)]]
 end
 
 function spawn_big_enemies(x, y)
-	local spawn_points = EntityGetInRadiusWithTag( x, y, 150, "spawn_point" )
 	local distance = math.sqrt(x*x + y*y)
-	if(distance < 600 and #spawn_points == 0)then
+	if(distance < 600)then
 		EntityLoad( "mods/evaisa.arena/files/entities/misc/spawn_point.xml", x, y )
 	end
+	--[[local r = ProceduralRandom( x, y )
+	local spawn_percent = BiomeMapGetVerticalPositionInsideBiome( x, y )
+	spawn_percent = ( 2.1 * spawn_percent )
+	if( r > spawn_percent ) then return end
+
+	spawn(g_big_enemies,x,y)]]
 end
 
 function spawn_lamp(x, y)
@@ -1029,15 +1039,15 @@ function spawn_props3(x, y)
 end
 
 function spawn_unique_enemy(x, y)
-
+	--spawn(g_unique_enemy,x,y)
 end
 
 function spawn_unique_enemy2(x, y)
-
+	--spawn(g_unique_enemy2,x,y)
 end
 
 function spawn_unique_enemy3(x, y)
-
+	--spawn(g_unique_enemy3,x,y)
 end
 
 function load_pixel_scene( x, y )
@@ -1105,7 +1115,7 @@ function spawn_hanging_prop(x, y)
 end
 
 function spawn_nest(x, y)
-	spawn(g_nest,x+4,y+8,0,0)
+	--spawn(g_nest,x+4,y+8,0,0)
 end
 
 function spawn_ladder(x, y)
@@ -1113,20 +1123,20 @@ function spawn_ladder(x, y)
 end
 
 function spawn_shopitem( x, y )
-	EntityHelper.NetworkRegister(generate_shop_item( x, y, false, 2 ))
+	generate_shop_item( x, y, false, 2 )
 end
 
 function spawn_meditation_cube( x, y )
-	SetRandomSeed( x, y )
+	--[[SetRandomSeed( x, y )
 	local rnd = Random( 1, 100 )
 	if( rnd > 96 and not ModIsEnabled("nightmare") ) then
 		LoadPixelScene( "data/biome_impl/excavationsite/meditation_cube.png", "data/biome_impl/excavationsite/meditation_cube_visual.png", x-20, y-29, "", true )
 		EntityLoad( "data/entities/buildings/teleport_meditation_cube.xml", x, y-70 )
-	end
+	end]]
 end
 
 function spawn_receptacle( x, y )
-	EntityLoad( "data/entities/buildings/receptacle_steam.xml", x, y )
+	--EntityLoad( "data/entities/buildings/receptacle_steam.xml", x, y )
 end
 
 -- Background sprites

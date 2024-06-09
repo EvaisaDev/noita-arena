@@ -6,6 +6,7 @@ dofile_once("data/scripts/director_helpers_design.lua")
 dofile_once("data/scripts/biome_scripts.lua")
 dofile_once("data/scripts/biome_modifiers.lua")
 dofile_once("data/scripts/biomes/summon_portal_util.lua")
+dofile( "mods/evaisa.arena/files/scripts/misc/generate_shop_item.lua" )
 
 RegisterSpawnFunction( 0xffffeedd, "init" )
 RegisterSpawnFunction( 0xff400000, "spawn_scavengers" )
@@ -834,7 +835,7 @@ g_trees =
 -- actual functions that get called from the wang generator
 
 function init(x, y, w, h)
-	local function is_inside_tile(pos_x, pos_y)
+	--[[local function is_inside_tile(pos_x, pos_y)
 		return pos_x >= x and pos_x <= x+w 
 		and pos_y >= y and pos_y <= y+h
 	end
@@ -886,32 +887,34 @@ function init(x, y, w, h)
 	if is_inside_tile(pos_x, pos_y) then spawn_statue(2, pos_x, pos_y, 0, 1) end
 	-- statue 2, bottom
 	pos_y = ProceduralRandomi(-415,40,biome_y_max - rim,biome_y_max)
-	if is_inside_tile(pos_x, pos_y) then spawn_statue(2, pos_x, pos_y, 0, 1) end
+	if is_inside_tile(pos_x, pos_y) then spawn_statue(2, pos_x, pos_y, 0, 1) end]]
 end
 
 function spawn_small_enemies(x, y)
-	local spawn_points = EntityGetInRadiusWithTag( x, y, 150, "spawn_point" )
+	--spawn(g_small_enemies,x,y)
+	-- spawn_hp_mult(g_small_enemies,x,y,0,0,2,"rainforest")
 	local distance = math.sqrt(x*x + y*y)
-	if(distance < 600 and #spawn_points == 0)then
+	if(distance < 600)then
 		EntityLoad( "mods/evaisa.arena/files/entities/misc/spawn_point.xml", x, y )
 	end
 end
 
 function spawn_big_enemies(x, y)
-	local spawn_points = EntityGetInRadiusWithTag( x, y, 150, "spawn_point" )
+	--spawn(g_big_enemies,x,y)
+	-- spawn_hp_mult(g_big_enemies,x,y,0,0,2,"rainforest")
 	local distance = math.sqrt(x*x + y*y)
-	if(distance < 600 and #spawn_points == 0)then
+	if(distance < 600)then
 		EntityLoad( "mods/evaisa.arena/files/entities/misc/spawn_point.xml", x, y )
 	end
 end
 
 function spawn_unique_enemy(x, y)
-
+	--spawn(g_unique_enemy,x,y+12)
 	-- spawn_hp_mult(g_unique_enemy,x,y,0,0,2,"rainforest")
 end
 
 function spawn_unique_enemy2(x, y)
-
+	--spawn(g_unique_enemy2,x,y)
 	-- spawn_hp_mult(g_unique_enemy,x,y,0,0,2,"rainforest")
 end
 
@@ -924,7 +927,7 @@ function spawn_items(x, y)
 end
 
 function spawn_nest(x, y)
-	spawn(g_nest,x,y)
+	--spawn(g_nest,x,y)
 end
 
 function spawn_props(x, y)
@@ -932,11 +935,12 @@ function spawn_props(x, y)
 end
 
 function spawn_scavengers(x, y)
-
+	--spawn(g_scavengers,x,y)
 	-- spawn_hp_mult(g_scavengers,x,y,0,0,2,"rainforest")
 end
 
 function spawn_large_enemies(x, y)
+	--spawn(g_large_enemies,x,y)
 
 	-- spawn_hp_mult(g_large_enemies,x,y,0,0,2,"rainforest")
 end
@@ -962,22 +966,22 @@ function load_pixel_scene4( x, y )
 end
 
 function spawn_vines(x, y)
-	spawn(g_vines,x+5,y+5)
+	--[[spawn(g_vines,x+5,y+5)
 	-- chance for an extra spawn for denser vineage
 	if ProceduralRandomf(x, y) < 0.5 then
 		spawn(g_vines,x,y+5)
-	end
+	end]]
 end
 
 function spawn_dragonspot(x, y)
-	EntityLoad( "data/entities/buildings/dragonspot.xml", x, y )
+	--EntityLoad( "data/entities/buildings/dragonspot.xml", x, y )
 end
 
 function spawn_tree(x, y)
-	spawn(g_trees,x+5,y+5)
+	--spawn(g_trees,x+5,y+5)
 end
 
 function spawn_root_grower(x, y)
-	if ProceduralRandom(x, y) < 0.5 then return end
-	EntityLoad( "data/entities/props/root_grower.xml", x+5, y+5 )
+	--[[if ProceduralRandom(x, y) < 0.5 then return end
+	EntityLoad( "data/entities/props/root_grower.xml", x+5, y+5 )]]
 end

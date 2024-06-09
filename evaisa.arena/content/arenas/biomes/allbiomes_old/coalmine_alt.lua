@@ -4,7 +4,7 @@ CHEST_LEVEL = 1
 dofile_once("data/scripts/director_helpers.lua")
 dofile_once("data/scripts/biome_scripts.lua")
 dofile_once("data/scripts/biome_modifiers.lua")
-dofile( "data/scripts/items/generate_shop_item.lua" )
+dofile( "mods/evaisa.arena/files/scripts/misc/generate_shop_item.lua" )
 
 RegisterSpawnFunction( 0xff0000ff, "spawn_nest" )
 RegisterSpawnFunction( 0xffB40000, "spawn_fungi" )
@@ -783,6 +783,7 @@ g_vines =
 
 -- this is a special function tweaked for spawning things in coalmine
 function spawn_items( pos_x, pos_y )
+	--[[
 	local r = ProceduralRandom( pos_x, pos_y )
 	-- 20% is air, nothing happens
 	if( r < 0.47 ) then return end
@@ -793,87 +794,94 @@ function spawn_items( pos_x, pos_y )
 		LoadPixelScene( "data/biome_impl/wand_altar.png", "data/biome_impl/wand_altar_visual.png", pos_x-10, pos_y-17, "", true )
 		return
 	end
+	]]
 end
 
 -- actual functions that get called from the wang generator
 
-
+-- enemies are not synced so lets just not.
 function spawn_small_enemies(x, y)
+	-- distance to 0, 0
+	-- get spawn points in range
 	local spawn_points = EntityGetInRadiusWithTag( x, y, 150, "spawn_point" )
-	local distance = math.sqrt(x*x + y*y)
-	if(distance < 600 and #spawn_points == 0)then
+	if(#spawn_points == 0)then
 		EntityLoad( "mods/evaisa.arena/files/entities/misc/spawn_point.xml", x, y )
 	end
 end
 
+-- enemies are not synced so lets just not.
 function spawn_big_enemies(x, y)
+	-- distance to 0, 0
 	local spawn_points = EntityGetInRadiusWithTag( x, y, 150, "spawn_point" )
-	local distance = math.sqrt(x*x + y*y)
-	if(distance < 600 and #spawn_points == 0)then
+	if(#spawn_points == 0)then
 		EntityLoad( "mods/evaisa.arena/files/entities/misc/spawn_point.xml", x, y )
 	end
 end
 
 function spawn_lamp(x, y)
-	spawn(g_lamp,x,y,0,0)
+	--spawn(g_lamp,x,y,0,0)
 end
 
+-- enemies are not synced so lets just not.
 function spawn_ghostlamp(x, y)
-	spawn2(g_ghostlamp,x,y,0,0)
+	--spawn2(g_ghostlamp,x,y,0,0)
 end
 
 function spawn_props(x, y)
-	spawn(g_props,x,y-3,0,0)
+	-- spawn(g_props,x,y-3,0,0)
 end
 
 function spawn_props2(x, y)
-	spawn(g_props2,x,y-3,0,0)
+	-- spawn(g_props2,x,y-3,0,0)
 end
 
 function spawn_props3(x, y)
-	spawn(g_props3,x,y,0,0)
+	-- spawn(g_props3,x,y,0,0)
 end
 
+-- enemies are not synced so lets just not.
 function spawn_unique_enemy(x, y)
-
+	--spawn(g_unique_enemy,x,y)
 end
 
+-- enemies are not synced so lets just not.
 function spawn_unique_enemy2(x, y)
-
+	--spawn(g_unique_enemy2,x,y)
 end
 
+-- enemies are not synced so lets just not.
 function spawn_unique_enemy3(x, y)
-
+	--spawn(g_unique_enemy3,x,y)
 end
 
 function load_pixel_scene( x, y )
-	load_random_pixel_scene( g_pixel_scene_01, x, y )
+	--load_random_pixel_scene( g_pixel_scene_01, x, y )
 end
 
 function load_pixel_scene2( x, y )
-	load_random_pixel_scene( g_pixel_scene_02, x, y )
+	--load_random_pixel_scene( g_pixel_scene_02, x, y )
 end
 
 function load_structures( x, y )
-	spawn( g_structures, x, y-30, 0, 0 )
+	--spawn( g_structures, x, y-30, 0, 0 )
 end
 
 function load_large_structures( x, y )
-	spawn( g_large_structures, x, y-30, 0, 0 )
+	--spawn( g_large_structures, x, y-30, 0, 0 )
 end
 
 function spawn_nest(x, y)
-	spawn(g_nest,x+4,y)
+	--spawn(g_nest,x+4,y)
 end
 
 function spawn_fungi(x, y)
-
+	spawn(g_fungi,x,y)
 end
 
 function spawn_vines(x, y)
-	spawn(g_vines,x+5,y+5)
+	--spawn(g_vines,x+5,y+5)
 end
 
 function spawn_shopitem( x, y )
-	EntityHelper.NetworkRegister(generate_shop_item( x, y, false, 1 ), x, y)
+	--generate_shop_item( x, y, false, 1 )
 end

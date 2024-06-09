@@ -36,6 +36,10 @@ end
 
 -- make a item network synced
 entity.NetworkRegister = function(item_entity, x, y, id)
+    if(item_entity == nil or item_entity == 0)then
+        return
+    end
+
     local EntityHelper = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/entity.lua")
     EntityHelper.SetVariable(item_entity, "arena_entity_id", id ~= nil and id or tonumber(tostring(x)..tostring(y)))
 
