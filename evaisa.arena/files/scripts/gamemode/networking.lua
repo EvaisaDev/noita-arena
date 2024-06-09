@@ -2092,9 +2092,8 @@ networking = {
 
             local entity = EntityGetWithName(uid)
             if(entity ~= nil and entity ~= 0 and data.players[tostring(user)])then
-                local was_refresh = false
                 local p = data.players[tostring(user)].entity
-
+                local was_perk = false
                 if(p ~= nil)then
                     --[[
                     local itemCostComp = EntityGetFirstComponentIncludingDisabled(entity, "ItemCostComponent")
@@ -2108,11 +2107,12 @@ networking = {
                     end
                     ]]
                     if(EntityGetIsAlive(entity))then
-            
+                        local was_refresh = false
 
                         local entity_x, entity_y = EntityGetTransform(entity)
                         if(EntityHasTag(entity, "perk"))then
 
+                            was_perk = true
                             EntityLoad( "data/entities/particles/image_emitters/perk_effect.xml", entity_x, entity_y - 8 )
 
                         elseif(EntityGetFilename(entity) == "mods/evaisa.arena/files/entities/misc/spell_refresh.xml")then
@@ -2143,13 +2143,21 @@ networking = {
 
                             EntityKill(entity)
                         end
+
+                        if(not was_refresh)then
+                            networking.send.request_item_update(lobby, user)
+                            networking.send.request_sync_hm(lobby, user)
+                        end
                         --networking.send.request_spectate_data(lobby, user)
                     end
                 end
-                
-                if(not was_refresh)then
-                    networking.send.request_item_update(lobby, user)
-                    networking.send.request_sync_hm(lobby, user)
+
+                if(was_perk)then
+                    for k, v in ipairs(EntityGetWithTag("client") or {})do
+                        EntityKill(v)
+                    end
+    
+                    SpectatorMode.ClearHM()
                 end
             end
         end,
