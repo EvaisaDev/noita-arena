@@ -370,6 +370,16 @@ arena_list = {
                 height_index="1",
                 color="FFC94C4C"
             },
+            {
+                biome_filename="mods/evaisa.arena/content/arenas/biomes/allbiomes/vault_frozen.xml",
+                height_index="1",
+                color="FF566D91"
+            },
+            {
+                biome_filename="mods/evaisa.arena/content/arenas/biomes/allbiomes/fungiforest.xml",
+                height_index="1",
+                color="FFBB54A5"
+            },
         },
         pixel_scenes = "mods/evaisa.arena/content/arenas/biomes/scenes.xml",
         spawn_points = { -- optional, can also use spawn pixels, 0,0 is there as a backup in case spawn pixels fail somehow.

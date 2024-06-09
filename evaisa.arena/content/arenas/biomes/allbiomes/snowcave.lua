@@ -1091,6 +1091,17 @@ end
 function spawn_small_enemies(x, y)
 	local spawn_points = EntityGetInRadiusWithTag( x, y, 150, "spawn_point" )
 	local distance = math.sqrt(x*x + y*y)
+	local hit, hit_x, hit_y = RaytracePlatforms( x, y, x, y+500 )
+
+	if(not hit)then
+		return
+	else
+		local hit_distance = math.sqrt(hit_x*hit_x + hit_y*hit_y)
+		if(hit_distance > 600)then
+			return
+		end
+	end
+
 	if(distance < 600 and #spawn_points == 0)then
 		EntityLoad( "mods/evaisa.arena/files/entities/misc/spawn_point.xml", x, y )
 	end
@@ -1099,6 +1110,17 @@ end
 function spawn_big_enemies(x, y)
 	local spawn_points = EntityGetInRadiusWithTag( x, y, 150, "spawn_point" )
 	local distance = math.sqrt(x*x + y*y)
+	local hit, hit_x, hit_y = RaytracePlatforms( x, y, x, y+500 )
+
+	if(not hit)then
+		return
+	else
+		local hit_distance = math.sqrt(hit_x*hit_x + hit_y*hit_y)
+		if(hit_distance > 600)then
+			return
+		end
+	end
+
 	if(distance < 600 and #spawn_points == 0)then
 		EntityLoad( "mods/evaisa.arena/files/entities/misc/spawn_point.xml", x, y )
 	end

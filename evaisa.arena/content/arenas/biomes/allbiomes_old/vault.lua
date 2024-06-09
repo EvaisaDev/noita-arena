@@ -1082,11 +1082,6 @@ function spawn_small_enemies(x, y)
 	local distance = math.sqrt(x*x + y*y)
 	if(distance < 600)then
 		EntityLoad( "mods/evaisa.arena/files/entities/misc/spawn_point.xml", x, y )
-	end
-	--[[if safe( x, y ) then
-		spawn(g_small_enemies,x,y)
-	end]]
-	-- spawn_hp_mult(g_small_enemies,x,y,0,0,4,"vault")
 end
 
 function spawn_big_enemies(x, y)
@@ -1094,10 +1089,6 @@ function spawn_big_enemies(x, y)
 	if(distance < 600)then
 		EntityLoad( "mods/evaisa.arena/files/entities/misc/spawn_point.xml", x, y )
 	end
-	--[[if safe( x, y ) then
-		spawn(g_big_enemies,x,y)
-	end]]
-	-- spawn_hp_mult(g_big_enemies,x,y,0,0,4,"vault")
 end
 
 function spawn_items(x, y)
@@ -1208,7 +1199,7 @@ function spawn_shopitem( x, y )
 end
 
 function spawn_lab_puzzle(x, y)
-	--[[SetRandomSeed(x, y)
+	SetRandomSeed(x, y)
 	local type_a = random_from_array({
 		"poly",
 		"tele",
@@ -1222,7 +1213,7 @@ function spawn_lab_puzzle(x, y)
 		"speed",
 	})
 	EntityLoad("data/entities/buildings/vault_lab_puzzle_" .. type_a .. ".xml", x - 10, y)
-	EntityLoad("data/entities/buildings/vault_lab_puzzle_" .. type_b .. ".xml", x + 11, y)]]
+	EntityLoad("data/entities/buildings/vault_lab_puzzle_" .. type_b .. ".xml", x + 11, y)
 end
 
 
