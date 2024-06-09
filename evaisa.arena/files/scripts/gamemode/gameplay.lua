@@ -1425,9 +1425,9 @@ ArenaGameplay = {
         data.picked_up_items = {}
 
         if(GameHasFlagRun("shop_sync"))then
-            GameAddFlagRun("sync_wand_generation")
+            GameAddFlagRun("sync_item_generation")
         else
-            GameRemoveFlagRun("sync_wand_generation")
+            GameRemoveFlagRun("sync_item_generation")
         end
 
         GameRemoveFlagRun("wardrobe_locked")
@@ -1838,7 +1838,7 @@ ArenaGameplay = {
     LoadArena = function(lobby, data, show_message, map)
         data.picked_up_items = {}
         
-        GameAddFlagRun("sync_wand_generation")
+        GameAddFlagRun("sync_item_generation")
 
         GameRemoveFlagRun("card_picked")
         data.client.cards = nil

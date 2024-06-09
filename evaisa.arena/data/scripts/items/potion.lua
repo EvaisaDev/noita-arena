@@ -59,7 +59,7 @@ function init(entity_id)
 	local x, y = EntityGetTransform(entity_id)
 
 	dofile("mods/evaisa.arena/files/scripts/gamemode/misc/seed_gen.lua")
-	local seed_x, seed_y = get_new_seed( x, y, GameHasFlagRun("shop_sync") )
+	local seed_x, seed_y = get_new_seed( x, y, GameHasFlagRun("sync_item_generation") )
 
 	print("potion_seed", tostring(seed_x), tostring(seed_y))
 
