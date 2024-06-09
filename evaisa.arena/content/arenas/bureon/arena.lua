@@ -17,132 +17,34 @@ function spawn_point( x, y )
 end
 
 function heart( x, y )
-	local entity = EntityLoad( "mods/evaisa.arena/content/arenas/bureon/entities/heart.xml", x, y )
-	EntityAddComponent2(entity, "LuaComponent", {
-		_tags = "enabled_in_world,enabled_in_hand,enabled_in_inventory",
-		script_item_picked_up = "mods/evaisa.arena/files/scripts/gamemode/misc/item_pickup.lua",
-		script_kick = "mods/evaisa.arena/files/scripts/gamemode/misc/item_kick.lua",
-		script_throw_item = "mods/evaisa.arena/files/scripts/gamemode/misc/item_throw.lua",
-	})
-
-	EntityAddComponent2(entity, "VariableStorageComponent", {
-		name = "arena_entity_id",
-		value_float = (54 + x) ^ y,
-		value_int = 0,
-	})
+	EntityHelper.NetworkRegister(EntityLoad( "mods/evaisa.arena/content/arenas/bureon/entities/heart.xml", x, y ), x, y)
 end
 
 function music3( x, y )
-	local entity = EntityLoad( "mods/evaisa.arena/content/arenas/bureon/entities/music_machine_03.xml", x, y )
-	EntityAddComponent2(entity, "LuaComponent", {
-		_tags = "enabled_in_world,enabled_in_hand,enabled_in_inventory",
-		script_item_picked_up = "mods/evaisa.arena/files/scripts/gamemode/misc/item_pickup.lua",
-		script_kick = "mods/evaisa.arena/files/scripts/gamemode/misc/item_kick.lua",
-		script_throw_item = "mods/evaisa.arena/files/scripts/gamemode/misc/item_throw.lua",
-	})
-
-	EntityAddComponent2(entity, "VariableStorageComponent", {
-		name = "arena_entity_id",
-		value_float = (55 + x) ^ y,
-		value_int = 0,
-	})
+	EntityHelper.NetworkRegister(EntityLoad( "mods/evaisa.arena/content/arenas/bureon/entities/music_machine_03.xml", x, y ), x, y)
 end
 
 function wand3( x, y )
-	local entity = EntityLoad( "mods/evaisa.arena/content/arenas/bureon/entities/wand_unshuffle_03.xml", x, y )
-	EntityAddComponent2(entity, "LuaComponent", {
-		_tags = "enabled_in_world,enabled_in_hand,enabled_in_inventory",
-		script_item_picked_up = "mods/evaisa.arena/files/scripts/gamemode/misc/item_pickup.lua",
-		script_kick = "mods/evaisa.arena/files/scripts/gamemode/misc/item_kick.lua",
-		script_throw_item = "mods/evaisa.arena/files/scripts/gamemode/misc/item_throw.lua",
-	})
-
-	EntityAddComponent2(entity, "VariableStorageComponent", {
-		name = "arena_entity_id",
-		value_float = (56 + x) ^ y,
-		value_int = 0,
-	})
+	EntityHelper.NetworkRegister(EntityLoad( "mods/evaisa.arena/content/arenas/bureon/entities/wand_unshuffle_03.xml", x, y ), x, y)
+	
 end
 
 function music2( x, y )
-	local entity = EntityLoad( "mods/evaisa.arena/content/arenas/bureon/entities/music_machine_02.xml", x, y )
-	EntityAddComponent2(entity, "LuaComponent", {
-		_tags = "enabled_in_world,enabled_in_hand,enabled_in_inventory",
-		script_item_picked_up = "mods/evaisa.arena/files/scripts/gamemode/misc/item_pickup.lua",
-		script_kick = "mods/evaisa.arena/files/scripts/gamemode/misc/item_kick.lua",
-		script_throw_item = "mods/evaisa.arena/files/scripts/gamemode/misc/item_throw.lua",
-	})
-
-	EntityAddComponent2(entity, "VariableStorageComponent", {
-		name = "arena_entity_id",
-		value_float = (57 + x) ^ y,
-		value_int = 0,
-	})
+	EntityHelper.NetworkRegister(EntityLoad( "mods/evaisa.arena/content/arenas/bureon/entities/music_machine_02.xml", x, y ), x, y)
 end
 
 function skull( x, y )
-	local entity = EntityLoad( "data/entities/props/physics_skull_01.xml", x, y )
-
-	local base_id = 58 -- some random number
-
-	EntityAddComponent2(entity, "LuaComponent", {
-		_tags = "enabled_in_world,enabled_in_hand,enabled_in_inventory",
-		script_item_picked_up = "mods/evaisa.arena/files/scripts/gamemode/misc/item_pickup.lua",
-		script_kick = "mods/evaisa.arena/files/scripts/gamemode/misc/item_kick.lua",
-		script_throw_item = "mods/evaisa.arena/files/scripts/gamemode/misc/item_throw.lua",
-	})
-
-	EntityAddComponent2(entity, "VariableStorageComponent", {
-		name = "arena_entity_id",
-		value_float = (base_id + x) ^ y,
-		value_int = 0,
-	})
+	EntityHelper.NetworkRegister(EntityLoad( "data/entities/props/physics_skull_01.xml", x, y ), x, y)
 end
 
 function bone1( x, y )
-	local entity = EntityLoad( "mods/evaisa.arena/content/arenas/bureon/entities/physics_bone_01.xml", x, y )
-	EntityAddComponent2(entity, "LuaComponent", {
-		_tags = "enabled_in_world,enabled_in_hand,enabled_in_inventory",
-		script_item_picked_up = "mods/evaisa.arena/files/scripts/gamemode/misc/item_pickup.lua",
-		script_kick = "mods/evaisa.arena/files/scripts/gamemode/misc/item_kick.lua",
-		script_throw_item = "mods/evaisa.arena/files/scripts/gamemode/misc/item_throw.lua",
-	})
-
-	EntityAddComponent2(entity, "VariableStorageComponent", {
-		name = "arena_entity_id",
-		value_float = (59 + x) ^ y,
-		value_int = 0,
-	})
+	EntityHelper.NetworkRegister(EntityLoad( "mods/evaisa.arena/content/arenas/bureon/entities/physics_bone_01.xml", x, y ), x, y)
 end
 
 function bone2( x, y )
-	local entity = EntityLoad( "mods/evaisa.arena/content/arenas/bureon/entities/physics_bone_02.xml", x, y )
-	EntityAddComponent2(entity, "LuaComponent", {
-		_tags = "enabled_in_world,enabled_in_hand,enabled_in_inventory",
-		script_item_picked_up = "mods/evaisa.arena/files/scripts/gamemode/misc/item_pickup.lua",
-		script_kick = "mods/evaisa.arena/files/scripts/gamemode/misc/item_kick.lua",
-		script_throw_item = "mods/evaisa.arena/files/scripts/gamemode/misc/item_throw.lua",
-	})
-
-	EntityAddComponent2(entity, "VariableStorageComponent", {
-		name = "arena_entity_id",
-		value_float = (60 + x) ^ y,
-		value_int = 0,
-	})
+	EntityHelper.NetworkRegister(EntityLoad( "mods/evaisa.arena/content/arenas/bureon/entities/physics_bone_02.xml", x, y ), x, y)
 end
 
 function orb( x, y )
-	local entity = EntityLoad( "data/entities/items/pickup/potion.xml", x, y )
-	EntityAddComponent2(entity, "LuaComponent", {
-		_tags = "enabled_in_world,enabled_in_hand,enabled_in_inventory",
-		script_item_picked_up = "mods/evaisa.arena/files/scripts/gamemode/misc/item_pickup.lua",
-		script_kick = "mods/evaisa.arena/files/scripts/gamemode/misc/item_kick.lua",
-		script_throw_item = "mods/evaisa.arena/files/scripts/gamemode/misc/item_throw.lua",
-	})
-
-	EntityAddComponent2(entity, "VariableStorageComponent", {
-		name = "arena_entity_id",
-		value_float = (51 + x) ^ y,
-		value_int = 0,
-	})
+	EntityHelper.NetworkRegister(EntityLoad( "data/entities/items/pickup/potion.xml", x, y ), x, y)
 end
