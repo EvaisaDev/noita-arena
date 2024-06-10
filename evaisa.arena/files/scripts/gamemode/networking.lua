@@ -95,6 +95,7 @@ typedef struct D {
     float vel_y;
     float vel_a;
     bool takes_control:1;
+    bool was_kick:1;
 } PhysicsUpdate;
 #pragma pack(pop)
 ]])
@@ -1476,6 +1477,12 @@ networking = {
                     gameplay_handler.WinnerCheck(lobby, data)
                 end
                 
+                -- kill the player
+                local client_entity = data.players[tostring(user)].entity
+                if (client_entity ~= nil and EntityGetIsAlive(client_entity)) then
+                    -- CLIENT ANNIHILATION WAWAWAHAHAHAHAH
+                    EntityKill(client_entity)
+                end
 
 
             end
@@ -1767,6 +1774,7 @@ networking = {
 
             
             local takes_control = message.takes_control
+            local was_kick = message.was_kick
 
             local entities_cleanup = EntityGetInRadiusWithTag(0, 0, 1000, "does_physics_update")
             
@@ -1782,6 +1790,14 @@ networking = {
                     has_found[entity_id] = true
                 end
             end
+            
+            local kick_handlers = {
+                ["beamstone"] = function(entity_id)
+                    dofile("data/scripts/items/beamstone_kick.lua")
+                    trigger(entity_id)
+                    print("beamstone triggered!")
+                end
+            }
 
 
             -- check cache
@@ -1792,6 +1808,16 @@ networking = {
                 else
                     if(v[1] == item_id)then
                         local entity_id = v[2]
+
+                        if(was_kick)then
+                            for str, func in pairs(kick_handlers)do
+                                local name = EntityGetName(entity_id)
+                                -- check if name contains string
+                                if(string.find(name, str))then
+                                    func(entity_id)
+                                end
+                            end
+                        end
 
                         if(takes_control)then
                             for i = #data.controlled_physics_entities, 1, -1 do
@@ -1824,13 +1850,20 @@ networking = {
                 local entity_id = EntityHelper.GetVariable(v, "arena_entity_id")
                 if(entity_id ~= nil and entity_id == item_id)then
                     
+                    if(was_kick)then
+                        for str, func in pairs(kick_handlers)do
+                            local name = EntityGetName(entity_id)
+                            -- check if name contains string
+                            if(string.find(name, str))then
+                                func(entity_id)
+                            end
+                        end
+                    end
+
                     if(takes_control)then
                         for i = #data.controlled_physics_entities, 1, -1 do
                             if(data.controlled_physics_entities[i] == v)then
                                 table.remove(data.controlled_physics_entities, i)
-
-                                --GamePrint("No longer in control")
-
                             end
                         end
                     end
@@ -3068,7 +3101,7 @@ networking = {
                 steamutils.send("item_picked_up", item_id, steamutils.messageTypes.OtherPlayers, lobby, true, true)
             end
         end,
-        physics_update = function(lobby, id, x, y, r, vel_x, vel_y, vel_a, takes_control)
+        physics_update = function(lobby, id, x, y, r, vel_x, vel_y, vel_a, takes_control, was_kick)
             local c = PhysicsUpdate{
                 id = id,
                 x = x,
@@ -3077,7 +3110,8 @@ networking = {
                 vel_x = vel_x,
                 vel_y = vel_y,
                 vel_a = vel_a,
-                takes_control = takes_control
+                takes_control = takes_control,
+                was_kick = was_kick
             }
             steamutils.send("physics_update", c, steamutils.messageTypes.OtherPlayers, lobby, true, true)
         end,

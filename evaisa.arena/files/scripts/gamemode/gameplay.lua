@@ -1697,6 +1697,7 @@ ArenaGameplay = {
         if(not data.spectator_mode)then
             RunWhenPlayerExists(function()
                 local player_entity = player.Get()
+                
                 if(not first_entry)then
                     local was_winner = GameHasFlagRun("arena_winner")
                     local was_loser = GameHasFlagRun("arena_loser")
@@ -1739,6 +1740,15 @@ ArenaGameplay = {
                         end
                     end
                 end
+
+                
+                --[[local beamstone_count = tonumber( GlobalsGetValue( "MEGA_BEAM_STONE_COUNT", "0" ) )
+                for i = 0, beamstone_count do
+                    local x,y = EntityGetTransform( player_entity )
+                    EntityLoad( "mods/evaisa.arena/files/entities/perks/beamstone.xml", x, y-10 )
+                    EntityLoad( "data/entities/particles/poof_white_appear.xml", x, y-10 )
+                end
+                GlobalsSetValue( "MEGA_BEAM_STONE_COUNT", "0" )]]
                 
                 -- give starting gear if first entry
                 dofile("mods/evaisa.arena/files/scripts/misc/heart_fullhp.lua")
@@ -3996,11 +4006,12 @@ ArenaGameplay = {
                             local body_id = body_ids[1]
                             local x, y, r, vel_x, vel_y, vel_a =  PhysicsBodyIDGetTransform( body_id )
                             
-                            networking.send.physics_update(lobby, arena_entity_id, gameplay_handler.round_to_decimal(x, 2), gameplay_handler.round_to_decimal(y, 2), gameplay_handler.round_to_decimal(r, 2), gameplay_handler.round_to_decimal(vel_x, 2), gameplay_handler.round_to_decimal(vel_y, 2), gameplay_handler.round_to_decimal(vel_a, 2), first_update[entity])
+                            networking.send.physics_update(lobby, arena_entity_id, gameplay_handler.round_to_decimal(x, 2), gameplay_handler.round_to_decimal(y, 2), gameplay_handler.round_to_decimal(r, 2), gameplay_handler.round_to_decimal(vel_x, 2), gameplay_handler.round_to_decimal(vel_y, 2), gameplay_handler.round_to_decimal(vel_a, 2), first_update[entity], GameHasFlagRun("was_item_kick"))
                         end
                     end
                 end
             end
+            GameRemoveFlagRun("was_item_kick")
 
             local fungal_shift_from = GlobalsGetValue("arena_fungal_shift_from", "")
             local fungal_shift_to = GlobalsGetValue("arena_fungal_shift_to", "")

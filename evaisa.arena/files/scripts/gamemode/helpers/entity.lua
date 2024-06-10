@@ -228,9 +228,9 @@ entity.GivePerk = function( entity_who_picked, perk_id, amount, for_client, for_
     EntitySetTransform( fake_perk_ent, pos_x, pos_y )
 
     if perk_data.func_client ~= nil then
-        perk_data.func_client( fake_perk_ent, entity_who_picked, perk_id, amount )
+        perk_data.func_client( fake_perk_ent, entity_who_picked, perk_id, amount, true )
     elseif perk_data.func ~= nil then
-        perk_data.func( fake_perk_ent, entity_who_picked, perk_id, amount )
+        perk_data.func( fake_perk_ent, entity_who_picked, perk_id, amount, true )
     end
 
     EntityKill( fake_perk_ent )

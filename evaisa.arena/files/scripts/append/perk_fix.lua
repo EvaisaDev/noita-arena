@@ -1,3 +1,5 @@
+local EntityHelper = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/entity.lua")
+
 local reapply_fix_list = {
     EXTRA_PERK = true,
     PERKS_LOTTERY = true,
@@ -102,6 +104,43 @@ local rewrites = {
 
 		end,
 		func_remove = function( entity_who_picked )
+		end,
+	},
+	MEGA_BEAM_STONE = {
+		id = "MEGA_BEAM_STONE",
+		ui_name = "$arena_perk_mega_beam_stone",
+		ui_description = "$perkdesc_mega_beam_stone",
+		ui_icon = "data/ui_gfx/perk_icons/mega_beam_stone.png",
+		perk_icon = "data/items_gfx/perks/mega_beam_stone.png",
+		stackable = STACKABLE_YES,
+		usable_by_enemies = false,
+		run_on_clients = false,
+		func = function( entity_perk_item, entity_who_picked, item_name, pickup_count )
+			local entities = GameGetAllInventoryItems( entity_who_picked ) or {}
+			local count = 0
+
+			pickup_count = pickup_count or 1
+
+			for _,entity in ipairs(entities) do
+				local name = EntityGetName( entity )
+				-- check if name contains the word "beamstone"
+				if string.find(name, "beamstone") then
+					count = count + 1
+				end
+			end
+
+			--print("beamstone count: "..tostring(count).."/"..tostring(pickup_count))
+
+			if(count >= pickup_count)then
+				return
+			end
+
+			--print("spawning beamstone")
+			
+			local x,y = EntityGetTransform( entity_who_picked )
+			EntityHelper.NetworkRegister(EntityLoad( "mods/evaisa.arena/files/entities/perks/beamstone.xml", x, y-10 ), x, y, math.floor(GameGetFrameNum() + x * y % 10000000))
+			
+			EntityLoad( "data/entities/particles/poof_white_appear.xml", x, y-10 )
 		end,
 	},
     SHIELD = {

@@ -798,7 +798,7 @@ player_helper.GivePerk = function(perk_id, amount, skip_count)
 
         if (perk_data.func ~= nil and not perk_data.one_off_effect and ((not perk_data.skip_functions_on_load) or GameHasFlagRun("initial_player_load"))) then
             print("Running perk function: " .. perk_data.id)
-            perk_data.func(fake_perk_ent, entity_who_picked, perk_id, amount)
+            perk_data.func(fake_perk_ent, entity_who_picked, perk_id, amount, true)
         end
     end
 
@@ -1047,6 +1047,8 @@ player_helper.Deserialize = function(data, skip_perk_count, lobby, lobby_data)
         EntityKill(v)
     end
 
+    local x, y = EntityGetTransform(player)
+
     if (data.item_data ~= nil) then
         player_helper.SetItemData(data.item_data)
     end
@@ -1054,7 +1056,11 @@ player_helper.Deserialize = function(data, skip_perk_count, lobby, lobby_data)
         player_helper.SetSpells(data.spells)
     end
     if (data.perks ~= nil) then
-        player_helper.SetPerks(data.perks, skip_perk_count)
+        delay.new(function ()
+            return DoesWorldExistAt(x - 5, y - 5, x + 5, y + 5)
+        end, function()
+            player_helper.SetPerks(data.perks, skip_perk_count)
+        end)
     end
     if (data.gold ~= nil) then
         player_helper.GiveGold(data.gold)

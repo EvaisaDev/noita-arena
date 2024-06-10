@@ -19,6 +19,9 @@ function kick( entity_who_kicked )
             kicked_item_string = kicked_item_string .. tostring(item_ent) .. ";"
 
             GlobalsSetValue("arena_items_controlled", kicked_item_string)
+
+            GameAddFlagRun("was_item_kick")
+
         end
     end
 end
