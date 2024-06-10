@@ -810,6 +810,8 @@ ArenaGameplay = {
                 data.zone_size = default_size or 600
             end
 
+            GlobalsSetValue("arena_area_floor", tostring(zone_floor))
+
             if (zone_type ~= "disabled") then
                 if (data.ready_for_zone and not data.zone_spawned) then
                     EntityLoad("mods/evaisa.arena/files/entities/area_indicator.xml", 0, 0)
@@ -1019,6 +1021,9 @@ ArenaGameplay = {
                 if (GameGetFrameNum() % 60 == 0) then
                     ArenaGameplay.DamageFloorCheck(zone_floor, zone_floor + 200)
                 end
+
+                GlobalsSetValue("arena_area_size", "0")
+
             end
         end
     end,

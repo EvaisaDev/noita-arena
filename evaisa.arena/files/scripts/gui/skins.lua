@@ -566,20 +566,41 @@ skins.init = function()
         GuiLayoutEnd(self.gui)
         
         if(GuiButton(self.gui, new_id(), 0, 3, GameTextGetTranslatedOrNot("$arena_skins_save_skin")))then
-            -- save skin
-            if(not self.selected_skin.is_default and self.selected_skin.path)then
-                fs.remove(self.selected_skin.path)
-            end
 
-            if(self.selected_skin.temp_path)then
-                fs.remove(self.selected_skin.temp_path)
-            end
 
-            if(string.lower(self.selected_skin.name) ~= "default")then
-                saveImage(player_modified_img, skins_folder..self.selected_skin.name..".png")
-            end
+            popup.create("save_skin_prompt", string.format(GameTextGetTranslatedOrNot("$arena_skins_confirm_save_name"), self.selected_skin.name),{
+                {
+                    text = GameTextGetTranslatedOrNot("$arena_skins_confirm_save_desc"),
+                    color = {214 / 255, 60 / 255, 60 / 255, 1}
+                },
+            }, {
+                {
+                    text = GameTextGetTranslatedOrNot("$arena_skins_confirm_save"),
+                    callback = function()
+                        -- save skin
+                        if(not self.selected_skin.is_default and self.selected_skin.path)then
+                            fs.remove(self.selected_skin.path)
+                        end
 
-            self.refresh_skins()
+                        if(self.selected_skin.temp_path)then
+                            fs.remove(self.selected_skin.temp_path)
+                        end
+
+                        if(string.lower(self.selected_skin.name) ~= "default")then
+                            saveImage(player_modified_img, skins_folder..self.selected_skin.name..".png")
+                        end
+
+                        self.refresh_skins()
+                    end
+                },
+                {
+                    text = GameTextGetTranslatedOrNot("$arena_skins_confirm_cancel"),
+                    callback = function()
+                    end
+                }
+            }, -6000)
+
+
         end
         GuiTooltip(self.gui, GameTextGetTranslatedOrNot("$arena_skins_save_skin"), GameTextGetTranslatedOrNot("$arena_skins_save_skin_description"))
 
@@ -636,17 +657,57 @@ skins.init = function()
             
             if(not skin.is_default)then
                 if(GuiButton(self.gui, new_id(), skin.img.w + 2, -1, GameTextGetTranslatedOrNot("$arena_skins_overwrite")))then
-                    -- overwrite skin
-                    fs.remove(skin.temp_path)
-                    saveImage(player_modified_img, skin.path)
-                    self.refresh_skins()
+
+                    popup.create("overwrite_skin_prompt", string.format(GameTextGetTranslatedOrNot("$arena_skins_confirm_overwrite_name"), skin.name),{
+                        {
+                            text = GameTextGetTranslatedOrNot("$arena_skins_confirm_overwrite_desc"),
+                            color = {214 / 255, 60 / 255, 60 / 255, 1}
+                        },
+                    }, {
+                        {
+                            text = GameTextGetTranslatedOrNot("$arena_skins_confirm_overwrite"),
+                            callback = function()
+                                -- overwrite skin
+                                fs.remove(skin.temp_path)
+                                saveImage(player_modified_img, skin.path)
+                                self.refresh_skins()
+
+                            end
+                        },
+                        {
+                            text = GameTextGetTranslatedOrNot("$arena_skins_confirm_cancel"),
+                            callback = function()
+                            end
+                        }
+                    }, -6000)
+
                 end
                 local width, height = GuiGetTextDimensions(self.gui, GameTextGetTranslatedOrNot("$arena_skins_overwrite"))
                 if (GuiButton(self.gui, new_id(), skin.img.w + 2 + width + 4, -height, GameTextGetTranslatedOrNot("$arena_skins_remove_skin"))) then
-                    -- delete skin
-                    fs.remove(skin.path)
-                    fs.remove(skin.temp_path)
-                    self.refresh_skins()
+
+                    popup.create("delete_skin_prompt", string.format(GameTextGetTranslatedOrNot("$arena_skins_confirm_delete_name"), skin.name),{
+                        {
+                            text = GameTextGetTranslatedOrNot("$arena_skins_confirm_delete_desc"),
+                            color = {214 / 255, 60 / 255, 60 / 255, 1}
+                        },
+                    }, {
+                        {
+                            text = GameTextGetTranslatedOrNot("$arena_skins_confirm_delete"),
+                            callback = function()
+                                -- delete skin
+                                fs.remove(skin.path)
+                                fs.remove(skin.temp_path)
+                                self.refresh_skins()
+                            end
+                        },
+                        {
+                            text = GameTextGetTranslatedOrNot("$arena_skins_confirm_cancel"),
+                            callback = function()
+                            end
+                        }
+                    }, -6000)
+
+    
                 end
             else
                 GuiText(self.gui, skin.img.w + 2, -1, " ")

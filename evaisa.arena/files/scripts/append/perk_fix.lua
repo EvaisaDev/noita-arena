@@ -143,6 +143,19 @@ local rewrites = {
 			EntityLoad( "data/entities/particles/poof_white_appear.xml", x, y-10 )
 		end,
 	},
+	TELEPORTITIS = 	{
+		id = "TELEPORTITIS",
+		ui_name = "$perk_teleportitis",
+		ui_description = "$perkdesc_teleportitis", -- TODO "and gain a shield for a short duration."
+		ui_icon = "data/ui_gfx/perk_icons/teleportitis.png",
+		perk_icon = "data/items_gfx/perks/teleportitis.png",
+		stackable = STACKABLE_NO,
+		usable_by_enemies = true,
+		run_on_clients = false,
+		func = function( entity_perk_item, entity_who_picked, item_name )
+			GameAddFlagRun( "teleportitis" )
+		end,
+	},
     SHIELD = {
 		id = "SHIELD",
 		ui_name = "$perk_shield",

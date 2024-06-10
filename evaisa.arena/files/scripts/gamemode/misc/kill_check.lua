@@ -16,7 +16,9 @@ local function serialize_damage_details(tbl)
     return string.format("%d,%d,%f,%f,%f,%f,%f,%f,%d,%f,%f", tbl.ragdoll_fx, tbl.damage_types, tbl.knockback_force, tbl.blood_multiplier, tbl.impulse[1], tbl.impulse[2], tbl.world_pos[1], tbl.world_pos[2], tbl.smash_explosion and 1 or 0, tbl.explosion_x or 0, tbl.explosion_y or 0)
 end
 
+dofile("mods/evaisa.arena/files/scripts/gamemode/misc/perks/teleportitis.lua")
 
+last_teleportitis_trigger = last_teleportitis_trigger or 0
 
 function damage_about_to_be_received( damage, x, y, entity_thats_responsible, critical_hit_chance )
     local entity_id = GetUpdatedEntityID()
@@ -46,6 +48,14 @@ function damage_about_to_be_received( damage, x, y, entity_thats_responsible, cr
                     handler()
                 end
             end
+        end
+    end
+
+    if(GameHasFlagRun( "teleportitis" ))then
+        if(GameGetFrameNum() - last_teleportitis_trigger > 60)then
+            damage = damage * 0.8
+            trigger(entity_id)
+            last_teleportitis_trigger = GameGetFrameNum()
         end
     end
 
