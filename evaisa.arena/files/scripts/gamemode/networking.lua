@@ -398,7 +398,9 @@ networking = {
                         end)
                     else
                         print("Win condition met! ending match..")
+                        scoreboard.apply_data(lobby, data)
                         delay.new(600, function()
+                            scoreboard.show()
                             StopGame()
                         end, function(frames)
                             if (frames % 60 == 0) then
@@ -1458,8 +1460,11 @@ networking = {
                 --print(json.stringify(killer))
 
                 data.players[tostring(user)]:Death(damage_details)
+
                 data.players[tostring(user)].alive = false
                 data.deaths = data.deaths + 1
+       
+
 
                 if (killer == nil) then
                     GamePrint(tostring(username) .. " died.")
@@ -1468,12 +1473,43 @@ networking = {
                     if (killer_id ~= nil) then
                         GamePrint(tostring(username) ..
                             " was killed by " .. steamutils.getTranslatedPersonaName(killer_id))
+
+                        if(steam_utils.IsOwner())then
+                            local user = killer_id
+                            local kill_key = tostring(user) .. "_kills"
+            
+                            local current_kills = tonumber(tonumber(steamutils.GetLobbyData(kill_key)) or "0")
+                
+                            print("incrementing kill count for "..tostring(user).." to "..tostring(current_kills + 1))
+                            steam_utils.TrySetLobbyData(lobby, kill_key, tostring(current_kills + 1))
+                
+                            if(user ~= steam_utils.getSteamID())then
+                                data.players[tostring(user)].kills = current_kills + 1
+                            else
+                                data.client.kills = current_kills + 1
+                            end
+            
+                            gameplay_handler.WinnerCheck(lobby, data)
+                        end
                     else
                         GamePrint(tostring(username) .. " died.")
                     end
                 end
 
                 if(steam_utils.IsOwner())then
+                    local death_key = tostring(user) .. "_deaths"
+
+                    local current_deaths = tonumber(tonumber(steamutils.GetLobbyData(death_key)) or "0")
+     
+                    print("incrementing death count for "..tostring(user).." to "..tostring(current_deaths + 1))
+                    steam_utils.TrySetLobbyData(lobby, death_key, tostring(current_deaths + 1))
+        
+                    if(user ~= steam_utils.getSteamID())then
+                        data.players[tostring(user)].deaths = current_deaths + 1
+                    else
+                        data.client.deaths = current_deaths + 1
+                    end
+
                     gameplay_handler.WinnerCheck(lobby, data)
                 end
                 

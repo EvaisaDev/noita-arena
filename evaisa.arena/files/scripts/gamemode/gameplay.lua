@@ -1065,6 +1065,44 @@ ArenaGameplay = {
         end
         return winstreak
     end,
+    GetKills = function(lobby, user, data)
+        if(data.players[tostring(user)] ~= nil and data.players[tostring(user)].kills ~= nil)then
+            return data.players[tostring(user)].kills or 0
+        end
+        -- if is localplayer
+        if(user == steam_utils.getSteamID() and data.kills ~= nil)then
+            return data.client.kills or 0
+        end
+
+        local kills = tonumber(steamutils.GetLobbyData( tostring(user) .. "_kills")) or 0
+        if(data.players[tostring(user)] ~= nil)then 
+            data.players[tostring(user)].kills = kills
+            print("Updated kills for " .. tostring(user) .. " to " .. tostring(kills))
+        elseif(user == steam_utils.getSteamID())then
+            data.client.kills = kills
+            print("Updated local kills to " .. tostring(kills))
+        end
+        return kills
+    end,
+    GetDeaths = function(lobby, user, data)
+        if(data.players[tostring(user)] ~= nil and data.players[tostring(user)].deaths ~= nil)then
+            return data.players[tostring(user)].deaths or 0
+        end
+        -- if is localplayer
+        if(user == steam_utils.getSteamID() and data.deaths ~= nil)then
+            return data.client.deaths or 0
+        end
+
+        local deaths = tonumber(steamutils.GetLobbyData( tostring(user) .. "_deaths")) or 0
+        if(data.players[tostring(user)] ~= nil)then 
+            data.players[tostring(user)].deaths = deaths
+            print("Updated deaths for " .. tostring(user) .. " to " .. tostring(deaths))
+        elseif(user == steam_utils.getSteamID())then
+            data.client.deaths = deaths
+            print("Updated local deaths to " .. tostring(deaths))
+        end
+        return deaths
+    end,
     WinnerCheck = function(lobby, data)
 
         if(GlobalsGetValue("arena_gamemode", "ffa") == "continuous")then
@@ -1186,7 +1224,9 @@ ArenaGameplay = {
                     end
                 end)
             else
+                scoreboard.apply_data(lobby, data)
                 delay.new(600, function()
+                    scoreboard.show()
                     StopGame()
                 end, function(frames)
                     if (frames % 60 == 0) then
@@ -1247,6 +1287,25 @@ ArenaGameplay = {
                 local killer_id = ArenaGameplay.FindUser(lobby, killer)
                 if (killer_id ~= nil) then
                     GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_kill"), tostring(username), steamutils.getTranslatedPersonaName(killer_id))--[[tostring(username) .. " was killed by " .. steamutils.getTranslatedPersonaName(killer_id)]])
+                
+                    if(steam_utils.IsOwner())then
+                        local user = killer_id
+                        local kill_key = tostring(user) .. "_kills"
+        
+                        local current_kills = tonumber(tonumber(steamutils.GetLobbyData(kill_key)) or "0")
+         
+                        print("incrementing kill count for "..tostring(user).." to "..tostring(current_kills + 1))
+                        steam_utils.TrySetLobbyData(lobby, kill_key, tostring(current_kills + 1))
+            
+                        if(user ~= steam_utils.getSteamID())then
+                            data.players[tostring(user)].kills = current_kills + 1
+                        else
+                            data.client.kills = current_kills + 1
+                        end
+        
+                        gameplay_handler.WinnerCheck(lobby, data)
+                    end
+                
                 else
                     GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_other_player_died"), tostring(username)))
                 end
@@ -1307,7 +1366,21 @@ ArenaGameplay = {
             --player.Move(-3000, -3000)
 
             if(steam_utils.IsOwner())then
-                ArenaGameplay.WinnerCheck(lobby, data)
+                local user = steam_utils.getSteamID()
+                local death_key = tostring(user) .. "_deaths"
+
+                local current_deaths = tonumber(tonumber(steamutils.GetLobbyData(death_key)) or "0")
+ 
+                print("incrementing death count for "..tostring(user).." to "..tostring(current_deaths + 1))
+                steam_utils.TrySetLobbyData(lobby, death_key, tostring(current_deaths + 1))
+    
+                if(user ~= steam_utils.getSteamID())then
+                    data.players[tostring(user)].deaths = current_deaths + 1
+                else
+                    data.client.deaths = current_deaths + 1
+                end
+
+                gameplay_handler.WinnerCheck(lobby, data)
             end
         end
     end,
@@ -1544,9 +1617,13 @@ ArenaGameplay = {
                 local user = member.id
                 local wins = tonumber(steamutils.GetLobbyData( tostring(user) .. "_wins")) or 0
                 local winstreak = tonumber(steamutils.GetLobbyData( tostring(user) .. "_winstreak")) or 0
+                local kills = tonumber(steamutils.GetLobbyData( tostring(user) .. "_kills")) or 0
+                local deaths = tonumber(steamutils.GetLobbyData( tostring(user) .. "_deaths")) or 0
                 if(data.players[tostring(user)])then
                     data.players[tostring(user)].wins = wins
                     data.players[tostring(user)].winstreak = winstreak
+                    data.players[tostring(user)].kills = kills
+                    data.players[tostring(user)].deaths = deaths
                 end
             end
         end
@@ -1571,6 +1648,8 @@ ArenaGameplay = {
                 local winstreak = tonumber(steamutils.GetLobbyData( tostring(steam_utils.getSteamID()) .. "_winstreak")) or 0
                 data.wins = wins
                 data.winstreak = winstreak
+                data.client.kills = tonumber(steamutils.GetLobbyData( tostring(steam_utils.getSteamID()) .. "_kills")) or 0
+                data.client.deaths = tonumber(steamutils.GetLobbyData( tostring(steam_utils.getSteamID()) .. "_deaths")) or 0
 
                 if (first_entry and player_entity) then
                     GameDestroyInventoryItems(player_entity)

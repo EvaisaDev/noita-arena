@@ -40,8 +40,21 @@ local old_wand_add_random_cards = wand_add_random_cards
 function wand_add_random_cards( gun, entity_id, level, cost )
 	
 
+	local rounds = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0
+	-- how many rounds it takes for the shop level to increment
+	local shop_scaling = tonumber(GlobalsGetValue("shop_scaling", "2"))
+	-- how much the shop level increments by
+	local shop_increment = tonumber(GlobalsGetValue("shop_jump", "1"))
+	-- the maximum shop level
+	local shop_max = tonumber(GlobalsGetValue("max_shop_level", "5"))
+	-- shop start level
+	local shop_start_level = tonumber(GlobalsGetValue("shop_start_level", "0"))
+	-- calculating how many times the shop level has been incremented
+	local num_increments = math.floor((rounds - 1) / shop_scaling)
+	-- should shops act as true random
+	local true_random = (GameHasFlagRun("max_tier_true_random") and (shop_start_level + num_increments * shop_increment > shop_max))
 	
-	if(not GameHasFlagRun("shop_no_tiers"))then
+	if(not GameHasFlagRun("shop_no_tiers") and not true_random)then
 		old_wand_add_random_cards( gun, entity_id, level)
 		return
 	end

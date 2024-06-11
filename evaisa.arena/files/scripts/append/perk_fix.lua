@@ -477,6 +477,9 @@ local rewrites = {
 			SetRandomSeed( seed_x, seed_y )
 			
 			dofile("mods/evaisa.arena/files/scripts/misc/random_action.lua")
+
+			
+
 			GetRandomActionWithType = function( x, y, level, type, i)
 				--print("Custom get action called!")
 				return RandomActionWithType( level, type ) or "LIGHT_BULLET"

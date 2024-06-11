@@ -39,6 +39,9 @@ spectator_handler = dofile("mods/evaisa.arena/files/scripts/gamemode/spectator.l
 
 skin_system = dofile("mods/evaisa.arena/files/scripts/gui/skins.lua").init()
 
+scoreboard = dofile("mods/evaisa.arena/files/scripts/gui/scoreboard.lua")
+
+
 if(ModSettingGet("evaisa.arena.custom_parallax"))then
     Parallax = dofile("mods/evaisa.arena/files/scripts/parallax/parallax.lua")
 end
@@ -937,6 +940,13 @@ ArenaMode = {
 			formatting_string = " $0",
 			width = 100
         },
+        {
+            id = "max_tier_true_random",
+            name = "$arena_settings_max_tier_true_random_name",
+            description = "$arena_settings_max_tier_true_random_desc",
+            type = "bool",
+            default = false
+        },  
         {
             id = "shop_price_multiplier",
 			name = "$arena_settings_shop_price_multiplier_name",
@@ -2118,6 +2128,16 @@ ArenaMode = {
         end
         GlobalsSetValue("max_shop_level", tostring(max_shop_level))
 
+        local max_tier_true_random = steam.matchmaking.getLobbyData(lobby, "setting_max_tier_true_random")
+        if (max_tier_true_random == nil) then
+            max_tier_true_random = "false"
+        end
+        if(max_tier_true_random == "true")then
+            GameAddFlagRun("max_tier_true_random")
+        else
+            GameRemoveFlagRun("max_tier_true_random")
+        end
+
         shop_price_multiplier = tonumber(steam.matchmaking.getLobbyData(lobby, "setting_shop_price_multiplier"))
         if (shop_price_multiplier == nil) then
             shop_price_multiplier = 10
@@ -2705,6 +2725,10 @@ ArenaMode = {
             arena_data_file:print(json_string)
 
         end
+        if (input:WasKeyPressed("f4")) then
+            scoreboard.apply_data(lobby, data)
+            scoreboard.show()
+        end
 
         if(input:WasKeyPressed("f10"))then
             if(steam_utils.IsOwner())then
@@ -2760,6 +2784,9 @@ ArenaMode = {
 
         
 
+    end,
+    lobby_update = function(lobby)
+        scoreboard.update(lobby)
     end,
     player_enter = function(lobby, user)
 

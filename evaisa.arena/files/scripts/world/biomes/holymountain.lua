@@ -98,8 +98,6 @@ function spawn_all_shopitems( x, y )
 	SetRandomSeed( random_seed_x, random_seed_y )
 
 	local rounds = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0
-
-
 	-- how many rounds it takes for the shop level to increment
 	local shop_scaling = tonumber(GlobalsGetValue("shop_scaling", "2"))
 	-- how much the shop level increments by
@@ -108,11 +106,14 @@ function spawn_all_shopitems( x, y )
 	local shop_max = tonumber(GlobalsGetValue("max_shop_level", "5"))
 	-- shop start level
 	local shop_start_level = tonumber(GlobalsGetValue("shop_start_level", "0"))
-
 	-- calculating how many times the shop level has been incremented
 	local num_increments = math.floor((rounds - 1) / shop_scaling)
+	-- should shops act as true random
+
 	-- calculating the current shop level including the start level and clamping it to the max level
 	local round_scaled = math.min(shop_start_level + num_increments * shop_increment, shop_max)
+
+	
 
 	round_scaled = math.floor(round_scaled + 0.5)
 	if(round_scaled < 0)then

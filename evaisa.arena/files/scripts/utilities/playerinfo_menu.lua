@@ -182,6 +182,8 @@ function playerinfo_menu:New()
 
                 local wins = ArenaGameplay.GetWins(lobby, player_id, data)
                 local winstreak = ArenaGameplay.GetWinstreak(lobby, player_id, data)
+                local kills = ArenaGameplay.GetKills(lobby, player_id, data)
+                local deaths = ArenaGameplay.GetDeaths(lobby, player_id, data)
                             
 
 
@@ -223,6 +225,8 @@ function playerinfo_menu:New()
 
                 local wins_text = tostring(wins)
                 local winstreak_text = tostring(winstreak)
+                local kills_text = tostring(kills)
+                local deaths_text = tostring(deaths)
 
                 local win_condition = GlobalsGetValue("win_condition", "unlimited")
                 local value = tonumber(GlobalsGetValue("win_condition_value", "5"))
@@ -235,6 +239,8 @@ function playerinfo_menu:New()
 
                 text_height_self = text_height_self + DrawTextElement("$arena_playerinfo_wins", wins_text)
                 text_height_self = text_height_self + DrawTextElement("$arena_playerinfo_winstreak", winstreak_text)
+                text_height_self = text_height_self + DrawTextElement("$arena_playerinfo_kills", kills_text)
+                text_height_self = text_height_self + DrawTextElement("$arena_playerinfo_deaths", deaths_text)
 
                 local health_ratio = hp / max_hp
                 local health_bar_width = 90
@@ -376,6 +382,8 @@ function playerinfo_menu:New()
 
                         local wins_text = tostring(ArenaGameplay.GetWins(lobby, playerid, data))
                         local winstreak_text = tostring(ArenaGameplay.GetWinstreak(lobby, playerid, data))
+                        local kills_text = tostring(ArenaGameplay.GetKills(lobby, playerid, data))
+                        local deaths_text = tostring(ArenaGameplay.GetDeaths(lobby, playerid, data))
 
                         local win_condition = GlobalsGetValue("win_condition", "unlimited")
                         local value = tonumber(GlobalsGetValue("win_condition_value", "5"))
@@ -388,6 +396,8 @@ function playerinfo_menu:New()
 
                         local wins_height = DrawTextElement("$arena_playerinfo_wins", wins_text)
                         local winstreak_height = DrawTextElement("$arena_playerinfo_winstreak", winstreak_text)
+                        local kills_height = DrawTextElement("$arena_playerinfo_kills", kills_text)
+                        local deaths_height = DrawTextElement("$arena_playerinfo_deaths", deaths_text)
                         
                         --print("index is "..tostring(index) .. " player_index is "..tostring(self.player_index))
 
@@ -398,6 +408,8 @@ function playerinfo_menu:New()
                             text_height_other = text_height_other + delay_height
                             text_height_other = text_height_other + wins_height
                             text_height_other = text_height_other + winstreak_height
+                            text_height_other = text_height_other + kills_height
+                            text_height_other = text_height_other + deaths_height
                             text_height_other = text_height_other + 4
                         end
 

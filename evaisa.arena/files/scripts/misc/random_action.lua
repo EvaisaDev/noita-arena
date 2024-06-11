@@ -22,8 +22,22 @@ end
 local random = rng.new(random_seed)
 ]]
 
-local generate_spell_list = function()
+generate_spell_list = function()
     local spell_list = {}
+
+    local rounds = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0
+    -- how many rounds it takes for the shop level to increment
+    local shop_scaling = tonumber(GlobalsGetValue("shop_scaling", "2"))
+    -- how much the shop level increments by
+    local shop_increment = tonumber(GlobalsGetValue("shop_jump", "1"))
+    -- the maximum shop level
+    local shop_max = tonumber(GlobalsGetValue("max_shop_level", "5"))
+    -- shop start level
+    local shop_start_level = tonumber(GlobalsGetValue("shop_start_level", "0"))
+    -- calculating how many times the shop level has been incremented
+    local num_increments = math.floor((rounds - 1) / shop_scaling)
+    -- should shops act as true random
+    local true_random = (GameHasFlagRun("max_tier_true_random") and (shop_start_level + num_increments * shop_increment > shop_max))
 
     for _, v in ipairs(actions) do
     
@@ -41,8 +55,8 @@ local generate_spell_list = function()
         for spawn_probability in string.gmatch(v.spawn_probability or "", "([^,]+)") do
             table.insert(spawn_probabilities, tonumber(spawn_probability))
         end
-    
-        if(GameHasFlagRun("shop_no_tiers"))then
+
+        if(GameHasFlagRun("shop_no_tiers") or true_random)then
             for i = 0, 50 do
                 local key = "level_" .. tostring(i)
                 spell_list[key] = spell_list[key] or {}
@@ -73,11 +87,16 @@ local generate_spell_list = function()
     return spell_list
 end
 
-
-
+last_generated = last_generated or 0
 
 
 function RandomAction(max_level, x, y)
+
+    if(spell_list == nil or GameGetFrameNum() - last_generated > 60)then
+        spell_list = generate_spell_list()
+        last_generated = GameGetFrameNum()
+    end
+
     --if(GameHasFlagRun("shop_sync"))then
         --[[local seed = get_new_seed(x, y, GameHasFlagRun("shop_sync"))
         if(seed ~= random_seed)then
@@ -89,8 +108,6 @@ function RandomAction(max_level, x, y)
         --local seed_x, seed_y = get_new_seed( x, y, GameHasFlagRun("shop_sync") )
         --SetRandomSeed( seed_x, seed_y )
     --end
-
-    local spell_list = generate_spell_list()
 
     local available_actions = {}
 
@@ -122,18 +139,10 @@ end
 
 -- GetRandomActionWithType function to find a random action with the specified action_type and max_level
 function RandomActionWithType(max_level, action_type, x, y)
-    --if(GameHasFlagRun("shop_sync"))then
-    --[[local seed = get_new_seed(x, y, GameHasFlagRun("shop_sync"))
-    if(seed ~= random_seed)then
-        random = rng.new(seed)
-        random_seed = seed
-    end]]
-    --end
-
-    --local seed_x, seed_y = get_new_seed( x, y, GameHasFlagRun("shop_sync") )
-    --SetRandomSeed( seed_x, seed_y )
-
-    local spell_list = generate_spell_list()
+    if(spell_list == nil or GameGetFrameNum() - last_generated > 60)then
+        spell_list = generate_spell_list()
+        last_generated = GameGetFrameNum()
+    end
 
     local available_actions = {}
 
