@@ -3648,55 +3648,6 @@ ArenaGameplay = {
 
         return FPS
     end,
-    ValidatePlayers = function(lobby, data)
-        local to_remove = {}
-        local player_count = 0
-        for k, v in pairs(data.players) do
-            local playerid = ArenaGameplay.FindUser(lobby, k)
-
-            if (playerid == nil or steamutils.IsSpectator(lobby, playerid)) then
-
-                print("round should end!!")
-
-                v:Clean(lobby)
-                data.players[k] = nil
-                table.insert(to_remove, k)
-                --local name = steamutils.getTranslatedPersonaName(playerid)
-                GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_player_left") ,tostring(lobby_member_names[k])))
-
-                -- if we are the last player, unready
-                if(not data.spectator_mode)then
-                    if (steam_utils.getNumLobbyMembers() == 1) then
-                        GameRemoveFlagRun("lock_ready_state")
-                        GameAddFlagRun("player_unready")
-                        GameRemoveFlagRun("ready_check")
-                        --ArenaGameplay.SetReady(lobby, data, false, true)
-                    end
-                end
-
-                --[[if (steam_utils.IsOwner()) then
-                    local winner_key = tostring(k) .. "_wins"
-                    steam_utils.DeleteLobbyData(lobby, winner_key)
-                end
-                ]]
-                lobby_member_names[k] = nil
-                if (data.state == "arena" and GlobalsGetValue("arena_gamemode", "ffa") ~= "continuous") then
-                    if(steam_utils.IsOwner())then
-                        ArenaGameplay.WinnerCheck(lobby, data)
-                    end
-                end
-            else
-                player_count = player_count + 1
-            end
-        end
-
-
-        for k, v in ipairs(to_remove) do
-            data.players[v] = nil
-            table.remove(to_remove, k)
-
-        end
-    end,
     GetAlivePlayers = function(lobby, data)
         local alive_players = {}
         for k, v in pairs(data.players) do
@@ -4000,9 +3951,6 @@ ArenaGameplay = {
             ArenaGameplay.CancelFire(lobby, data)
         end
         ArenaGameplay.UpdateTweens(lobby, data)
-        if (GameGetFrameNum() % 60 == 0) then
-            ArenaGameplay.ValidatePlayers(lobby, data)
-        end
     end,
     LateUpdate = function(lobby, data)
 

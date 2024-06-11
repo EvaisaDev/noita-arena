@@ -2838,6 +2838,48 @@ ArenaMode = {
         --print("Received event: " .. event)
 
     end,
+    disconnected = function(lobby, user)
+        print("round should end!!")
+
+        local k = tostring(user)
+
+        if(data == nil)then
+            return
+        end
+
+        local v = data.players[k]
+
+
+        if(v ~= nil)then
+            v:Clean(lobby)
+            data.players[k] = nil
+        end
+
+        --local name = steamutils.getTranslatedPersonaName(playerid)
+        GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_player_left") ,tostring(lobby_member_names[k])))
+
+        -- if we are the last player, unready
+        if(not data.spectator_mode)then
+            if (steam_utils.getNumLobbyMembers() == 1) then
+                GameRemoveFlagRun("lock_ready_state")
+                GameAddFlagRun("player_unready")
+                GameRemoveFlagRun("ready_check")
+                --ArenaGameplay.SetReady(lobby, data, false, true)
+            end
+        end
+
+        --[[if (steam_utils.IsOwner()) then
+            local winner_key = tostring(k) .. "_wins"
+            steam_utils.DeleteLobbyData(lobby, winner_key)
+        end
+        ]]
+        lobby_member_names[k] = nil
+        if (data.state == "arena" and GlobalsGetValue("arena_gamemode", "ffa") ~= "continuous") then
+            if(steam_utils.IsOwner())then
+                ArenaGameplay.WinnerCheck(lobby, data)
+            end
+        end
+    end,
     on_projectile_fired = function(lobby, shooter_id, projectile_id, rng, position_x, position_y, target_x, target_y,
                                    send_message, unknown1, multicast_index, unknown3)
         --[[print(tostring(send_message))
