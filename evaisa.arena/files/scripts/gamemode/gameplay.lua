@@ -493,7 +493,7 @@ ArenaGameplay = {
         GameRemoveFlagRun("Immortal")
         GameRemoveFlagRun("no_shooting")
     end,
-    ResetEverything = function(lobby)
+    ResetEverything = function(lobby, skip_owner_check)
         local player_entity = player.Get()
 
         dofile_once("data/scripts/perks/perk_list.lua")
@@ -520,7 +520,7 @@ ArenaGameplay = {
         print("Resetting everything!!!")
 
 
-        if (steam_utils.IsOwner()) then
+        if (steam_utils.IsOwner() and not skip_owner_check) then
             steam_utils.DeleteLobbyData(lobby, "holyMountainCount")
             steam_utils.DeleteLobbyData(lobby, "total_gold")
             steam_utils.DeleteLobbyData(lobby, "ready_players")
@@ -1594,7 +1594,7 @@ ArenaGameplay = {
         --np.ComponentUpdatesSetEnabled("BlackHoleSystem", false)
         --np.ComponentUpdatesSetEnabled("MagicConvertMaterialSystem", false)
 
-        local members = steamutils.getLobbyMembers(lobby)
+        --[[local members = steamutils.getLobbyMembers(lobby)
         for k, member in pairs(members) do
             if (member.id ~= steam_utils.getSteamID()) then
                 local user = member.id
@@ -1609,7 +1609,7 @@ ArenaGameplay = {
                     data.players[tostring(user)].deaths = deaths
                 end
             end
-        end
+        end]]
 
         
         if(not data.spectator_mode)then

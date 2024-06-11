@@ -2807,7 +2807,7 @@ ArenaMode = {
         if(gameplay_handler == nil)then
             return
         end
-        gameplay_handler.ResetEverything(lobby)
+        gameplay_handler.ResetEverything(lobby, true)
 
         local keybinds_global = GlobalsGetValue("evaisa.mp.keybinds", "{}")
         local keybinds_order_global = GlobalsGetValue("evaisa.mp.keybinds_order", "{}")

@@ -1890,8 +1890,10 @@ networking = {
                         for str, func in pairs(kick_handlers)do
                             local name = EntityGetName(entity_id)
                             -- check if name contains string
-                            if(string.find(name, str))then
-                                func(entity_id)
+                            if(name ~= nil and name ~= "")then
+                                if(string.find(name, str))then
+                                    func(entity_id)
+                                end
                             end
                         end
                     end
