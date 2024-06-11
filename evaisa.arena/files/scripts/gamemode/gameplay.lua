@@ -3897,6 +3897,9 @@ ArenaGameplay = {
                 local pickup = GlobalsGetValue("hm_item_pickup", "")
                 if(pickup ~= "")then
                     networking.send.pick_hm_entity(lobby, pickup)
+                    if(data.client.match_data_unpacked ~= nil)then
+                        data.client.match_data_unpacked.floor_items = {}
+                    end
                     GlobalsSetValue("arena_item_pickup", "0")
                     GlobalsSetValue("hm_item_pickup", "")
                     GameAddFlagRun("should_save_player")
@@ -3910,6 +3913,10 @@ ArenaGameplay = {
                     else
                         steamutils.AddLobbyFlag(lobby, tostring(steam_utils.getSteamID()).."picked_heart")
 
+                    end
+
+                    if(data.client.match_data_unpacked ~= nil)then
+                        data.client.match_data_unpacked.floor_items = {}
                     end
 
                     GameAddFlagRun("should_save_player")
@@ -4103,6 +4110,9 @@ ArenaGameplay = {
                 networking.send.item_picked_up(lobby, tonumber(GlobalsGetValue("arena_item_pickup", "0")))
                 GameAddFlagRun("should_save_player")
                 GlobalsSetValue("arena_item_pickup", "0")
+                if(data.client.match_data_unpacked ~= nil)then
+                    data.client.match_data_unpacked.floor_items = {}
+                end
             end
             
             if (data.state == "arena") then
