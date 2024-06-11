@@ -163,7 +163,7 @@ scoreboard.apply_data = function(lobby, data)
         --[[if(v.name == nil)then
             v.name = steamutils.getTranslatedPersonaName(gameplay_handler.FindUser(lobby, playerid))
         end]]
-        local playerid = gameplay_handler.FindUser(lobby, v)
+        local playerid = gameplay_handler.FindUser(lobby, k)
         
         if(playerid ~= nil)then
             local wins = ArenaGameplay.GetWins(lobby, playerid, data)
