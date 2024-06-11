@@ -581,6 +581,19 @@ local function SendLobbyData(lobby)
         --print(item_blacklist_string_temp)
         steam_utils.TrySetLobbyData(lobby, "item_blacklist_data", item_blacklist_string_temp)
     end
+
+    if(sorted_material_list_ids)then
+        local material_blacklist_string_temp = ""
+        for _, material in pairs(sorted_material_list_ids)do
+            if(material_blacklist_data[material.id] == nil)then
+                material_blacklist_string_temp = material_blacklist_string_temp .. "0"
+            else
+                material_blacklist_string_temp = material_blacklist_string_temp .. (material_blacklist_data[material.id] and "1" or "0")
+            end
+        end
+        --print(material_blacklist_string_temp)
+        steam_utils.TrySetLobbyData(lobby, "material_blacklist_data", material_blacklist_string_temp)
+    end
         
     steam.matchmaking.sendLobbyChatMsg(lobby, "refresh")
 end
