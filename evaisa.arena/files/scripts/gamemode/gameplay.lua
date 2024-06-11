@@ -423,10 +423,25 @@ ArenaGameplay = {
                 local user = member.id
                 local wins = tonumber(steamutils.GetLobbyData( tostring(user) .. "_wins")) or 0
                 local winstreak = tonumber(steamutils.GetLobbyData( tostring(user) .. "_winstreak")) or 0
+                local kills = tonumber(steamutils.GetLobbyData( tostring(user) .. "_kills")) or 0
+                local deaths = tonumber(steamutils.GetLobbyData( tostring(user) .. "_deaths")) or 0
                 data.players[tostring(user)].wins = wins
                 data.players[tostring(user)].winstreak = winstreak
             end
         end
+
+        -- get our own wins and winstreak and kills and deaths
+        local player_id = steam_utils.getSteamID()
+        local wins = tonumber(steamutils.GetLobbyData( tostring(player_id) .. "_wins")) or 0
+        local winstreak = tonumber(steamutils.GetLobbyData( tostring(player_id) .. "_winstreak")) or 0
+        local kills = tonumber(steamutils.GetLobbyData( tostring(player_id) .. "_kills")) or 0
+        local deaths = tonumber(steamutils.GetLobbyData( tostring(player_id) .. "_deaths")) or 0
+
+        data.client.wins = wins
+        data.client.winstreak = winstreak
+        data.client.kills = kills
+        data.client.deaths = deaths
+
         --print(tostring(ready_players_string))
 
 
@@ -1032,8 +1047,8 @@ ArenaGameplay = {
             return data.players[tostring(user)].wins or 0
         end
         -- if is localplayer
-        if(user == steam_utils.getSteamID() and data.wins ~= nil)then
-            return data.wins
+        if(user == steam_utils.getSteamID() and data.client.wins ~= nil)then
+            return data.client.wins
         end
 
         local wins = tonumber(steamutils.GetLobbyData( tostring(user) .. "_wins")) or 0
@@ -1041,7 +1056,7 @@ ArenaGameplay = {
             data.players[tostring(user)].wins = wins
             print("Updated wins for " .. tostring(user) .. " to " .. tostring(wins))
         elseif(user == steam_utils.getSteamID())then
-            data.wins = wins
+            data.client.wins = wins
             print("Updated local wins to " .. tostring(wins))
         end
         return wins
@@ -1051,8 +1066,8 @@ ArenaGameplay = {
             return data.players[tostring(user)].winstreak or 0
         end
         -- if is localplayer
-        if(user == steam_utils.getSteamID() and data.winstreak ~= nil)then
-            return data.winstreak
+        if(user == steam_utils.getSteamID() and data.client.winstreak ~= nil)then
+            return data.client.winstreak
         end
 
         local winstreak = tonumber(steamutils.GetLobbyData( tostring(user) .. "_winstreak")) or 0
@@ -1060,7 +1075,7 @@ ArenaGameplay = {
             data.players[tostring(user)].winstreak = winstreak
             print("Updated winstreak for " .. tostring(user) .. " to " .. tostring(winstreak))
         elseif(user == steam_utils.getSteamID())then
-            data.winstreak = winstreak
+            data.client.winstreak = winstreak
             print("Updated local winstreak to " .. tostring(winstreak))
         end
         return winstreak
@@ -1172,8 +1187,8 @@ ArenaGameplay = {
                 data.players[tostring(winner)].winstreak = current_winstreak + 1
                 data.players[tostring(winner)].wins = current_wins + 1
             else
-                data.winstreak = current_winstreak + 1
-                data.wins = current_wins + 1
+                data.client.winstreak = current_winstreak + 1
+                data.client.wins = current_wins + 1
             end
 
 
@@ -1644,13 +1659,6 @@ ArenaGameplay = {
             RunWhenPlayerExists(function()
                 local player_entity = player.Get()
                 -- update local wins
-                local wins = tonumber(steamutils.GetLobbyData( tostring(steam_utils.getSteamID()) .. "_wins")) or 0
-                local winstreak = tonumber(steamutils.GetLobbyData( tostring(steam_utils.getSteamID()) .. "_winstreak")) or 0
-                data.wins = wins
-                data.winstreak = winstreak
-                data.client.kills = tonumber(steamutils.GetLobbyData( tostring(steam_utils.getSteamID()) .. "_kills")) or 0
-                data.client.deaths = tonumber(steamutils.GetLobbyData( tostring(steam_utils.getSteamID()) .. "_deaths")) or 0
-
                 if (first_entry and player_entity) then
                     GameDestroyInventoryItems(player_entity)
                 end

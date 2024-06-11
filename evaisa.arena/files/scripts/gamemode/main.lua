@@ -2476,7 +2476,7 @@ ArenaMode = {
         if(data.frame_spawned ~= nil)then
             print("NEW DATA TABLE, SPAWNED FRAME: " .. tostring(data.frame_spawned))
             print("CURR FRAME: " .. tostring(GameGetFrameNum()))
-            print("WINS: " .. tostring(data.wins))
+            print("WINS: " .. tostring(data.client.wins))
         end
 
         data:DefinePlayers(lobby)
