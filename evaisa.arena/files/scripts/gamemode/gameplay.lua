@@ -547,7 +547,9 @@ ArenaGameplay = {
                 "winner_key",
                 "_ready",
                 "_loaded",
-                "current_map"
+                "current_map",
+                "_deaths",
+                "_kills",
             }
 
             steamutils.CleanLobbyData(function(key, value)
