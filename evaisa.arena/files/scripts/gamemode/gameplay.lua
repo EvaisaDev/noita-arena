@@ -1070,7 +1070,7 @@ ArenaGameplay = {
             return data.players[tostring(user)].kills or 0
         end
         -- if is localplayer
-        if(user == steam_utils.getSteamID() and data.kills ~= nil)then
+        if(user == steam_utils.getSteamID() and data.client.kills ~= nil)then
             return data.client.kills or 0
         end
 
@@ -1089,7 +1089,7 @@ ArenaGameplay = {
             return data.players[tostring(user)].deaths or 0
         end
         -- if is localplayer
-        if(user == steam_utils.getSteamID() and data.deaths ~= nil)then
+        if(user == steam_utils.getSteamID() and data.client.deaths ~= nil)then
             return data.client.deaths or 0
         end
 
