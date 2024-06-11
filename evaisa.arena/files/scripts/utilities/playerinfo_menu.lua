@@ -335,11 +335,8 @@ function playerinfo_menu:New()
                             GuiImage(self.gui, new_id(), 0, 2, "mods/evaisa.arena/files/sprites/ui/check.png", 1, 1, 1, 0)
                         end
 
-                        if(v.name == nil)then
-                            v.name = steamutils.getTranslatedPersonaName(gameplay_handler.FindUser(lobby, playerid))
-                        end
 
-                        local username = v.name
+                        local username = steamutils.getTranslatedPersonaName(gameplay_handler.FindUser(lobby, playerid))
                         GuiZSetForNextWidget(self.gui, 900)
                         local color = game_funcs.ID2Color(playerid)
                         if(color == nil)then

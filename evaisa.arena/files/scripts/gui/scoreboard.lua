@@ -160,26 +160,26 @@ scoreboard.apply_data = function(lobby, data)
     -- Add other players
     for k, v in pairs(data.players)do
      
-        if(v.name == nil)then
+        --[[if(v.name == nil)then
             v.name = steamutils.getTranslatedPersonaName(gameplay_handler.FindUser(lobby, playerid))
+        end]]
+        local playerid = gameplay_handler.FindUser(lobby, v)
+        
+        if(playerid ~= nil)then
+            local wins = ArenaGameplay.GetWins(lobby, playerid, data)
+            local winstreak = ArenaGameplay.GetWinstreak(lobby, playerid, data)
+            local kills = ArenaGameplay.GetKills(lobby, playerid, data)
+            local deaths = ArenaGameplay.GetDeaths(lobby, playerid, data)
+
+            table.insert(scoreboard.data, {
+                id = playerid,
+                name = steamutils.getTranslatedPersonaName(playerid),
+                wins = wins,
+                streak = winstreak,
+                kills = kills,
+                deaths = deaths
+            })
         end
-        local playerid = k
-
-        local wins = ArenaGameplay.GetWins(lobby, playerid, data)
-        local winstreak = ArenaGameplay.GetWinstreak(lobby, playerid, data)
-        local kills = ArenaGameplay.GetKills(lobby, playerid, data)
-        local deaths = ArenaGameplay.GetDeaths(lobby, playerid, data)
-
-        table.insert(scoreboard.data, {
-            id = playerid,
-            name = v.name,
-            wins = wins,
-            streak = winstreak,
-            kills = kills,
-            deaths = deaths
-        })
-
-
     end
 
     -- Sort the data
