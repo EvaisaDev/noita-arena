@@ -147,6 +147,7 @@ local upgrade_system = {
 
             GameAddFlagRun("update_card_menu_state")
             GameAddFlagRun("card_picked")
+            GameAddFlagRun("sync_hm_to_spectators")
 
             GamePlaySound("data/audio/Desktop/ui.bank", "ui/button_click", 0, 0)
 

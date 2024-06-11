@@ -3726,7 +3726,12 @@ ArenaGameplay = {
 
         if(GameHasFlagRun("sync_hm_to_spectators"))then
 
+
             if(data.state == "lobby")then
+                if(data.client.match_data_unpacked ~= nil)then
+                    data.client.match_data_unpacked.floor_items = {}
+                end
+                GameAddFlagRun("should_save_player")
                 networking.send.sync_hm(lobby, data)
             end
             
@@ -3900,9 +3905,10 @@ ArenaGameplay = {
                     if(data.client.match_data_unpacked ~= nil)then
                         data.client.match_data_unpacked.floor_items = {}
                     end
+                    GameAddFlagRun("should_save_player")
                     GlobalsSetValue("arena_item_pickup", "0")
                     GlobalsSetValue("hm_item_pickup", "")
-                    GameAddFlagRun("should_save_player")
+                    
                 end
 
                 if(GameHasFlagRun("picked_up_new_heart"))then
