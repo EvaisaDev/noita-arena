@@ -149,12 +149,16 @@ scoreboard.apply_data = function(lobby, data)
 
     local own_wins = ArenaGameplay.GetWins(lobby, player_id, data)
     local own_streak = ArenaGameplay.GetWinstreak(lobby, player_id, data)
+    local own_kills = ArenaGameplay.GetKills(lobby, player_id, data)
+    local own_deaths = ArenaGameplay.GetDeaths(lobby, player_id, data)
 
     table.insert(scoreboard.data, {
         id = player_id,
         name = self_name,
         wins = own_wins,
-        streak = own_streak
+        streak = own_streak,
+        kills = own_kills,
+        deaths = own_deaths
     })
 
     -- Add other players
