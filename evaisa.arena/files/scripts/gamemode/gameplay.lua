@@ -1043,78 +1043,46 @@ ArenaGameplay = {
         end
     end,
     GetWins = function(lobby, user, data)
-        if(data.players[tostring(user)] ~= nil and data.players[tostring(user)].wins ~= nil)then
-            return data.players[tostring(user)].wins or 0
-        end
-        -- if is localplayer
-        if(user == steam_utils.getSteamID() and data.client.wins ~= nil)then
-            return data.client.wins
-        end
-
         local wins = tonumber(steamutils.GetLobbyData( tostring(user) .. "_wins")) or 0
         if(data.players[tostring(user)] ~= nil)then 
             data.players[tostring(user)].wins = wins
-            print("Updated wins for " .. tostring(user) .. " to " .. tostring(wins))
+            --print("Updated wins for " .. tostring(user) .. " to " .. tostring(wins))
         elseif(user == steam_utils.getSteamID())then
             data.client.wins = wins
-            print("Updated local wins to " .. tostring(wins))
+            --print("Updated local wins to " .. tostring(wins))
         end
         return wins
     end,
     GetWinstreak = function(lobby, user, data)
-        if(data.players[tostring(user)] ~= nil and data.players[tostring(user)].winstreak ~= nil)then
-            return data.players[tostring(user)].winstreak or 0
-        end
-        -- if is localplayer
-        if(user == steam_utils.getSteamID() and data.client.winstreak ~= nil)then
-            return data.client.winstreak
-        end
-
         local winstreak = tonumber(steamutils.GetLobbyData( tostring(user) .. "_winstreak")) or 0
         if(data.players[tostring(user)] ~= nil)then 
             data.players[tostring(user)].winstreak = winstreak
-            print("Updated winstreak for " .. tostring(user) .. " to " .. tostring(winstreak))
+            --print("Updated winstreak for " .. tostring(user) .. " to " .. tostring(winstreak))
         elseif(user == steam_utils.getSteamID())then
             data.client.winstreak = winstreak
-            print("Updated local winstreak to " .. tostring(winstreak))
+            --print("Updated local winstreak to " .. tostring(winstreak))
         end
         return winstreak
     end,
     GetKills = function(lobby, user, data)
-        if(data.players[tostring(user)] ~= nil and data.players[tostring(user)].kills ~= nil)then
-            return data.players[tostring(user)].kills or 0
-        end
-        -- if is localplayer
-        if(user == steam_utils.getSteamID() and data.client.kills ~= nil)then
-            return data.client.kills or 0
-        end
-
         local kills = tonumber(steamutils.GetLobbyData( tostring(user) .. "_kills")) or 0
         if(data.players[tostring(user)] ~= nil)then 
             data.players[tostring(user)].kills = kills
-            print("Updated kills for " .. tostring(user) .. " to " .. tostring(kills))
+            --print("Updated kills for " .. tostring(user) .. " to " .. tostring(kills))
         elseif(user == steam_utils.getSteamID())then
             data.client.kills = kills
-            print("Updated local kills to " .. tostring(kills))
+            --print("Updated local kills to " .. tostring(kills))
         end
         return kills
     end,
     GetDeaths = function(lobby, user, data)
-        if(data.players[tostring(user)] ~= nil and data.players[tostring(user)].deaths ~= nil)then
-            return data.players[tostring(user)].deaths or 0
-        end
-        -- if is localplayer
-        if(user == steam_utils.getSteamID() and data.client.deaths ~= nil)then
-            return data.client.deaths or 0
-        end
-
         local deaths = tonumber(steamutils.GetLobbyData( tostring(user) .. "_deaths")) or 0
         if(data.players[tostring(user)] ~= nil)then 
             data.players[tostring(user)].deaths = deaths
-            print("Updated deaths for " .. tostring(user) .. " to " .. tostring(deaths))
+            --print("Updated deaths for " .. tostring(user) .. " to " .. tostring(deaths))
         elseif(user == steam_utils.getSteamID())then
             data.client.deaths = deaths
-            print("Updated local deaths to " .. tostring(deaths))
+            --print("Updated local deaths to " .. tostring(deaths))
         end
         return deaths
     end,
