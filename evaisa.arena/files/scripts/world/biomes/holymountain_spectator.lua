@@ -37,7 +37,7 @@ end
 function spawn_hp( x, y )
 	EntityLoad( "data/entities/buildings/music_trigger_temple.xml", x-16, y )
 	EntityLoad( "data/entities/buildings/coop_respawn.xml", x, y )
-	--local chunk_loader = EntityLoad("mods/evaisa.arena/files/entities/chunk_loader.xml", 0, 0)
+	EntityLoad("mods/evaisa.arena/files/entities/chunk_loader_hm.xml", x, 0)
 	--EntitySetTransform(chunk_loader, 1500, 0)
 	--[[EntityApplyTransform(chunk_loader, 300, 0)
 	EntitySetTransform(chunk_loader, 300, 0)

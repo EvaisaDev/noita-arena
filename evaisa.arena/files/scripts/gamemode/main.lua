@@ -4,7 +4,6 @@ perk_info_saved = logger.init("perk_info_saved.lua")
 perk_info_loaded = logger.init("perk_info_loaded.lua")
 arena_data_file = logger.init("arena_data.log")
 
-
 if(not debugging)then
 	arena_log.enabled = false
 end
