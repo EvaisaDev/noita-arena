@@ -602,13 +602,18 @@ function DestroyDataTable()
     data = nil
 end
 
+local filter_types = {
+    all = "$arena_blacklist_filter_all",
+    blacklist = "$arena_blacklist_filter_blacklist",
+    whitelist = "$arena_blacklist_filter_whitelist" 
+}
 
 np.SetGameModeDeterministic(true)
 
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 174,
+    version = 175,
     required_online_version = 359,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
@@ -1244,12 +1249,33 @@ ArenaMode = {
                         SendLobbyData(lobby)
                     end
                 end
+
+
+                perk_filter_type = perk_filter_type or "all"
+
+                GuiZSetForNextWidget(gui, -5600)
+                if GuiButton(gui, new_id(), 0, 0, string.format(GameTextGetTranslatedOrNot("$arena_blacklist_filter"), GameTextGetTranslatedOrNot(filter_types[perk_filter_type]))) then
+                    if(perk_filter_type == "all")then
+                        perk_filter_type = "blacklist"
+                    elseif(perk_filter_type == "blacklist")then
+                        perk_filter_type = "whitelist"
+                    else
+                        perk_filter_type = "all"
+                    end
+                end
+
                 local iteration = 0
                 for i, perk in ipairs(sorted_perk_list)do
 
+                    local valid = true
+                    if(perk_filter_type == "blacklist")then
+                        valid = perk_blacklist_data[perk.id] == true
+                    elseif(perk_filter_type == "whitelist")then
+                        valid = not perk_blacklist_data[perk.id]
+                    end
 
 
-                    if(perk_search_content == "" or search(perk.id, perk.ui_name, perk_search_content, function() return perk_blacklist_data[perk.id] end)) then
+                    if(valid and (perk_search_content == "" or search(perk.id, perk.ui_name, perk_search_content, function() return perk_blacklist_data[perk.id] end))) then
                         iteration = iteration + 1
                         GuiLayoutBeginHorizontal(gui, 0, -((iteration - 1) * 2), true)
                         local is_blacklisted = perk_blacklist_data[perk.id]--steam.matchmaking.getLobbyData(lobby,"perk_blacklist_"..perk.id) == "true"
@@ -1345,11 +1371,35 @@ ArenaMode = {
                     return id
                 end]]
 
+
+                spell_filter_type = spell_filter_type or "all"
+
+                GuiZSetForNextWidget(gui, -5600)
+                if GuiButton(gui, new_id(), 0, 0, string.format(GameTextGetTranslatedOrNot("$arena_blacklist_filter"), GameTextGetTranslatedOrNot(filter_types[spell_filter_type]))) then
+                    if(spell_filter_type == "all")then
+                        spell_filter_type = "blacklist"
+                    elseif(spell_filter_type == "blacklist")then
+                        spell_filter_type = "whitelist"
+                    else
+                        spell_filter_type = "all"
+                    end
+                end
+
+
+
                 local iteration = 0
 
                 for i, spell in ipairs(sorted_spell_list)do
                     
-                    if(spell_search_content == "" or search(spell.id, spell.name, spell_search_content, function() return spell_blacklist_data[spell.id] end)) then
+                    local valid = true
+                    if(spell_filter_type == "blacklist")then
+                        valid = spell_blacklist_data[spell.id] == true
+                    elseif(spell_filter_type == "whitelist")then
+                        valid = not spell_blacklist_data[spell.id]
+                    end
+
+
+                    if(valid and (spell_search_content == "" or search(spell.id, spell.name, spell_search_content, function() return spell_blacklist_data[spell.id] end))) then
                         iteration = iteration + 1
                         GuiLayoutBeginHorizontal(gui, 0, -((iteration - 1) * 2), true)
                         local is_blacklisted = spell_blacklist_data[spell.id] --steam.matchmaking.getLobbyData(lobby,"spell_blacklist_"..spell.id) == "true"
@@ -1442,9 +1492,33 @@ ArenaMode = {
                         SendLobbyData(lobby)
                     end
                 end
+
+
+                card_filter_type = card_filter_type or "all"
+
+                GuiZSetForNextWidget(gui, -5600)
+                if GuiButton(gui, new_id(), 0, 0, string.format(GameTextGetTranslatedOrNot("$arena_blacklist_filter"), GameTextGetTranslatedOrNot(filter_types[card_filter_type]))) then
+                    if(card_filter_type == "all")then
+                        card_filter_type = "blacklist"
+                    elseif(card_filter_type == "blacklist")then
+                        card_filter_type = "whitelist"
+                    else
+                        card_filter_type = "all"
+                    end
+                end
+
                 local iteration = 0
                 for i, card in ipairs(sorted_card_list)do
-                    if(card_search_content == "" or search(card.id, card.ui_name, card_search_content, function() return card_blacklist_data[card.id] end)) then
+
+                    local valid = true
+                    if(card_filter_type == "blacklist")then
+                        valid = card_blacklist_data[card.id] == true
+                    elseif(card_filter_type == "whitelist")then
+                        valid = not card_blacklist_data[card.id]
+                    end
+
+
+                    if(valid and (card_search_content == "" or search(card.id, card.ui_name, card_search_content, function() return card_blacklist_data[card.id] end))) then
                         iteration = iteration + 1
                         GuiLayoutBeginHorizontal(gui, 0, -((iteration - 1) * 2), true)
                         local is_blacklisted = card_blacklist_data[card.id]--steam.matchmaking.getLobbyData(lobby,"card_blacklist_"..card.id) == "true"
@@ -1534,9 +1608,32 @@ ArenaMode = {
                         SendLobbyData(lobby)
                     end
                 end
+
+
+                item_filter_type = item_filter_type or "all"
+
+                GuiZSetForNextWidget(gui, -5600)
+                if GuiButton(gui, new_id(), 0, 0, string.format(GameTextGetTranslatedOrNot("$arena_blacklist_filter"), GameTextGetTranslatedOrNot(filter_types[item_filter_type]))) then
+                    if(item_filter_type == "all")then
+                        item_filter_type = "blacklist"
+                    elseif(item_filter_type == "blacklist")then
+                        item_filter_type = "whitelist"
+                    else
+                        item_filter_type = "all"
+                    end
+                end
+
                 local iteration = 0
                 for i, item in ipairs(sorted_item_list)do
-                    if(item_search_content == "" or search(item.id, item.ui_name, item_search_content, function() return item_blacklist_data[item.id] end)) then
+
+                    local valid = true
+                    if(item_filter_type == "blacklist")then
+                        valid = item_blacklist_data[item.id] == true
+                    elseif(item_filter_type == "whitelist")then
+                        valid = not item_blacklist_data[item.id]
+                    end
+
+                    if(valid and (item_search_content == "" or search(item.id, item.ui_name, item_search_content, function() return item_blacklist_data[item.id] end))) then
                         iteration = iteration + 1
                         GuiLayoutBeginHorizontal(gui, 0, -((iteration - 1) * 2), true)
                         local is_blacklisted = item_blacklist_data[item.id]--steam.matchmaking.getLobbyData(lobby,"item_blacklist_"..item.id) == "true"
@@ -1625,6 +1722,20 @@ ArenaMode = {
                         SendLobbyData(lobby)
                     end
                 end
+
+                material_filter_type = material_filter_type or "all"
+
+                GuiZSetForNextWidget(gui, -5600)
+                if GuiButton(gui, new_id(), 0, 0, string.format(GameTextGetTranslatedOrNot("$arena_blacklist_filter"), GameTextGetTranslatedOrNot(filter_types[material_filter_type]))) then
+                    if(material_filter_type == "all")then
+                        material_filter_type = "blacklist"
+                    elseif(material_filter_type == "blacklist")then
+                        material_filter_type = "whitelist"
+                    else
+                        material_filter_type = "all"
+                    end
+                end
+
                 local iteration = 0
                 for i, material in ipairs(sorted_material_list)do
                     local sprite_path = "data/generated/material_icons/"..material.id..".png"
@@ -1633,7 +1744,15 @@ ArenaMode = {
                     end
                     material.sprite = sprite_path
 
-                    if(material_search_content == "" or search(material.id, material.ui_name, material_search_content, function() return material_blacklist_data[material.id] end)) then
+                    local valid = true
+                    if(material_filter_type == "blacklist")then
+                        valid = material_blacklist_data[material.id] == true
+                    elseif(material_filter_type == "whitelist")then
+                        valid = not material_blacklist_data[material.id]
+                    end
+
+
+                    if(valid and (material_search_content == "" or search(material.id, material.ui_name, material_search_content, function() return material_blacklist_data[material.id] end))) then
                         iteration = iteration + 1
                         GuiLayoutBeginHorizontal(gui, 0, -((iteration - 1) * 2), true)
                         local is_blacklisted = material_blacklist_data[material.id]--steam.matchmaking.getLobbyData(lobby,"material_blacklist_"..material.id) == "true"
@@ -1730,10 +1849,31 @@ ArenaMode = {
                     return id
                 end]]
 
+                
+                map_filter_type = map_filter_type or "all"
+
+                GuiZSetForNextWidget(gui, -5600)
+                if GuiButton(gui, new_id(), 0, 0, string.format(GameTextGetTranslatedOrNot("$arena_blacklist_filter"), GameTextGetTranslatedOrNot(filter_types[map_filter_type]))) then
+                    if(map_filter_type == "all")then
+                        map_filter_type = "blacklist"
+                    elseif(map_filter_type == "blacklist")then
+                        map_filter_type = "whitelist"
+                    else
+                        map_filter_type = "all"
+                    end
+                end
+
                 local iteration = 0
 
                 for i, map in ipairs(sorted_map_list)do
-                    if(map_search_content == "" or search(map.id, map.name, map_search_content, function() return map_blacklist_data[map.id] end)) then
+                    local valid = true
+                    if(map_filter_type == "blacklist")then
+                        valid = map_blacklist_data[map.id] == true
+                    elseif(map_filter_type == "whitelist")then
+                        valid = not map_blacklist_data[map.id]
+                    end
+
+                    if(valid and (map_search_content == "" or search(map.id, map.name, map_search_content, function() return map_blacklist_data[map.id] end))) then
                         iteration = iteration + 1
                         GuiLayoutBeginHorizontal(gui, 0, ((iteration - 1)), true)
                         local is_blacklisted = map_blacklist_data[map.id]
