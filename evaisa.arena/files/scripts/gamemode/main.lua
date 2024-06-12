@@ -2744,6 +2744,7 @@ ArenaMode = {
 
         end
 
+        --[[
         if(input:WasKeyPressed("f9"))then
             ArenaGameplay.WinnerCheck(lobby, data)
         end
@@ -2758,6 +2759,7 @@ ArenaMode = {
                 end)
             end
         end
+        ]]
         --[[elseif(input:WasKeyPressed("f9"))then
             EntityKill(GameGetWorldStateEntity())
         elseif(input:WasKeyPressed("f6"))then
