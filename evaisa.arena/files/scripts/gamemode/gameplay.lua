@@ -245,6 +245,7 @@ ArenaGameplay = {
             end,
             ["best_of"] = function(value)
                 local current_round = ArenaGameplay.GetNumRounds(lobby)
+                print("Checking best of: " .. current_round .. " - " .. value)
                 if(current_round >= value)then
                     local members = steamutils.getLobbyMembers(lobby)
                     local best_player = nil
@@ -496,6 +497,8 @@ ArenaGameplay = {
     ResetEverything = function(lobby, skip_owner_check)
         local player_entity = player.Get()
 
+        scoreboard.open = false
+
         dofile_once("data/scripts/perks/perk_list.lua")
         for i, perk_data in ipairs(perk_list) do
             local perk_id = perk_data.id
@@ -583,8 +586,17 @@ ArenaGameplay = {
         end
 
         -- kill globals and run flags
+        -- save keybinds!!!
+        local keybinds_global = GlobalsGetValue("evaisa.mp.keybinds", "{}")
+        local keybinds_order_global = GlobalsGetValue("evaisa.mp.keybinds_order", "{}")
+
         ComponentSetValue(EntityGetFirstComponent(GameGetWorldStateEntity(), "WorldStateComponent"), "lua_globals", "")
         ComponentSetValue(EntityGetFirstComponent(GameGetWorldStateEntity(), "WorldStateComponent"), "flags", "")
+
+        
+        GlobalsSetValue("evaisa.mp.keybinds", keybinds_global)
+        GlobalsSetValue("evaisa.mp.keybinds_order", keybinds_order_global)
+
     end,
     ReadyAmount = function(data, lobby)
         if(data.state ~= "lobby")then
@@ -1210,8 +1222,9 @@ ArenaGameplay = {
                 end)
             else
                 scoreboard.apply_data(lobby, data)
+                scoreboard.show()
                 delay.new(600, function()
-                    scoreboard.show()
+                    scoreboard.open = false
                     StopGame()
                 end, function(frames)
                     if (frames % 60 == 0) then

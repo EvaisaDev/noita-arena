@@ -675,6 +675,12 @@ ArenaMode = {
         -- Card system gamepad bindings
         bindings:RegisterBinding("arena_cards_select_card_joy", "Arena - Cards [gamepad]", "Take selected card", "JOY_BUTTON_A", "joy", false, false, true, false)
         
+        -- Scoreboard keyboard bindings
+        bindings:RegisterBinding("arena_scoreboard_toggle", "Arena - Scoreboard [keyboard]", "Toggle Scoreboard", "", "key", false, true, false, false)
+
+        -- Scoreboard gamepad bindings
+        bindings:RegisterBinding("arena_scoreboard_toggle_joy", "Arena - Scoreboard [gamepad]", "Toggle Scoreboard", "", "joy", false, false, true, false)
+
     end,
     default_presets = {
         ["Wand Locked"] = {
@@ -2737,9 +2743,9 @@ ArenaMode = {
             arena_data_file:print(json_string)
 
         end
-        if (input:WasKeyPressed("f4")) then
-            scoreboard.apply_data(lobby, data)
-            scoreboard.show()
+
+        if(input:WasKeyPressed("f9"))then
+            ArenaGameplay.WinnerCheck(lobby, data)
         end
 
         if(input:WasKeyPressed("f10"))then
@@ -2784,6 +2790,10 @@ ArenaMode = {
         end]]
 
 
+        if(GameGetFrameNum() % 60 == 0)then
+            scoreboard.apply_data(lobby, data)
+        end
+
         --print("Did something go wrong?")
     end,
     late_update = function(lobby)
@@ -2798,7 +2808,47 @@ ArenaMode = {
 
     end,
     lobby_update = function(lobby)
+        
+        if(scoreboard_button_ui == nil)then
+            scoreboard_button_ui = GuiCreate()
+        end
+
+        GuiStartFrame(scoreboard_button_ui)
+
+        if (not IsPaused() and (data ~= nil or (#scoreboard.data > 0))) then
+
+
+            local screen_width, screen_height = GuiGetScreenDimensions(scoreboard_button_ui)
+
+            GuiOptionsAdd(scoreboard_button_ui, 6)
+
+            if(GameGetIsGamepadConnected())then
+                GuiOptionsAdd(scoreboard_button_ui, 2)
+            else
+                GuiOptionsRemove(scoreboard_button_ui, 2)
+            end
+
+            if (GuiImageButton(scoreboard_button_ui, 21312, screen_width - 60, screen_height - 20, "", "mods/evaisa.arena/files/sprites/ui/scoreboard.png")) then
+                GamePlaySound("data/audio/Desktop/ui.bank", "ui/button_click", 0, 0)
+                if(data ~= nil)then
+                    scoreboard.apply_data(lobby, data)
+                end
+                scoreboard.open = not scoreboard.open
+            end
+
+            
+            if (bindings:IsJustDown("arena_scoreboard_toggle") or bindings:IsJustDown("arena_scoreboard_toggle_joy")) then
+                GamePlaySound("data/audio/Desktop/ui.bank", "ui/button_click", 0, 0)
+                if(data ~= nil)then
+                    scoreboard.apply_data(lobby, data)
+                end
+                scoreboard.open = not scoreboard.open
+            end
+        end
+
+
         scoreboard.update(lobby)
+
     end,
     player_enter = function(lobby, user)
 
@@ -2819,13 +2869,11 @@ ArenaMode = {
         if(gameplay_handler == nil)then
             return
         end
+
+
         gameplay_handler.ResetEverything(lobby, true)
 
-        local keybinds_global = GlobalsGetValue("evaisa.mp.keybinds", "{}")
-        local keybinds_order_global = GlobalsGetValue("evaisa.mp.keybinds_order", "{}")
 
-        GlobalsSetValue("evaisa.mp.keybinds", keybinds_global)
-        GlobalsSetValue("evaisa.mp.keybinds_order", keybinds_order_global)
     end,
     --[[
     message = function(lobby, message, user)

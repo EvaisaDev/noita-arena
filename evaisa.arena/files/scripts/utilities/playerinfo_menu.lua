@@ -222,7 +222,7 @@ function playerinfo_menu:New()
                 GuiColorSetForNextWidget(self.gui, 1, 1, 1, 0.8)
                 GuiText(self.gui, 0, 0, string.format(GameTextGetTranslatedOrNot("$arena_playerinfo_winstreak"), tostring(winstreak)))
                 ]]
-
+                --[[
                 local wins_text = tostring(wins)
                 local winstreak_text = tostring(winstreak)
                 local kills_text = tostring(kills)
@@ -241,6 +241,7 @@ function playerinfo_menu:New()
                 text_height_self = text_height_self + DrawTextElement("$arena_playerinfo_winstreak", winstreak_text)
                 text_height_self = text_height_self + DrawTextElement("$arena_playerinfo_kills", kills_text)
                 text_height_self = text_height_self + DrawTextElement("$arena_playerinfo_deaths", deaths_text)
+                ]]
 
                 local health_ratio = hp / max_hp
                 local health_bar_width = 90
@@ -374,7 +375,7 @@ function playerinfo_menu:New()
                         GuiText(self.gui, 0, 0, string.format(GameTextGetTranslatedOrNot("$arena_playerinfo_winstreak"), tostring(winstreak)))
 
                         ]]
-                        local ping_height = DrawTextElement("$arena_playerinfo_ping", v.ping)
+                        --[[local ping_height = DrawTextElement("$arena_playerinfo_ping", v.ping)
                         local delay_height = DrawTextElement("$arena_playerinfo_delay", v.delay_frames)
 
                         local wins_text = tostring(ArenaGameplay.GetWins(lobby, playerid, data))
@@ -408,7 +409,7 @@ function playerinfo_menu:New()
                             text_height_other = text_height_other + kills_height
                             text_height_other = text_height_other + deaths_height
                             text_height_other = text_height_other + 4
-                        end
+                        end]]
 
                         local health_ratio = v.health / v.max_health
                         local health_bar_width = 90

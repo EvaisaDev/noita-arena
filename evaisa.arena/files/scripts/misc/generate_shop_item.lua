@@ -58,6 +58,10 @@ function generate_shop_item( x, y, cheap_item, biomeid_, is_stealable, sync )
 	-- Note( Petri ): Testing how much squaring the biomeid for prices affects things
 	local level = biomeid
 
+	if(level == nil)then
+		level = 5
+	end
+
 	
 	if(level > 10)then
 		level = 10

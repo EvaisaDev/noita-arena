@@ -1,0 +1,19 @@
+- Summon Sädekivi now retriggers if you lost your shiny rock.
+- Sädekivi is now network synced.
+- Teleportitis Dodge / Teleportitis can now only send you a limited distance out of the zone
+- Added confirmation prompts to Skin Editor UI
+- In edge-cases of clients not dying after their death message is received, the entity is now forcefully killed.
+- Hollow egg can no longer be picked up
+ - Note that hollow egg (as inventory items) never worked in arena to begin with, it is basically impossible to make them work currently due to the fact that spell triggers are not serialized by Noita's entity serializer.
+- Added Lobby Setting: Max Tier Random (idk what to call it)
+ - When the max shop tier is reached shops will start giving completely random contents.
+- Optimized spell blacklist code slightly.
+- Fixed issue where if the host crashed, it would reset wins / win streaks
+- Added Kills / Deaths to the player info menu.
+- Fixed Materials Blacklist (I forgot to hook it up to the lobby data system)
+
+
+- Reworked Noita Online window system.
+- Fixed usernames becoming incorrect sometimes.
+- Fixed rejoin entity duplication
+- Load cache when joining a lobby

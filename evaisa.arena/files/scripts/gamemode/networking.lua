@@ -399,8 +399,9 @@ networking = {
                     else
                         print("Win condition met! ending match..")
                         scoreboard.apply_data(lobby, data)
+                        scoreboard.show()
                         delay.new(600, function()
-                            scoreboard.show()
+                            scoreboard.open = false
                             StopGame()
                         end, function(frames)
                             if (frames % 60 == 0) then
