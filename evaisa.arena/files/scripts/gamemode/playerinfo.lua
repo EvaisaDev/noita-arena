@@ -48,8 +48,7 @@ function playerinfo:New(lobby, user)
             local items = GameGetAllInventoryItems( self.entity ) or {}
 
             for i,item in ipairs(items) do
-                EntityRemoveFromParent(item)
-                EntityKill(item)
+                GameKillInventoryItem(self.entity, item)
             end
 
             local damage_model_comp = EntityGetFirstComponentIncludingDisabled(self.entity, "DamageModelComponent")
@@ -92,9 +91,16 @@ function playerinfo:New(lobby, user)
                 EntityInflictDamage(self.entity, 69420, "DAMAGE_MATERIAL", "", "NORMAL", 0, 0, GameGetWorldStateEntity())
             end
         end
+
+        -- Kill the bitch if they are still alive for some reason, this is cursed as hell
+        delay.new(5, function()
+            if(self.entity ~= nil and EntityGetIsAlive(self.entity))then
+                EntityKill(self.entity)
+            end
+            self.entity = nil
+        end)
             
         self.last_velocity = nil
-        self.entity = nil
         self.held_item = nil
         if(self.hp_bar)then
             self.hp_bar:destroy()
@@ -107,11 +113,15 @@ function playerinfo:New(lobby, user)
         self.previous_positions = {}
     end
     obj.Clean = function(self, lobby)
+
+        local items = GameGetAllInventoryItems( self.entity ) or {}
+        -- destroy all
+        for i,item in ipairs(items) do
+            GameKillInventoryItem(self.entity, item)
+        end
+        
         if(self.entity ~= nil and EntityGetIsAlive(self.entity))then
             EntityKill(self.entity)
-        end
-        if(self.held_item ~= nil and EntityGetIsAlive(self.held_item))then
-            EntityKill(self.held_item)
         end
         self.entity = nil
         self.held_item = nil
@@ -136,6 +146,12 @@ function playerinfo:New(lobby, user)
         end]]
     end
     obj.Destroy = function(self)
+        local items = GameGetAllInventoryItems( self.entity ) or {}
+        -- destroy all
+        for i,item in ipairs(items) do
+            GameKillInventoryItem(self.entity, item)
+        end
+
         if(self.entity ~= nil and EntityGetIsAlive(self.entity))then
             EntityKill(self.entity)
         end

@@ -73,6 +73,83 @@ local skip_function_list = {
 }
 
 local rewrites = {
+	ADVENTURER = {
+		-- shooting unedited wands gives back HP
+		id = "ADVENTURER",
+		ui_name = "$perk_adventurer",
+		ui_description = "$perkdesc_adventurer",
+		ui_icon = "data/ui_gfx/perk_icons/adventurer.png",
+		perk_icon = "data/items_gfx/perks/adventurer.png",
+		stackable = STACKABLE_NO,
+		func = function( entity_perk_item, entity_who_picked, item_name )
+			print("Adventurer perk picked")
+			EntityAddComponent2( entity_who_picked, "LuaComponent", 
+			{
+				_tags = "perk_component",
+				script_source_file = "data/scripts/perks/adventurer.lua",
+				execute_every_n_frame = 1,
+				execute_on_added = true,
+				call_init_function = true,
+			} )
+			
+		end,
+	},
+	-- Fixed issue where health was reset on load
+	GLASS_CANNON = {
+		id = "GLASS_CANNON",
+		ui_name = "$perk_glass_cannon",
+		ui_description = "$arena_perk_glass_cannon_alt",
+		ui_icon = "data/ui_gfx/perk_icons/glass_cannon.png",
+		perk_icon = "data/items_gfx/perks/glass_cannon.png",
+		game_effect = "DAMAGE_MULTIPLIER",
+		stackable = STACKABLE_YES,
+		stackable_is_rare = true,
+		stackable_maximum = 2,
+		max_in_perk_pool = 2,
+		usable_by_enemies = true,
+		skip_functions_on_load = true,
+		func = function( entity_perk_item, entity_who_picked, item_name )
+			local damagemodels = EntityGetComponent( entity_who_picked, "DamageModelComponent" )
+			if( damagemodels ~= nil ) then
+				for i,damagemodel in ipairs(damagemodels) do
+					local hp = tonumber( ComponentGetValue( damagemodel, "hp" ) )
+					local max_hp = 50 / 25
+					
+					--ComponentSetValue( damagemodel, "hp", math.min( hp, max_hp ) )
+					ComponentSetValue( damagemodel, "max_hp", max_hp )
+					ComponentSetValue( damagemodel, "max_hp_cap", max_hp )
+					ComponentSetValue( damagemodel, "hp", max_hp )
+				end
+			end
+		end,
+	},
+	-- Fixed issue where vampirism health is reapplied on load
+	VAMPIRISM = {
+		id = "VAMPIRISM",
+		ui_name = "$perk_vampirism",
+		ui_description = "$perkdesc_vampirism",
+		ui_icon = "data/ui_gfx/perk_icons/vampirism.png",
+		perk_icon = "data/items_gfx/perks/vampirism.png",
+		game_effect = "HEALING_BLOOD",
+		game_effect2 = "PROTECTION_FOOD_POISONING",
+		stackable = STACKABLE_NO,
+		skip_functions_on_load = true,
+		func = function( entity_perk_item, entity_who_picked, item_name )
+
+			local damagemodels = EntityGetComponent( entity_who_picked, "DamageModelComponent" )
+			if( damagemodels ~= nil ) then
+				for i,damagemodel in ipairs(damagemodels) do
+					local hp = tonumber( ComponentGetValue( damagemodel, "hp" ) )
+					local max_hp = tonumber( ComponentGetValue( damagemodel, "max_hp" ) ) * 0.75
+
+					max_hp = math.ceil( max_hp * 25 ) / 25
+					
+					ComponentSetValue( damagemodel, "hp", math.min( hp, max_hp ) )
+					ComponentSetValue( damagemodel, "max_hp", max_hp )
+				end
+			end
+		end,
+	},
 	UNLIMITED_SPELLS = {
 		id = "UNLIMITED_SPELLS",
 		ui_name = "$perk_unlimited_spells",
@@ -150,7 +227,7 @@ local rewrites = {
 		ui_icon = "data/ui_gfx/perk_icons/teleportitis.png",
 		perk_icon = "data/items_gfx/perks/teleportitis.png",
 		stackable = STACKABLE_NO,
-		usable_by_enemies = true,
+		usable_by_enemies = false,
 		run_on_clients = false,
 		func = function( entity_perk_item, entity_who_picked, item_name )
 			GameAddFlagRun( "teleportitis" )
@@ -167,22 +244,17 @@ local rewrites = {
 		stackable_maximum = 5,
 		max_in_perk_pool = 2,
 		usable_by_enemies = true,
-		on_player_load = function(entity_who_picked)
-			local name = EntityGetName( entity_who_picked )
-			print("resetting shield count for "..name..".")
-			GlobalsSetValue( "PERK_SHIELD_COUNT_"..tostring(name), "0" )
-		end,
 		func = function( entity_perk_item, entity_who_picked, item_name )
 			local x,y = EntityGetTransform( entity_who_picked )
 			local name = EntityGetName( entity_who_picked )
 			local child_id = EntityLoad( "data/entities/misc/perks/shield.xml", x, y )
 			
-			local shield_num = tonumber( GlobalsGetValue( "PERK_SHIELD_COUNT_"..tostring(name), "0" ) )
+			local shield_num = EntityHelper.GetVariable(entity_who_picked, "shield_count") or 0
 			local shield_radius = 10 + shield_num * 2.5
 			local charge_speed = math.max( 0.22 - shield_num * 0.05, 0.02 )
 			shield_num = shield_num + 1
 
-			GlobalsSetValue( "PERK_SHIELD_COUNT_"..tostring(name), tostring( shield_num ) )
+			EntityHelper.SetVariable(entity_who_picked, "shield_count", shield_num)
 			
 			local comps = EntityGetComponent( child_id, "EnergyShieldComponent" )
 			if( comps ~= nil ) then
@@ -303,7 +375,6 @@ local rewrites = {
 		stackable = STACKABLE_YES, -- Arvi: these variables don't really make sense for this perk but putting them in anyway
 		stackable_is_rare = true,
 		usable_by_enemies = true,
-		not_in_default_perk_pool = true,
 		func = function( entity_perk_item, entity_who_picked, item_name, pickup_count )
 			local x,y = EntityGetTransform( entity_who_picked )
 			local child_id = 0

@@ -162,7 +162,7 @@ entity.PickItem = function(ent, item, inventory)
     end  
 end
 
-entity.GivePerk = function( entity_who_picked, perk_id, amount, for_client, for_enemy )
+entity.GivePerk = function( entity_who_picked, perk_id, amount )
     -- fetch perk info ---------------------------------------------------
 
     if(entity_who_picked == nil or entity_who_picked == 0 or not EntityGetIsAlive(entity_who_picked))then
@@ -178,13 +178,10 @@ entity.GivePerk = function( entity_who_picked, perk_id, amount, for_client, for_
         return
     end
 
-    if (for_client and not (perk_data.run_on_clients or perk_data.usable_by_enemies)) then
+    if (not (perk_data.run_on_clients or perk_data.usable_by_enemies)) then
         return
     end
 
-    if (for_enemy and not perk_data.usable_by_enemies) then
-        return
-    end
 
     local no_remove = perk_data.do_not_remove or false
 

@@ -1515,11 +1515,11 @@ networking = {
                 end
                 
                 -- kill the player
-                local client_entity = data.players[tostring(user)].entity
+                --[[local client_entity = data.players[tostring(user)].entity
                 if (client_entity ~= nil and EntityGetIsAlive(client_entity)) then
                     -- CLIENT ANNIHILATION WAWAWAHAHAHAHAH
                     EntityKill(client_entity)
-                end
+                end]]
 
 
             end
