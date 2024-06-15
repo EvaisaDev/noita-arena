@@ -362,6 +362,19 @@ skins.init = function()
                 end
             end
         },
+        {
+            id = "cosmetics",
+            icon = "mods/evaisa.arena/files/gfx/skins/tool_icons/cosmetics.png",
+            name = "Cosmetics Inventory",
+            description = "Open your cosmetics inventory.",
+            hide_skin_window = true,
+            button = function()
+                print("Open cosmetics inventory")
+            end,
+            draw = function(x, y)
+
+            end,
+        }
         --[[
         {
             id = "apply",
@@ -441,51 +454,56 @@ skins.init = function()
 
         local container_x, container_y = x, y
 
-        -- draw window bars
-        
-        GuiBeginAutoBox( self.gui )
-
         local z_index = -3900
-        GuiZSet( self.gui, z_index - 1 )
-        GuiColorSetForNextWidget( self.gui, 0, 0, 0, 0.3 )
-
         local bar_y = y - 14
-        local title = GameTextGetTranslatedOrNot("$arena_skins_skin_editor")
+        
+        -- draw window bars
+        if(not self.tools[self.selected_tool].hide_skin_window)then
+            GuiBeginAutoBox( self.gui )
 
-        GuiText(self.gui, x, bar_y, " "..title)
+           
+            GuiZSet( self.gui, z_index - 1 )
+            GuiColorSetForNextWidget( self.gui, 0, 0, 0, 0.3 )
 
-        local w = 202
 
-        GuiLayoutBeginLayer( self.gui )
-        GuiLayoutBeginHorizontal( self.gui, 0, 0, true, 0, 0)
-        if(CustomButton(self.gui, "sagsadshds", x + (w - 10), bar_y + 1, z_index - 600, 1, "mods/evaisa.mp/files/gfx/ui/minimize.png", 0, 0, 0, 0.5))then
-            self.editor_open = false
-            GameRemoveFlagRun("wardrobe_open")
+            local title = GameTextGetTranslatedOrNot("$arena_skins_skin_editor")
+
+            GuiText(self.gui, x, bar_y, " "..title)
+
+            local w = 202
+
+            GuiLayoutBeginLayer( self.gui )
+            GuiLayoutBeginHorizontal( self.gui, 0, 0, true, 0, 0)
+            if(CustomButton(self.gui, "sagsadshds", x + (w - 10), bar_y + 1, z_index - 600, 1, "mods/evaisa.mp/files/gfx/ui/minimize.png", 0, 0, 0, 0.5))then
+                self.editor_open = false
+                GameRemoveFlagRun("wardrobe_open")
+            end
+            GuiLayoutEnd( self.gui )
+            GuiLayoutEndLayer( self.gui )
+
+
+            GuiZSetForNextWidget( self.gui, z_index )
+            GuiOptionsAddForNextWidget(self.gui, GUI_OPTION.IsExtraDraggable)
+            GuiEndAutoBoxNinePiece( self.gui, 0, w, 8, false, 0, "mods/evaisa.mp/files/gfx/ui/9piece_window_bar.png", "mods/evaisa.mp/files/gfx/ui/9piece_window_bar.png")
+
+            -- color bar
+
+            GuiBeginAutoBox( self.gui )
+
+            GuiZSet( self.gui, z_index - 1 )
+            GuiColorSetForNextWidget( self.gui, 0, 0, 0, 0.3 )
+
+            local title = GameTextGetTranslatedOrNot("$arena_skins_color_picker")
+
+            GuiText(self.gui, x + 200 + 8, bar_y, " "..title)
+
+            w = 70
+
+            GuiZSetForNextWidget( self.gui, z_index )
+            GuiOptionsAddForNextWidget(self.gui, GUI_OPTION.IsExtraDraggable)
+            GuiEndAutoBoxNinePiece( self.gui, 0, w, 8, false, 0, "mods/evaisa.mp/files/gfx/ui/9piece_window_bar.png", "mods/evaisa.mp/files/gfx/ui/9piece_window_bar.png")
+
         end
-        GuiLayoutEnd( self.gui )
-        GuiLayoutEndLayer( self.gui )
-
-
-        GuiZSetForNextWidget( self.gui, z_index )
-        GuiOptionsAddForNextWidget(self.gui, GUI_OPTION.IsExtraDraggable)
-        GuiEndAutoBoxNinePiece( self.gui, 0, w, 8, false, 0, "mods/evaisa.mp/files/gfx/ui/9piece_window_bar.png", "mods/evaisa.mp/files/gfx/ui/9piece_window_bar.png")
-
-        -- color bar
-
-        GuiBeginAutoBox( self.gui )
-
-        GuiZSet( self.gui, z_index - 1 )
-        GuiColorSetForNextWidget( self.gui, 0, 0, 0, 0.3 )
-
-        local title = GameTextGetTranslatedOrNot("$arena_skins_color_picker")
-
-        GuiText(self.gui, x + 200 + 8, bar_y, " "..title)
-
-        w = 70
-
-        GuiZSetForNextWidget( self.gui, z_index )
-        GuiOptionsAddForNextWidget(self.gui, GUI_OPTION.IsExtraDraggable)
-        GuiEndAutoBoxNinePiece( self.gui, 0, w, 8, false, 0, "mods/evaisa.mp/files/gfx/ui/9piece_window_bar.png", "mods/evaisa.mp/files/gfx/ui/9piece_window_bar.png")
 
         -- saved skins bar
         GuiBeginAutoBox( self.gui )
@@ -567,7 +585,7 @@ skins.init = function()
         
         if(GuiButton(self.gui, new_id(), 0, 3, GameTextGetTranslatedOrNot("$arena_skins_save_skin")))then
 
-
+            self.inputs_locked = true
             popup.create("save_skin_prompt", string.format(GameTextGetTranslatedOrNot("$arena_skins_confirm_save_name"), self.selected_skin.name),{
                 {
                     text = GameTextGetTranslatedOrNot("$arena_skins_confirm_save_desc"),
@@ -577,6 +595,7 @@ skins.init = function()
                 {
                     text = GameTextGetTranslatedOrNot("$arena_skins_confirm_save"),
                     callback = function()
+                        self.inputs_locked = false
                         -- save skin
                         if(not self.selected_skin.is_default and self.selected_skin.path)then
                             fs.remove(self.selected_skin.path)
@@ -596,6 +615,7 @@ skins.init = function()
                 {
                     text = GameTextGetTranslatedOrNot("$arena_skins_confirm_cancel"),
                     callback = function()
+                        self.inputs_locked = false
                     end
                 }
             }, -6000)
@@ -657,6 +677,7 @@ skins.init = function()
             
             if(not skin.is_default)then
                 if(GuiButton(self.gui, new_id(), skin.img.w + 2, -1, GameTextGetTranslatedOrNot("$arena_skins_overwrite")))then
+                    self.inputs_locked = true
 
                     popup.create("overwrite_skin_prompt", string.format(GameTextGetTranslatedOrNot("$arena_skins_confirm_overwrite_name"), skin.name),{
                         {
@@ -667,6 +688,7 @@ skins.init = function()
                         {
                             text = GameTextGetTranslatedOrNot("$arena_skins_confirm_overwrite"),
                             callback = function()
+                                self.inputs_locked = false
                                 -- overwrite skin
                                 fs.remove(skin.temp_path)
                                 saveImage(player_modified_img, skin.path)
@@ -677,6 +699,7 @@ skins.init = function()
                         {
                             text = GameTextGetTranslatedOrNot("$arena_skins_confirm_cancel"),
                             callback = function()
+                                self.inputs_locked = false
                             end
                         }
                     }, -6000)
@@ -684,7 +707,7 @@ skins.init = function()
                 end
                 local width, height = GuiGetTextDimensions(self.gui, GameTextGetTranslatedOrNot("$arena_skins_overwrite"))
                 if (GuiButton(self.gui, new_id(), skin.img.w + 2 + width + 4, -height, GameTextGetTranslatedOrNot("$arena_skins_remove_skin"))) then
-
+                    self.inputs_locked = true
                     popup.create("delete_skin_prompt", string.format(GameTextGetTranslatedOrNot("$arena_skins_confirm_delete_name"), skin.name),{
                         {
                             text = GameTextGetTranslatedOrNot("$arena_skins_confirm_delete_desc"),
@@ -694,6 +717,8 @@ skins.init = function()
                         {
                             text = GameTextGetTranslatedOrNot("$arena_skins_confirm_delete"),
                             callback = function()
+                                self.inputs_locked = false
+
                                 -- delete skin
                                 fs.remove(skin.path)
                                 fs.remove(skin.temp_path)
@@ -703,6 +728,7 @@ skins.init = function()
                         {
                             text = GameTextGetTranslatedOrNot("$arena_skins_confirm_cancel"),
                             callback = function()
+                                self.inputs_locked = false
                             end
                         }
                     }, -6000)
@@ -744,9 +770,10 @@ skins.init = function()
 
             if(clicked)then
                 GamePlaySound("data/audio/Desktop/ui.bank", "ui/button_click", 0, 0)
-                if(not tool.button)then
+                if(not tool.not_tool)then
                     self.selected_tool = i
-                else
+                end
+                if(tool.button)then
                     tool.button()
                 end
             elseif(hovered)then
@@ -789,6 +816,14 @@ skins.init = function()
         -- remove control characters
         self.current_skin_name = self.current_skin_name:gsub("%c", "")]]
 
+        if(self.tools[self.selected_tool].draw)then
+            self.tools[self.selected_tool].draw(x, y)
+        end
+
+        if(self.tools[self.selected_tool].hide_skin_window)then
+            return
+        end
+
         GuiZSetForNextWidget(self.gui, -3900)
         GuiBeginScrollContainer(self.gui, 6434252 + (GameGetFrameNum() % 2), x, y, 200, 200, false, 1, 1)
 
@@ -817,8 +852,9 @@ skins.init = function()
             GuiZSetForNextWidget(self.gui, -4001)
             GuiImage(self.gui, new_id(), player_x + relative_x * scale, player_y + relative_y * scale, "mods/evaisa.arena/files/gfx/skins/draw_cursor.png", 1, 1, 1)
 
-            self.tools[self.selected_tool].action(relative_x, relative_y)
-
+            if(not self.inputs_locked and self.tools[self.selected_tool].action ~= nil)then
+                self.tools[self.selected_tool].action(relative_x, relative_y)
+            end
         end
 
 

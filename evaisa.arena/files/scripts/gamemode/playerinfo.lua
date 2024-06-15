@@ -45,11 +45,7 @@ function playerinfo:New(lobby, user)
     obj.Death = function(self, damage_details)
         if(self.entity ~= nil and EntityGetIsAlive(self.entity))then
 
-            local items = GameGetAllInventoryItems( self.entity ) or {}
-
-            for i,item in ipairs(items) do
-                GameKillInventoryItem(self.entity, item)
-            end
+            GameDestroyInventoryItems( self.entity )
 
             local damage_model_comp = EntityGetFirstComponentIncludingDisabled(self.entity, "DamageModelComponent")
             if(damage_model_comp ~= nil)then
@@ -114,10 +110,8 @@ function playerinfo:New(lobby, user)
     end
     obj.Clean = function(self, lobby)
 
-        local items = GameGetAllInventoryItems( self.entity ) or {}
-        -- destroy all
-        for i,item in ipairs(items) do
-            GameKillInventoryItem(self.entity, item)
+        if(self.entity ~= nil and EntityGetIsAlive(self.entity))then
+            GameDestroyInventoryItems( self.entity )
         end
         
         if(self.entity ~= nil and EntityGetIsAlive(self.entity))then
@@ -146,11 +140,7 @@ function playerinfo:New(lobby, user)
         end]]
     end
     obj.Destroy = function(self)
-        local items = GameGetAllInventoryItems( self.entity ) or {}
-        -- destroy all
-        for i,item in ipairs(items) do
-            GameKillInventoryItem(self.entity, item)
-        end
+        GameDestroyInventoryItems( self.entity )
 
         if(self.entity ~= nil and EntityGetIsAlive(self.entity))then
             EntityKill(self.entity)

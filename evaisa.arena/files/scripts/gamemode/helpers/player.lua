@@ -1042,10 +1042,7 @@ player_helper.Deserialize = function(data, skip_perk_count, lobby, lobby_data)
     data = type(data) == "string" and bitser.loads(data) or data
 
     -- kill items
-    for k, v in pairs(GameGetAllInventoryItems(player) or {}) do
-        GameKillInventoryItem(player, v)
-        EntityKill(v)
-    end
+    GameDestroyInventoryItems( player )
 
     local x, y = EntityGetTransform(player)
 

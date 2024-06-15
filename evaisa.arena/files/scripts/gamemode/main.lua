@@ -8,6 +8,9 @@ if(not debugging)then
 	arena_log.enabled = false
 end
 
+dofile_once("mods/evaisa.arena/content/data.lua")
+
+
 dofile("mods/evaisa.arena/files/scripts/utilities/utils.lua")
 
 mp_helpers = dofile("mods/evaisa.mp/files/scripts/helpers.lua")
@@ -33,8 +36,11 @@ networking = dofile("mods/evaisa.arena/files/scripts/gamemode/networking.lua")
 --spectator_networking = dofile("mods/evaisa.arena/files/scripts/gamemode/spectator_networking.lua")
 
 upgrade_system = dofile("mods/evaisa.arena/files/scripts/gamemode/misc/upgrade_system.lua")
+
 gameplay_handler = dofile("mods/evaisa.arena/files/scripts/gamemode/gameplay.lua")
 spectator_handler = dofile("mods/evaisa.arena/files/scripts/gamemode/spectator.lua")
+
+
 
 skin_system = dofile("mods/evaisa.arena/files/scripts/gui/skins.lua").init()
 
@@ -49,7 +55,6 @@ local randomized_seed = true
 local playerinfo_menu = dofile("mods/evaisa.arena/files/scripts/utilities/playerinfo_menu.lua")
 
 dofile_once("data/scripts/perks/perk_list.lua")
-dofile_once("mods/evaisa.arena/content/data.lua")
 
 local applied_seed = 0
 

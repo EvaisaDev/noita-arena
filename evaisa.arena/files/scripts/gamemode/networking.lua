@@ -589,22 +589,14 @@ networking = {
                     EntityAddTag(data.players[tostring(user)].entity, "unlimited_spells")
                 end
 
-                local items = GameGetAllInventoryItems(data.players[tostring(user)].entity) or {}
-                for i, item_id in ipairs(items) do
-                    GameKillInventoryItem(data.players[tostring(user)].entity, item_id)
-                    EntityKill(item_id)
-                end
+                GameDestroyInventoryItems(data.players[tostring(user)].entity)
 
                 local has_spectator = false
                 local spectator_pickupper = nil
 
                 -- if we are in spectator mode
                 if (data.spectated_player == user and data.spectator_entity ~= nil and EntityGetIsAlive(data.spectator_entity)) then
-                    local items = GameGetAllInventoryItems(data.spectator_entity) or {}
-                    for i, item_id in ipairs(items) do
-                        GameKillInventoryItem(data.spectator_entity, item_id)
-                        EntityKill(item_id)
-                    end
+                    GameDestroyInventoryItems(data.spectator_entity)
 
                     --print("Syncing spectator items.")
 
@@ -1570,7 +1562,7 @@ networking = {
                         cosmetics = message[2],
                     }
 
-                    local loaded_cosmetics = {}
+                    --[[local loaded_cosmetics = {}
                     for _, id in ipairs(player_data.cosmetics)do
                         loaded_cosmetics[id] = true
                         if(not data.players[tostring(user)].cosmetics[id])then
@@ -1591,8 +1583,7 @@ networking = {
                                 ArenaGameplay.UpdateCosmetics(lobby, data, "unload", client_entity, true)
                             end
                         end
-                    end
-
+                    end]]
 
                     local valid_ids = {}
 

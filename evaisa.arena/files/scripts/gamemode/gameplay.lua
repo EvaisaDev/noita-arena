@@ -4,158 +4,11 @@ local EntityHelper = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/en
 local counter = dofile_once("mods/evaisa.arena/files/scripts/utilities/ready_counter.lua")
 local countdown = dofile_once("mods/evaisa.arena/files/scripts/utilities/countdown.lua")
 local EZWand = dofile("mods/evaisa.arena/files/scripts/utilities/EZWand.lua")
+dofile("mods/evaisa.arena/files/scripts/gamemode/cosmetics/cosmetics.lua")
 
 ArenaLoadCountdown = ArenaLoadCountdown or nil
 
 ArenaGameplay = {
-    GetCosmetic = function(id)
-        for k, v in ipairs(cosmetics)do
-            if(v.id == id)then
-                return v
-            end
-        end
-    end,
-    CosmeticMaxStackDisable = function(lobby, data, id)
-        for k, v in ipairs(cosmetics)do
-            if(v.id == id)then
-                local player_entity = player.Get()
-
-                if(player_entity and v.type and cosmetic_types[v.type] ~= nil)then
-                    local type_data = cosmetic_types[v.type]
-                    local max_stack = type_data.max_stack
-                    if(max_stack ~= nil and max_stack > 0)then
-                        local count = 0
-                        for k, v in pairs(data.cosmetics)do
-                            if(v)then
-                                count = count + 1
-                            end
-                        end
-                        -- disable random cosmetic if max stack is reached
-                        if(count >= max_stack)then
-                            local random_cosmetic = nil
-                            for k, v in pairs(data.cosmetics)do
-                                if(v)then
-                                    random_cosmetic = k
-                                    break
-                                end
-                            end
-                            if(random_cosmetic ~= nil)then
-                                data.cosmetics[random_cosmetic] = nil
-                                ArenaGameplay.UpdateCosmetics(lobby, data, "unload", player_entity, false)
-                            end
-                        end
-                    end
-                end
-            end
-        end
-    end,
-    UpdateCosmetics = function(lobby, data, callback, entity, is_client)
-        for k, v in ipairs(cosmetics)do
-            local can_run = false
-            if(not is_client and (v.try_force_enable ~= nil and v.try_force_enable(lobby, data)))then
-                can_run = true
-            elseif(is_client and entity and data.players[EntityGetName(entity)] ~= nil and data.players[EntityGetName(entity)].cosmetics[v.id])then
-                can_run = true
-            end
-
-            if(can_run and not is_client and not data.cosmetics[v.id])then
-                ArenaGameplay.CosmeticMaxStackDisable(lobby, data, v.id)
-
-                data.cosmetics[v.id] = true
-                --print("Cosmetic enabled: "..v.id)
-                if(entity)then
-                    ArenaGameplay.UpdateCosmetics(lobby, data, "load", entity, is_client)
-                end
-            elseif(not can_run and not is_client and data.cosmetics[v.id])then
-                data.cosmetics[v.id] = nil
-                --print("Cosmetic disabled: "..v.id)
-                if(entity)then
-                    ArenaGameplay.UpdateCosmetics(lobby, data, "unload", entity, is_client)
-                end
-            end
-
-
-            if(callback == "try_unlock")then
-                if(not is_client and v.try_unlock ~= nil)then
-                    local unlock_attempt = v.try_unlock(lobby, data)
-                    if(unlock_attempt and v.unlock_flag ~= nil and not GameHasFlagRun(v.unlock_flag))then
-                        GameAddFlagRun(v.unlock_flag)
-                    end
-                end
-            elseif(callback == "update")then
-
-                if(entity and v.on_update ~= nil and can_run)then
-                    v.on_update(lobby, data, entity)
-                end
-            elseif(callback == "load")then
-                
-                if(entity and v.on_load ~= nil and can_run)then
-
-                    if(v.sprite_sheet)then
-                        EntityAddComponent2(entity, "SpriteComponent", {
-                            _tags="character",
-                            alpha=1, 
-                            image_file=v.sprite_sheet, 
-                            next_rect_animation="", 
-                            offset_x=6, 
-                            offset_y=14, 
-                            rect_animation="walk", 
-                            z_index=0.6,
-                        })
-                    end
-                    if(v.hat_sprite)then
-                        local offset_x, offset_y = 0, 0
-                        if(v.hat_offset)then
-                            offset_x = v.hat_offset.x or 0
-                            offset_y = v.hat_offset.y or 0
-                        end
-                        local hat_entity = EntityCreateNew(v.id)
-                        EntityAddChild(entity, hat_entity)
-                        EntityAddComponent2(hat_entity, "SpriteComponent", {
-                            _tags="character",
-                            alpha=1, 
-                            image_file=v.hat_sprite, 
-                            next_rect_animation="", 
-                            offset_x=offset_x, 
-                            offset_y=offset_y, 
-                            rect_animation="walk", 
-                            z_index=0.4,
-                        })
-                        EntityAddComponent2(hat_entity, "InheritTransformComponent", {
-                            parent_hotspot_tag="hat"
-                        })
-                    end
-                    v.on_load(lobby, data, entity)
-                end
-            elseif(callback == "unload")then
-                if(entity and v.on_unload ~= nil)then
-                    if(v.sprite_sheet)then
-                        local sprite_components = EntityGetComponent(entity, "SpriteComponent") or {}
-                        for k, component in ipairs(sprite_components)do
-                            if(ComponentGetValue(component, "image_file") == v.sprite_sheet)then
-                                EntityRemoveComponent(entity, component)
-                            end
-                        end
-                    end
-                    if(v.hat_sprite)then
-                        local children = EntityGetAllChildren(entity) or {}
-                        for k, child in ipairs(children)do
-                            local name = EntityGetName(child)
-                            if(name == v.id)then
-                                EntityKill(child)
-                                print("Killed child: "..name)
-                            end
-                        end
-                    end
-                    v.on_unload(lobby, data, entity)
-                end
-            elseif(callback == "arena_unlocked" and can_run)then
-                if(entity and v.on_arena_unlocked ~= nil)then
-                    v.on_arena_unlocked(lobby, data, entity)
-                end
-            end
-        end
-    end,
     GetNumRounds = function(lobby)
         local holyMountainCount = tonumber(GlobalsGetValue("holyMountainCount", "0"))
         return holyMountainCount
@@ -721,7 +574,9 @@ ArenaGameplay = {
 
         player.Deserialize(data.client.serialized_player, (not data.client.player_loaded_from_data), lobby, data)
 
-        gameplay_handler.UpdateCosmetics(lobby, data, "load", current_player, false)
+        --gameplay_handler.UpdateCosmetics(lobby, data, "load", current_player, false)
+
+        cosmetics_handler.LoadPlayerCosmetics(lobby, data, current_player)
 
         
         GameRemoveFlagRun("player_unloaded")
@@ -2126,14 +1981,19 @@ ArenaGameplay = {
 
                     player.Unlock(data)
 
-                    local player_entity = player.Get()
+                    --[[local player_entity = player.Get()
                     gameplay_handler.UpdateCosmetics(lobby, data, "arena_unlocked", player_entity, false)
         
                     for k, v in pairs(data.players) do
                         if(v.entity ~= nil)then
                             gameplay_handler.UpdateCosmetics(lobby, data, "arena_unlocked", v.entity, true)
                         end
-                    end
+                    end]]
+
+                    delay.new(5, function()
+                        cosmetics_handler.ArenaUnlocked(lobby, data)
+                    end)
+                    
         
                     GameAddFlagRun("countdown_completed")
                     if(not data.spectator_mode)then
@@ -3057,14 +2917,18 @@ ArenaGameplay = {
             --message_handler.send.Unlock(lobby)
             networking.send.check_can_unlock(lobby)
 
-            local player_entity = player.Get()
+            --[[local player_entity = player.Get()
             gameplay_handler.UpdateCosmetics(lobby, data, "arena_unlocked", player_entity, false)
 
             for k, v in pairs(data.players) do
                 if(v.entity ~= nil)then
                     gameplay_handler.UpdateCosmetics(lobby, data, "arena_unlocked", v.entity, true)
                 end
-            end
+            end]]
+            
+            delay.new(5, function()
+                cosmetics_handler.ArenaUnlocked(lobby, data)
+            end)
 
             GameAddFlagRun("countdown_completed")
             if(not data.spectator_mode)then
@@ -3141,6 +3005,8 @@ ArenaGameplay = {
             networking.send.request_dummy_target(lobby, user)
             networking.send.request_card_list(lobby, user)
         end
+
+        cosmetics_handler.LoadClientCosmetics(lobby, data, client)
 
         return client
     end,
@@ -3728,13 +3594,14 @@ ArenaGameplay = {
         local player_entity = player.Get()
 
         if(player_entity ~= nil)then
-            gameplay_handler.UpdateCosmetics(lobby, data, "try_unlock", player_entity, false)
+            --[[gameplay_handler.UpdateCosmetics(lobby, data, "try_unlock", player_entity, false)
             gameplay_handler.UpdateCosmetics(lobby, data, "update", player_entity, false)
             for k, v in pairs(data.players) do
                 if(v.entity ~= nil)then
                     gameplay_handler.UpdateCosmetics(lobby, data, "update", v.entity, true)
                 end
-            end
+            end]]
+            cosmetics_handler.Update(lobby, data)
         end
 
         if(GameHasFlagRun("sync_hm_to_spectators"))then
