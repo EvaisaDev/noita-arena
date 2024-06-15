@@ -174,9 +174,9 @@ entity.PickItem = function(ent, item, inventory)
     pickup_tag_fix(item)
 
 
-    local sprite_particle_emitter_comp = EntityGetFirstComponentIncludingDisabled(self.entity_id, "SpriteParticleEmitterComponent")
+    local sprite_particle_emitter_comp = EntityGetFirstComponentIncludingDisabled(item, "SpriteParticleEmitterComponent")
     if sprite_particle_emitter_comp ~= nil then
-        EntitySetComponentIsEnabled(self.entity_id, sprite_particle_emitter_comp, false)
+        EntitySetComponentIsEnabled(item, sprite_particle_emitter_comp, false)
     end
   
 
