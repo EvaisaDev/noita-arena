@@ -45,6 +45,11 @@ function playerinfo:New(lobby, user)
     obj.Death = function(self, damage_details)
         if(self.entity ~= nil and EntityGetIsAlive(self.entity))then
 
+            for i, v in ipairs(GameGetAllInventoryItems( self.entity) or {})do
+                print("Player had item at time of death: "..tostring(v))
+            end
+
+            print("Destroying player inventory")
             GameDestroyInventoryItems( self.entity )
 
             local damage_model_comp = EntityGetFirstComponentIncludingDisabled(self.entity, "DamageModelComponent")
@@ -111,6 +116,7 @@ function playerinfo:New(lobby, user)
     obj.Clean = function(self, lobby)
 
         if(self.entity ~= nil and EntityGetIsAlive(self.entity))then
+            print("Destroying player inventory")
             GameDestroyInventoryItems( self.entity )
         end
         
@@ -140,6 +146,7 @@ function playerinfo:New(lobby, user)
         end]]
     end
     obj.Destroy = function(self)
+        print("Destroying player inventory")
         GameDestroyInventoryItems( self.entity )
 
         if(self.entity ~= nil and EntityGetIsAlive(self.entity))then
