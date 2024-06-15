@@ -73,6 +73,62 @@ local skip_function_list = {
 }
 
 local rewrites = {
+	-- Fixed issue where health was reset on load
+	GLASS_CANNON = {
+		id = "GLASS_CANNON",
+		ui_name = "$perk_glass_cannon",
+		ui_description = "$arena_perk_glass_cannon_alt",
+		ui_icon = "data/ui_gfx/perk_icons/glass_cannon.png",
+		perk_icon = "data/items_gfx/perks/glass_cannon.png",
+		game_effect = "DAMAGE_MULTIPLIER",
+		stackable = STACKABLE_YES,
+		stackable_is_rare = true,
+		stackable_maximum = 2,
+		max_in_perk_pool = 2,
+		usable_by_enemies = true,
+		skip_functions_on_load = true,
+		func = function( entity_perk_item, entity_who_picked, item_name )
+			local damagemodels = EntityGetComponent( entity_who_picked, "DamageModelComponent" )
+			if( damagemodels ~= nil ) then
+				for i,damagemodel in ipairs(damagemodels) do
+					local hp = tonumber( ComponentGetValue( damagemodel, "hp" ) )
+					local max_hp = 50 / 25
+					
+					--ComponentSetValue( damagemodel, "hp", math.min( hp, max_hp ) )
+					ComponentSetValue( damagemodel, "max_hp", max_hp )
+					ComponentSetValue( damagemodel, "max_hp_cap", max_hp )
+					ComponentSetValue( damagemodel, "hp", max_hp )
+				end
+			end
+		end,
+	},
+	-- Fixed issue where vampirism health is reapplied on load
+	VAMPIRISM = {
+		id = "VAMPIRISM",
+		ui_name = "$perk_vampirism",
+		ui_description = "$perkdesc_vampirism",
+		ui_icon = "data/ui_gfx/perk_icons/vampirism.png",
+		perk_icon = "data/items_gfx/perks/vampirism.png",
+		game_effect = "HEALING_BLOOD",
+		game_effect2 = "PROTECTION_FOOD_POISONING",
+		stackable = STACKABLE_NO,
+		skip_functions_on_load = true,
+		func = function( entity_perk_item, entity_who_picked, item_name )
+
+			local damagemodels = EntityGetComponent( entity_who_picked, "DamageModelComponent" )
+			if( damagemodels ~= nil ) then
+				for i,damagemodel in ipairs(damagemodels) do
+					local hp = tonumber( ComponentGetValue( damagemodel, "hp" ) )
+					local max_hp = tonumber( ComponentGetValue( damagemodel, "max_hp" ) ) * 0.75
+
+					max_hp = math.ceil( max_hp * 25 ) / 25
+					
+					ComponentSetValue( damagemodel, "hp", math.min( hp, max_hp ) )
+					ComponentSetValue( damagemodel, "max_hp", max_hp )
+				end
+			end
+		end,
+	},
 	UNLIMITED_SPELLS = {
 		id = "UNLIMITED_SPELLS",
 		ui_name = "$perk_unlimited_spells",
@@ -303,7 +359,6 @@ local rewrites = {
 		stackable = STACKABLE_YES, -- Arvi: these variables don't really make sense for this perk but putting them in anyway
 		stackable_is_rare = true,
 		usable_by_enemies = true,
-		not_in_default_perk_pool = true,
 		func = function( entity_perk_item, entity_who_picked, item_name, pickup_count )
 			local x,y = EntityGetTransform( entity_who_picked )
 			local child_id = 0
