@@ -568,15 +568,15 @@ networking = {
             if(data.state ~= "arena" and not data.spectator_mode)then
                 return
             end
-
+            print("Received item update")
 
             if (not gameplay_handler.CheckPlayer(lobby, user, data)) then
-                --print("Entity is missing!!! wtf!??")
+                print("Player was missing")
                 return
             end
 
             if (data.players[tostring(user)].entity and EntityGetIsAlive(data.players[tostring(user)].entity)) then
-                --print("weewoo update items")
+                print("weewoo update items")
                 local items_data = message[1]
                 local force = message[2]
                 local unlimited_spells = message[3]
@@ -643,19 +643,23 @@ networking = {
 
                         local item_entity = nil
                         if(itemInfo.is_wand)then
-                            item:PickUp(data.players[tostring(user)].entity)
+                            --item:PickUp(data.players[tostring(user)].entity)
+                            EntityHelper.PickItem(data.players[tostring(user)].entity, item.entity_id, "QUICK")
+                            print("forcing pickup of wand")
                             item_entity = item.entity_id
 
                             if(has_spectator)then
 
                                 ComponentSetValue2(spectator_pickupper, "only_pick_this_entity", spectator_item.entity_id)
                                 
-                                spectator_item:PickUp(data.spectator_entity)
+                                EntityHelper.PickItem(data.players[tostring(user)].entity, spectator_item.entity_id, "QUICK")
+                               -- spectator_item:PickUp(data.spectator_entity)
                                 spectator_item_entity = spectator_item.entity_id
 
                                 --print("Adding spectator item to spectator.")
                             end
                         else
+                            print("forcing pickup of item")
                             EntityHelper.PickItem(data.players[tostring(user)].entity, item, "QUICK")
                             item_entity = item
 
@@ -728,7 +732,8 @@ networking = {
 
                             ComponentSetValue2(spectator_pickupper, "only_pick_this_entity", spectator_item.entity_id)
                             
-                            spectator_item:PickUp(data.spectator_entity)
+                            --spectator_item:PickUp(data.spectator_entity)
+                            EntityHelper.PickItem(data.players[tostring(user)].entity, spectator_item.entity_id, "QUICK")
                             spectator_item_entity = spectator_item.entity_id
 
                         else

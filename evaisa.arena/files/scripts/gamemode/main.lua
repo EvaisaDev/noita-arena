@@ -2889,11 +2889,11 @@ ArenaMode = {
 
         end
 
-        --[[
+        
         if(input:WasKeyPressed("f9"))then
-            ArenaGameplay.WinnerCheck(lobby, data)
+            ArenaGameplay.WinnerCheck(lobby, data, true)
         end
-
+        --[[
         if(input:WasKeyPressed("f10"))then
             if(steam_utils.IsOwner())then
                 GameRemoveFlagRun("DeserializedHolyMountain")

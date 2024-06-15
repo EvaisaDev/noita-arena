@@ -132,12 +132,32 @@ entity.GetVariable = function(ent, name)
     return nil
 end
 
+local function pickup_tag_fix(item)
+    EntitySetComponentsWithTagEnabled( item, "enabled_in_world", false )
+    EntitySetComponentsWithTagEnabled( item, "enabled_in_hand", false )
+    EntitySetComponentsWithTagEnabled( item, "enabled_in_inventory", true )
+
+    -- get all children
+    local children = EntityGetAllChildren(item)
+
+    -- loop through children
+    if children ~= nil then
+        for i,child in ipairs(children) do
+            pickup_tag_fix(child)
+        end
+    end
+end
+
 entity.PickItem = function(ent, item, inventory)
     local item_component = EntityGetFirstComponentIncludingDisabled(item, "ItemComponent")
     local preferred_inv = "QUICK"
     if item_component then
       ComponentSetValue2(item_component, "has_been_picked_by_player", true)
       preferred_inv = ComponentGetValue2(item_component, "preferred_inventory")
+      ComponentSetValue2(item_component, "mFramePickedUp", GameGetFrameNum())
+      -- play_spinning_animation
+      ComponentSetValue2(item_component, "play_spinning_animation", true)
+      ComponentSetValue2(item_component, "play_hover_animation", false)
     end
     if inventory ~= nil then
       preferred_inv = inventory
@@ -151,15 +171,17 @@ entity.PickItem = function(ent, item, inventory)
       end
     end
   
-    EntitySetComponentsWithTagEnabled( item, "enabled_in_world", false )
-    EntitySetComponentsWithTagEnabled( item, "enabled_in_hand", false )
-    EntitySetComponentsWithTagEnabled( item, "enabled_in_inventory", true )
+    pickup_tag_fix(item)
+
+
+    local sprite_particle_emitter_comp = EntityGetFirstComponentIncludingDisabled(self.entity_id, "SpriteParticleEmitterComponent")
+    if sprite_particle_emitter_comp ~= nil then
+        EntitySetComponentIsEnabled(self.entity_id, sprite_particle_emitter_comp, false)
+    end
   
-    local wand_children = EntityGetAllChildren(item) or {}
-  
-    for k, v in ipairs(wand_children)do
-      EntitySetComponentsWithTagEnabled( item, "enabled_in_world", false )
-    end  
+
+    print("Adding Item ("..item..") to Inventory ("..preferred_inv..") of Entity ("..ent..")")
+    print("Item ("..item..") attached as child to Entity ("..EntityGetParent(item)..") of Root Entity ("..EntityGetRootEntity(item)..")")
 end
 
 entity.GivePerk = function( entity_who_picked, perk_id, amount )
