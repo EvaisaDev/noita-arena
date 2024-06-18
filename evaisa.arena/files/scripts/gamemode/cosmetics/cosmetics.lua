@@ -13,7 +13,7 @@ cosmetics_handler = {
     CosmeticCheckLimit = function(lobby, data, id)
         local v = cosmetic_dict[id]
         local player = player_helper.Get()
-        if(player and v.type and cosmetic_types[v.type] ~= nil)then
+        if(v.type and cosmetic_types[v.type] ~= nil)then
             local type_data = cosmetic_types[v.type]
             local max_stack = type_data.max_stack
             if(max_stack ~= nil and max_stack > 0)then
@@ -36,6 +36,9 @@ cosmetics_handler = {
                     if(enabled and cosmetic_id ~= id)then
                         local cosmetic = cosmetic_dict[cosmetic_id]
                         if(cosmetic.type == type_data and cosmetic)then
+                            if(player)then
+                                cosmetics_handler.UnloadCosmetic(lobby, data, cosmetic, player)
+                            end
                             data.cosmetics[cosmetic_id] = false
                             count = count - 1
                             if(count <= max_stack)then
@@ -47,8 +50,61 @@ cosmetics_handler = {
             end
         end
     end,
+    CosmeticsGetValidList = function(t, id)
+        local v = cosmetic_dict[id]
+        if(v.type and cosmetic_types[v.type] ~= nil)then
+            print("Checking cosmetics for type: "..v.type.." id: "..id)
+            local type_data = cosmetic_types[v.type]
+            local max_stack = type_data.max_stack
+            if(max_stack ~= nil and max_stack > 0)then
+                local count = 0
+                for _, cosmetic_id in ipairs(t)do
+                    local cosmetic = cosmetic_dict[cosmetic_id]
+                    if(cosmetic.type == v.type and cosmetic)then
+                        count = count + 1
+                        -- print type count
+                        print(cosmetic.type.." count: "..count)
+                    end
+                end
+
+                if(count < max_stack)then
+                    return
+                end
+
+                -- start disabling cosmetics
+                for i = #t, 1, -1 do
+                    local cosmetic_id = t[i]
+                    if(cosmetic_id ~= id)then
+                        local cosmetic = cosmetic_dict[cosmetic_id]
+                        if(cosmetic.type == v.type and cosmetic)then
+                            -- remove from list
+                            table.remove(t, i)
+                            print("Removed: "..cosmetic_id)
+                            
+                            count = count - 1
+                            if(count <= max_stack)then
+                                break
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end,
     CosmeticValid = function(lobby, data, cosmetic, entity, is_client)
-        return (not is_client and (cosmetic.try_force_enable ~= nil and cosmetic.try_force_enable(lobby, data))) or (is_client and entity and data.players[EntityGetName(entity)] ~= nil and data.players[EntityGetName(entity)].cosmetics[cosmetic.id])
+        -- load client cosmetics
+        if (is_client and entity and data.players[EntityGetName(entity)] ~= nil and data.players[EntityGetName(entity)].cosmetics[cosmetic.id]) then
+            return true
+        end
+        -- force enabled player cosmetics
+        if ((not is_client and (cosmetic.try_force_enable ~= nil and cosmetic:try_force_enable(lobby, data)))) then
+            return true
+        end
+
+        -- check if cosmetic is unlocked and enabled??
+        if (cosmetics_handler.IsUnlocked(cosmetic) and data.cosmetics[cosmetic.id]) then
+            return true
+        end
     end,
     LoadCosmetic = function(lobby, data, cosmetic, entity, is_client)
         local can_run = cosmetics_handler.CosmeticValid(lobby, data, cosmetic, entity, is_client)
@@ -65,30 +121,43 @@ cosmetics_handler = {
                     z_index=0.6,
                 })
             end
-            if(cosmetic.hat_sprite)then
+            if(cosmetic.sprite)then
                 local offset_x, offset_y = 0, 0
-                if(cosmetic.hat_offset)then
-                    offset_x = cosmetic.hat_offset.x or 0
-                    offset_y = cosmetic.hat_offset.y or 0
+                if(cosmetic.sprite_offset)then
+                    offset_x = cosmetic.sprite_offset.x or 0
+                    offset_y = cosmetic.sprite_offset.y or 0
                 end
                 local hat_entity = EntityCreateNew(cosmetic.id)
+                local hotspot = "hat"
+                if(cosmetic.hotspot)then
+                    hotspot = cosmetic.hotspot
+                end
                 EntityAddChild(entity, hat_entity)
                 EntityAddComponent2(hat_entity, "SpriteComponent", {
                     _tags="character",
                     alpha=1, 
-                    image_file=cosmetic.hat_sprite, 
+                    image_file=cosmetic.sprite, 
                     next_rect_animation="", 
                     offset_x=offset_x, 
                     offset_y=offset_y, 
-                    rect_animation="walk", 
                     z_index=0.4,
                 })
+                EntityAddComponent2(hat_entity, "SpriteAnimatorComponent")
                 EntityAddComponent2(hat_entity, "InheritTransformComponent", {
-                    parent_hotspot_tag="hat"
+                    parent_hotspot_tag=hotspot,
+                    only_position=cosmetic.sprite_only_inherit_position or false,
                 })
+                if(cosmetic.sprite_scale)then
+                    local x, y, r = EntityGetTransform(hat_entity)
+                    EntitySetTransform(hat_entity, x, y, r, cosmetic.sprite_scale.x or 1, cosmetic.sprite_scale.y or 1)
+                end
+                if(cosmetic.sprite_rotation)then
+                    local x, y, r = EntityGetTransform(hat_entity)
+                    EntitySetTransform(hat_entity, x, y, cosmetic.sprite_rotation)
+                end
             end
             if(cosmetic.on_load ~= nil)then
-                cosmetic.on_load(lobby, data, entity)
+                cosmetic:on_load(lobby, data, entity)
             end
         end
     end,
@@ -102,7 +171,7 @@ cosmetics_handler = {
                     end
                 end
             end
-            if(cosmetic.hat_sprite)then
+            if(cosmetic.sprite)then
                 local children = EntityGetAllChildren(entity) or {}
                 for k, child in ipairs(children)do
                     local name = EntityGetName(child)
@@ -113,7 +182,7 @@ cosmetics_handler = {
                 end
             end
             if(cosmetic.on_unload ~= nil)then
-                cosmetic.on_unload(lobby, data, entity)
+                cosmetic:on_unload(lobby, data, entity)
             end
         end
     end,
@@ -138,6 +207,29 @@ cosmetics_handler = {
             end
         end
     end,
+    UnloadPlayerCosmetics = function(lobby, data, entity)
+        for cosmetic_id, enabled in pairs(data.cosmetics or {})do
+            if(enabled)then
+                local cosmetic = cosmetic_dict[cosmetic_id]
+                if(cosmetic)then
+                    cosmetics_handler.UnloadCosmetic(lobby, data, cosmetic, entity)
+                    data.cosmetics[cosmetic_id] = nil
+                end
+            end
+        end
+    end,
+    ApplyCosmeticsList = function(lobby, data, player, cosmetics_list)
+        cosmetics_handler.UnloadPlayerCosmetics(lobby, data, player)
+        for k, cosmetic_id in ipairs(cosmetics_list)do
+            -- unload all cosmetics
+            local cosmetic = cosmetic_dict[cosmetic_id]
+            if(cosmetic)then
+                data.cosmetics[cosmetic_id] = true
+                cosmetics_handler.CosmeticCheckLimit(lobby, data, cosmetic_id)
+                cosmetics_handler.LoadCosmetic(lobby, data, cosmetic, player, false)
+            end
+        end
+    end,
     ArenaUnlocked = function(lobby, data)
         for k, cosmetic in ipairs(cosmetics)do
             for id, p in pairs(data.players or {})do
@@ -146,7 +238,7 @@ cosmetics_handler = {
                     local can_run = cosmetics_handler.CosmeticValid(lobby, data, cosmetic, entity, false)
                     if(entity and can_run)then
                         if(cosmetic.on_arena_unlocked ~= nil)then
-                            cosmetic.on_arena_unlocked(lobby, data, entity)
+                            cosmetic:on_arena_unlocked(lobby, data, entity)
                         end
                     end
                 end
@@ -156,18 +248,46 @@ cosmetics_handler = {
                 local can_run = cosmetics_handler.CosmeticValid(lobby, data, cosmetic, player, true)
                 if(can_run)then
                     if(cosmetic.on_arena_unlocked ~= nil)then
-                        cosmetic.on_arena_unlocked(lobby, data, player)
+                        cosmetic:on_arena_unlocked(lobby, data, player)
                     end
                 end
             end
         end
     end,
     TryUnlock = function(lobby, data, cosmetic)
-        local unlock_attempt = cosmetic.try_unlock(lobby, data)
-        if(unlock_attempt and cosmetic.unlock_flag ~= nil and not GameHasFlagRun(cosmetic.unlock_flag))then
-            GameAddFlagRun(cosmetic.unlock_flag)
+        if(cosmetic.can_be_unlocked == false)then
+            return false
+        end
+        local unlock_flag = "cosmetic_unlocked_"..cosmetic.id
+        if(cosmetic.unlock_default == true)then
+            local unlock_flag = "cosmetic_unlocked_"..cosmetic.id
+            if(not HasFlagPersistent(unlock_flag))then
+                AddFlagPersistent(unlock_flag)
+            end
+            return true
+        end
+        local unlock_attempt = cosmetic:try_unlock(lobby, data)
+        if(unlock_attempt and not HasFlagPersistent(unlock_flag))then
+            AddFlagPersistent(unlock_flag)
         end
         return true
+    end,
+    IsUnlocked = function(cosmetic)
+        local unlock_flag = "cosmetic_unlocked_"..cosmetic.id
+        return HasFlagPersistent(unlock_flag)
+    end,
+    Unlock = function(cosmetic_id)
+        local unlock_flag = "cosmetic_unlocked_"..cosmetic_id
+        AddFlagPersistent(unlock_flag)
+    end,
+    EnableCosmetic = function(lobby, data, cosmetic_id)
+        local player = player_helper.Get()
+
+        data.cosmetics[cosmetic_id] = true
+        cosmetics_handler.CosmeticCheckLimit(lobby, data, cosmetic_id)
+        if(player and EntityGetIsAlive(player))then
+            cosmetics_handler.LoadCosmetic(lobby, data, cosmetic_dict[cosmetic_id], player, false)
+        end
     end,
     Update = function(lobby, data)
         for k, cosmetic in ipairs(cosmetics)do
@@ -181,7 +301,7 @@ cosmetics_handler = {
                     local can_run = cosmetics_handler.CosmeticValid(lobby, data, cosmetic, entity, false)
                     if(entity and can_run)then
                         if(cosmetic.on_update ~= nil)then
-                            cosmetic.on_update(lobby, data, entity)
+                            cosmetic:on_update(lobby, data, entity)
                         end
                     end
                 end
@@ -191,7 +311,7 @@ cosmetics_handler = {
                 local can_run = cosmetics_handler.CosmeticValid(lobby, data, cosmetic, player, true)
                 if(can_run)then
                     if(cosmetic.on_update ~= nil)then
-                        cosmetic.on_update(lobby, data, player)
+                        cosmetic:on_update(lobby, data, player)
                     end
                     if(not data.cosmetics[cosmetic.id])then
                         data.cosmetics[cosmetic.id] = true

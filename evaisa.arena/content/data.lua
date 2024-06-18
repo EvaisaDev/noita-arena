@@ -395,6 +395,40 @@ arena_list = {
             ComponentSetValue2(world_state_component, "time_dt", 0)
         end,
     },
+--[[
+{
+    id = "static_tile_test",
+    name = "Static Tile Test",
+    description = "!!!",
+    credits = "Evaisa",
+    thumbnail = "mods/evaisa.arena/content/arenas/spoop/thumbnail.png",
+    frame = "mods/evaisa.arena/content/arenas/frame.png",
+    biome_map = "mods/evaisa.arena/content/arenas/test_static_tile/map.lua",
+    custom_biomes = {
+        {
+            biome_filename="mods/evaisa.arena/content/arenas/test_static_tile/empty.xml",
+            height_index="1",
+            color="ff92b4cb"
+        },
+        {
+            biome_filename="mods/evaisa.arena/content/arenas/test_static_tile/biome_mimics.xml",
+            height_index="0",
+            color="ff9b7dec"
+        }
+    },
+    spawn_points = { -- optional, can also use spawn pixels, 0,0 is there as a backup in case spawn pixels fail somehow.
+        {x = 0, y = 0}
+    },
+    zone_size = 1150, -- size of damage zone, should be max distance from 0, 0 players can travel
+    zone_floor = 600, -- damage floor, if player falls below this they die.
+    update = function(self, lobby, data) -- Ran every frame while in the arena.
+        local world_state = GameGetWorldStateEntity()
+        local world_state_component = EntityGetFirstComponentIncludingDisabled(world_state, "WorldStateComponent")
+        
+        ComponentSetValue2(world_state_component, "time", 0)
+        ComponentSetValue2(world_state_component, "time_dt", 0)
+    end,
+},]]
     {
         id = "bureon",
         name = "$arena_maps_bureon_name",
@@ -464,17 +498,16 @@ cosmetics = {
         credits = "Evaisa",
         --sprite_sheet = "mods/evaisa.arena/content/cosmetics/dunce_hat/sprite_sheet.png",
         type = "dunce",
-        hat_offset = {x = 2, y = 5},
-        hat_sprite = "mods/evaisa.arena/content/cosmetics/dunce_hat/hat.png",
-        --unlock_flag = "cosmetic_unlocked_dunce_hat",
+        sprite_offset = {x = 2, y = 5},
+        sprite = "mods/evaisa.arena/content/cosmetics/dunce_hat/hat.png",
         can_be_unlocked = false,
         can_be_purchased = false,
         unlocked_default = false,
         price = 0,
-        try_unlock = function(lobby, data) -- runs every frame, if true, unlock flag is added
+        try_unlock = function(self, lobby, data) -- runs every frame, if true, unlock flag is added
             return false
         end,
-        try_force_enable = function(lobby, data) -- if this condition is true, the cosmetic will be enabled even if it's not unlocked
+        try_force_enable = function(self, lobby, data) -- if this condition is true, the cosmetic will be enabled even if it's not unlocked
             if(GameHasFlagRun("dunce"))then
                 local ready_count = ArenaGameplay.ReadyAmount(data, lobby)
                 local total_count = ArenaGameplay.TotalPlayers(lobby)
@@ -485,81 +518,159 @@ cosmetics = {
             end
             return false
         end,
-        on_update = function(lobby, data, entity) -- runs every frame while hat is worn
+        on_update = function(self, lobby, data, entity) -- runs every frame while hat is worn
         end,
-        on_load = function(lobby, data, entity) -- runs when cosmetic is loaded, can be used to load entities etc.
+        on_load = function(self, lobby, data, entity) -- runs when cosmetic is loaded, can be used to load entities etc.
         end,
-        on_unload = function(lobby, data, entity) -- runs when cosmetic is unloaded, can be used to unload entities etc.
+        on_unload = function(self, lobby, data, entity) -- runs when cosmetic is unloaded, can be used to unload entities etc.
         end,
-        on_arena_unlocked = function(lobby, data, entity) -- runs when player is unlocked in arena.
+        on_arena_unlocked = function(self, lobby, data, entity) -- runs when player is unlocked in arena.
         end,
     },
     {
-        id = "gold_dust",
+        id = "gold_dust2",
         name = "Gold Dust",
         description = "???",
-        icon = "",
+        icon = "mods/evaisa.arena/content/cosmetics/gold_dust/icon.png",
         credits = "Evaisa",
-        --sprite_sheet = "mods/evaisa.arena/content/cosmetics/dunce_hat/sprite_sheet.png",
         type = "particles",
-        unlock_flag = "cosmetic_unlocked_gold_dust",
-        can_be_unlocked = false,
-        can_be_purchased = false,
+        can_be_unlocked = true,
+        can_be_purchased = true,
         unlocked_default = false,
-        price = 0,
-        try_unlock = function(lobby, data) -- runs every frame, if true, unlock flag is added
-            local steam_id = steam_utils.getSteamID()
+        price = 1000,
+        try_unlock = function(self, lobby, data) -- runs every frame, if true, unlock flag is added
+            --[[local steam_id = steam_utils.getSteamID()
             
             local id = tostring(steam_id)
 
-            return id == "76561198032563991"
+            return id == "76561198032563991"]]
+            return false
         end,
-        try_force_enable = function(lobby, data) -- if this condition is true, the cosmetic will be enabled even if it's not unlocked
+        try_force_enable = function(self, lobby, data) -- if this condition is true, the cosmetic will be enabled even if it's not unlocked
 
             return false
         end,
-        on_update = function(lobby, data, entity) -- runs every frame while hat is worn
+        on_update = function(self, lobby, data, entity) -- runs every frame while hat is worn
         end,
-        on_load = function(lobby, data, entity) -- runs when cosmetic is loaded, can be used to load entities etc.
-            EntityLoadToEntity("mods/evaisa.arena/content/cosmetics/gold_dust/gold_dust.xml", entity)
+        on_load = function(self, lobby, data, entity) -- runs when cosmetic is loaded, can be used to load entities etc.
+            local ent = EntityLoad("mods/evaisa.arena/content/cosmetics/gold_dust/gold_dust.xml")
+            EntityAddChild(entity, ent)
+
         end,
-        on_unload = function(lobby, data, entity) -- runs when cosmetic is unloaded, can be used to unload entities etc.
+        on_unload = function(self, lobby, data, entity) -- runs when cosmetic is unloaded, can be used to unload entities etc.
+            local children = EntityGetAllChildren(entity)
+            for _, child in ipairs(children or {}) do
+                if(EntityGetName(child) == "gold_dust")then
+                    EntityKill(child)
+                end
+            end
         end,
-        on_arena_unlocked = function(lobby, data, entity) -- runs when player is unlocked in arena.
+        on_arena_unlocked = function(self, lobby, data, entity) -- runs when player is unlocked in arena.
         end,
     },
     {
         id = "shrek_mask",
-        name = "Shrek Mask",
+        name = "Ogre Mask",
         description = "???",
-        icon = "",
+        icon = "mods/evaisa.arena/content/cosmetics/shrek/icon.png",
         credits = "Evaisa",
         --sprite_sheet = "mods/evaisa.arena/content/cosmetics/dunce_hat/sprite_sheet.png",
         type = "mask",
-        unlock_flag = "cosmetic_unlocked_shrek_mask",
-        can_be_unlocked = false,
+        can_be_unlocked = true,
         can_be_purchased = false,
         unlocked_default = false,
-        hat_offset = {x = 1, y = 1},
-        hat_sprite = "mods/evaisa.arena/content/cosmetics/shrek/shrek_mask.png",
-        price = 0,
+        sprite_offset = {x = 1, y = 1},
+        sprite = "mods/evaisa.arena/content/cosmetics/shrek/shrek_mask.png",
+        price = 10,
         try_unlock = function(lobby, data) -- runs every frame, if true, unlock flag is added
             local steam_id = steam_utils.getSteamID()
             
             local id = tostring(steam_id)
 
-            return id == "76561198032563991"
+            return id == "76561197991801655"
         end,
-        try_force_enable = function(lobby, data) -- if this condition is true, the cosmetic will be enabled even if it's not unlocked
+        try_force_enable = function(self, lobby, data) -- if this condition is true, the cosmetic will be enabled even if it's not unlocked
             return false
         end,
-        on_update = function(lobby, data, entity) -- runs every frame while hat is worn
+        on_update = function(self, lobby, data, entity) -- runs every frame while hat is worn
         end,
-        on_load = function(lobby, data, entity) -- runs when cosmetic is loaded, can be used to load entities etc.
+        on_load = function(self, lobby, data, entity) -- runs when cosmetic is loaded, can be used to load entities etc.
         end,
-        on_unload = function(lobby, data, entity) -- runs when cosmetic is unloaded, can be used to unload entities etc.
+        on_unload = function(self, lobby, data, entity) -- runs when cosmetic is unloaded, can be used to unload entities etc.
         end,
-        on_arena_unlocked = function(lobby, data, entity) -- runs when player is unlocked in arena.
+        on_arena_unlocked = function(self, lobby, data, entity) -- runs when player is unlocked in arena.
+        end,
+    },
+    {
+        id = "propeller_hat",
+        name = "Propeller Hat",
+        description = "A propeller hat.",
+        icon = "mods/evaisa.arena/content/cosmetics/propeller/icon.png",
+        credits = "Evaisa",
+        --sprite_sheet = "mods/evaisa.arena/content/cosmetics/dunce_hat/sprite_sheet.png",
+        type = "hat",
+        sprite_offset = {x = 3, y = 7},
+        sprite = "mods/evaisa.arena/content/cosmetics/propeller/hat.xml",
+        can_be_unlocked = true,
+        can_be_purchased = true,
+        unlocked_default = false,
+        price = 100,
+        try_unlock = function(self, lobby, data) -- runs every frame, if true, unlock flag is added
+            return false
+        end,
+        try_force_enable = function(self, lobby, data) -- if this condition is true, the cosmetic will be enabled even if it's not unlocked
+            return false
+        end,
+        on_update = function(self, lobby, data, entity) -- runs every frame while hat is worn
+        end,
+        on_load = function(self, lobby, data, entity) -- runs when cosmetic is loaded, can be used to load entities etc.
+        end,
+        on_unload = function(self, lobby, data, entity) -- runs when cosmetic is unloaded, can be used to unload entities etc.
+        end,
+        on_arena_unlocked = function(self, lobby, data, entity) -- runs when player is unlocked in arena.
+        end,
+    },
+    {
+        id = "fish_hat",
+        name = "Joel",
+        description = "[Unlocked by 15 players while wet]",
+        icon = "mods/evaisa.arena/content/cosmetics/fish/icon.png",
+        credits = "Evaisa",
+        --sprite_sheet = "mods/evaisa.arena/content/cosmetics/dunce_hat/sprite_sheet.png",
+        type = "hat",
+        sprite_offset = {x = 4, y = 7},
+        sprite = "mods/evaisa.arena/content/cosmetics/fish/hat2.xml",
+        can_be_unlocked = true,
+        can_be_purchased = true,
+        unlocked_default = false,
+        price = 100,
+        try_unlock = function(self, lobby, data) -- runs every frame, if true, unlock flag is added
+            return false
+        end,
+        try_force_enable = function(self, lobby, data) -- if this condition is true, the cosmetic will be enabled even if it's not unlocked
+            return false
+        end,
+        on_update = function(self, lobby, data, entity) -- runs every frame while hat is worn
+            --[[self.rotation = self.rotation or 0
+            local children = EntityGetAllChildren(entity)
+            for _, child in ipairs(children or {}) do
+                if(EntityGetName(child) == self.id)then
+                    print("found fish")
+                    -- simulate rotating the fish by changing the width of the sprite
+                    self.rotation = self.rotation + 0.05
+                    local width = math.sin(self.rotation)
+                    local x, y, r = EntityGetTransform(entity)
+                    EntitySetTransform(child, x, y, r, width, 1)
+                    
+                end
+            end]]
+        end,
+        on_load = function(self, lobby, data, entity) -- runs when cosmetic is loaded, can be used to load entities etc.
+
+        end,
+        on_unload = function(self, lobby, data, entity) -- runs when cosmetic is unloaded, can be used to unload entities etc.
+        end,
+        on_arena_unlocked = function(self, lobby, data, entity) -- runs when player is unlocked in arena.
         end,
     },
 }

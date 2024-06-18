@@ -1,4 +1,5 @@
-<Entity>
+<Entity name = "gold_dust">
+    <InheritTransformComponent/>
 	<!-- small sparkys -->
    <SpriteParticleEmitterComponent
         sprite_file="data/particles/shine_08.xml"

@@ -1,11 +1,7 @@
 function damage_about_to_be_received( damage, x, y, entity_thats_responsible, critical_hit_chance )
-
-
-    local is_dummy = nil
-    if(entity_thats_responsible ~= 0 and EntityGetName(entity_thats_responsible) == "dummy_damage")then
-        is_dummy = true
-    end
-    if(not is_dummy and entity_thats_responsible ~= GameGetWorldStateEntity())then
+    local damage_details = GetDamageDetails()
+    
+    if(damage_details.description ~= "damage_fake" and damage_details.description ~= "kill_client")then
         return 0, 0
     end
 
@@ -16,19 +12,14 @@ end
 
 
 function damage_received( damage, message, entity_thats_responsible, is_fatal, projectile_thats_responsible )
-    --[[local entity_id = GetUpdatedEntityID()
-    local is_dummy = nil
-    if(entity_thats_responsible ~= 0 and EntityGetName(entity_thats_responsible) == "dummy_damage")then
-        is_dummy = true
-    end
-    if(is_dummy)then]]
-        --print("Damage received: "..tostring(damage))
+    if message == "damage_fake" then
+        local entity_id = GetUpdatedEntityID()
         local damageModelComponent = EntityGetFirstComponentIncludingDisabled( entity_id, "DamageModelComponent" )
         if damageModelComponent ~= nil then
             local health = ComponentGetValue2( damageModelComponent, "hp" )
-            if health then
-                ComponentSetValue2( damageModelComponent, "hp", health + damage )
+            if health - damage <= 0 then
+                ComponentSetValue2( damageModelComponent, "hp", damage + 0.04 )
             end
         end
-    --end
+    end
 end

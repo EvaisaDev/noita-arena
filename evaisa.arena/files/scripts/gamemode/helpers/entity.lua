@@ -1,5 +1,13 @@
 local entity = {}
 
+GameDestroyInventoryItems = function( entity_who_picked )
+    local items = GameGetAllInventoryItems( entity_who_picked )
+    for i, item in ipairs(items or {}) do
+        EntityRemoveFromParent( item )
+        EntityKill( item )
+    end
+end
+
 entity.ClearGameEffects = function( ent )
     local components = EntityGetComponent(ent, "GameEffectComponent")
     if components ~= nil then

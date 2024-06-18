@@ -2598,9 +2598,6 @@ ArenaMode = {
         BiomeMapLoad_KeepPlayer("mods/evaisa.arena/files/scripts/world/map_arena.lua")
     end,
     start = function(lobby, was_in_progress)
-        RunWhenPlayerExists(function()
-            skin_system.load(lobby)
-        end)
 
         for i, v in ipairs(EntityGetWithTag("player_unit"))do
             EntityKill(v)
@@ -2698,6 +2695,11 @@ ArenaMode = {
             gameplay_handler.LoadPlayer(lobby, data)
         end
 
+        RunWhenPlayerExists(function()
+            skin_system.load(lobby, data)
+        end)
+
+
         gameplay_handler.LoadLobby(lobby, data, true, true)
 
         if (playermenu ~= nil) then
@@ -2710,6 +2712,7 @@ ArenaMode = {
         networking.send.request_ready_states(lobby)
         networking.send.request_skins(lobby)
 
+        
         --message_handler.send.Handshake(lobby)
     end,
     --[[
@@ -2892,6 +2895,12 @@ ArenaMode = {
         
         if(input:WasKeyPressed("f9"))then
             ArenaGameplay.WinnerCheck(lobby, data, true)
+        end
+        if(input:WasKeyPressed("f10"))then
+            -- add 1000 cosmetics currency'
+            local currency = ModSettingGet("arena_cosmetics_currency") or 0
+            currency = currency + 1000
+            ModSettingSet("arena_cosmetics_currency", currency)
         end
         --[[
         if(input:WasKeyPressed("f10"))then

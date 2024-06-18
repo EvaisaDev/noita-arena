@@ -501,7 +501,7 @@ local rewrites = {
             local respawn_count = tonumber( GlobalsGetValue( "RESPAWN_COUNT", "0" ) )
             respawn_count = respawn_count + 1
 
-			GamePrint("Respawn count set to "..tostring(respawn_count)..".")
+			--GamePrint("Respawn count set to "..tostring(respawn_count)..".")
 			print("Respawn count set to "..tostring(respawn_count)..".")
 
             GlobalsSetValue( "RESPAWN_COUNT", tostring( respawn_count ) )

@@ -42,15 +42,15 @@ function playerinfo:New(lobby, user)
         obj.state = state
     end
 
-    obj.Death = function(self, damage_details)
+    obj.Death = function(self, damage_details, attacker)
         if(self.entity ~= nil and EntityGetIsAlive(self.entity))then
 
             for i, v in ipairs(GameGetAllInventoryItems( self.entity) or {})do
                 print("Player had item at time of death: "..tostring(v))
+                EntityRemoveFromParent(v)
+                EntityKill(v)
             end
 
-            print("Destroying player inventory")
-            GameDestroyInventoryItems( self.entity )
 
             local damage_model_comp = EntityGetFirstComponentIncludingDisabled(self.entity, "DamageModelComponent")
             if(damage_model_comp ~= nil)then
@@ -85,11 +85,11 @@ function playerinfo:New(lobby, user)
                     if(damage_type == "DAMAGE_ICE")then
                         damage_type = "DAMAGE_PROJECTILE"
                     end
-                    EntityInflictDamage(self.entity, damage_per_type, damage_type, "damage_fake",
-                    ragdoll_fx, damage_details.impulse_x, damage_details.impulse_y, GameGetWorldStateEntity(), damage_details.world_pos_x, damage_details.world_pos_y, damage_details.knockback_force)
+                    EntityInflictDamage(self.entity, damage_per_type, damage_type, "kill_client",
+                    ragdoll_fx, damage_details.impulse_x, damage_details.impulse_y, attacker or GameGetWorldStateEntity(), damage_details.world_pos_x, damage_details.world_pos_y, damage_details.knockback_force)
                 end
             else
-                EntityInflictDamage(self.entity, 69420, "DAMAGE_MATERIAL", "", "NORMAL", 0, 0, GameGetWorldStateEntity())
+                EntityInflictDamage(self.entity, 69420, "DAMAGE_MATERIAL", "kill_client", "NORMAL", 0, 0, attacker or GameGetWorldStateEntity())
             end
         end
 

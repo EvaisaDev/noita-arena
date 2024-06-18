@@ -1960,7 +1960,11 @@ ArenaGameplay = {
 
         GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_map_loaded"), tostring(arena.name)))
 
-        BiomeMapLoad_KeepPlayer(arena.biome_map, arena.pixel_scenes)
+        if(arena.pixel_scenes ~= nil)then
+            BiomeMapLoad_KeepPlayer(arena.biome_map, arena.pixel_scenes)
+        else
+            BiomeMapLoad_KeepPlayer(arena.biome_map, "data/biome/_pixel_scenes.xml")
+        end
         if(data.current_arena.load)then
             data.current_arena:load(lobby, data)
         end
@@ -3356,10 +3360,12 @@ ArenaGameplay = {
                 --print("Spawn RNG: "..tostring(spawn_seed))
                 --print("spawnpoint_count: " .. tostring(#spawn_points))
     
-    
-                if (spawn_points ~= nil and #spawn_points > 0) then
-                    data.ready_for_zone = true
-    
+                local x, y = 0, 0
+
+                data.ready_for_zone = true
+
+                
+                if(spawn_points ~= nil and #spawn_points > 0)then
                     local spawn_index = math.floor(ArenaGameplay.GetPlayerIndex(lobby) % #spawn_points)
     
                     if(spawn_index < 1)then
@@ -3367,52 +3373,55 @@ ArenaGameplay = {
                     end
     
                     local spawn_point = spawn_points[spawn_index]
-                    local x, y = EntityGetTransform(spawn_point)
-    
-                    local spawn_loaded = DoesWorldExistAt(x - 100, y - 100, x + 100, y + 100)
-    
-                    --player.Move(x, y)
-    
-                    arena_log:print("Arena loaded? " .. tostring(spawn_loaded))
-    
-                    local in_bounds = ArenaGameplay.IsInBounds(0, 0, data.current_arena.zone_size)
-    
-                    if (not in_bounds) then
-                        arena_log:print("Game tried to spawn player out of bounds, retrying...")
-                        GamePrint("Game attempted to spawn you out of bounds, retrying...")
-                    end
-    
-                    if (spawn_loaded and in_bounds) then
-                        data.preparing = false
-                        data.chunkloaders_initialized = false
-                        if(EntityGetIsAlive(data.spawn_loader))then
-                            EntityKill(data.spawn_loader)
-                        end
-
-                        data.load_frames = 0
-                        --GamePrint("Spawned!!")
-    
-                        if(not data.spectator_mode)then
-                            ArenaGameplay.LoadPlayer(lobby, data, x, y)
-
-                            if (not steam_utils.IsOwner()) then
-                                RunWhenPlayerExists(function()
-                                    networking.send.arena_loaded(lobby)
-                                end)
-                                
-                                --message_handler.send.Loaded(lobby)
-                            end
-        
-                            --message_handler.send.Health(lobby)
-                            networking.send.health_update(lobby, data, true)
-                        else
-                            data.is_spectating = true
-                        end
-                    end
-
-                 --   player.Move(data.spawn_point.x, data.spawn_point.y)
+                    x, y = EntityGetTransform(spawn_point)
+                elseif(data.spawn_point)then
+                    x, y = data.spawn_point.x, data.spawn_point.y
                 end
+
+                local spawn_loaded = DoesWorldExistAt(x - 100, y - 100, x + 100, y + 100)
+
+                --player.Move(x, y)
+
+                arena_log:print("Arena loaded? " .. tostring(spawn_loaded))
+
+                local in_bounds = ArenaGameplay.IsInBounds(0, 0, data.current_arena.zone_size)
+
+                if (not in_bounds) then
+                    arena_log:print("Game tried to spawn player out of bounds, retrying...")
+                    --GamePrint("Game attempted to spawn you out of bounds, retrying...")
+                end
+
+                if (spawn_loaded and in_bounds) then
+                    data.preparing = false
+                    data.chunkloaders_initialized = false
+                    if(EntityGetIsAlive(data.spawn_loader))then
+                        EntityKill(data.spawn_loader)
+                    end
+
+                    data.load_frames = 0
+                    --GamePrint("Spawned!!")
+
+                    if(not data.spectator_mode)then
+                        ArenaGameplay.LoadPlayer(lobby, data, x, y)
+
+                        if (not steam_utils.IsOwner()) then
+                            RunWhenPlayerExists(function()
+                                networking.send.arena_loaded(lobby)
+                            end)
+                            
+                            --message_handler.send.Loaded(lobby)
+                        end
+    
+                        --message_handler.send.Health(lobby)
+                        networking.send.health_update(lobby, data, true)
+                    else
+                        data.is_spectating = true
+                    end
+                end
+
+                --   player.Move(data.spawn_point.x, data.spawn_point.y)
             end
+
         else
                                     
             for k, v in ipairs(EntityGetWithTag("spawn_point") or {})do
