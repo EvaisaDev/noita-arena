@@ -169,8 +169,8 @@ cosmetics_handler = {
     end,
     UnloadCosmetic = function(lobby, data, cosmetic, entity)
         -- stacktrace using debug.traceback()
-        local trace = debug.traceback()	
-        print("Unloading cosmetic: "..cosmetic.id.." trace: "..trace)
+        --local trace = debug.traceback()	
+        --print("Unloading cosmetic: "..cosmetic.id.." trace: "..trace)
         
         if(entity)then
             if(cosmetic.sprite_sheet)then
