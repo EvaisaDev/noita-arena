@@ -125,7 +125,7 @@ function playerinfo:New(lobby, user)
         end
         self.entity = nil
         self.held_item = nil
-        self.cosmetics = {}
+        self.last_cosmetics = nil
         self.last_velocity = nil
         if(self.hp_bar)then
             self.hp_bar:destroy()
