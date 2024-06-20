@@ -1040,19 +1040,52 @@ networking = {
             if(data.state ~= "arena" and not data.spectator_mode)then
                 return
             end
-            
-            -- idk why i am delaying item switching by 5 frames
-            --delay.new(5, function()
-                if (not gameplay_handler.CheckPlayer(lobby, user, data)) then
-                    return
+
+            if (not gameplay_handler.CheckPlayer(lobby, user, data)) then
+                return
+            end
+
+            --GlobalsSetValue(tostring(wand.entity_id).."_wand", wandInfo.id)
+            local is_wand, slot_x, slot_y = message.is_wand, message.slot_x, message.slot_y
+            -- GamePrint("Switching item to slot: " .. tostring(slot_x) .. ", " .. tostring(slot_y))
+            if (data.players[tostring(user)].entity and EntityGetIsAlive(data.players[tostring(user)].entity)) then
+                local items = GameGetAllInventoryItems(data.players[tostring(user)].entity) or {}
+                for i, item in ipairs(items) do
+                    -- check id
+                    --local item_id = tonumber(GlobalsGetValue(tostring(item) .. "_item")) or -1
+                    local itemComp = EntityGetFirstComponentIncludingDisabled(item, "ItemComponent")
+                    local item_slot_x, item_slot_y = ComponentGetValue2(itemComp, "inventory_slot")
+
+                    local ability_comp = EntityGetFirstComponentIncludingDisabled(item, "AbilityComponent")
+                    
+                    local item_is_wand = false
+                    if(ability_comp and ComponentGetValue2(ability_comp, "use_gun_script"))then
+                        item_is_wand = true
+                    end
+
+                    if (item_slot_x == slot_x and item_slot_y == slot_y and item_is_wand == is_wand) then
+                        local inventory2Comp = EntityGetFirstComponentIncludingDisabled(
+                            data.players[tostring(user)].entity, "Inventory2Component")
+                        --local mActiveItem = ComponentGetValue2(inventory2Comp, "mActiveItem")
+
+                        --if (mActiveItem ~= item) then
+                            np.SetActiveHeldEntity(data.players[tostring(user)].entity, item, false, false)
+                        --end
+                        break
+                    end
+                end
+                local has_spectator = false
+
+
+                -- if we are in spectator mode
+                if (data.spectated_player == user and data.spectator_entity ~= nil and EntityGetIsAlive(data.spectator_entity)) then
+                    has_spectator = true
                 end
 
-                --GlobalsSetValue(tostring(wand.entity_id).."_wand", wandInfo.id)
-                local is_wand, slot_x, slot_y = message.is_wand, message.slot_x, message.slot_y
-                -- GamePrint("Switching item to slot: " .. tostring(slot_x) .. ", " .. tostring(slot_y))
-                if (data.players[tostring(user)].entity and EntityGetIsAlive(data.players[tostring(user)].entity)) then
-                    local items = GameGetAllInventoryItems(data.players[tostring(user)].entity) or {}
-                    for i, item in ipairs(items) do
+
+                if(has_spectator)then
+                    local spectator_items = GameGetAllInventoryItems(data.spectator_entity) or {}
+                    for i, item in ipairs(spectator_items) do
                         -- check id
                         --local item_id = tonumber(GlobalsGetValue(tostring(item) .. "_item")) or -1
                         local itemComp = EntityGetFirstComponentIncludingDisabled(item, "ItemComponent")
@@ -1066,57 +1099,20 @@ networking = {
                         end
     
                         if (item_slot_x == slot_x and item_slot_y == slot_y and item_is_wand == is_wand) then
-                            local inventory2Comp = EntityGetFirstComponentIncludingDisabled(
-                                data.players[tostring(user)].entity, "Inventory2Component")
+                            local inventory2Comp = EntityGetFirstComponentIncludingDisabled(data.spectator_entity, "Inventory2Component")
                             local mActiveItem = ComponentGetValue2(inventory2Comp, "mActiveItem")
     
                             if (mActiveItem ~= item) then
-                                game_funcs.SetActiveHeldEntity(data.players[tostring(user)].entity, item, false, false)
+                                game_funcs.SetActiveHeldEntity(data.spectator_entity, item, false, false)
+                                data.spectator_selected_item = item
+                                --print("Switching spectator item to slot: " .. tostring(slot_x) .. ", " .. tostring(slot_y))
                             end
                             break
                         end
                     end
-                    local has_spectator = false
-    
- 
-                    -- if we are in spectator mode
-                    if (data.spectated_player == user and data.spectator_entity ~= nil and EntityGetIsAlive(data.spectator_entity)) then
-                        has_spectator = true
-                    end
-    
-    
-                    if(has_spectator)then
-                        local spectator_items = GameGetAllInventoryItems(data.spectator_entity) or {}
-                        for i, item in ipairs(spectator_items) do
-                            -- check id
-                            --local item_id = tonumber(GlobalsGetValue(tostring(item) .. "_item")) or -1
-                            local itemComp = EntityGetFirstComponentIncludingDisabled(item, "ItemComponent")
-                            local item_slot_x, item_slot_y = ComponentGetValue2(itemComp, "inventory_slot")
-        
-                            local ability_comp = EntityGetFirstComponentIncludingDisabled(item, "AbilityComponent")
-                            
-                            local item_is_wand = false
-                            if(ability_comp and ComponentGetValue2(ability_comp, "use_gun_script"))then
-                                item_is_wand = true
-                            end
-        
-                            if (item_slot_x == slot_x and item_slot_y == slot_y and item_is_wand == is_wand) then
-                                local inventory2Comp = EntityGetFirstComponentIncludingDisabled(data.spectator_entity, "Inventory2Component")
-                                local mActiveItem = ComponentGetValue2(inventory2Comp, "mActiveItem")
-        
-                                if (mActiveItem ~= item) then
-                                    game_funcs.SetActiveHeldEntity(data.spectator_entity, item, false, false)
-                                    data.spectator_selected_item = item
-                                    --print("Switching spectator item to slot: " .. tostring(slot_x) .. ", " .. tostring(slot_y))
-                                end
-                                break
-                            end
-                        end
-                    end
                 end
-            --end)
-
-        
+            end
+          
         end,
         sync_wand_stats = function(lobby, message, user, data)
             if(data.state ~= "arena" and not data.spectator_mode)then

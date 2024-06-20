@@ -4061,7 +4061,6 @@ ArenaGameplay = {
                 if inventory_2_comp ~= nil then
                     local mLastItemSwitchFrame = ComponentGetValue2(inventory_2_comp, "mLastItemSwitchFrame")
                     if (mLastItemSwitchFrame == GameGetFrameNum()) then
-                        print("sending item switch")
                         if (data.state == "arena") then
                             networking.send.switch_item(lobby, data)
                         else
