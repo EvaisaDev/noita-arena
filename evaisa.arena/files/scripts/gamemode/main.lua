@@ -3126,9 +3126,6 @@ ArenaMode = {
             data.players[k] = nil
         end
 
-        --local name = steamutils.getTranslatedPersonaName(playerid)
-        GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_player_left") ,tostring(lobby_member_names[k])))
-
         -- if we are the last player, unready
         if(not data.spectator_mode)then
             if (steam_utils.getNumLobbyMembers() == 1) then
