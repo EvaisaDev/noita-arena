@@ -116,8 +116,8 @@ GetActiveStatusEffects = function( entity_id, combined )
     local fire_duration_frames = ComponentGetValue2(damage_model_component, "mFireDurationFrames") or 720
     local fire_value = fire_frames_left / fire_duration_frames
     if(is_on_fire == true)then
-      print("fire_value: " .. tostring(fire_value))
-      print("on_fire: " .. tostring(is_on_fire))
+      --[[print("fire_value: " .. tostring(fire_value))
+      print("on_fire: " .. tostring(is_on_fire))]]
       if(combined)then
         active_effects["ON_FIRE"] = fire_value
       else

@@ -571,7 +571,7 @@ cosmetics = {
     {
         id = "shrek_mask",
         name = "Ogre Mask",
-        description = "???",
+        description = "Unique cosmetic for Xytio.",
         icon = "mods/evaisa.arena/content/cosmetics/shrek/icon.png",
         credits = "Evaisa",
         --sprite_sheet = "mods/evaisa.arena/content/cosmetics/dunce_hat/sprite_sheet.png",
@@ -633,17 +633,19 @@ cosmetics = {
     {
         id = "fish_hat",
         name = "Joel",
-        description = "[Unlocked by 15 players while wet]",
+        description = "[Unlocked by killing 15 players while wet]",
         icon = "mods/evaisa.arena/content/cosmetics/fish/icon.png",
         credits = "Evaisa",
         --sprite_sheet = "mods/evaisa.arena/content/cosmetics/dunce_hat/sprite_sheet.png",
         type = "hat",
-        sprite_offset = {x = 4, y = 7},
+        sprite_offset = {x = 4, y = 9},
         sprite = "mods/evaisa.arena/content/cosmetics/fish/hat2.xml",
         can_be_unlocked = true,
-        can_be_purchased = true,
+        can_be_purchased = false,
         unlocked_default = false,
-        price = 100,
+        always_run_kill_func = true, -- Run kill func even when not worn
+        always_run_win_func = false, -- Run Win func even when not worn
+        price = 0,
         try_unlock = function(self, lobby, data) -- runs every frame, if true, unlock flag is added
             return false
         end,
@@ -665,12 +667,44 @@ cosmetics = {
                 end
             end]]
         end,
+        on_kill = function(self, lobby, data, entity, killed_entity) -- runs when player kills another player
+            local unlock_flag = "cosmetic_unlocked_"..self.id
+            if(not HasFlagPersistent(unlock_flag))then
+                local children = EntityGetAllChildren(entity)
+                for k, v in ipairs(children or {}) do
+                    -- if has GameEffectComponent
+                    local game_effect_comp = EntityGetFirstComponentIncludingDisabled(v, "GameEffectComponent")
+                    if(game_effect_comp ~= nil)then
+                        -- check if has wet effect
+                        local effect = ComponentGetValue2(game_effect_comp, "effect")
+                        if(effect == "WET")then
+                            -- check if has killed 15 players
+                            local kills = tonumber(ModSettingGet("ARENA_COSMETIC_JOEL_COUNTER") or 0)
+                        
+                            kills = kills + 1
+                            if(kills >= 15)then
+                                AddFlagPersistent(unlock_flag)
+
+                                GamePrintImportant("$arena_cosmetic_unlock", string.format(GameTextGetTranslatedOrNot("$arena_cosmetic_hidden_unlock")), GameTextGetTranslatedOrNot(self.name))
+                            end
+
+                            ModSettingSet("ARENA_COSMETIC_JOEL_COUNTER", tostring(kills))
+                        end
+
+                    end
+                end
+            end
+
+        end,
+        on_win = function(self, lobby, data, entity) -- runs when player wins a round
+        end,
         on_load = function(self, lobby, data, entity) -- runs when cosmetic is loaded, can be used to load entities etc.
 
         end,
         on_unload = function(self, lobby, data, entity) -- runs when cosmetic is unloaded, can be used to unload entities etc.
         end,
         on_arena_unlocked = function(self, lobby, data, entity) -- runs when player is unlocked in arena.
+            
         end,
     },
 }

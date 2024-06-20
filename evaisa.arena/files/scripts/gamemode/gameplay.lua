@@ -1028,6 +1028,16 @@ ArenaGameplay = {
                 data.players[tostring(winner)].winstreak = current_winstreak + 1
                 data.players[tostring(winner)].wins = current_wins + 1
             else
+                -- grant coin
+                local currency = ModSettingGet("arena_cosmetics_currency") or 0
+                currency = currency + 100
+                ModSettingSet("arena_cosmetics_currency", currency)
+        
+                local player_entity = player.Get()
+                if(player_entity)then
+                    cosmetics_handler.OnWin(lobby, data, player_entity)
+                end
+                
                 data.client.winstreak = current_winstreak + 1
                 data.client.wins = current_wins + 1
             end
@@ -3850,35 +3860,35 @@ ArenaGameplay = {
             data.force_open_inventory = false
         end
 
-        if(data.state == "lobby")then
-            if(not IsPaused() and not (data.spectator_mode and data.spectated_player == nil))then
-                ArenaGameplay.UpdateDummy(lobby, data)
-                for k, v in pairs(data.players) do
-                    if (v.entity ~= nil and EntityGetIsAlive(v.entity)) then
-                        ArenaGameplay.DrawNametag(lobby, data, v.entity, lobby_member_names[k], 34)
+        if(not GameHasFlagRun("arena_trailer_mode"))then
+            if(data.state == "lobby")then
+                if(not IsPaused() and not (data.spectator_mode and data.spectated_player == nil))then
+                    ArenaGameplay.UpdateDummy(lobby, data)
+                    for k, v in pairs(data.players) do
+                        if (v.entity ~= nil and EntityGetIsAlive(v.entity)) then
+                            ArenaGameplay.DrawNametag(lobby, data, v.entity, lobby_member_names[k], 34)
+                        end
                     end
                 end
-            end
-        else
-            local player_entities = {}
-            if(not IsPaused())then
-                for k, v in pairs(data.players) do
-                    if (v.entity ~= nil and EntityGetIsAlive(v.entity)) then
-                        player_entities[k] = v.entity
-                        
-                        ArenaGameplay.DrawNametag(lobby, data, v.entity, lobby_member_names[k], 34)
+            else
+                local player_entities = {}
+                if(not IsPaused())then
+                    for k, v in pairs(data.players) do
+                        if (v.entity ~= nil and EntityGetIsAlive(v.entity)) then
+                            player_entities[k] = v.entity
+                            
+                            ArenaGameplay.DrawNametag(lobby, data, v.entity, lobby_member_names[k], 34)
+                        end
                     end
                 end
-            end
-            if (not IsPaused() and GameHasFlagRun("player_is_unlocked") and (not GameHasFlagRun("no_shooting"))) then
-                --print("drawing markers!!")
-                game_funcs.RenderOffScreenMarkers(player_entities)
-                game_funcs.RenderAboveHeadMarkers(player_entities, 0, 27)
-                ArenaGameplay.UpdateHealthbars(data)
+                if (not IsPaused() and GameHasFlagRun("player_is_unlocked") and (not GameHasFlagRun("no_shooting"))) then
+                    --print("drawing markers!!")
+                    game_funcs.RenderOffScreenMarkers(player_entities)
+                    game_funcs.RenderAboveHeadMarkers(player_entities, 0, 27)
+                    ArenaGameplay.UpdateHealthbars(data)
+                end
             end
         end
-
-
 
 
 
@@ -4061,20 +4071,26 @@ ArenaGameplay = {
             local projectiles_fired = tonumber(GlobalsGetValue( "wand_fire_count", "0" ))
 
             if (projectiles_fired > 0--[[data.client.projectiles_fired ~= nil and data.client.projectiles_fired > 0]]) then
-                local special_seed = tonumber(GlobalsGetValue("player_rng", "0"))
-                --local cast_state = GlobalsGetValue("player_cast_state") or nil
+                local controls_comp = EntityGetFirstComponentIncludingDisabled(current_player, "ControlsComponent")
+                
+                if(controls_comp)then
+                    local change_item_r = ComponentGetValue2(controls_comp, "mButtonDownChangeItemR")
+                    local change_item_l = ComponentGetValue2(controls_comp, "mButtonDownChangeItemL")
+                    
+                    local special_seed = tonumber(GlobalsGetValue("player_rng", "0"))
+                    -- only allow fire if not switching items
+                    if(not (change_item_r or change_item_l))then
+  
+                        if(data.state == "arena")then
+                            networking.send.fire_wand(lobby, data.client.projectile_rng_stack, special_seed)
+                        else
+                            networking.send.fire_wand(lobby, data.client.projectile_rng_stack, special_seed, true)
+                        end
 
-                --print(tostring(cast_state))
-
-                --GamePrint("Sending special seed:"..tostring(special_seed))
-                --message_handler.send.WandFired(lobby, data.client.projectile_rng_stack, special_seed, cast_state)
-                if(data.state == "arena")then
-                    networking.send.fire_wand(lobby, data.client.projectile_rng_stack, special_seed)
-                else
-                    networking.send.fire_wand(lobby, data.client.projectile_rng_stack, special_seed, true)
+                    end
+                    GlobalsSetValue("wand_fire_count", "0")
+                    data.client.projectile_rng_stack = {}
                 end
-                GlobalsSetValue("wand_fire_count", "0")
-                data.client.projectile_rng_stack = {}
             end
 
 

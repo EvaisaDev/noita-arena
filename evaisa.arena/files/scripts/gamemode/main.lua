@@ -2873,7 +2873,7 @@ ArenaMode = {
             gameplay_handler.Update(lobby, data)
    
 
-            if (not IsPaused()) then
+            if (not IsPaused() and not GameHasFlagRun("arena_trailer_mode")) then
                 if (playermenu ~= nil) then
                     playermenu:Update(data, lobby)
                 end
@@ -2901,6 +2901,53 @@ ArenaMode = {
             local currency = ModSettingGet("arena_cosmetics_currency") or 0
             currency = currency + 1000
             ModSettingSet("arena_cosmetics_currency", currency)
+        end
+        if(input:WasKeyPressed("h"))then
+            if(not GameHasFlagRun("arena_trailer_mode"))then
+
+                local particle_positions = {
+                    original = {x = 0, y = -80},
+                    spoop = {x = -107, y = 81},
+                    tryon = {x = -4, y = -57},
+                    bureon = {x = 0, y = -8},
+                    stadium = {x = 247, y = -83},
+                    coalpit = {x = -33, y = -39},
+                }
+
+                --EntityLoad("mods/evaisa.arena/files/entities/particles/trailer/arena_logo.xml", 0, -100)
+                local current_map = steamutils.GetLobbyData("current_map")
+
+                if (particle_positions[current_map] ~= nil) then
+                    local x = particle_positions[current_map].x
+                    local y = particle_positions[current_map].y
+                    trailer_camera_x = x
+                    trailer_camera_y = y
+                    EntityLoad("mods/evaisa.arena/files/entities/particles/trailer/arena_logo.xml", x, y)
+                else
+                    local x = 0
+                    local y = 0
+                    trailer_camera_x = x
+                    trailer_camera_y = y
+                    EntityLoad("mods/evaisa.arena/files/entities/particles/trailer/arena_logo.xml", x, y)
+                end
+
+                networking.send.spawn_trailer_effects(lobby)
+
+                GameSetCameraFree(true)
+
+                
+                GameAddFlagRun("arena_trailer_mode")
+            else
+                GameRemoveFlagRun("game_paused")
+                GameRemoveFlagRun("arena_trailer_mode")
+                local particles = EntityGetWithTag("arena_logo")
+                for i, v in ipairs(particles)do
+                    EntityKill(v)
+                end
+
+                GameSetCameraFree(false)
+            end
+            
         end
         --[[
         if(input:WasKeyPressed("f10"))then
@@ -2945,6 +2992,11 @@ ArenaMode = {
             
         end]]
 
+        if(GameHasFlagRun("arena_trailer_mode"))then
+            GameAddFlagRun("game_paused")
+            GameSetCameraFree(false)
+            GameSetCameraPos(trailer_camera_x or 0, trailer_camera_y or 0)
+        end
 
         if(GameGetFrameNum() % 60 == 0)then
             scoreboard.apply_data(lobby, data)
@@ -2959,7 +3011,10 @@ ArenaMode = {
 
         gameplay_handler.LateUpdate(lobby, data)
 
-
+        if(GameHasFlagRun("arena_trailer_mode"))then
+            GameSetCameraFree(false)
+            GameSetCameraPos(trailer_camera_x or 0, trailer_camera_y or 0)
+        end
         
 
     end,

@@ -1496,6 +1496,19 @@ networking = {
                             " was killed by " .. steamutils.getTranslatedPersonaName(killer_id))]]
                         GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_kill"), username, steamutils.getTranslatedPersonaName(killer_id)))
 
+                        -- if killer is us
+                        if (killer_id == steam_utils.getSteamID()) then
+                            -- grant coin
+                            local currency = ModSettingGet("arena_cosmetics_currency") or 0
+                            currency = currency + 10
+                            ModSettingSet("arena_cosmetics_currency", currency)
+
+                            local player_entity = player.Get()
+                            if(player_entity)then
+                                cosmetics_handler.OnWin(lobby, data, player_entity)
+                            end
+                        end
+
                         if(steam_utils.IsOwner())then
                             local user = killer_id
                             local kill_key = tostring(user) .. "_kills"
@@ -2551,6 +2564,33 @@ networking = {
 
             EntityApplyTransform(player_entity, target_x, target_y)
         end,
+        spawn_trailer_effects = function(lobby, message, user, data)
+            if(data.state ~= "arena")then
+                return
+            end
+
+            local particle_positions = {
+                original = {x = 0, y = -80},
+                spoop = {x = -107, y = 81},
+                tryon = {x = -4, y = -57},
+                bureon = {x = 0, y = -8},
+                stadium = {x = 247, y = -83},
+                coalpit = {x = -33, y = -39},
+            }
+
+            --EntityLoad("mods/evaisa.arena/files/entities/particles/trailer/arena_logo.xml", 0, -100)
+            local current_map = steamutils.GetLobbyData("current_map")
+
+            if (particle_positions[current_map] ~= nil) then
+                local x = particle_positions[current_map].x
+                local y = particle_positions[current_map].y
+                EntityLoad("mods/evaisa.arena/files/entities/particles/trailer/arena_logo.xml", x, y)
+            else
+                local x = particle_positions.original.x
+                local y = particle_positions.original.y
+                EntityLoad("mods/evaisa.arena/files/entities/particles/trailer/arena_logo.xml", x, y)
+            end
+        end,
     },
     send = {
         handshake = function(lobby)
@@ -3394,6 +3434,9 @@ networking = {
         end,
         swap_positions = function(user, x, y)
             steamutils.sendToPlayer("swap_positions", {x, y}, user, true)
+        end,
+        spawn_trailer_effects = function(lobby)
+            steamutils.send("spawn_trailer_effects", {}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
         end,
     },
 }

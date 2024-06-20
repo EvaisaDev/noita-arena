@@ -254,19 +254,36 @@ cosmetics_handler = {
             end
         end
     end,
+    OnKill = function(lobby, data, player, target)
+        for k, cosmetic in ipairs(cosmetics)do
+            if(player and EntityGetIsAlive(player))then
+                local can_run = cosmetics_handler.CosmeticValid(lobby, data, cosmetic, player, true) or cosmetic.always_run_kill_func
+                if(can_run)then
+                    if(cosmetic.on_kill ~= nil)then
+                        cosmetic:on_kill(lobby, data, player, target)
+                    end
+                end
+            end
+        end
+    end,
+    OnWin = function(lobby, data, player)
+        for k, cosmetic in ipairs(cosmetics)do
+            if(player and EntityGetIsAlive(player))then
+                local can_run = cosmetics_handler.CosmeticValid(lobby, data, cosmetic, player, true) or cosmetic.always_run_win_func
+                if(can_run)then
+                    if(cosmetic.on_win ~= nil)then
+                        cosmetic:on_win(lobby, data, player)
+                    end
+                end
+            end
+        end
+    end,
     TryUnlock = function(lobby, data, cosmetic)
-        if(cosmetic.can_be_unlocked == false)then
+        local unlock_flag = "cosmetic_unlocked_"..cosmetic.id
+        if(cosmetic.unlocked_default or cosmetic.can_be_unlocked == false or HasFlagPersistent(unlock_flag))then
             return false
         end
-        local unlock_flag = "cosmetic_unlocked_"..cosmetic.id
-        if(cosmetic.unlock_default == true)then
-            local unlock_flag = "cosmetic_unlocked_"..cosmetic.id
-            if(not HasFlagPersistent(unlock_flag))then
-                AddFlagPersistent(unlock_flag)
-            end
-            return true
-        end
-        local unlock_attempt = cosmetic:try_unlock(lobby, data)
+        local unlock_attempt = cosmetic.unlocked_default or cosmetic:try_unlock(lobby, data)
         if(unlock_attempt and not HasFlagPersistent(unlock_flag))then
             AddFlagPersistent(unlock_flag)
         end
@@ -274,7 +291,7 @@ cosmetics_handler = {
     end,
     IsUnlocked = function(cosmetic)
         local unlock_flag = "cosmetic_unlocked_"..cosmetic.id
-        return HasFlagPersistent(unlock_flag)
+        return cosmetic.unlocked_default or HasFlagPersistent(unlock_flag)
     end,
     Unlock = function(cosmetic_id)
         local unlock_flag = "cosmetic_unlocked_"..cosmetic_id

@@ -425,6 +425,12 @@ function generate_shop_potion( x, y, biome_id )
 		if( damage_model_comp ~= nil ) then
 			EntitySetComponentIsEnabled( eid, damage_model_comp, false )
 		end
+		
+		local physics_body_collision_component = EntityGetFirstComponentIncludingDisabled( eid, "PhysicsBodyCollisionDamageComponent" )
+
+		if( physics_body_collision_component ~= nil ) then
+			EntitySetComponentIsEnabled( eid, physics_body_collision_component, false )
+		end
 
 		EntityAddComponent( eid, "LuaComponent", { 
 			script_item_picked_up="mods/evaisa.arena/files/scripts/gamemode/misc/enable_damage_on_pick.lua"
