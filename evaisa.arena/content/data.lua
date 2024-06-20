@@ -668,6 +668,7 @@ cosmetics = {
             end]]
         end,
         on_kill = function(self, lobby, data, entity, killed_entity) -- runs when player kills another player
+            print("killed")
             local unlock_flag = "cosmetic_unlocked_"..self.id
             if(not HasFlagPersistent(unlock_flag))then
                 local children = EntityGetAllChildren(entity)
