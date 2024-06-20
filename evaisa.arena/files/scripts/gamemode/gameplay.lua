@@ -1968,7 +1968,7 @@ ArenaGameplay = {
         end
 
 
-        GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_map_loaded"), tostring(arena.name)))
+        GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_map_loaded"), GameTextGetTranslatedOrNot(tostring(arena.name))))
 
         if(arena.pixel_scenes ~= nil)then
             BiomeMapLoad_KeepPlayer(arena.biome_map, arena.pixel_scenes)
@@ -3024,7 +3024,15 @@ ArenaGameplay = {
             networking.send.request_card_list(lobby, user)
         end
 
-        cosmetics_handler.LoadClientCosmetics(lobby, data, client)
+        --cosmetics_handler.LoadClientCosmetics(lobby, data, client)
+
+        local cosmetics = {}
+        
+        for k, v in pairs(data.players[tostring(user)].cosmetics or {})do
+            table.insert(cosmetics, k)
+        end
+
+        cosmetics_handler.ApplyCosmeticsList(lobby, data, client, cosmetics, true, user)
 
         return client
     end,
@@ -3866,7 +3874,7 @@ ArenaGameplay = {
                     ArenaGameplay.UpdateDummy(lobby, data)
                     for k, v in pairs(data.players) do
                         if (v.entity ~= nil and EntityGetIsAlive(v.entity)) then
-                            ArenaGameplay.DrawNametag(lobby, data, v.entity, lobby_member_names[k], 34)
+                            ArenaGameplay.DrawNametag(lobby, data, v.entity, lobby_member_names[k], 44)
                         end
                     end
                 end
@@ -3877,14 +3885,14 @@ ArenaGameplay = {
                         if (v.entity ~= nil and EntityGetIsAlive(v.entity)) then
                             player_entities[k] = v.entity
                             
-                            ArenaGameplay.DrawNametag(lobby, data, v.entity, lobby_member_names[k], 34)
+                            ArenaGameplay.DrawNametag(lobby, data, v.entity, lobby_member_names[k], 44)
                         end
                     end
                 end
                 if (not IsPaused() and GameHasFlagRun("player_is_unlocked") and (not GameHasFlagRun("no_shooting"))) then
                     --print("drawing markers!!")
                     game_funcs.RenderOffScreenMarkers(player_entities)
-                    game_funcs.RenderAboveHeadMarkers(player_entities, 0, 27)
+                    game_funcs.RenderAboveHeadMarkers(player_entities, 0, 37)
                     ArenaGameplay.UpdateHealthbars(data)
                 end
             end

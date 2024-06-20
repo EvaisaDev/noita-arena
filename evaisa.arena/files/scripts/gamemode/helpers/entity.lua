@@ -188,8 +188,8 @@ entity.PickItem = function(ent, item, inventory)
     end
   
 
-    print("Adding Item ("..item..") to Inventory ("..preferred_inv..") of Entity ("..ent..")")
-    print("Item ("..item..") attached as child to Entity ("..EntityGetParent(item)..") of Root Entity ("..EntityGetRootEntity(item)..")")
+    --print("Adding Item ("..item..") to Inventory ("..preferred_inv..") of Entity ("..ent..")")
+    --print("Item ("..item..") attached as child to Entity ("..EntityGetParent(item)..") of Root Entity ("..EntityGetRootEntity(item)..")")
 end
 
 entity.GivePerk = function( entity_who_picked, perk_id, amount )

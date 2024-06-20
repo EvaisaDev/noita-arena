@@ -649,7 +649,7 @@ networking = {
                         if(itemInfo.is_wand)then
                             --item:PickUp(data.players[tostring(user)].entity)
                             EntityHelper.PickItem(data.players[tostring(user)].entity, item.entity_id, "QUICK")
-                            print("forcing pickup of wand")
+                            --print("forcing pickup of wand")
                             item_entity = item.entity_id
 
                             if(has_spectator)then
@@ -663,7 +663,7 @@ networking = {
                                 --print("Adding spectator item to spectator.")
                             end
                         else
-                            print("forcing pickup of item")
+                            --print("forcing pickup of item")
                             EntityHelper.PickItem(data.players[tostring(user)].entity, item, "QUICK")
                             item_entity = item
 
