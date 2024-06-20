@@ -1050,6 +1050,8 @@ networking = {
             -- GamePrint("Switching item to slot: " .. tostring(slot_x) .. ", " .. tostring(slot_y))
             if (data.players[tostring(user)].entity and EntityGetIsAlive(data.players[tostring(user)].entity)) then
                 local items = GameGetAllInventoryItems(data.players[tostring(user)].entity) or {}
+                local target = nil
+                local not_target = nil
                 for i, item in ipairs(items) do
                     -- check id
                     --local item_id = tonumber(GlobalsGetValue(tostring(item) .. "_item")) or -1
@@ -1068,12 +1070,27 @@ networking = {
                             data.players[tostring(user)].entity, "Inventory2Component")
                         --local mActiveItem = ComponentGetValue2(inventory2Comp, "mActiveItem")
 
+                        target = item
                         --if (mActiveItem ~= item) then
-                            np.SetActiveHeldEntity(data.players[tostring(user)].entity, item, false, false)
+                            
                         --end
+                    else
+                        not_target = item
+                    end
+
+                    if(target and not_target)then
                         break
                     end
                 end
+
+                if(not_target)then
+                    np.SetActiveHeldEntity(data.players[tostring(user)].entity, not_target, false, false)
+                end
+                
+                if(target)then
+                    np.SetActiveHeldEntity(data.players[tostring(user)].entity, target, false, false)
+                end
+
                 local has_spectator = false
 
 
