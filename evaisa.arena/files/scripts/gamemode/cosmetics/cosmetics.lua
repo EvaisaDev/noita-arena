@@ -213,6 +213,7 @@ cosmetics_handler = {
                 local cosmetic = cosmetic_dict[cosmetic_id]
                 if(cosmetic)then
                     cosmetics_handler.UnloadCosmetic(lobby, data, cosmetic, entity)
+                    print ("Unloading cosmetic on client: "..cosmetic_id)
                     data.players[tostring(user)].cosmetics[cosmetic_id] = nil
                 end
             end
@@ -240,10 +241,66 @@ cosmetics_handler = {
         end
     end,
     ApplyCosmeticsList = function(lobby, data, player, cosmetics_list, is_client, user)
+
+        
+
         if is_client then
+            -- check if list matches current
+            local current_list = {}
+            for cosmetic_id, enabled in pairs(data.players[tostring(user)].cosmetics or {})do
+                if(enabled)then
+                    table.insert(current_list, cosmetic_id)
+                end
+            end
+            local match = true
+
+            if(#current_list ~= #cosmetics_list)then
+                match = false
+            end
+
+            if(match)then
+                for k, cosmetic_id in ipairs(cosmetics_list)do
+                    if(cosmetic_id ~= current_list[k])then
+                        match = false
+                        break
+                    end
+                end
+            end
+
+            if(match)then
+                return
+            end
+
+
             cosmetics_handler.UnloadClientCosmetics(lobby, data, user)
         else
-            print("Unloading player cosmetics")
+
+            -- check if list matches current
+            local current_list = {}
+            for cosmetic_id, enabled in pairs(data.cosmetics or {})do
+                if(enabled)then
+                    table.insert(current_list, cosmetic_id)
+                end
+            end
+            local match = true
+
+            if(#current_list ~= #cosmetics_list)then
+                match = false
+            end
+
+            if(match)then
+                for k, cosmetic_id in ipairs(cosmetics_list)do
+                    if(cosmetic_id ~= current_list[k])then
+                        match = false
+                        break
+                    end
+                end
+            end
+
+            if(match)then
+                return
+            end
+
             cosmetics_handler.UnloadPlayerCosmetics(lobby, data, player)
         end
         

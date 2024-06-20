@@ -1608,6 +1608,7 @@ networking = {
                 return
             end
             local client_entity = data.players[tostring(user)].entity
+            local client_data = data.players[tostring(user)]
 
             if (data.spectator_mode or (GameHasFlagRun("player_is_unlocked")) and client_entity ~= nil and EntityGetIsAlive(client_entity)) then
                 
@@ -1618,7 +1619,13 @@ networking = {
                         cosmetics = message[2],
                     }
 
-                    cosmetics_handler.ApplyCosmeticsList(lobby, data, client_entity, player_data.cosmetics, true, user)
+                    local cosmetics_string = table.concat(player_data.cosmetics, ",")
+                    
+                    if(client_data.last_cosmetics ~= cosmetics_string)then
+                        cosmetics_handler.ApplyCosmeticsList(lobby, data, client_entity, player_data.cosmetics, true, user)
+                    end
+
+                    client_data.last_cosmetics =  cosmetics_string
 
                     local valid_ids = {}
 
