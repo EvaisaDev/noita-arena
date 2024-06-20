@@ -4097,7 +4097,7 @@ ArenaGameplay = {
                             networking.send.fire_wand(lobby, data.client.projectile_rng_stack, special_seed, true)
                         end
 
-                    end
+                    --end
                     GlobalsSetValue("wand_fire_count", "0")
                     data.client.projectile_rng_stack = {}
                 --end
