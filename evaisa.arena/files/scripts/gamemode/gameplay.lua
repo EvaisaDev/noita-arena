@@ -957,9 +957,9 @@ ArenaGameplay = {
     end,
     WinnerCheck = function(lobby, data, manual)
 
-        if not manual then
+        --[[if not manual then
             return
-        end
+        end]]
 
         if(GlobalsGetValue("arena_gamemode", "ffa") == "continuous")then
             return
