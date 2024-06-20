@@ -208,6 +208,7 @@ cosmetics_handler = {
         end
     end,
     UnloadClientCosmetics = function(lobby, data, user)
+        local entity = data.players[tostring(user)].entity
         for cosmetic_id, enabled in pairs(data.players[tostring(user)].cosmetics or {})do
             if(enabled)then
                 local cosmetic = cosmetic_dict[cosmetic_id]
@@ -246,7 +247,7 @@ cosmetics_handler = {
 
         if is_client then
             -- check if list matches current
-            local current_list = {}
+            --[[local current_list = {}
             for cosmetic_id, enabled in pairs(data.players[tostring(user)].cosmetics or {})do
                 if(enabled)then
                     table.insert(current_list, cosmetic_id)
@@ -269,14 +270,14 @@ cosmetics_handler = {
 
             if(match)then
                 return
-            end
+            end]]
 
 
             cosmetics_handler.UnloadClientCosmetics(lobby, data, user)
         else
 
             -- check if list matches current
-            local current_list = {}
+            --[[local current_list = {}
             for cosmetic_id, enabled in pairs(data.cosmetics or {})do
                 if(enabled)then
                     table.insert(current_list, cosmetic_id)
@@ -299,7 +300,7 @@ cosmetics_handler = {
 
             if(match)then
                 return
-            end
+            end]]
 
             cosmetics_handler.UnloadPlayerCosmetics(lobby, data, player)
         end

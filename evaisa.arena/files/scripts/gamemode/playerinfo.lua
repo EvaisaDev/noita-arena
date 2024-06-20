@@ -109,6 +109,7 @@ function playerinfo:New(lobby, user)
         end
         self.ready = false
         self.alive = false
+        self.last_cosmetics = nil
         --[[self.last_position_x = nil
         self.last_position_y = nil]]
         self.previous_positions = {}
@@ -157,6 +158,7 @@ function playerinfo:New(lobby, user)
         end
         self.entity = nil
         self.held_item = nil
+        self.last_cosmetics = nil
         if(self.hp_bar)then
             self.hp_bar:destroy()
             self.hp_bar = nil

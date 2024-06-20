@@ -3029,6 +3029,7 @@ ArenaGameplay = {
         local cosmetics = {}
         
         for k, v in pairs(data.players[tostring(user)].cosmetics or {})do
+            print("Applying cosmetic: "..tostring(k))
             table.insert(cosmetics, k)
         end
 

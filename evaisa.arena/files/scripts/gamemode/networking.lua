@@ -1594,6 +1594,7 @@ networking = {
         end,
         player_data_update = function(lobby, message, user, data)
             if(data.state ~= "arena" and not data.spectator_mode)then
+                print("not in arena")
                 return
             end
 
@@ -1605,6 +1606,7 @@ networking = {
 
             ]]
             if (not gameplay_handler.CheckPlayer(lobby, user, data)) then
+                print("not a player")
                 return
             end
             local client_entity = data.players[tostring(user)].entity
@@ -1620,12 +1622,16 @@ networking = {
                     }
 
                     local cosmetics_string = table.concat(player_data.cosmetics, ",")
+
+                    --print("Received cosmetics: " .. cosmetics_string)
+                    --print("Last cosmetics: " .. tostring(client_data.last_cosmetics))
                     
                     if(client_data.last_cosmetics ~= cosmetics_string)then
+                        print("Applying cosmetics!!")
                         cosmetics_handler.ApplyCosmeticsList(lobby, data, client_entity, player_data.cosmetics, true, user)
                     end
 
-                    client_data.last_cosmetics =  cosmetics_string
+                    client_data.last_cosmetics = cosmetics_string
 
                     local valid_ids = {}
 
