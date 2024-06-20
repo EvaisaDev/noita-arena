@@ -96,13 +96,19 @@ cosmetics_handler = {
         if (is_client and entity and data.players[EntityGetName(entity)] ~= nil and data.players[EntityGetName(entity)].cosmetics[cosmetic.id]) then
             return true
         end
+
+        -- no clients beyond this point
+        if(is_client)then
+            return false
+        end
+
         -- force enabled player cosmetics
         if ((not is_client and (cosmetic.try_force_enable ~= nil and cosmetic:try_force_enable(lobby, data)))) then
             return true
         end
 
         -- check if cosmetic is unlocked and enabled??
-        if (not is_client and cosmetics_handler.IsUnlocked(cosmetic) and data.cosmetics[cosmetic.id]) then
+        if (cosmetics_handler.IsUnlocked(cosmetic) and data.cosmetics[cosmetic.id]) then
             return true
         end
     end,
@@ -162,6 +168,10 @@ cosmetics_handler = {
         end
     end,
     UnloadCosmetic = function(lobby, data, cosmetic, entity)
+        -- stacktrace using debug.traceback()
+        local trace = debug.traceback()	
+        print("Unloading cosmetic: "..cosmetic.id.." trace: "..trace)
+        
         if(entity)then
             if(cosmetic.sprite_sheet)then
                 local sprite_components = EntityGetComponent(entity, "SpriteComponent") or {}
@@ -233,6 +243,7 @@ cosmetics_handler = {
         if is_client then
             cosmetics_handler.UnloadClientCosmetics(lobby, data, user)
         else
+            print("Unloading player cosmetics")
             cosmetics_handler.UnloadPlayerCosmetics(lobby, data, player)
         end
         
@@ -241,6 +252,7 @@ cosmetics_handler = {
             local cosmetic = cosmetic_dict[cosmetic_id]
             if(cosmetic)then
                 if(not is_client)then
+                    print("Applying cosmetic: "..cosmetic_id)
                     data.cosmetics[cosmetic_id] = true
                     cosmetics_handler.CosmeticCheckLimit(lobby, data, cosmetic_id)
                 else
@@ -335,7 +347,7 @@ cosmetics_handler = {
             for id, p in pairs(data.players or {})do
                 if(p.entity ~= nil and EntityGetIsAlive(p.entity))then
                     local entity = p.entity
-                    local can_run = cosmetics_handler.CosmeticValid(lobby, data, cosmetic, entity, false)
+                    local can_run = cosmetics_handler.CosmeticValid(lobby, data, cosmetic, entity, true)
                     if(entity and can_run)then
                         if(cosmetic.on_update ~= nil)then
                             cosmetic:on_update(lobby, data, entity)
@@ -345,7 +357,7 @@ cosmetics_handler = {
             end
             local player = player_helper.Get()
             if(player and EntityGetIsAlive(player))then
-                local can_run = cosmetics_handler.CosmeticValid(lobby, data, cosmetic, player, true)
+                local can_run = cosmetics_handler.CosmeticValid(lobby, data, cosmetic, player, false)
                 if(can_run)then
                     if(cosmetic.on_update ~= nil)then
                         cosmetic:on_update(lobby, data, player)
