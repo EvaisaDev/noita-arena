@@ -2915,44 +2915,39 @@ networking = {
         switch_item = function(lobby, data, user, force, to_spectators)
             local held_item = player_helper.GetActiveHeldItem()
             if (held_item ~= nil and held_item ~= 0) then
-                if (force or user ~= nil or held_item ~= data.client.previous_selected_item) then
+     
+                local item_comp = EntityGetFirstComponentIncludingDisabled(held_item, "ItemComponent")
 
-                    --local wand_id = tonumber(GlobalsGetValue(tostring(held_item) .. "_item")) or -1
-                    --if (wand_id ~= -1) then
-                    local item_comp = EntityGetFirstComponentIncludingDisabled(held_item, "ItemComponent")
-
-                    -- the hell??
-                    if(item_comp == nil)then
-                        return
-                    end
-
-                    local slot_x, slot_y = ComponentGetValue2(item_comp, "inventory_slot")
-                    local ability_comp = EntityGetFirstComponentIncludingDisabled(held_item, "AbilityComponent")
-                    
-                    local is_wand = false
-                    if(ability_comp and ComponentGetValue2(ability_comp, "use_gun_script"))then
-                        is_wand = true
-                    end
-
-                    local item = ItemSwitch{
-                        is_wand = is_wand,
-                        slot_x = slot_x,
-                        slot_y = slot_y,
-                    }
-
-                    if (user == nil) then
-                        if(to_spectators)then
-                            steamutils.send("switch_item", item, steamutils.messageTypes.Spectators, lobby, true, true)
-                        else
-                            steamutils.send("switch_item", item, steamutils.messageTypes.OtherPlayers, lobby, true, true)
-                        end
-                        data.client.previous_selected_item = held_item
-                    else
-                        steamutils.sendToPlayer("switch_item", item, user, true)
-                    end
-                    
-                    --end
+                -- the hell??
+                if(item_comp == nil)then
+                    return
                 end
+
+                local slot_x, slot_y = ComponentGetValue2(item_comp, "inventory_slot")
+                local ability_comp = EntityGetFirstComponentIncludingDisabled(held_item, "AbilityComponent")
+                
+                local is_wand = false
+                if(ability_comp and ComponentGetValue2(ability_comp, "use_gun_script"))then
+                    is_wand = true
+                end
+
+                local item = ItemSwitch{
+                    is_wand = is_wand,
+                    slot_x = slot_x,
+                    slot_y = slot_y,
+                }
+
+                if (user == nil) then
+                    if(to_spectators)then
+                        steamutils.send("switch_item", item, steamutils.messageTypes.Spectators, lobby, true, true)
+                    else
+                        steamutils.send("switch_item", item, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+                    end
+                    --data.client.previous_selected_item = held_item
+                else
+                    steamutils.sendToPlayer("switch_item", item, user, true)
+                end
+    
             end
         end,
         sync_wand_stats = function(lobby, data, to_spectators)

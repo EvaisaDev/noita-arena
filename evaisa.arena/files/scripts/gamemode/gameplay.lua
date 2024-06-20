@@ -4037,7 +4037,7 @@ ArenaGameplay = {
             if(data.client.last_inventory == nil or player.DidInventoryChange(data.client.last_inventory, current_inventory_info))then
             -- GamePrint("Inventory has changed!")
                 GameAddFlagRun("ForceUpdateInventory")
-                no_switching = 10
+                no_switching = 3
                 data.client.last_inventory = current_inventory_info
                 GameAddFlagRun("should_save_player")
             end
@@ -4057,10 +4057,17 @@ ArenaGameplay = {
                     end
                 end
 
-                if (data.state == "arena") then
-                    networking.send.switch_item(lobby, data)
-                else
-                    networking.send.switch_item(lobby, data, nil, false, true)
+                local inventory_2_comp = EntityGetFirstComponentIncludingDisabled(player_entity, "Inventory2Component")
+                if inventory_2_comp ~= nil then
+                    local mLastItemSwitchFrame = ComponentGetValue2(inventory_2_comp, "mLastItemSwitchFrame")
+                    if (mLastItemSwitchFrame == GameGetFrameNum()) then
+                        print("sending item switch")
+                        if (data.state == "arena") then
+                            networking.send.switch_item(lobby, data)
+                        else
+                            networking.send.switch_item(lobby, data, nil, false, true)
+                        end
+                    end
                 end
             end
 
