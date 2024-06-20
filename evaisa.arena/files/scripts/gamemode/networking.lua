@@ -1518,7 +1518,7 @@ networking = {
 
                             local player_entity = player.Get()
                             if(player_entity)then
-                                cosmetics_handler.OnWin(lobby, data, player_entity)
+                                cosmetics_handler.OnKill(lobby, data, player_entity)
                             end
                         end
 
