@@ -680,7 +680,7 @@ cosmetics = {
                         local effect = ComponentGetValue2(game_effect_comp, "effect")
                         if(effect == "WET")then
                             -- check if has killed 15 players
-                            local kills = tonumber(ModSettingGet("ARENA_COSMETIC_JOEL_COUNTER") or 0)
+                            local kills = tonumber(ModSettingGet("ARENA_COSMETIC_JOEL_COUNTER")) or 0
                         
                             kills = kills + 1
                             if(kills >= 15)then
@@ -689,7 +689,7 @@ cosmetics = {
                                 GamePrintImportant("$arena_cosmetic_unlock", string.format(GameTextGetTranslatedOrNot("$arena_cosmetic_hidden_unlock")), GameTextGetTranslatedOrNot(self.name))
                             end
 
-                            ModSettingSet("ARENA_COSMETIC_JOEL_COUNTER", tostring(kills))
+                            ModSettingSet("ARENA_COSMETIC_JOEL_COUNTER", kills)
                         end
 
                     end
