@@ -102,7 +102,7 @@ cosmetics_handler = {
         end
 
         -- check if cosmetic is unlocked and enabled??
-        if (cosmetics_handler.IsUnlocked(cosmetic) and data.cosmetics[cosmetic.id]) then
+        if (not is_client and cosmetics_handler.IsUnlocked(cosmetic) and data.cosmetics[cosmetic.id]) then
             return true
         end
     end,
@@ -197,6 +197,17 @@ cosmetics_handler = {
             end
         end
     end,
+    UnloadClientCosmetics = function(lobby, data, user)
+        for cosmetic_id, enabled in pairs(data.players[tostring(user)].cosmetics or {})do
+            if(enabled)then
+                local cosmetic = cosmetic_dict[cosmetic_id]
+                if(cosmetic)then
+                    cosmetics_handler.UnloadCosmetic(lobby, data, cosmetic, entity)
+                    data.players[tostring(user)].cosmetics[cosmetic_id] = nil
+                end
+            end
+        end
+    end,
     LoadPlayerCosmetics = function(lobby, data, entity)
         for k, cosmetic in ipairs(cosmetics)do
             if(entity ~= nil and EntityGetIsAlive(entity))then
@@ -218,15 +229,24 @@ cosmetics_handler = {
             end
         end
     end,
-    ApplyCosmeticsList = function(lobby, data, player, cosmetics_list)
-        cosmetics_handler.UnloadPlayerCosmetics(lobby, data, player)
+    ApplyCosmeticsList = function(lobby, data, player, cosmetics_list, is_client, user)
+        if is_client then
+            cosmetics_handler.UnloadClientCosmetics(lobby, data, user)
+        else
+            cosmetics_handler.UnloadPlayerCosmetics(lobby, data, player)
+        end
+        
         for k, cosmetic_id in ipairs(cosmetics_list)do
             -- unload all cosmetics
             local cosmetic = cosmetic_dict[cosmetic_id]
             if(cosmetic)then
-                data.cosmetics[cosmetic_id] = true
-                cosmetics_handler.CosmeticCheckLimit(lobby, data, cosmetic_id)
-                cosmetics_handler.LoadCosmetic(lobby, data, cosmetic, player, false)
+                if(not is_client)then
+                    data.cosmetics[cosmetic_id] = true
+                    cosmetics_handler.CosmeticCheckLimit(lobby, data, cosmetic_id)
+                else
+                    data.players[tostring(user)].cosmetics[cosmetic_id] = true
+                end
+                cosmetics_handler.LoadCosmetic(lobby, data, cosmetic, player, is_client)
             end
         end
     end,

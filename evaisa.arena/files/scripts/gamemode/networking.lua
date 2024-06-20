@@ -1618,28 +1618,7 @@ networking = {
                         cosmetics = message[2],
                     }
 
-                    --[[local loaded_cosmetics = {}
-                    for _, id in ipairs(player_data.cosmetics)do
-                        loaded_cosmetics[id] = true
-                        if(not data.players[tostring(user)].cosmetics[id])then
-                            -- add cosmetic
-                            data.players[tostring(user)].cosmetics[id] = true
-                            if(client_entity)then
-                                print("Loading client cosmetic: " .. tostring(id))
-                                ArenaGameplay.UpdateCosmetics(lobby, data, "load", client_entity, true)
-                            end
-                        end
-                    end
-
-                    for k, v in pairs(data.players[tostring(user)].cosmetics)do
-                        if(not loaded_cosmetics[k])then
-                            -- remove cosmetic
-                            data.players[tostring(user)].cosmetics[k] = nil
-                            if(client_entity)then
-                                ArenaGameplay.UpdateCosmetics(lobby, data, "unload", client_entity, true)
-                            end
-                        end
-                    end]]
+                    cosmetics_handler.ApplyCosmeticsList(lobby, data, client_entity, player_data.cosmetics, true, user)
 
                     local valid_ids = {}
 
