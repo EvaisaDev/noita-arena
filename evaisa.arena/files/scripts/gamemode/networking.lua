@@ -810,7 +810,7 @@ networking = {
                         controls_data.kick = false
                     end
 
-                    --EntityHelper.BlockFiring(data.players[tostring(user)].entity, true)
+                    EntityHelper.BlockFiring(data.players[tostring(user)].entity, true)
 
                     if(message.fire)then
                         ComponentSetValue2(controlsComp, "mButtonDownFire", true)

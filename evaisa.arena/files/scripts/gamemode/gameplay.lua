@@ -4071,16 +4071,26 @@ ArenaGameplay = {
             local projectiles_fired = tonumber(GlobalsGetValue( "wand_fire_count", "0" ))
 
             if (projectiles_fired > 0--[[data.client.projectiles_fired ~= nil and data.client.projectiles_fired > 0]]) then
-                local controls_comp = EntityGetFirstComponentIncludingDisabled(current_player, "ControlsComponent")
-                
+
+                --[[local controls_comp = EntityGetFirstComponentIncludingDisabled(current_player, "ControlsComponent")
+            
                 if(controls_comp)then
                     local change_item_r = ComponentGetValue2(controls_comp, "mButtonDownChangeItemR")
                     local change_item_l = ComponentGetValue2(controls_comp, "mButtonDownChangeItemL")
-                    
+                    local change_frame_r = ComponentGetValue2(controls_comp, "mButtonFrameChangeItemR")
+                    local change_frame_l = ComponentGetValue2(controls_comp, "mButtonFrameChangeItemL")
+
+
+                    print("Fire wand! "..tostring(projectiles_fired))
+                    print("Change item r: "..tostring(change_item_r))
+                    print("Change item l: "..tostring(change_item_l))
+                    print("Change frame r: "..tostring(change_frame_r))
+                    print("Change frame l: "..tostring(change_frame_l))]]
+
                     local special_seed = tonumber(GlobalsGetValue("player_rng", "0"))
                     -- only allow fire if not switching items
-                    if(not (change_item_r or change_item_l))then
-  
+                    --if(not (change_item_r or change_item_l))then
+    
                         if(data.state == "arena")then
                             networking.send.fire_wand(lobby, data.client.projectile_rng_stack, special_seed)
                         else
@@ -4090,11 +4100,10 @@ ArenaGameplay = {
                     end
                     GlobalsSetValue("wand_fire_count", "0")
                     data.client.projectile_rng_stack = {}
-                end
+                --end
+        
             end
 
-
-            GlobalsSetValue("wand_fire_count", "0")
 
             if(data.state == "lobby" and current_player ~= nil and GameGetFrameNum() % 120 == 0 and not data.preparing)then
                 GameAddFlagRun("should_save_player")
