@@ -2880,7 +2880,7 @@ ArenaMode = {
             end
         end
 
-        
+        --[[
         if (input:WasKeyPressed("f5")) then
             
             -- global table snapshot
@@ -2949,6 +2949,7 @@ ArenaMode = {
             end
             
         end
+        ]]
         --[[
         if(input:WasKeyPressed("f10"))then
             if(steam_utils.IsOwner())then
