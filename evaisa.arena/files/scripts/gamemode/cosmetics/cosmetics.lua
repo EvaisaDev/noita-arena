@@ -115,11 +115,11 @@ cosmetics_handler = {
     LoadCosmetic = function(lobby, data, cosmetic, entity, is_client)
         local can_run = cosmetics_handler.CosmeticValid(lobby, data, cosmetic, entity, is_client)
         if(entity and can_run)then
-            if(cosmetic.sprite_sheet)then
+            if(cosmetic.sprite_sheet_overlay)then
                 EntityAddComponent2(entity, "SpriteComponent", {
                     _tags="character",
                     alpha=1, 
-                    image_file=cosmetic.sprite_sheet, 
+                    image_file=cosmetic.sprite_sheet_overlay, 
                     next_rect_animation="", 
                     offset_x=6, 
                     offset_y=14, 
@@ -174,10 +174,10 @@ cosmetics_handler = {
         --print("Unloading cosmetic: "..cosmetic.id.." trace: "..trace)
         
         if(entity)then
-            if(cosmetic.sprite_sheet)then
+            if(cosmetic.sprite_sheet_overlay)then
                 local sprite_components = EntityGetComponent(entity, "SpriteComponent") or {}
                 for k, component in ipairs(sprite_components)do
-                    if(ComponentGetValue(component, "image_file") == cosmetic.sprite_sheet)then
+                    if(ComponentGetValue(component, "image_file") == cosmetic.sprite_sheet_overlay)then
                         EntityRemoveComponent(entity, component)
                     end
                 end

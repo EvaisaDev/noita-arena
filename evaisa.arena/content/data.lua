@@ -496,7 +496,7 @@ cosmetics = {
         description = "$arena_cosmetics_dunce_hat_description",
         icon = "mods/evaisa.arena/content/cosmetics/dunce_hat/icon.png",
         credits = "Evaisa",
-        --sprite_sheet = "mods/evaisa.arena/content/cosmetics/dunce_hat/sprite_sheet.png",
+        --sprite_sheet_overlay = "mods/evaisa.arena/content/cosmetics/dunce_hat/sprite_sheet_overlay.png",
         type = "dunce",
         sprite_offset = {x = 2, y = 5},
         sprite = "mods/evaisa.arena/content/cosmetics/dunce_hat/hat.png",
@@ -574,7 +574,7 @@ cosmetics = {
         description = "Unique cosmetic for Xytio.",
         icon = "mods/evaisa.arena/content/cosmetics/shrek/icon.png",
         credits = "Evaisa",
-        --sprite_sheet = "mods/evaisa.arena/content/cosmetics/dunce_hat/sprite_sheet.png",
+        --sprite_sheet_overlay = "mods/evaisa.arena/content/cosmetics/dunce_hat/sprite_sheet_overlay.png",
         type = "mask",
         can_be_unlocked = true,
         can_be_purchased = false,
@@ -602,12 +602,43 @@ cosmetics = {
         end,
     },
     {
+        id = "tanksy_hat",
+        name = "Tanksy Hat",
+        description = "Unique cosmetic for Tanksy.",
+        icon = "mods/evaisa.arena/content/cosmetics/tanksy/icon.png",
+        credits = "Evaisa",
+        sprite_sheet_overlay = "mods/evaisa.arena/content/cosmetics/tanksy/player_hat.xml",
+        type = "hat",
+        can_be_unlocked = true,
+        can_be_purchased = false,
+        unlocked_default = false,
+        price = 10,
+        try_unlock = function(lobby, data) -- runs every frame, if true, unlock flag is added
+            local steam_id = steam_utils.getSteamID()
+            
+            local id = tostring(steam_id)
+
+            return id == "76561197995188444"
+        end,
+        try_force_enable = function(self, lobby, data) -- if this condition is true, the cosmetic will be enabled even if it's not unlocked
+            return false
+        end,
+        on_update = function(self, lobby, data, entity) -- runs every frame while hat is worn
+        end,
+        on_load = function(self, lobby, data, entity) -- runs when cosmetic is loaded, can be used to load entities etc.
+        end,
+        on_unload = function(self, lobby, data, entity) -- runs when cosmetic is unloaded, can be used to unload entities etc.
+        end,
+        on_arena_unlocked = function(self, lobby, data, entity) -- runs when player is unlocked in arena.
+        end,
+    },
+    {
         id = "propeller_hat",
         name = "Propeller Hat",
         description = "A propeller hat.",
         icon = "mods/evaisa.arena/content/cosmetics/propeller/icon.png",
         credits = "Evaisa",
-        --sprite_sheet = "mods/evaisa.arena/content/cosmetics/dunce_hat/sprite_sheet.png",
+        --sprite_sheet_overlay = "mods/evaisa.arena/content/cosmetics/dunce_hat/sprite_sheet_overlay.png",
         type = "hat",
         sprite_offset = {x = 3, y = 7},
         sprite = "mods/evaisa.arena/content/cosmetics/propeller/hat.xml",
@@ -636,7 +667,7 @@ cosmetics = {
         description = "[Unlocked by killing 15 players while wet]",
         icon = "mods/evaisa.arena/content/cosmetics/fish/icon.png",
         credits = "Evaisa",
-        --sprite_sheet = "mods/evaisa.arena/content/cosmetics/dunce_hat/sprite_sheet.png",
+        --sprite_sheet_overlay = "mods/evaisa.arena/content/cosmetics/dunce_hat/sprite_sheet_overlay.png",
         type = "hat",
         sprite_offset = {x = 4, y = 9},
         sprite = "mods/evaisa.arena/content/cosmetics/fish/hat2.xml",
@@ -714,7 +745,7 @@ cosmetics = {
         description = "[Unlocked by killing 30 players while wet]",
         icon = "mods/evaisa.arena/content/cosmetics/fish2/icon.png",
         credits = "Evaisa",
-        --sprite_sheet = "mods/evaisa.arena/content/cosmetics/dunce_hat/sprite_sheet.png",
+        --sprite_sheet_overlay = "mods/evaisa.arena/content/cosmetics/dunce_hat/sprite_sheet_overlay.png",
         type = "hat",
         sprite_offset = {x = 4, y = 9},
         sprite = "mods/evaisa.arena/content/cosmetics/fish2/fish_02.xml",
