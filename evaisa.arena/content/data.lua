@@ -528,7 +528,7 @@ cosmetics = {
         end,
     },
     {
-        id = "gold_dust2",
+        id = "gold_dust",
         name = "Gold Dust",
         description = "???",
         icon = "mods/evaisa.arena/content/cosmetics/gold_dust/icon.png",
@@ -668,7 +668,6 @@ cosmetics = {
             end]]
         end,
         on_kill = function(self, lobby, data, entity, killed_entity) -- runs when player kills another player
-            print("killed")
             local unlock_flag = "cosmetic_unlocked_"..self.id
             if(not HasFlagPersistent(unlock_flag))then
                 local children = EntityGetAllChildren(entity)
@@ -685,6 +684,7 @@ cosmetics = {
                             kills = kills + 1
                             if(kills >= 15)then
                                 AddFlagPersistent(unlock_flag)
+                                ModSettingRemove("ARENA_COSMETIC_JOEL_COUNTER")
 
                                 GamePrintImportant("$arena_cosmetic_unlock", string.format(GameTextGetTranslatedOrNot("$arena_cosmetic_hidden_unlock")), GameTextGetTranslatedOrNot(self.name))
                             end
@@ -708,6 +708,431 @@ cosmetics = {
             
         end,
     },
+    {
+        id = "fish_hat_2",
+        name = "Suureväkäs",
+        description = "[Unlocked by killing 30 players while wet]",
+        icon = "mods/evaisa.arena/content/cosmetics/fish2/icon.png",
+        credits = "Evaisa",
+        --sprite_sheet = "mods/evaisa.arena/content/cosmetics/dunce_hat/sprite_sheet.png",
+        type = "hat",
+        sprite_offset = {x = 4, y = 9},
+        sprite = "mods/evaisa.arena/content/cosmetics/fish2/fish_02.xml",
+        sprite_animation = "walk",
+        can_be_unlocked = true,
+        can_be_purchased = true,
+        unlocked_default = false,
+        always_run_kill_func = true, -- Run kill func even when not worn
+        always_run_win_func = false, -- Run Win func even when not worn
+        price = 0,
+        try_unlock = function(self, lobby, data) -- runs every frame, if true, unlock flag is added
+            return false
+        end,
+        try_force_enable = function(self, lobby, data) -- if this condition is true, the cosmetic will be enabled even if it's not unlocked
+            return false
+        end,
+        on_update = function(self, lobby, data, entity) -- runs every frame while hat is worn
+            --[[self.rotation = self.rotation or 0
+            local children = EntityGetAllChildren(entity)
+            for _, child in ipairs(children or {}) do
+                if(EntityGetName(child) == self.id)then
+                    print("found fish")
+                    -- simulate rotating the fish by changing the width of the sprite
+                    self.rotation = self.rotation + 0.05
+                    local width = math.sin(self.rotation)
+                    local x, y, r = EntityGetTransform(entity)
+                    EntitySetTransform(child, x, y, r, width, 1)
+                    
+                end
+            end]]
+        end,
+        on_kill = function(self, lobby, data, entity, killed_entity) -- runs when player kills another player
+            local unlock_flag = "cosmetic_unlocked_"..self.id
+            if(not HasFlagPersistent(unlock_flag))then
+                local children = EntityGetAllChildren(entity)
+                for k, v in ipairs(children or {}) do
+                    -- if has GameEffectComponent
+                    local game_effect_comp = EntityGetFirstComponentIncludingDisabled(v, "GameEffectComponent")
+                    if(game_effect_comp ~= nil)then
+                        -- check if has wet effect
+                        local effect = ComponentGetValue2(game_effect_comp, "effect")
+                        if(effect == "WET")then
+                            -- check if has killed 15 players
+                            local kills = tonumber(ModSettingGet("ARENA_COSMETIC_JOEL_COUNTER2")) or 0
+                        
+                            kills = kills + 1
+                            if(kills >= 30)then
+                                AddFlagPersistent(unlock_flag)
+                                ModSettingRemove("ARENA_COSMETIC_JOEL_COUNTER2")
+
+                                GamePrintImportant("$arena_cosmetic_unlock", string.format(GameTextGetTranslatedOrNot("$arena_cosmetic_hidden_unlock")), GameTextGetTranslatedOrNot(self.name))
+                            end
+
+                            ModSettingSet("ARENA_COSMETIC_JOEL_COUNTER2", kills)
+                        end
+
+                    end
+                end
+            end
+
+        end,
+        on_win = function(self, lobby, data, entity) -- runs when player wins a round
+        end,
+        on_load = function(self, lobby, data, entity) -- runs when cosmetic is loaded, can be used to load entities etc.
+
+        end,
+        on_unload = function(self, lobby, data, entity) -- runs when cosmetic is unloaded, can be used to unload entities etc.
+        end,
+        on_arena_unlocked = function(self, lobby, data, entity) -- runs when player is unlocked in arena.
+            
+        end,
+    },
+    --[[
+    -- bithday
+    {
+        id = "birthday_hat",
+        name = "Party Hat",
+        description = "It is your birthday today.",
+        icon = "mods/evaisa.arena/content/cosmetics/icons/birthday.png",
+        credits = "Evaisa",
+        type = "hat",
+        sprite_offset = {x = 3, y = 7},
+        sprite = "mods/evaisa.arena/content/cosmetics/sprites/birthday.xml",
+        can_be_unlocked = true,
+        can_be_purchased = true,
+        unlocked_default = false,
+        price = 0,
+    },
+    -- bowler
+    {
+        id = "bowler_hat",
+        name = "Bowler Hat",
+        description = "A bowler hat.",
+        icon = "mods/evaisa.arena/content/cosmetics/icons/bowler.png",
+        credits = "Evaisa",
+        type = "hat",
+        sprite_offset = {x = 3, y = 7},
+        sprite = "mods/evaisa.arena/content/cosmetics/sprites/bowler.xml",
+        can_be_unlocked = true,
+        can_be_purchased = true,
+        unlocked_default = false,
+        price = 0,
+    },
+    -- construction
+    {
+        id = "construction_hat",
+        name = "Hard Hat",
+        description = "Earthquakes are guaranteed.",
+        icon = "mods/evaisa.arena/content/cosmetics/icons/construction.png",
+        credits = "Evaisa",
+        type = "hat",
+        sprite_offset = {x = 3, y = 7},
+        sprite = "mods/evaisa.arena/content/cosmetics/sprites/construction.xml",
+        can_be_unlocked = true,
+        can_be_purchased = true,
+        unlocked_default = false,
+        price = 0,
+    },
+    -- crown
+    {
+        id = "crown_hat",
+        name = "Crown",
+        description = "[Unlocked by getting 10 wins]",
+        icon = "mods/evaisa.arena/content/cosmetics/icons/crown.png",
+        credits = "Evaisa",
+        type = "hat",
+        sprite_offset = {x = 3, y = 7},
+        sprite = "mods/evaisa.arena/content/cosmetics/sprites/crown.xml",
+        can_be_unlocked = true,
+        can_be_purchased = false,
+        unlocked_default = false,
+        price = 0,
+        on_win = function(self, lobby, data, entity) -- runs when player wins a round
+            local unlock_flag = "cosmetic_unlocked_"..self.id
+            if(not HasFlagPersistent(unlock_flag))then
+                local wins = tonumber(ModSettingGet("ARENA_COSMETIC_CROWN_COUNTER")) or 0
+                wins = wins + 1
+                if(wins >= 10)then
+                    AddFlagPersistent(unlock_flag)
+                    ModSettingRemove("ARENA_COSMETIC_CROWN_COUNTER")
+
+                    GamePrintImportant("$arena_cosmetic_unlock", string.format(GameTextGetTranslatedOrNot("$arena_cosmetic_hidden_unlock")), GameTextGetTranslatedOrNot(self.name))
+                end
+
+                ModSettingSet("ARENA_COSMETIC_CROWN_COUNTER", wins)
+            end
+        end,
+    },
+    -- detective
+    {
+        id = "detective_hat",
+        name = "Detective Hat",
+        description = "What crime are we solving today?",
+        icon = "mods/evaisa.arena/content/cosmetics/icons/detective.png",
+        credits = "Evaisa",
+        type = "hat",
+        sprite_offset = {x = 3, y = 7},
+        sprite = "mods/evaisa.arena/content/cosmetics/sprites/detective.xml",
+        can_be_unlocked = true,
+        can_be_purchased = true,
+        unlocked_default = false,
+        price = 0,
+    },
+    -- ears
+    {
+        id = "ears_hat",
+        name = "Fluffy Ears",
+        description = "woahg they're so fluffy",
+        icon = "mods/evaisa.arena/content/cosmetics/icons/ears.png",
+        credits = "Evaisa",
+        type = "hat",
+        sprite_offset = {x = 3, y = 7},
+        sprite = "mods/evaisa.arena/content/cosmetics/sprites/ears.xml",
+        can_be_unlocked = true,
+        can_be_purchased = true,
+        unlocked_default = false,
+        price = 0,
+    },
+    -- elk_boss
+    {
+        id = "elk_boss_hat",
+        name = "Tapion vasalli",
+        description = "Some fancy antlers these are.",
+        icon = "mods/evaisa.arena/content/cosmetics/icons/elk_boss.png",
+        credits = "Evaisa",
+        type = "hat",
+        sprite_offset = {x = 3, y = 7},
+        sprite = "mods/evaisa.arena/content/cosmetics/sprites/elk_boss.xml",
+        can_be_unlocked = true,
+        can_be_purchased = true,
+        unlocked_default = false,
+        price = 0,
+    },
+    -- elk
+    {
+        id = "elk_hat",
+        name = "Antlers",
+        description = "A pair of magestic antlers.",
+        icon = "mods/evaisa.arena/content/cosmetics/icons/elk.png",
+        credits = "Evaisa",
+        type = "hat",
+        sprite_offset = {x = 3, y = 7},
+        sprite = "mods/evaisa.arena/content/cosmetics/sprites/elk.xml",
+        can_be_unlocked = true,
+        can_be_purchased = true,
+        unlocked_default = false,
+        price = 0,
+    },
+    -- flatcap
+    {
+        id = "flatcap_hat",
+        name = "Flat Cap",
+        description = "A flat cap.",
+        icon = "mods/evaisa.arena/content/cosmetics/icons/flatcap.png",
+        credits = "Evaisa",
+        type = "hat",
+        sprite_offset = {x = 3, y = 7},
+        sprite = "mods/evaisa.arena/content/cosmetics/sprites/flatcap.xml",
+        can_be_unlocked = true,
+        can_be_purchased = true,
+        unlocked_default = false,
+        price = 0,
+    },
+    -- grenade
+    {
+        id = "grenade_hat",
+        name = "Kranuhiisi Mask",
+        description = "Wear the flesh of your enemies!",
+        icon = "mods/evaisa.arena/content/cosmetics/icons/grenade.png",
+        credits = "Evaisa",
+        type = "hat",
+        sprite_offset = {x = 3, y = 7},
+        sprite = "mods/evaisa.arena/content/cosmetics/sprites/grenade.xml",
+        can_be_unlocked = true,
+        can_be_purchased = true,
+        unlocked_default = false,
+        price = 0,
+    },
+    -- healer
+    {
+        id = "healer_hat",
+        name = "Parantajahiisi Mask",
+        description = "Medic!",
+        icon = "mods/evaisa.arena/content/cosmetics/icons/healer.png",
+        credits = "Evaisa",
+        type = "hat",
+        sprite_offset = {x = 3, y = 7},
+        sprite = "mods/evaisa.arena/content/cosmetics/sprites/healer.xml",
+        can_be_unlocked = true,
+        can_be_purchased = true,
+        unlocked_default = false,
+        price = 0,
+    },
+    -- leprechaun
+    {
+        id = "leprechaun_hat",
+        name = "Leprechaun Hat",
+        description = "Where did I hide the gold again?",
+        icon = "mods/evaisa.arena/content/cosmetics/icons/leprechaun.png",
+        credits = "Evaisa",
+        type = "hat",
+        sprite_offset = {x = 3, y = 7},
+        sprite = "mods/evaisa.arena/content/cosmetics/sprites/leprechaun.xml",
+        can_be_unlocked = true,
+        can_be_purchased = true,
+        unlocked_default = false,
+        price = 0,
+    },
+    -- plumber
+    {
+        id = "plumber_hat",
+        name = "Plumber Hat",
+        description = "Legally distinct italian plumber hat.",
+        icon = "mods/evaisa.arena/content/cosmetics/icons/plumber.png",
+        credits = "Evaisa",
+        type = "hat",
+        sprite_offset = {x = 3, y = 7},
+        sprite = "mods/evaisa.arena/content/cosmetics/sprites/plumber.xml",
+        can_be_unlocked = true,
+        can_be_purchased = true,
+        unlocked_default = false,
+        price = 0,
+    },
+    -- pylon
+    {
+        id = "pylon_hat",
+        name = "Pylon",
+        description = "I drank the blood of some people, but the people were on drugs, and now I'm a wizaerd!",
+        icon = "mods/evaisa.arena/content/cosmetics/icons/pylon.png",
+        credits = "Evaisa",
+        type = "hat",
+        sprite_offset = {x = 3, y = 7},
+        sprite = "mods/evaisa.arena/content/cosmetics/sprites/pylon.xml",
+        can_be_unlocked = true,
+        can_be_purchased = true,
+        unlocked_default = false,
+        price = 0,
+    },
+    -- sheriff
+    {
+        id = "sheriff_hat",
+        name = "Sheriff Hat",
+        description = "Yeehaw!",
+        icon = "mods/evaisa.arena/content/cosmetics/icons/sheriff.png",
+        credits = "Evaisa",
+        type = "hat",
+        sprite_offset = {x = 3, y = 7},
+        sprite = "mods/evaisa.arena/content/cosmetics/sprites/sheriff.xml",
+        can_be_unlocked = true,
+        can_be_purchased = true,
+        unlocked_default = false,
+        price = 0,
+    },
+    -- sombrero
+    {
+        id = "sombrero_hat",
+        name = "Sombrero",
+        description = "Shades you from the hot sun.",
+        icon = "mods/evaisa.arena/content/cosmetics/icons/sombrero.png",
+        credits = "Evaisa",
+        type = "hat",
+        sprite_offset = {x = 3, y = 7},
+        sprite = "mods/evaisa.arena/content/cosmetics/sprites/sombrero.xml",
+        can_be_unlocked = true,
+        can_be_purchased = true,
+        unlocked_default = false,
+        price = 0,
+    },
+    -- straw hat
+    {
+        id = "straw_hat",
+        name = "Straw Hat",
+        description = "A hat made from straw, often used by farmers.",
+        icon = "mods/evaisa.arena/content/cosmetics/icons/strawhat.png",
+        credits = "Evaisa",
+        type = "hat",
+        sprite_offset = {x = 3, y = 7},
+        sprite = "mods/evaisa.arena/content/cosmetics/sprites/strawhat.xml",
+        can_be_unlocked = true,
+        can_be_purchased = true,
+        unlocked_default = false,
+        price = 0,
+    },
+    -- tiara
+    {
+        id = "tiara_hat",
+        name = "Tiara",
+        description = "A fancy tiara.",
+        icon = "mods/evaisa.arena/content/cosmetics/icons/tiara.png",
+        credits = "Evaisa",
+        type = "hat",
+        sprite_offset = {x = 3, y = 7},
+        sprite = "mods/evaisa.arena/content/cosmetics/sprites/tiara.xml",
+        can_be_unlocked = true,
+        can_be_purchased = true,
+        unlocked_default = false,
+        price = 0,
+    },
+    -- toimari
+    {
+        id = "toimari_hat",
+        name = "Toimari Mask",
+        description = "You the boss now.",
+        icon = "mods/evaisa.arena/content/cosmetics/icons/toimari.png",
+        credits = "Evaisa",
+        type = "hat",
+        sprite_offset = {x = 3, y = 7},
+        sprite = "mods/evaisa.arena/content/cosmetics/sprites/toimari.xml",
+        can_be_unlocked = true,
+        can_be_purchased = true,
+        unlocked_default = false,
+        price = 0,
+    },
+    -- tophat
+    {
+        id = "tophat_hat",
+        name = "Top Hat",
+        description = "A fancy top hat.",
+        icon = "mods/evaisa.arena/content/cosmetics/icons/tophat.png",
+        credits = "Evaisa",
+        type = "hat",
+        sprite_offset = {x = 3, y = 7},
+        sprite = "mods/evaisa.arena/content/cosmetics/sprites/tophat.xml",
+        can_be_unlocked = true,
+        can_be_purchased = true,
+        unlocked_default = false,
+        price = 0,
+    },
+    -- welder
+    {
+        id = "welder_hat",
+        name = "Welding Mask",
+        description = "Safety first.",
+        icon = "mods/evaisa.arena/content/cosmetics/icons/welder.png",
+        credits = "Evaisa",
+        type = "hat",
+        sprite_offset = {x = 3, y = 7},
+        sprite = "mods/evaisa.arena/content/cosmetics/sprites/welder.xml",
+        can_be_unlocked = true,
+        can_be_purchased = true,
+        unlocked_default = false,
+        price = 0,
+    },
+    -- wizard
+    {
+        id = "wizard_hat",
+        name = "Wizard Hat",
+        description = "Improves your magic by 0%",
+        icon = "mods/evaisa.arena/content/cosmetics/icons/wizard.png",
+        credits = "Evaisa",
+        type = "hat",
+        sprite_offset = {x = 3, y = 7},
+        sprite = "mods/evaisa.arena/content/cosmetics/sprites/wizard.xml",
+        can_be_unlocked = true,
+        can_be_purchased = true,
+        unlocked_default = false,
+        price = 0,
+    }]]
 }
 
 cosmetic_types = {

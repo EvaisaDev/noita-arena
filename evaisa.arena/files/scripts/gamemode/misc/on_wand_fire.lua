@@ -11,7 +11,7 @@ function wand_fired( gun_entity_id )
             fire_count = tonumber( fire_count )
             fire_count = fire_count + 1
             GlobalsSetValue( "wand_fire_count", tostring( fire_count ) )
-            GamePrint("fired")
+            --GamePrint("fired")
         --[[end
     end]]
 end

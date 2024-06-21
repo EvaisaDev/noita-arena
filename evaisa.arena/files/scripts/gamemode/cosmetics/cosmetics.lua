@@ -60,7 +60,7 @@ cosmetics_handler = {
                 local count = 0
                 for _, cosmetic_id in ipairs(t)do
                     local cosmetic = cosmetic_dict[cosmetic_id]
-                    if(cosmetic.type == v.type and cosmetic)then
+                    if(cosmetic and cosmetic.type == v.type)then
                         count = count + 1
                         -- print type count
                         print(cosmetic.type.." count: "..count)
@@ -76,7 +76,7 @@ cosmetics_handler = {
                     local cosmetic_id = t[i]
                     if(cosmetic_id ~= id)then
                         local cosmetic = cosmetic_dict[cosmetic_id]
-                        if(cosmetic.type == v.type and cosmetic)then
+                        if(cosmetic and cosmetic.type == v.type)then
                             -- remove from list
                             table.remove(t, i)
                             print("Removed: "..cosmetic_id)
@@ -143,9 +143,10 @@ cosmetics_handler = {
                     _tags="character",
                     alpha=1, 
                     image_file=cosmetic.sprite, 
-                    next_rect_animation="", 
+                    next_rect_animation=cosmetic.sprite_animation or "", 
                     offset_x=offset_x, 
                     offset_y=offset_y, 
+                    rect_animation=cosmetic.sprite_animation or "",
                     z_index=0.4,
                 })
                 EntityAddComponent2(hat_entity, "SpriteAnimatorComponent")
@@ -373,7 +374,7 @@ cosmetics_handler = {
         if(cosmetic.unlocked_default or cosmetic.can_be_unlocked == false or HasFlagPersistent(unlock_flag))then
             return false
         end
-        local unlock_attempt = cosmetic.unlocked_default or cosmetic:try_unlock(lobby, data)
+        local unlock_attempt = cosmetic.unlocked_default or (cosmetic.try_unlock and cosmetic:try_unlock(lobby, data))
         if(unlock_attempt and not HasFlagPersistent(unlock_flag))then
             AddFlagPersistent(unlock_flag)
         end

@@ -1427,7 +1427,13 @@ networking = {
 
                     local mActiveItem = ComponentGetValue2(inventory2Comp, "mActiveItem")
 
-                    if (mActiveItem ~= nil) then
+                    print("Active item id: " .. tostring(mActiveItem))
+                    print("Client entity id: " .. tostring(client_entity))
+                    print("Item root entity id: " .. tostring(EntityGetRootEntity(mActiveItem)))
+                    print("Item is alive: " .. tostring(EntityGetIsAlive(mActiveItem)))
+                    print("Client is alive: " .. tostring(EntityGetIsAlive(client_entity)))
+
+                    if (mActiveItem ~= nil and client_entity == EntityGetRootEntity(mActiveItem)) then
                         local aimNormal_x, aimNormal_y = ComponentGetValue2(controlsComp, "mAimingVectorNormalized")
                         local aim_x, aim_y = ComponentGetValue2(controlsComp, "mAimingVector")
                         local firing = ComponentGetValue2(controlsComp, "mButtonDownFire")
