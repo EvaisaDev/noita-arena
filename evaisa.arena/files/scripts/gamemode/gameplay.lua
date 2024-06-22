@@ -1032,14 +1032,15 @@ ArenaGameplay = {
                 local currency = ModSettingGet("arena_cosmetics_currency") or 0
                 currency = currency + 100
                 ModSettingSet("arena_cosmetics_currency", currency)
-        
-                local player_entity = player.Get()
-                if(player_entity)then
-                    cosmetics_handler.OnWin(lobby, data, player_entity)
-                end
                 
                 data.client.winstreak = current_winstreak + 1
                 data.client.wins = current_wins + 1
+
+                        
+                local player_entity = player.Get()
+                if(player_entity)then
+                    cosmetics_handler.OnWin(lobby, data, player_entity, wins, winstreak)
+                end
             end
 
 

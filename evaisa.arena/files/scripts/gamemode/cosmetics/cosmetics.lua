@@ -27,7 +27,7 @@ cosmetics_handler = {
                     end
                 end
 
-                if(count < max_stack)then
+                if(count <= max_stack)then
                     return
                 end
 
@@ -67,7 +67,7 @@ cosmetics_handler = {
                     end
                 end
 
-                if(count < max_stack)then
+                if(count <= max_stack)then
                     return
                 end
 
@@ -124,7 +124,7 @@ cosmetics_handler = {
                     offset_x=6, 
                     offset_y=14, 
                     rect_animation="walk", 
-                    z_index=0.6,
+                    z_index=cosmetic.overlay_z or 0.5,
                 })
             end
             if(cosmetic.sprite)then
@@ -147,7 +147,7 @@ cosmetics_handler = {
                     offset_x=offset_x, 
                     offset_y=offset_y, 
                     rect_animation=cosmetic.sprite_animation or "",
-                    z_index=0.4,
+                    z_index=cosmetic.sprite_z or 0.4,
                 })
                 EntityAddComponent2(hat_entity, "SpriteAnimatorComponent")
                 EntityAddComponent2(hat_entity, "InheritTransformComponent", {
@@ -357,13 +357,13 @@ cosmetics_handler = {
             end
         end
     end,
-    OnWin = function(lobby, data, player)
+    OnWin = function(lobby, data, player, wins, winstreak)
         for k, cosmetic in ipairs(cosmetics)do
             if(player and EntityGetIsAlive(player))then
                 local can_run = cosmetics_handler.CosmeticValid(lobby, data, cosmetic, player, true) or cosmetic.always_run_win_func
                 if(can_run)then
                     if(cosmetic.on_win ~= nil)then
-                        cosmetic:on_win(lobby, data, player)
+                        cosmetic:on_win(lobby, data, player, wins, winstreak)
                     end
                 end
             end

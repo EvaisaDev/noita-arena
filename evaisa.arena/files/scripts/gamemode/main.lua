@@ -2880,14 +2880,6 @@ ArenaMode = {
             end
         end
 
-        if(input:WasKeyPressed("k"))then
-            -- get player
-            local player_entity = player.Get()
-            if(player_entity and EntityGetIsAlive(player_entity))then
-                EntityInflictDamage(player_entity, 10000, "DAMAGE_SLICE", "player", "BLOOD_EXPLOSION", 0, 0, GameGetWorldStateEntity())
-            end
-        end
-
         --[[
         if (input:WasKeyPressed("f5")) then
             

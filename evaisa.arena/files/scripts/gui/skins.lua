@@ -482,24 +482,32 @@ skins.init = function()
 
                             GuiImage(self.gui, new_id(), slot_x, slot_y, "mods/evaisa.arena/files/sprites/ui/cosmetics/slot.png", alpha, scale, scale)
                             local clicked, _, hovered = GuiGetPreviousWidgetInfo(self.gui)
-                            if(hovered and last_hovered_item_index ~= item_index)then
-                                GamePlaySound("data/audio/Desktop/ui.bank", "ui/button_select", 0, 0)
-                                
-                                last_hovered_item_index = item_index
-                            elseif(not hovered and last_hovered_item_index == item_index)then
-                                last_hovered_item_index = nil
-                            end
 
-                            if(not unlocked)then
-                                if(currency >= item.price)then
-                                    GuiTooltip(self.gui, item.name, string.format(GameTextGetTranslatedOrNot("$arena_cosmetics_buy"), item.price))
-                                else
-                                    GuiTooltip(self.gui, item.name, GameTextGetTranslatedOrNot("$arena_cosmetics_buy_not_enough"))
+                            local mouse_x, mouse_y = input:GetUIMousePos(self.gui)
+
+                            -- make sure mouse is within bounds of the window
+                            if(not self.inputs_locked and mouse_x >= x and mouse_x <= x + main_container_width and mouse_y >= y and mouse_y <= y + main_container_height)then
+                            
+                                if(hovered and last_hovered_item_index ~= item_index)then
+                                    GamePlaySound("data/audio/Desktop/ui.bank", "ui/button_select", 0, 0)
+                                    
+                                    last_hovered_item_index = item_index
+                                elseif(not hovered and last_hovered_item_index == item_index)then
+                                    last_hovered_item_index = nil
                                 end
-                            else
-                                GuiTooltip(self.gui, item.name, item.description)
-                            end
 
+
+                                if(not unlocked)then
+                                    if(currency >= item.price)then
+                                        GuiTooltip(self.gui, item.name, string.format(GameTextGetTranslatedOrNot("$arena_cosmetics_buy"), item.price))
+                                    else
+                                        GuiTooltip(self.gui, item.name, GameTextGetTranslatedOrNot("$arena_cosmetics_buy_not_enough"))
+                                    end
+                                else
+                                    GuiTooltip(self.gui, item.name, item.description)
+                                end
+
+                            end
                             local cosmetic_enabled = function(item_id)
                                 for i, id in ipairs(self.selected_cosmetics)do
                                     if(id == item_id)then
@@ -509,29 +517,31 @@ skins.init = function()
                                 return false
                             end
 
-
-                            if(clicked)then
-                                GamePlaySound("data/audio/Desktop/ui.bank", "ui/button_click", 0, 0)
+                            if(not self.inputs_locked and mouse_x >= x and mouse_x <= x + main_container_width and mouse_y >= y and mouse_y <= y + main_container_height)then
                                 
-                                -- check if item is unlocked
-                                if(unlocked)then
-                                    if(cosmetic_enabled(item.id))then
-                                        -- remove from selected cosmetics
-                                        for i, id in ipairs(self.selected_cosmetics)do
-                                            if(id == item.id)then
-                                                table.remove(self.selected_cosmetics, i)
-                                                break
+                                if(clicked)then
+                                    GamePlaySound("data/audio/Desktop/ui.bank", "ui/button_click", 0, 0)
+                                    
+                                    -- check if item is unlocked
+                                    if(unlocked)then
+                                        if(cosmetic_enabled(item.id))then
+                                            -- remove from selected cosmetics
+                                            for i, id in ipairs(self.selected_cosmetics)do
+                                                if(id == item.id)then
+                                                    table.remove(self.selected_cosmetics, i)
+                                                    break
+                                                end
                                             end
+                                        else
+                                            table.insert(self.selected_cosmetics, item.id)
+                                            cosmetics_handler.CosmeticsGetValidList(self.selected_cosmetics, item.id)
                                         end
                                     else
-                                        table.insert(self.selected_cosmetics, item.id)
-                                        cosmetics_handler.CosmeticsGetValidList(self.selected_cosmetics, item.id)
-                                    end
-                                else
-                                    if(currency >= item.price)then
-                                        currency = currency - item.price
-                                        ModSettingSet("arena_cosmetics_currency", currency)
-                                        cosmetics_handler.Unlock(item.id)
+                                        if(currency >= item.price)then
+                                            currency = currency - item.price
+                                            ModSettingSet("arena_cosmetics_currency", currency)
+                                            cosmetics_handler.Unlock(item.id)
+                                        end
                                     end
                                 end
                             end
@@ -811,7 +821,9 @@ skins.init = function()
                 {
                     text = GameTextGetTranslatedOrNot("$arena_skins_confirm_save"),
                     callback = function()
-                        self.inputs_locked = false
+                        delay.new(5, function()
+                            self.inputs_locked = false
+                        end)
                         -- save skin
                         if(not self.selected_skin.is_default and self.selected_skin.path)then
                             fs.remove(self.selected_skin.path)
