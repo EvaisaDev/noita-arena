@@ -8,6 +8,9 @@ if(not debugging)then
 	arena_log.enabled = false
 end
 
+dofile_once("mods/evaisa.arena/content/data.lua")
+
+
 dofile("mods/evaisa.arena/files/scripts/utilities/utils.lua")
 
 mp_helpers = dofile("mods/evaisa.mp/files/scripts/helpers.lua")
@@ -33,8 +36,11 @@ networking = dofile("mods/evaisa.arena/files/scripts/gamemode/networking.lua")
 --spectator_networking = dofile("mods/evaisa.arena/files/scripts/gamemode/spectator_networking.lua")
 
 upgrade_system = dofile("mods/evaisa.arena/files/scripts/gamemode/misc/upgrade_system.lua")
+
 gameplay_handler = dofile("mods/evaisa.arena/files/scripts/gamemode/gameplay.lua")
 spectator_handler = dofile("mods/evaisa.arena/files/scripts/gamemode/spectator.lua")
+
+
 
 skin_system = dofile("mods/evaisa.arena/files/scripts/gui/skins.lua").init()
 
@@ -49,7 +55,6 @@ local randomized_seed = true
 local playerinfo_menu = dofile("mods/evaisa.arena/files/scripts/utilities/playerinfo_menu.lua")
 
 dofile_once("data/scripts/perks/perk_list.lua")
-dofile_once("mods/evaisa.arena/content/data.lua")
 
 local applied_seed = 0
 
@@ -613,8 +618,8 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 176,
-    required_online_version = 359,
+    version = 178,
+    required_online_version = 363,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
     end,
@@ -2593,9 +2598,6 @@ ArenaMode = {
         BiomeMapLoad_KeepPlayer("mods/evaisa.arena/files/scripts/world/map_arena.lua")
     end,
     start = function(lobby, was_in_progress)
-        RunWhenPlayerExists(function()
-            skin_system.load(lobby)
-        end)
 
         for i, v in ipairs(EntityGetWithTag("player_unit"))do
             EntityKill(v)
@@ -2693,6 +2695,11 @@ ArenaMode = {
             gameplay_handler.LoadPlayer(lobby, data)
         end
 
+        RunWhenPlayerExists(function()
+            skin_system.load(lobby, data)
+        end)
+
+
         gameplay_handler.LoadLobby(lobby, data, true, true)
 
         if (playermenu ~= nil) then
@@ -2705,6 +2712,7 @@ ArenaMode = {
         networking.send.request_ready_states(lobby)
         networking.send.request_skins(lobby)
 
+        
         --message_handler.send.Handshake(lobby)
     end,
     --[[
@@ -2865,14 +2873,14 @@ ArenaMode = {
             gameplay_handler.Update(lobby, data)
    
 
-            if (not IsPaused()) then
+            if (not IsPaused() and not GameHasFlagRun("arena_trailer_mode")) then
                 if (playermenu ~= nil) then
                     playermenu:Update(data, lobby)
                 end
             end
         end
 
-        
+        --[[
         if (input:WasKeyPressed("f5")) then
             
             -- global table snapshot
@@ -2884,11 +2892,65 @@ ArenaMode = {
 
         end
 
-        --[[
+        
         if(input:WasKeyPressed("f9"))then
-            ArenaGameplay.WinnerCheck(lobby, data)
+            ArenaGameplay.WinnerCheck(lobby, data, true)
         end
+        if(input:WasKeyPressed("f10"))then
+            -- add 1000 cosmetics currency'
+            local currency = ModSettingGet("arena_cosmetics_currency") or 0
+            currency = currency + 1000
+            ModSettingSet("arena_cosmetics_currency", currency)
+        end
+        if(input:WasKeyPressed("h"))then
+            if(not GameHasFlagRun("arena_trailer_mode"))then
 
+                local particle_positions = {
+                    original = {x = 0, y = -80},
+                    spoop = {x = -107, y = 81},
+                    tryon = {x = -4, y = -57},
+                    bureon = {x = 0, y = -8},
+                    stadium = {x = 247, y = -83},
+                    coalpit = {x = -33, y = -39},
+                }
+
+                --EntityLoad("mods/evaisa.arena/files/entities/particles/trailer/arena_logo.xml", 0, -100)
+                local current_map = steamutils.GetLobbyData("current_map")
+
+                if (particle_positions[current_map] ~= nil) then
+                    local x = particle_positions[current_map].x
+                    local y = particle_positions[current_map].y
+                    trailer_camera_x = x
+                    trailer_camera_y = y
+                    EntityLoad("mods/evaisa.arena/files/entities/particles/trailer/arena_logo.xml", x, y)
+                else
+                    local x = 0
+                    local y = 0
+                    trailer_camera_x = x
+                    trailer_camera_y = y
+                    EntityLoad("mods/evaisa.arena/files/entities/particles/trailer/arena_logo.xml", x, y)
+                end
+
+                networking.send.spawn_trailer_effects(lobby)
+
+                GameSetCameraFree(true)
+
+                
+                GameAddFlagRun("arena_trailer_mode")
+            else
+                GameRemoveFlagRun("game_paused")
+                GameRemoveFlagRun("arena_trailer_mode")
+                local particles = EntityGetWithTag("arena_logo")
+                for i, v in ipairs(particles)do
+                    EntityKill(v)
+                end
+
+                GameSetCameraFree(false)
+            end
+            
+        end
+        ]]
+        --[[
         if(input:WasKeyPressed("f10"))then
             if(steam_utils.IsOwner())then
                 GameRemoveFlagRun("DeserializedHolyMountain")
@@ -2931,6 +2993,11 @@ ArenaMode = {
             
         end]]
 
+        if(GameHasFlagRun("arena_trailer_mode"))then
+            GameAddFlagRun("game_paused")
+            GameSetCameraFree(false)
+            GameSetCameraPos(trailer_camera_x or 0, trailer_camera_y or 0)
+        end
 
         if(GameGetFrameNum() % 60 == 0)then
             scoreboard.apply_data(lobby, data)
@@ -2945,7 +3012,10 @@ ArenaMode = {
 
         gameplay_handler.LateUpdate(lobby, data)
 
-
+        if(GameHasFlagRun("arena_trailer_mode"))then
+            GameSetCameraFree(false)
+            GameSetCameraPos(trailer_camera_x or 0, trailer_camera_y or 0)
+        end
         
 
     end,
@@ -3056,9 +3126,6 @@ ArenaMode = {
             v:Clean(lobby)
             data.players[k] = nil
         end
-
-        --local name = steamutils.getTranslatedPersonaName(playerid)
-        GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_player_left") ,tostring(lobby_member_names[k])))
 
         -- if we are the last player, unready
         if(not data.spectator_mode)then

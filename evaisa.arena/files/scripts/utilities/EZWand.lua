@@ -1182,39 +1182,6 @@ function wand:GetName()
   error("No item component found", 2)
 end
 
-function wand:PickUp(entity)
-    local item_component = EntityGetFirstComponentIncludingDisabled(self.entity_id, "ItemComponent")
-    local preferred_inv = "QUICK"
-    if item_component then
-      ComponentSetValue2(item_component, "has_been_picked_by_player", true)
-      preferred_inv = ComponentGetValue2(item_component, "preferred_inventory")
-    end
-
-    local entity_children = EntityGetAllChildren(entity) or {}
-
-    for key, child in pairs( entity_children ) do
-      if EntityGetName( child ) == "inventory_"..string.lower(preferred_inv) then
-        EntityAddChild( child, self.entity_id)
-      end
-    end
-  
-    EntitySetComponentsWithTagEnabled( self.entity_id, "enabled_in_world", false )
-    EntitySetComponentsWithTagEnabled( self.entity_id, "enabled_in_hand", false )
-    EntitySetComponentsWithTagEnabled( self.entity_id, "enabled_in_inventory", true )
-  
-    local wand_children = EntityGetAllChildren(self.entity_id) or {}
-  
-    for k, v in ipairs(wand_children)do
-      EntitySetComponentsWithTagEnabled( self.entity_id, "enabled_in_world", false )
-    end
-
-    local sprite_particle_emitter_comp = EntityGetFirstComponentIncludingDisabled(self.entity_id, "SpriteParticleEmitterComponent")
-    if sprite_particle_emitter_comp ~= nil then
-        EntitySetComponentIsEnabled(self.entity_id, sprite_particle_emitter_comp, false)
-    end
-  
-end
-
 function wand:PlaceAt(x, y)
 	EntitySetComponentIsEnabled(self.entity_id, self.ability_component, true)
 	local hotspot_comp = EntityGetFirstComponentIncludingDisabled(self.entity_id, "HotspotComponent")

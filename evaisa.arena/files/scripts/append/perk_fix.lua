@@ -73,6 +73,27 @@ local skip_function_list = {
 }
 
 local rewrites = {
+	ADVENTURER = {
+		-- shooting unedited wands gives back HP
+		id = "ADVENTURER",
+		ui_name = "$perk_adventurer",
+		ui_description = "$perkdesc_adventurer",
+		ui_icon = "data/ui_gfx/perk_icons/adventurer.png",
+		perk_icon = "data/items_gfx/perks/adventurer.png",
+		stackable = STACKABLE_NO,
+		func = function( entity_perk_item, entity_who_picked, item_name )
+			print("Adventurer perk picked")
+			EntityAddComponent2( entity_who_picked, "LuaComponent", 
+			{
+				_tags = "perk_component",
+				script_source_file = "data/scripts/perks/adventurer.lua",
+				execute_every_n_frame = 1,
+				execute_on_added = true,
+				call_init_function = true,
+			} )
+			
+		end,
+	},
 	-- Fixed issue where health was reset on load
 	GLASS_CANNON = {
 		id = "GLASS_CANNON",
@@ -206,7 +227,7 @@ local rewrites = {
 		ui_icon = "data/ui_gfx/perk_icons/teleportitis.png",
 		perk_icon = "data/items_gfx/perks/teleportitis.png",
 		stackable = STACKABLE_NO,
-		usable_by_enemies = true,
+		usable_by_enemies = false,
 		run_on_clients = false,
 		func = function( entity_perk_item, entity_who_picked, item_name )
 			GameAddFlagRun( "teleportitis" )
@@ -223,22 +244,17 @@ local rewrites = {
 		stackable_maximum = 5,
 		max_in_perk_pool = 2,
 		usable_by_enemies = true,
-		on_player_load = function(entity_who_picked)
-			local name = EntityGetName( entity_who_picked )
-			print("resetting shield count for "..name..".")
-			GlobalsSetValue( "PERK_SHIELD_COUNT_"..tostring(name), "0" )
-		end,
 		func = function( entity_perk_item, entity_who_picked, item_name )
 			local x,y = EntityGetTransform( entity_who_picked )
 			local name = EntityGetName( entity_who_picked )
 			local child_id = EntityLoad( "data/entities/misc/perks/shield.xml", x, y )
 			
-			local shield_num = tonumber( GlobalsGetValue( "PERK_SHIELD_COUNT_"..tostring(name), "0" ) )
+			local shield_num = EntityHelper.GetVariable(entity_who_picked, "shield_count") or 0
 			local shield_radius = 10 + shield_num * 2.5
 			local charge_speed = math.max( 0.22 - shield_num * 0.05, 0.02 )
 			shield_num = shield_num + 1
 
-			GlobalsSetValue( "PERK_SHIELD_COUNT_"..tostring(name), tostring( shield_num ) )
+			EntityHelper.SetVariable(entity_who_picked, "shield_count", shield_num)
 			
 			local comps = EntityGetComponent( child_id, "EnergyShieldComponent" )
 			if( comps ~= nil ) then
@@ -485,7 +501,7 @@ local rewrites = {
             local respawn_count = tonumber( GlobalsGetValue( "RESPAWN_COUNT", "0" ) )
             respawn_count = respawn_count + 1
 
-			GamePrint("Respawn count set to "..tostring(respawn_count)..".")
+			--GamePrint("Respawn count set to "..tostring(respawn_count)..".")
 			print("Respawn count set to "..tostring(respawn_count)..".")
 
             GlobalsSetValue( "RESPAWN_COUNT", tostring( respawn_count ) )

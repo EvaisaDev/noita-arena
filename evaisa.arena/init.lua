@@ -145,7 +145,7 @@ function OnMagicNumbersAndWorldSeedInitialized()
         end
     end
 
-    --print(tostring(biome_list))
+    print(tostring(biome_list))
 
     ModTextFileSetContent("data/biome/_biomes_all.xml", tostring(biome_list))
 

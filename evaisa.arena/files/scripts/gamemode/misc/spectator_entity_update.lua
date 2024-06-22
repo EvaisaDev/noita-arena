@@ -29,8 +29,26 @@ hide_entity = function(entity)
 end
 
 last_held_entity = last_held_entity or nil
+if(GameHasFlagRun("arena_trailer_mode"))then
+    -- get inventory gui component
+    local gui = EntityGetFirstComponentIncludingDisabled(entity, "InventoryGuiComponent")
+    if gui ~= nil then
+        EntityRemoveComponent(entity, gui)
+    end
+    -- get status effect data component
+    local status_effect_data = EntityGetFirstComponentIncludingDisabled(entity, "StatusEffectDataComponent")
+    if status_effect_data ~= nil then
+        EntityRemoveComponent(entity, status_effect_data)
+    end
+end
+
 
 if inventory ~= nil then
+    if(GameHasFlagRun("arena_trailer_mode"))then
+        EntityRemoveComponent(entity, inventory)
+        return
+    end
+
     local held_item = ComponentGetValue2(inventory, "mActiveItem")
 
     if held_item ~= nil and held_item ~= 0 and held_item ~= last_held_entity and EntityGetIsAlive(held_item) then

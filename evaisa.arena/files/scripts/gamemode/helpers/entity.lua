@@ -1,5 +1,13 @@
 local entity = {}
 
+GameDestroyInventoryItems = function( entity_who_picked )
+    local items = GameGetAllInventoryItems( entity_who_picked )
+    for i, item in ipairs(items or {}) do
+        EntityRemoveFromParent( item )
+        EntityKill( item )
+    end
+end
+
 entity.ClearGameEffects = function( ent )
     local components = EntityGetComponent(ent, "GameEffectComponent")
     if components ~= nil then
@@ -132,12 +140,32 @@ entity.GetVariable = function(ent, name)
     return nil
 end
 
+local function pickup_tag_fix(item)
+    EntitySetComponentsWithTagEnabled( item, "enabled_in_world", false )
+    EntitySetComponentsWithTagEnabled( item, "enabled_in_hand", false )
+    EntitySetComponentsWithTagEnabled( item, "enabled_in_inventory", true )
+
+    -- get all children
+    local children = EntityGetAllChildren(item)
+
+    -- loop through children
+    if children ~= nil then
+        for i,child in ipairs(children) do
+            pickup_tag_fix(child)
+        end
+    end
+end
+
 entity.PickItem = function(ent, item, inventory)
     local item_component = EntityGetFirstComponentIncludingDisabled(item, "ItemComponent")
     local preferred_inv = "QUICK"
     if item_component then
       ComponentSetValue2(item_component, "has_been_picked_by_player", true)
       preferred_inv = ComponentGetValue2(item_component, "preferred_inventory")
+      ComponentSetValue2(item_component, "mFramePickedUp", GameGetFrameNum())
+      -- play_spinning_animation
+      ComponentSetValue2(item_component, "play_spinning_animation", true)
+      ComponentSetValue2(item_component, "play_hover_animation", false)
     end
     if inventory ~= nil then
       preferred_inv = inventory
@@ -151,18 +179,20 @@ entity.PickItem = function(ent, item, inventory)
       end
     end
   
-    EntitySetComponentsWithTagEnabled( item, "enabled_in_world", false )
-    EntitySetComponentsWithTagEnabled( item, "enabled_in_hand", false )
-    EntitySetComponentsWithTagEnabled( item, "enabled_in_inventory", true )
+    pickup_tag_fix(item)
+
+
+    local sprite_particle_emitter_comp = EntityGetFirstComponentIncludingDisabled(item, "SpriteParticleEmitterComponent")
+    if sprite_particle_emitter_comp ~= nil then
+        EntitySetComponentIsEnabled(item, sprite_particle_emitter_comp, false)
+    end
   
-    local wand_children = EntityGetAllChildren(item) or {}
-  
-    for k, v in ipairs(wand_children)do
-      EntitySetComponentsWithTagEnabled( item, "enabled_in_world", false )
-    end  
+
+    --print("Adding Item ("..item..") to Inventory ("..preferred_inv..") of Entity ("..ent..")")
+    --print("Item ("..item..") attached as child to Entity ("..EntityGetParent(item)..") of Root Entity ("..EntityGetRootEntity(item)..")")
 end
 
-entity.GivePerk = function( entity_who_picked, perk_id, amount, for_client, for_enemy )
+entity.GivePerk = function( entity_who_picked, perk_id, amount )
     -- fetch perk info ---------------------------------------------------
 
     if(entity_who_picked == nil or entity_who_picked == 0 or not EntityGetIsAlive(entity_who_picked))then
@@ -178,13 +208,10 @@ entity.GivePerk = function( entity_who_picked, perk_id, amount, for_client, for_
         return
     end
 
-    if (for_client and not (perk_data.run_on_clients or perk_data.usable_by_enemies)) then
+    if (not (perk_data.run_on_clients or perk_data.usable_by_enemies)) then
         return
     end
 
-    if (for_enemy and not perk_data.usable_by_enemies) then
-        return
-    end
 
     local no_remove = perk_data.do_not_remove or false
 

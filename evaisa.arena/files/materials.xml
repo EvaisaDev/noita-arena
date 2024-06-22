@@ -186,6 +186,23 @@
     </Graphics>
     </CellDataChild> 
 
+    <CellData 
+      name="arena_trailer_spark"  
+      ui_name="$mat_spark"
+        tags="[fire],[hot]"
+      burnable="0"  
+      density="1"  
+      cell_type="fire" 
+      wang_color="7fff6024"
+      generates_smoke="0"  
+      liquid_gravity="0.5"  
+      liquid_sand="0"  
+      on_fire="0"  
+      requires_oxygen="1"  
+      temperature_of_fire="0"
+      gfx_glow="1" >
+    </CellData>
+
     <Reaction probability="100"
         input_cell1="rock_static_mountain_drain" 			input_cell2="[liquid]"
         output_cell1="rock_static_mountain_drain" 		output_cell2="air"  
@@ -216,13 +233,6 @@
 
     <Reaction probability="100"
         input_cell1="rock_static_mountain_drain" 			input_cell2="[gas]"
-        output_cell1="rock_static_mountain_drain" 		output_cell2="air"  
-        blob_radius1="9"						blob_radius2="9"
-	    lob_restrict_to_input_material1="1" 
-	></Reaction>
-
-        <Reaction probability="100"
-        input_cell1="rock_static_mountain_drain" 			input_cell2="[corrodible]"
         output_cell1="rock_static_mountain_drain" 		output_cell2="air"  
         blob_radius1="9"						blob_radius2="9"
 	    lob_restrict_to_input_material1="1" 

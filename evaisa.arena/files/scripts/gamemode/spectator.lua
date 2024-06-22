@@ -56,12 +56,12 @@ SpectatorMode = {
     end,
     HandleSpectatorSync = function(lobby, data)
         if(data.spectated_player == nil)then
-            print("No spectated player")
+            --print("No spectated player")
             return
         end
         local player = data.players[tostring(data.spectated_player)]
         if(player == nil)then
-            print("No player")
+            --print("No player")
             return
         end
 
@@ -227,7 +227,7 @@ SpectatorMode = {
         end
     end,
     SpectateUpdate = function(lobby, data)
-        if (data.is_spectating) then
+        if (data.is_spectating and not GameHasFlagRun("arena_trailer_mode")) then
 
             SpectatorMode.SpectatorText(lobby, data)
 

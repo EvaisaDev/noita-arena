@@ -261,6 +261,7 @@ local function deserialize_damage_details(str)
     local smash_explosion = values[9] == 1
     local explosion_x = values[10]
     local explosion_y = values[11]
+    local attacker = values[12]
     
     
     --print("ragdoll_fx: " .. tostring(ragdoll_fx) .. ",\ndamage_types: " .. tostring(damage_types) .. ",\nknockback_force: " .. tostring(knockback_force) .. ",\nimpulse_x: " .. tostring(impulse_x) .. ",\nimpulse_y: " .. tostring(impulse_y) .. ",\nworld_pos_x: " .. tostring(world_pos_x) .. ",\nworld_pos_y: " .. tostring(world_pos_y) .. ",\nsmash_explosion: " .. tostring(smash_explosion) .. ",\nexplosion_x: " .. tostring(explosion_x) .. ",\nexplosion_y: " .. tostring(explosion_y))
@@ -277,7 +278,7 @@ local function deserialize_damage_details(str)
         smash_explosion = smash_explosion,
         explosion_x = tonumber(explosion_x),
         explosion_y = tonumber(explosion_y),
-    }
+    }, attacker
 end
 
 local round_to_decimal = function(num, numDecimalPlaces)
@@ -315,7 +316,8 @@ networking = {
                 data.players[tostring(user)].ready = true
 
                 if (not message[2]) then
-                    GamePrint(tostring(username) .. " is ready.")
+                    --GamePrint(tostring(username) .. " is ready.")
+                    GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_player_ready"), username))
                 end
 
                 if (steam_utils.IsOwner()) then
@@ -326,7 +328,8 @@ networking = {
                 data.players[tostring(user)].ready = false
 
                 if (not message[2]) then
-                    GamePrint(tostring(username) .. " is no longer ready.")
+                    --GamePrint(tostring(username) .. " is no longer ready.")
+                    GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_player_unready"), username))
                 end
 
                 if (steam_utils.IsOwner()) then
@@ -419,7 +422,8 @@ networking = {
 
             data.players[tostring(user)].loaded = true
 
-            GamePrint(username .. " has loaded the arena.")
+            --GamePrint(username .. " has loaded the arena.")
+            GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_player_loaded_arena"), username))
             arena_log:print(username .. " has loaded the arena.")
 
             if (steam_utils.IsOwner()) then
@@ -442,7 +446,7 @@ networking = {
                 return
             end
 
-            GamePrint("Starting countdown...")
+            --GamePrint("Starting countdown...")
 
             arena_log:print("Received all clear for starting countdown.")
 
@@ -568,15 +572,15 @@ networking = {
             if(data.state ~= "arena" and not data.spectator_mode)then
                 return
             end
-
+            print("Received item update")
 
             if (not gameplay_handler.CheckPlayer(lobby, user, data)) then
-                --print("Entity is missing!!! wtf!??")
+                print("Player was missing")
                 return
             end
 
             if (data.players[tostring(user)].entity and EntityGetIsAlive(data.players[tostring(user)].entity)) then
-                --print("weewoo update items")
+                print("weewoo update items")
                 local items_data = message[1]
                 local force = message[2]
                 local unlimited_spells = message[3]
@@ -589,22 +593,14 @@ networking = {
                     EntityAddTag(data.players[tostring(user)].entity, "unlimited_spells")
                 end
 
-                local items = GameGetAllInventoryItems(data.players[tostring(user)].entity) or {}
-                for i, item_id in ipairs(items) do
-                    GameKillInventoryItem(data.players[tostring(user)].entity, item_id)
-                    EntityKill(item_id)
-                end
+                GameDestroyInventoryItems(data.players[tostring(user)].entity)
 
                 local has_spectator = false
                 local spectator_pickupper = nil
 
                 -- if we are in spectator mode
                 if (data.spectated_player == user and data.spectator_entity ~= nil and EntityGetIsAlive(data.spectator_entity)) then
-                    local items = GameGetAllInventoryItems(data.spectator_entity) or {}
-                    for i, item_id in ipairs(items) do
-                        GameKillInventoryItem(data.spectator_entity, item_id)
-                        EntityKill(item_id)
-                    end
+                    GameDestroyInventoryItems(data.spectator_entity)
 
                     --print("Syncing spectator items.")
 
@@ -651,19 +647,23 @@ networking = {
 
                         local item_entity = nil
                         if(itemInfo.is_wand)then
-                            item:PickUp(data.players[tostring(user)].entity)
+                            --item:PickUp(data.players[tostring(user)].entity)
+                            EntityHelper.PickItem(data.players[tostring(user)].entity, item.entity_id, "QUICK")
+                            --print("forcing pickup of wand")
                             item_entity = item.entity_id
 
                             if(has_spectator)then
 
                                 ComponentSetValue2(spectator_pickupper, "only_pick_this_entity", spectator_item.entity_id)
                                 
-                                spectator_item:PickUp(data.spectator_entity)
+                                EntityHelper.PickItem(data.players[tostring(user)].entity, spectator_item.entity_id, "QUICK")
+                               -- spectator_item:PickUp(data.spectator_entity)
                                 spectator_item_entity = spectator_item.entity_id
 
                                 --print("Adding spectator item to spectator.")
                             end
                         else
+                            --print("forcing pickup of item")
                             EntityHelper.PickItem(data.players[tostring(user)].entity, item, "QUICK")
                             item_entity = item
 
@@ -736,7 +736,8 @@ networking = {
 
                             ComponentSetValue2(spectator_pickupper, "only_pick_this_entity", spectator_item.entity_id)
                             
-                            spectator_item:PickUp(data.spectator_entity)
+                            --spectator_item:PickUp(data.spectator_entity)
+                            EntityHelper.PickItem(data.players[tostring(user)].entity, spectator_item.entity_id, "QUICK")
                             spectator_item_entity = spectator_item.entity_id
 
                         else
@@ -809,7 +810,7 @@ networking = {
                         controls_data.kick = false
                     end
 
-                    --EntityHelper.BlockFiring(data.players[tostring(user)].entity, true)
+                    EntityHelper.BlockFiring(data.players[tostring(user)].entity, true)
 
                     if(message.fire)then
                         ComponentSetValue2(controlsComp, "mButtonDownFire", true)
@@ -1039,19 +1040,69 @@ networking = {
             if(data.state ~= "arena" and not data.spectator_mode)then
                 return
             end
-            
-            -- idk why i am delaying item switching by 5 frames
-            --delay.new(5, function()
-                if (not gameplay_handler.CheckPlayer(lobby, user, data)) then
-                    return
+
+            if (not gameplay_handler.CheckPlayer(lobby, user, data)) then
+                return
+            end
+
+            --GlobalsSetValue(tostring(wand.entity_id).."_wand", wandInfo.id)
+            local is_wand, slot_x, slot_y = message.is_wand, message.slot_x, message.slot_y
+            -- GamePrint("Switching item to slot: " .. tostring(slot_x) .. ", " .. tostring(slot_y))
+            if (data.players[tostring(user)].entity and EntityGetIsAlive(data.players[tostring(user)].entity)) then
+                local items = GameGetAllInventoryItems(data.players[tostring(user)].entity) or {}
+                local target = nil
+                local not_target = nil
+                for i, item in ipairs(items) do
+                    -- check id
+                    --local item_id = tonumber(GlobalsGetValue(tostring(item) .. "_item")) or -1
+                    local itemComp = EntityGetFirstComponentIncludingDisabled(item, "ItemComponent")
+                    local item_slot_x, item_slot_y = ComponentGetValue2(itemComp, "inventory_slot")
+
+                    local ability_comp = EntityGetFirstComponentIncludingDisabled(item, "AbilityComponent")
+                    
+                    local item_is_wand = false
+                    if(ability_comp and ComponentGetValue2(ability_comp, "use_gun_script"))then
+                        item_is_wand = true
+                    end
+
+                    if (item_slot_x == slot_x and item_slot_y == slot_y and item_is_wand == is_wand) then
+                        local inventory2Comp = EntityGetFirstComponentIncludingDisabled(
+                            data.players[tostring(user)].entity, "Inventory2Component")
+                        --local mActiveItem = ComponentGetValue2(inventory2Comp, "mActiveItem")
+
+                        target = item
+                        --if (mActiveItem ~= item) then
+                            
+                        --end
+                    else
+                        not_target = item
+                    end
+
+                    if(target and not_target)then
+                        break
+                    end
                 end
 
-                --GlobalsSetValue(tostring(wand.entity_id).."_wand", wandInfo.id)
-                local is_wand, slot_x, slot_y = message.is_wand, message.slot_x, message.slot_y
-                -- GamePrint("Switching item to slot: " .. tostring(slot_x) .. ", " .. tostring(slot_y))
-                if (data.players[tostring(user)].entity and EntityGetIsAlive(data.players[tostring(user)].entity)) then
-                    local items = GameGetAllInventoryItems(data.players[tostring(user)].entity) or {}
-                    for i, item in ipairs(items) do
+                if(not_target)then
+                    np.SetActiveHeldEntity(data.players[tostring(user)].entity, not_target, false, false)
+                end
+                
+                if(target)then
+                    np.SetActiveHeldEntity(data.players[tostring(user)].entity, target, false, false)
+                end
+
+                local has_spectator = false
+
+
+                -- if we are in spectator mode
+                if (data.spectated_player == user and data.spectator_entity ~= nil and EntityGetIsAlive(data.spectator_entity)) then
+                    has_spectator = true
+                end
+
+
+                if(has_spectator)then
+                    local spectator_items = GameGetAllInventoryItems(data.spectator_entity) or {}
+                    for i, item in ipairs(spectator_items) do
                         -- check id
                         --local item_id = tonumber(GlobalsGetValue(tostring(item) .. "_item")) or -1
                         local itemComp = EntityGetFirstComponentIncludingDisabled(item, "ItemComponent")
@@ -1065,57 +1116,20 @@ networking = {
                         end
     
                         if (item_slot_x == slot_x and item_slot_y == slot_y and item_is_wand == is_wand) then
-                            local inventory2Comp = EntityGetFirstComponentIncludingDisabled(
-                                data.players[tostring(user)].entity, "Inventory2Component")
+                            local inventory2Comp = EntityGetFirstComponentIncludingDisabled(data.spectator_entity, "Inventory2Component")
                             local mActiveItem = ComponentGetValue2(inventory2Comp, "mActiveItem")
     
                             if (mActiveItem ~= item) then
-                                game_funcs.SetActiveHeldEntity(data.players[tostring(user)].entity, item, false, false)
+                                game_funcs.SetActiveHeldEntity(data.spectator_entity, item, false, false)
+                                data.spectator_selected_item = item
+                                --print("Switching spectator item to slot: " .. tostring(slot_x) .. ", " .. tostring(slot_y))
                             end
                             break
                         end
                     end
-                    local has_spectator = false
-    
- 
-                    -- if we are in spectator mode
-                    if (data.spectated_player == user and data.spectator_entity ~= nil and EntityGetIsAlive(data.spectator_entity)) then
-                        has_spectator = true
-                    end
-    
-    
-                    if(has_spectator)then
-                        local spectator_items = GameGetAllInventoryItems(data.spectator_entity) or {}
-                        for i, item in ipairs(spectator_items) do
-                            -- check id
-                            --local item_id = tonumber(GlobalsGetValue(tostring(item) .. "_item")) or -1
-                            local itemComp = EntityGetFirstComponentIncludingDisabled(item, "ItemComponent")
-                            local item_slot_x, item_slot_y = ComponentGetValue2(itemComp, "inventory_slot")
-        
-                            local ability_comp = EntityGetFirstComponentIncludingDisabled(item, "AbilityComponent")
-                            
-                            local item_is_wand = false
-                            if(ability_comp and ComponentGetValue2(ability_comp, "use_gun_script"))then
-                                item_is_wand = true
-                            end
-        
-                            if (item_slot_x == slot_x and item_slot_y == slot_y and item_is_wand == is_wand) then
-                                local inventory2Comp = EntityGetFirstComponentIncludingDisabled(data.spectator_entity, "Inventory2Component")
-                                local mActiveItem = ComponentGetValue2(inventory2Comp, "mActiveItem")
-        
-                                if (mActiveItem ~= item) then
-                                    game_funcs.SetActiveHeldEntity(data.spectator_entity, item, false, false)
-                                    data.spectator_selected_item = item
-                                    --print("Switching spectator item to slot: " .. tostring(slot_x) .. ", " .. tostring(slot_y))
-                                end
-                                break
-                            end
-                        end
-                    end
                 end
-            --end)
-
-        
+            end
+          
         end,
         sync_wand_stats = function(lobby, message, user, data)
             if(data.state ~= "arena" and not data.spectator_mode)then
@@ -1162,17 +1176,27 @@ networking = {
             end
         end,
         health_update = function(lobby, message, user, data)
-            local health = message[1]
-            local maxHealth = message[2]
-            local damage_details = message[3]
-            local damage = message[4]
-            local invincibility_frames = message[5]
+            local attacker = message[1]
+            local health = message[2]
+            local maxHealth = message[3]
+            local damage_details = message[4]
+            local damage = message[5]
+            local invincibility_frames = message[6]
 
             if (health ~= nil and maxHealth ~= nil) then
                 local client_entity = data.players[tostring(user)].entity
                 if (client_entity ~= nil) then
                     if(not EntityGetIsAlive(client_entity))then
                         return
+                    end
+
+                    -- find attacker entity
+                    local attacker_entity = nil
+                    if (attacker ~= nil and data.players[tostring(attacker)] ~= nil) then
+                        local ent = data.players[tostring(attacker)].entity
+                        if(ent and EntityGetIsAlive(ent))then
+                            attacker_entity = ent
+                        end
                     end
 
                     --print("Received health update!!")
@@ -1206,10 +1230,10 @@ networking = {
                         ]]
 
 
-                        local damage_entity = EntityGetWithName("dummy_damage")
+                        --[[local damage_entity = EntityGetWithName("dummy_damage")
                         if(damage_entity == nil or damage_entity == 0 or not EntityGetIsAlive(damage_entity))then
                             damage_entity = EntityCreateNew("dummy_damage")
-                        end
+                        end]]
                         if(damage_details ~= nil and damage_details.ragdoll_fx ~= nil)then
                             --print(json.stringify(damage_details))
 
@@ -1253,7 +1277,7 @@ networking = {
                                 ragdoll_fx, 
                                 damage_details.impulse_x, 
                                 damage_details.impulse_y, 
-                                damage_entity, 
+                                attacker_entity, 
                                 damage_details.world_pos_x, 
                                 damage_details.world_pos_y, 
                                 damage_details.knockback_force)
@@ -1269,7 +1293,7 @@ networking = {
                             "NONE", 
                             0, 
                             0, 
-                            EntityGetWithName("dummy_damage"))
+                            attacker_entity)
 
                             --print("inflicting damage: " .. tostring(damage))
 
@@ -1403,7 +1427,13 @@ networking = {
 
                     local mActiveItem = ComponentGetValue2(inventory2Comp, "mActiveItem")
 
-                    if (mActiveItem ~= nil) then
+                    print("Active item id: " .. tostring(mActiveItem))
+                    print("Client entity id: " .. tostring(client_entity))
+                    print("Item root entity id: " .. tostring(EntityGetRootEntity(mActiveItem)))
+                    print("Item is alive: " .. tostring(EntityGetIsAlive(mActiveItem)))
+                    print("Client is alive: " .. tostring(EntityGetIsAlive(client_entity)))
+
+                    if (mActiveItem ~= nil and client_entity == EntityGetRootEntity(mActiveItem)) then
                         local aimNormal_x, aimNormal_y = ComponentGetValue2(controlsComp, "mAimingVectorNormalized")
                         local aim_x, aim_y = ComponentGetValue2(controlsComp, "mAimingVector")
                         local firing = ComponentGetValue2(controlsComp, "mButtonDownFire")
@@ -1460,7 +1490,15 @@ networking = {
                 local damage_details = message[2]
                 --print(json.stringify(killer))
 
-                data.players[tostring(user)]:Death(damage_details)
+                local attacker_entity = nil
+                if (killer ~= nil and data.players[tostring(killer)] ~= nil) then
+                    local ent = data.players[tostring(killer)].entity
+                    if(ent and EntityGetIsAlive(ent))then
+                        attacker_entity = ent
+                    end
+                end
+
+                data.players[tostring(user)]:Death(damage_details, attacker_entity)
 
                 data.players[tostring(user)].alive = false
                 data.deaths = data.deaths + 1
@@ -1468,12 +1506,27 @@ networking = {
 
 
                 if (killer == nil) then
-                    GamePrint(tostring(username) .. " died.")
+                    --GamePrint(tostring(username) .. " died.")
+                    GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_other_player_died"), username))
                 else
                     local killer_id = gameplay_handler.FindUser(lobby, killer)
                     if (killer_id ~= nil) then
-                        GamePrint(tostring(username) ..
-                            " was killed by " .. steamutils.getTranslatedPersonaName(killer_id))
+                        --[[GamePrint(tostring(username) ..
+                            " was killed by " .. steamutils.getTranslatedPersonaName(killer_id))]]
+                        GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_kill"), username, steamutils.getTranslatedPersonaName(killer_id)))
+
+                        -- if killer is us
+                        if (killer_id == steam_utils.getSteamID()) then
+                            -- grant coin
+                            local currency = ModSettingGet("arena_cosmetics_currency") or 0
+                            currency = currency + 10
+                            ModSettingSet("arena_cosmetics_currency", currency)
+
+                            local player_entity = player.Get()
+                            if(player_entity)then
+                                cosmetics_handler.OnKill(lobby, data, player_entity)
+                            end
+                        end
 
                         if(steam_utils.IsOwner())then
                             local user = killer_id
@@ -1493,7 +1546,8 @@ networking = {
                             gameplay_handler.WinnerCheck(lobby, data)
                         end
                     else
-                        GamePrint(tostring(username) .. " died.")
+                        --GamePrint(tostring(username) .. " died.")
+                        GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_other_player_died"), username))
                     end
                 end
 
@@ -1515,11 +1569,11 @@ networking = {
                 end
                 
                 -- kill the player
-                local client_entity = data.players[tostring(user)].entity
+                --[[local client_entity = data.players[tostring(user)].entity
                 if (client_entity ~= nil and EntityGetIsAlive(client_entity)) then
                     -- CLIENT ANNIHILATION WAWAWAHAHAHAHAH
                     EntityKill(client_entity)
-                end
+                end]]
 
 
             end
@@ -1546,6 +1600,7 @@ networking = {
         end,
         player_data_update = function(lobby, message, user, data)
             if(data.state ~= "arena" and not data.spectator_mode)then
+                print("not in arena")
                 return
             end
 
@@ -1557,9 +1612,11 @@ networking = {
 
             ]]
             if (not gameplay_handler.CheckPlayer(lobby, user, data)) then
+                print("not a player")
                 return
             end
             local client_entity = data.players[tostring(user)].entity
+            local client_data = data.players[tostring(user)]
 
             if (data.spectator_mode or (GameHasFlagRun("player_is_unlocked")) and client_entity ~= nil and EntityGetIsAlive(client_entity)) then
                 
@@ -1570,29 +1627,17 @@ networking = {
                         cosmetics = message[2],
                     }
 
-                    local loaded_cosmetics = {}
-                    for _, id in ipairs(player_data.cosmetics)do
-                        loaded_cosmetics[id] = true
-                        if(not data.players[tostring(user)].cosmetics[id])then
-                            -- add cosmetic
-                            data.players[tostring(user)].cosmetics[id] = true
-                            if(client_entity)then
-                                print("Loading client cosmetic: " .. tostring(id))
-                                ArenaGameplay.UpdateCosmetics(lobby, data, "load", client_entity, true)
-                            end
-                        end
+                    local cosmetics_string = table.concat(player_data.cosmetics, ",")
+
+                    --print("Received cosmetics: " .. cosmetics_string)
+                    --print("Last cosmetics: " .. tostring(client_data.last_cosmetics))
+                    
+                    if(client_data.last_cosmetics ~= cosmetics_string)then
+                        print("Applying cosmetics!!")
+                        cosmetics_handler.ApplyCosmeticsList(lobby, data, client_entity, player_data.cosmetics, true, user)
                     end
 
-                    for k, v in pairs(data.players[tostring(user)].cosmetics)do
-                        if(not loaded_cosmetics[k])then
-                            -- remove cosmetic
-                            data.players[tostring(user)].cosmetics[k] = nil
-                            if(client_entity)then
-                                ArenaGameplay.UpdateCosmetics(lobby, data, "unload", client_entity, true)
-                            end
-                        end
-                    end
-
+                    client_data.last_cosmetics = cosmetics_string
 
                     local valid_ids = {}
 
@@ -2031,7 +2076,7 @@ networking = {
             if (not steam_utils.IsOwner( user))then
                 return
             end
-            GamePrint("starting map vote")
+            --GamePrint("starting map vote")
             gameplay_handler.StartMapVote(lobby, data, message[1])
         end,
         add_vote = function(lobby, message, user, data)
@@ -2530,6 +2575,33 @@ networking = {
 
             EntityApplyTransform(player_entity, target_x, target_y)
         end,
+        spawn_trailer_effects = function(lobby, message, user, data)
+            if(data.state ~= "arena")then
+                return
+            end
+
+            local particle_positions = {
+                original = {x = 0, y = -80},
+                spoop = {x = -107, y = 81},
+                tryon = {x = -4, y = -57},
+                bureon = {x = 0, y = -8},
+                stadium = {x = 247, y = -83},
+                coalpit = {x = -33, y = -39},
+            }
+
+            --EntityLoad("mods/evaisa.arena/files/entities/particles/trailer/arena_logo.xml", 0, -100)
+            local current_map = steamutils.GetLobbyData("current_map")
+
+            if (particle_positions[current_map] ~= nil) then
+                local x = particle_positions[current_map].x
+                local y = particle_positions[current_map].y
+                EntityLoad("mods/evaisa.arena/files/entities/particles/trailer/arena_logo.xml", x, y)
+            else
+                local x = particle_positions.original.x
+                local y = particle_positions.original.y
+                EntityLoad("mods/evaisa.arena/files/entities/particles/trailer/arena_logo.xml", x, y)
+            end
+        end,
     },
     send = {
         handshake = function(lobby)
@@ -2854,44 +2926,39 @@ networking = {
         switch_item = function(lobby, data, user, force, to_spectators)
             local held_item = player_helper.GetActiveHeldItem()
             if (held_item ~= nil and held_item ~= 0) then
-                if (force or user ~= nil or held_item ~= data.client.previous_selected_item) then
+     
+                local item_comp = EntityGetFirstComponentIncludingDisabled(held_item, "ItemComponent")
 
-                    --local wand_id = tonumber(GlobalsGetValue(tostring(held_item) .. "_item")) or -1
-                    --if (wand_id ~= -1) then
-                    local item_comp = EntityGetFirstComponentIncludingDisabled(held_item, "ItemComponent")
-
-                    -- the hell??
-                    if(item_comp == nil)then
-                        return
-                    end
-
-                    local slot_x, slot_y = ComponentGetValue2(item_comp, "inventory_slot")
-                    local ability_comp = EntityGetFirstComponentIncludingDisabled(held_item, "AbilityComponent")
-                    
-                    local is_wand = false
-                    if(ability_comp and ComponentGetValue2(ability_comp, "use_gun_script"))then
-                        is_wand = true
-                    end
-
-                    local item = ItemSwitch{
-                        is_wand = is_wand,
-                        slot_x = slot_x,
-                        slot_y = slot_y,
-                    }
-
-                    if (user == nil) then
-                        if(to_spectators)then
-                            steamutils.send("switch_item", item, steamutils.messageTypes.Spectators, lobby, true, true)
-                        else
-                            steamutils.send("switch_item", item, steamutils.messageTypes.OtherPlayers, lobby, true, true)
-                        end
-                        data.client.previous_selected_item = held_item
-                    else
-                        steamutils.sendToPlayer("switch_item", item, user, true)
-                    end
-                    
-                    --end
+                -- the hell??
+                if(item_comp == nil)then
+                    return
                 end
+
+                local slot_x, slot_y = ComponentGetValue2(item_comp, "inventory_slot")
+                local ability_comp = EntityGetFirstComponentIncludingDisabled(held_item, "AbilityComponent")
+                
+                local is_wand = false
+                if(ability_comp and ComponentGetValue2(ability_comp, "use_gun_script"))then
+                    is_wand = true
+                end
+
+                local item = ItemSwitch{
+                    is_wand = is_wand,
+                    slot_x = slot_x,
+                    slot_y = slot_y,
+                }
+
+                if (user == nil) then
+                    if(to_spectators)then
+                        steamutils.send("switch_item", item, steamutils.messageTypes.Spectators, lobby, true, true)
+                    else
+                        steamutils.send("switch_item", item, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+                    end
+                    --data.client.previous_selected_item = held_item
+                else
+                    steamutils.sendToPlayer("switch_item", item, user, true)
+                end
+    
             end
         end,
         sync_wand_stats = function(lobby, data, to_spectators)
@@ -2988,7 +3055,7 @@ networking = {
             if (health ~= nil and max_health ~= nil) then
                 if ((data.client.max_hp ~= max_health or data.client.hp ~= health) or force) then
                    -- print(GlobalsGetValue("last_damage_details", ""))
-                    local damage_details = deserialize_damage_details(GlobalsGetValue("last_damage_details", ""))
+                    local damage_details, attacker = deserialize_damage_details(GlobalsGetValue("last_damage_details", ""))
 
                     if(not GameHasFlagRun("player_died"))then
                         GlobalsSetValue("last_damage_details", "")
@@ -3005,7 +3072,7 @@ networking = {
                         invincibility_frames = tonumber(GlobalsGetValue("invincibility_frames", "5"))
                     end
 
-                    steamutils.send("health_update", { health, max_health, damage_details, damage, invincibility_frames }, steamutils.messageTypes.OtherPlayers, lobby,
+                    steamutils.send("health_update", {attacker, health, max_health, damage_details, damage, invincibility_frames }, steamutils.messageTypes.OtherPlayers, lobby,
                         true, true)
                 end
             end
@@ -3373,6 +3440,9 @@ networking = {
         end,
         swap_positions = function(user, x, y)
             steamutils.sendToPlayer("swap_positions", {x, y}, user, true)
+        end,
+        spawn_trailer_effects = function(lobby)
+            steamutils.send("spawn_trailer_effects", {}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
         end,
     },
 }

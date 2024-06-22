@@ -42,15 +42,15 @@ function playerinfo:New(lobby, user)
         obj.state = state
     end
 
-    obj.Death = function(self, damage_details)
+    obj.Death = function(self, damage_details, attacker)
         if(self.entity ~= nil and EntityGetIsAlive(self.entity))then
 
-            local items = GameGetAllInventoryItems( self.entity ) or {}
-
-            for i,item in ipairs(items) do
-                EntityRemoveFromParent(item)
-                EntityKill(item)
+            for i, v in ipairs(GameGetAllInventoryItems( self.entity) or {})do
+                print("Player had item at time of death: "..tostring(v))
+                EntityRemoveFromParent(v)
+                EntityKill(v)
             end
+
 
             local damage_model_comp = EntityGetFirstComponentIncludingDisabled(self.entity, "DamageModelComponent")
             if(damage_model_comp ~= nil)then
@@ -85,16 +85,23 @@ function playerinfo:New(lobby, user)
                     if(damage_type == "DAMAGE_ICE")then
                         damage_type = "DAMAGE_PROJECTILE"
                     end
-                    EntityInflictDamage(self.entity, damage_per_type, damage_type, "damage_fake",
-                    ragdoll_fx, damage_details.impulse_x, damage_details.impulse_y, GameGetWorldStateEntity(), damage_details.world_pos_x, damage_details.world_pos_y, damage_details.knockback_force)
+                    EntityInflictDamage(self.entity, damage_per_type, damage_type, "kill_client",
+                    ragdoll_fx, damage_details.impulse_x, damage_details.impulse_y, attacker or GameGetWorldStateEntity(), damage_details.world_pos_x, damage_details.world_pos_y, damage_details.knockback_force)
                 end
             else
-                EntityInflictDamage(self.entity, 69420, "DAMAGE_MATERIAL", "", "NORMAL", 0, 0, GameGetWorldStateEntity())
+                EntityInflictDamage(self.entity, 69420, "DAMAGE_MATERIAL", "kill_client", "NORMAL", 0, 0, attacker or GameGetWorldStateEntity())
             end
         end
+
+        -- Kill the bitch if they are still alive for some reason, this is cursed as hell
+        delay.new(5, function()
+            if(self.entity ~= nil and EntityGetIsAlive(self.entity))then
+                EntityKill(self.entity)
+            end
+            self.entity = nil
+        end)
             
         self.last_velocity = nil
-        self.entity = nil
         self.held_item = nil
         if(self.hp_bar)then
             self.hp_bar:destroy()
@@ -102,20 +109,24 @@ function playerinfo:New(lobby, user)
         end
         self.ready = false
         self.alive = false
+        self.last_cosmetics = nil
         --[[self.last_position_x = nil
         self.last_position_y = nil]]
         self.previous_positions = {}
     end
     obj.Clean = function(self, lobby)
+
+        if(self.entity ~= nil and EntityGetIsAlive(self.entity))then
+            print("Destroying player inventory")
+            GameDestroyInventoryItems( self.entity )
+        end
+        
         if(self.entity ~= nil and EntityGetIsAlive(self.entity))then
             EntityKill(self.entity)
         end
-        if(self.held_item ~= nil and EntityGetIsAlive(self.held_item))then
-            EntityKill(self.held_item)
-        end
         self.entity = nil
         self.held_item = nil
-        self.cosmetics = {}
+        self.last_cosmetics = nil
         self.last_velocity = nil
         if(self.hp_bar)then
             self.hp_bar:destroy()
@@ -136,6 +147,9 @@ function playerinfo:New(lobby, user)
         end]]
     end
     obj.Destroy = function(self)
+        print("Destroying player inventory")
+        GameDestroyInventoryItems( self.entity )
+
         if(self.entity ~= nil and EntityGetIsAlive(self.entity))then
             EntityKill(self.entity)
         end
@@ -144,6 +158,7 @@ function playerinfo:New(lobby, user)
         end
         self.entity = nil
         self.held_item = nil
+        self.last_cosmetics = nil
         if(self.hp_bar)then
             self.hp_bar:destroy()
             self.hp_bar = nil

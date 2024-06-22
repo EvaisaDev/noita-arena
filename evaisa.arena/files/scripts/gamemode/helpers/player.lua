@@ -332,83 +332,6 @@ end
 
 set_next_frame = set_next_frame or nil
 
-player_helper.SetWandData = function(wand_data)
-    local player = player_helper.Get()
-    if (player == nil) then
-        return
-    end
-
-    if (wand_data ~= nil) then
-        local active_item_entity = nil
-
-        for k, wandInfo in ipairs(wand_data) do
-            local x, y = EntityGetTransform(player)
-
-            local wand = EZWand(wandInfo.data, x, y)
-            if (wand == nil) then
-                return
-            end
-
-            wand:PickUp(player)
-
-            local itemComp = EntityGetFirstComponentIncludingDisabled(wand.entity_id, "ItemComponent")
-            if (itemComp ~= nil) then
-                ComponentSetValue2(itemComp, "inventory_slot", wandInfo.slot_x, wandInfo.slot_y)
-            end
-
-            --print("Deserialized wand #"..tostring(k).." - Active? "..tostring(wandInfo.active))
-
-            if (wandInfo.active) then
-                active_item_entity = wand.entity_id
-            end
-
-            GlobalsSetValue(tostring(wand.entity_id) .. "_wand", tostring(wandInfo.id))
-        end
-
-        if (active_item_entity ~= nil) then
-            arena_log:print("Selected item was: " .. tostring(active_item_entity))
-
-            game_funcs.SetActiveHeldEntity(player, active_item_entity, false, false)
-
-            --[[
-            local inventory2Comp = EntityGetFirstComponentIncludingDisabled(player, "Inventory2Component")
-
-            ComponentSetValue2(inventory2Comp, "mActiveItem", active_item_entity)
-            ComponentSetValue2(inventory2Comp, "mActualActiveItem", active_item_entity)
-            ComponentSetValue2(inventory2Comp, "mInitialized", false)
-            ComponentSetValue2(inventory2Comp, "mForceRefresh", true)
-            ]]
-        end
-    end
-end
-
-local pickup_item = function(entity, item)
-    local item_component = EntityGetFirstComponentIncludingDisabled(item, "ItemComponent")
-    if item_component then
-      ComponentSetValue2(item_component, "has_been_picked_by_player", true)
-    end
-    --GamePickUpInventoryItem(entity, self.entity_id, false)
-    local entity_children = EntityGetAllChildren(entity) or {}
-    -- 
-    for key, child in pairs( entity_children ) do
-      if EntityGetName( child ) == "inventory_quick" then
-        EntityAddChild( child, item)
-      end
-    end
-  
-    EntitySetComponentsWithTagEnabled( item, "enabled_in_world", false )
-    EntitySetComponentsWithTagEnabled( item, "enabled_in_hand", false )
-    EntitySetComponentsWithTagEnabled( item, "enabled_in_inventory", true )
-  
-    local wand_children = EntityGetAllChildren(item) or {}
-  
-    for k, v in ipairs(wand_children)do
-      EntitySetComponentsWithTagEnabled( item, "enabled_in_world", false )
-    end  
-end
-
-
-
 player_helper.SetItemData = function(item_data)
     local player = player_helper.Get()
     if (player == nil) then
@@ -437,7 +360,7 @@ player_helper.SetItemData = function(item_data)
             end
 
             if(itemInfo.is_wand)then
-                item:PickUp(player)
+                entity.PickItem(player, item.entity_id)
                 local itemComp = EntityGetFirstComponentIncludingDisabled(item.entity_id, "ItemComponent")
                 if (itemComp ~= nil) then
                     ComponentSetValue2(itemComp, "inventory_slot", itemInfo.slot_x, itemInfo.slot_y)
@@ -447,7 +370,7 @@ player_helper.SetItemData = function(item_data)
                     active_item_entity = item.entity_id
                 end
             else
-                pickup_item(player, item)
+                entity.PickItem(player, item)
                 local itemComp = EntityGetFirstComponentIncludingDisabled(item, "ItemComponent")
                 if (itemComp ~= nil) then
                     ComponentSetValue2(itemComp, "inventory_slot", itemInfo.slot_x, itemInfo.slot_y)
@@ -1042,10 +965,7 @@ player_helper.Deserialize = function(data, skip_perk_count, lobby, lobby_data)
     data = type(data) == "string" and bitser.loads(data) or data
 
     -- kill items
-    for k, v in pairs(GameGetAllInventoryItems(player) or {}) do
-        GameKillInventoryItem(player, v)
-        EntityKill(v)
-    end
+    GameDestroyInventoryItems( player )
 
     local x, y = EntityGetTransform(player)
 
