@@ -74,7 +74,6 @@ local skip_function_list = {
 
 local rewrites = {
 	ADVENTURER = {
-		-- shooting unedited wands gives back HP
 		id = "ADVENTURER",
 		ui_name = "$perk_adventurer",
 		ui_description = "$perkdesc_adventurer",
