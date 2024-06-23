@@ -1,6 +1,6 @@
-<!-- "mods/evaisa.arena/content/cosmetics/tanksy/player.png"  -->
+<!-- "mods/evaisa.arena/content/cosmetics/overlay/tanksy/player.png"  -->
 <Sprite 
-	filename="mods/evaisa.arena/content/cosmetics/tanksy/player.png"
+	filename="mods/evaisa.arena/content/cosmetics/overlay/tanksy/player.png"
 	offset_x="6" 
 	offset_y="14" 
 	default_animation="stand"

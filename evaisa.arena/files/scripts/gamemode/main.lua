@@ -618,7 +618,7 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 178,
+    version = 179,
     required_online_version = 363,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
@@ -696,12 +696,10 @@ ArenaMode = {
         ["Wand Locked"] = {
             ["version"] = 2,
             ["settings"] = {
-                ["zone_speed"] = 30,
                 ["shop_start_level"] = 0,
                 ["shop_random_ratio"] = 50,
                 ["shop_type"] = "spell_only",
                 ["shop_jump"] = 1,
-                ["zone_step_interval"] = 30,
                 ["upgrades_catchup"] = "losers",
                 ["damage_cap"] = "0.25",
                 ["shop_scaling"] = 2,
@@ -1019,28 +1017,42 @@ ArenaMode = {
             default = "static"
         },
         {
-            id = "zone_speed",
-            name = "$arena_settings_zone_speed_name",
-            description = "$arena_settings_zone_speed_description",
+            id = "zone_time",
+            require = function(setting_self)
+                return GlobalsGetValue("zone_shrink", "static") == "shrinking_Linear" or GlobalsGetValue("zone_shrink", "static") == "shrinking_step"
+            end,
+            name = "$arena_settings_zone_time_name",
+            description = "$arena_settings_zone_time_description",
             type = "slider",    
             min = 1,
-            max = 100,
-            default = 30,
+            max = 600,
+            default = 120,
             display_multiplier = 1,
-            formatting_string = " $0",
+			formatting_func = function(value)
+                -- trim spaces around value
+                value = value:match("^%s*(.-)%s*$")
+                -- if under 60, show seconds
+                if(tonumber(value) < 60)then
+                    return " "..tostring(value) .. "s"
+                else
+                    return " "..tostring(math.floor((value / 60) * 10) / 10) .. "m"
+                end
+            end,
             width = 100
         },
         {
-            id = "zone_step_interval",
-            name = "$arena_settings_zone_step_interval_name",
-            description = "$arena_settings_zone_step_interval_description",
+            id = "zone_steps",
+            require = function(setting_self)
+                return GlobalsGetValue("zone_shrink", "static") == "shrinking_step"
+            end,
+            name = "$arena_settings_zone_steps_name",
+            description = "$arena_settings_zone_steps_description",
             type = "slider",
             min = 1,
-            max = 90,
-            default = 30,
+            max = 30,
+            default = 6,
             display_multiplier = 1,
-            formatting_string = " $0s",
-            width = 100
+            formatting_string = " $0",
         },
         {
             id = "upgrades_system",
@@ -2332,17 +2344,17 @@ ArenaMode = {
         end
         GlobalsSetValue("zone_shrink", tostring(zone_shrink))
 
-        local zone_speed = tonumber(steam.matchmaking.getLobbyData(lobby, "setting_zone_speed"))
-        if (zone_speed == nil) then
-            zone_speed = 30
+        local zone_time = tonumber(steam.matchmaking.getLobbyData(lobby, "setting_zone_time"))
+        if (zone_time == nil) then
+            zone_time = 120
         end
-        GlobalsSetValue("zone_speed", tostring(zone_speed))
+        GlobalsSetValue("zone_time", tostring(zone_time))
 
-        local zone_step_interval = tonumber(steam.matchmaking.getLobbyData(lobby, "setting_zone_step_interval"))
-        if (zone_step_interval == nil) then
-            zone_step_interval = 30
+        local zone_steps = tonumber(steam.matchmaking.getLobbyData(lobby, "setting_zone_steps"))
+        if (zone_steps == nil) then
+            zone_steps = 6
         end
-        GlobalsSetValue("zone_step_interval", tostring(zone_step_interval))
+        GlobalsSetValue("zone_steps", tostring(zone_steps))
 
         local upgrades_system = steam.matchmaking.getLobbyData(lobby, "setting_upgrades_system")
         if (upgrades_system == nil) then
@@ -2879,6 +2891,10 @@ ArenaMode = {
                 end
             end
         end
+        
+        if(input:WasKeyPressed("f9"))then
+            ArenaGameplay.WinnerCheck(lobby, data, true)
+        end
 
         --[[
         if (input:WasKeyPressed("f5")) then
@@ -2893,9 +2909,7 @@ ArenaMode = {
         end
 
         
-        if(input:WasKeyPressed("f9"))then
-            ArenaGameplay.WinnerCheck(lobby, data, true)
-        end
+
         if(input:WasKeyPressed("f10"))then
             -- add 1000 cosmetics currency'
             local currency = ModSettingGet("arena_cosmetics_currency") or 0

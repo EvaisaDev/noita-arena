@@ -14,7 +14,7 @@ if(area_size ~= last_area_size)then
     local outer_emitter = EntityGetFirstComponent(this, "ParticleEmitterComponent", "area_indicator_outer")
 
     if(circle_emitter ~= nil)then
-        ComponentSetValue2(circle_emitter, "area_circle_radius", area_size, area_size + 15)
+        ComponentSetValue2(circle_emitter, "area_circle_radius", area_size, area_size)
         ComponentSetValue2(circle_emitter, "count_min", math.floor(area_size * 0.5))
         ComponentSetValue2(circle_emitter, "count_max", math.floor(area_size * 0.5))
     end

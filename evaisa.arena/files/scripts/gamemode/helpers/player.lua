@@ -149,13 +149,24 @@ player_helper.GiveStartingGear = function()
         return
     end
     local x, y = EntityGetTransform(player)
+
+    local network_id_base = tonumber(tostring(steam_utils.getSteamID())) % 2431252
+
+    print("Network ID base: " .. network_id_base)
+    
     local wand = EntityLoad("data/entities/items/starting_wand_rng.xml", x, y)
     arena_log:print("Starting gear granted to player entity: " .. tostring(player))
     GamePickUpInventoryItem(player, wand, false)
+    EntityAddTag(wand, "picked_by_player")
+    entity.NetworkRegister(wand, nil, nil, network_id_base) 
     local wand2 = EntityLoad("data/entities/items/starting_bomb_wand_rng.xml", x, y)
     GamePickUpInventoryItem(player, wand2, false)
+    EntityAddTag(wand2, "picked_by_player")
+    entity.NetworkRegister(wand2, nil, nil, network_id_base + 1) 
     local potion = EntityLoad("data/entities/items/pickup/potion_starting.xml", x, y)
     GamePickUpInventoryItem(player, potion, false)
+    EntityAddTag(potion, "picked_by_player")
+    entity.NetworkRegister(potion, nil, nil, network_id_base + 2) 
 end
 
 player_helper.Immortal = function(immortal)
@@ -361,6 +372,7 @@ player_helper.SetItemData = function(item_data)
 
             if(itemInfo.is_wand)then
                 entity.PickItem(player, item.entity_id)
+                EntityAddTag(item.entity_id, "picked_by_player")
                 local itemComp = EntityGetFirstComponentIncludingDisabled(item.entity_id, "ItemComponent")
                 if (itemComp ~= nil) then
                     ComponentSetValue2(itemComp, "inventory_slot", itemInfo.slot_x, itemInfo.slot_y)
@@ -371,6 +383,7 @@ player_helper.SetItemData = function(item_data)
                 end
             else
                 entity.PickItem(player, item)
+                EntityAddTag(item, "picked_by_player")
                 local itemComp = EntityGetFirstComponentIncludingDisabled(item, "ItemComponent")
                 if (itemComp ~= nil) then
                     ComponentSetValue2(itemComp, "inventory_slot", itemInfo.slot_x, itemInfo.slot_y)

@@ -361,7 +361,7 @@ ArenaGameplay = {
 
             if (pickup_count > 0) then
                 if (perk_data.func_remove ~= nil) then
-                    perk_data.func_remove(player)
+                    perk_data.func_remove(player_entity)
                 end
             end
             GameRemoveFlagRun(flag_name)
@@ -684,11 +684,8 @@ ArenaGameplay = {
 
             --{{"disabled", "Disabled"}, {"static", "Static"}, {"shrinking_Linear", "Linear Shrinking"}, {"shrinking_step", "Stepped Shrinking"}},
             local zone_type = GlobalsGetValue("zone_shrink", "static")
-            local zone_speed = tonumber(GlobalsGetValue("zone_speed", "30")) -- pixels per step or pixels per minute (frames * 60 * 60)
-            local zone_step_interval = tonumber(GlobalsGetValue("zone_step_interval", "30")) *
-                60                                                           -- seconds between steps
-
-            local step_time = zone_step_interval / 2
+            local zone_time = tonumber(GlobalsGetValue("zone_time", "120")) -- time in seconds it should take for the zone to reach minimum size
+            local zone_steps = tonumber(GlobalsGetValue("zone_steps", "6"))                                                -- seconds between steps
 
             if(data.zone_size == nil)then
                 data.zone_size = default_size or 600
@@ -731,9 +728,12 @@ ArenaGameplay = {
                             GuiOptionsAdd(data.zone_gui, GUI_OPTION.NonInteractive)
                         end
 
-                        local step_size = zone_speed / 60 / 60
+                        -- calculate the step size
+                        -- it should take zone_time seconds to reach 0 from default_size
+                        local step_size = default_size / (zone_time * 60)
+                    
 
-                        --GamePrint("step_size: " .. step_size)
+                        GamePrint("step_size: " .. step_size)
 
                         data.zone_size = data.zone_size - step_size
 
@@ -768,19 +768,26 @@ ArenaGameplay = {
                         if (data.using_controller) then
                             GuiOptionsAdd(data.zone_gui, GUI_OPTION.NonInteractive)
                         end
+                        local step_time = ((zone_time / zone_steps) * 60) / 2 -- 120 seconds / 6 steps = 20 seconds per step = 1200 frames
 
-                        -- every step should take step_time seconds to complete
-                        if (GameGetFrameNum() - data.last_step_frame > zone_step_interval) then
-                            local step_size = zone_speed / step_time
+                        if (GameGetFrameNum() - data.last_step_frame > step_time) then
+
+                            -- we need to divide the zone time with the number of steps
+                            -- note that we take pauses between every step, these pauses are equal duration to the step time
+                  
+                            local step_size = default_size / (step_time * zone_steps)
+
                             data.zone_size = data.zone_size - step_size
+                            
 
                             if (data.zone_size < 0) then
                                 data.zone_size = 0
                             end
 
-                            if (GameGetFrameNum() - data.last_step_frame > zone_step_interval + step_time) then
+                            if (GameGetFrameNum() - data.last_step_frame > step_time + step_time) then
                                 data.last_step_frame = GameGetFrameNum()
                             end
+               
 
                             GlobalsSetValue("arena_area_size", tostring(data.zone_size))
                             GlobalsSetValue("arena_area_size_cap", tostring(data.zone_size + 200))
@@ -806,7 +813,7 @@ ArenaGameplay = {
                                 local screen_width, screen_height = GuiGetScreenDimensions(data.zone_gui)
 
             
-                                zone_shrink_time = math.ceil((zone_step_interval - (GameGetFrameNum() - data.last_step_frame)) /
+                                zone_shrink_time = math.ceil((step_time - (GameGetFrameNum() - data.last_step_frame)) /
                                     60)
 
                                 local text = string.format(GameTextGetTranslatedOrNot("$arena_zone_shrink_countdown"), tostring( zone_shrink_time))
@@ -1039,7 +1046,7 @@ ArenaGameplay = {
                         
                 local player_entity = player.Get()
                 if(player_entity)then
-                    cosmetics_handler.OnWin(lobby, data, player_entity, wins, winstreak)
+                    cosmetics_handler.OnWin(lobby, data, player_entity, data.client.wins, data.client.winstreak)
                 end
             end
 
@@ -1460,7 +1467,7 @@ ArenaGameplay = {
         ArenaGameplay.GracefulReset(lobby, data)
 
         data.allow_round_end = false
-        data.controlled_physics_entities = {}
+        data.controlled_entities = {}
         GameRemoveFlagRun("lock_ready_state")
         GameRemoveFlagRun("can_save_player")
         GameRemoveFlagRun("countdown_completed")
@@ -1872,7 +1879,7 @@ ArenaGameplay = {
         data.players_loaded = false
         data.deaths = 0
         data.lobby_loaded = false
-        data.controlled_physics_entities = {}
+        data.controlled_entities = {}
         data.client.player_loaded_from_data = false
 
         local members = steamutils.getLobbyMembers(lobby)
@@ -3599,11 +3606,20 @@ ArenaGameplay = {
                         end
                   
     
-                        EntityKill(v)
+                       
+
+                        if(EntityGetRootEntity(v) == v)then
+                            EntityLoad("data/entities/particles/image_emitters/shop_effect.xml", entity_x, entity_y - 8)
+                            EntityKill(v)
+                        elseif(not EntityHasTag(EntityGetRootEntity(v), "client"))then
+                            EntityKill(v)
+                        end
 
                         table.remove(data.picked_up_items, i)
+
+                        print("Picked up item removed")
     
-                        EntityLoad("data/entities/particles/image_emitters/shop_effect.xml", entity_x, entity_y - 8)
+                       
                     end
                 end
             end
@@ -3902,22 +3918,23 @@ ArenaGameplay = {
 
 
 
-        --data.controlled_physics_entities
+        --data.controlled_entities
         if(not data.spectator_mode)then
             local first_update = {}
             local kicked_item_string = GlobalsGetValue("arena_items_controlled", "") or ""
             for item in string.gmatch(kicked_item_string, "([^;]+)") do
                 local item_entity = tonumber(item) or 0
                 local has_control = false
-                for k, v in ipairs(data.controlled_physics_entities)do
+                for k, v in ipairs(data.controlled_entities)do
                     if(v == item_entity)then
                         has_control = true
                         break
                     end
                 end
                 if(EntityGetIsAlive(item_entity) and not first_update[item_entity] and not has_control)then
-                    table.insert(data.controlled_physics_entities, item_entity)
+                    table.insert(data.controlled_entities, item_entity)
                     first_update[item_entity] = true
+                    print("We took controls of item: "..tostring(item_entity))
                     local arena_entity_id = EntityHelper.GetVariable(item_entity, "arena_entity_id")
 
                     if(arena_entity_id ~= nil)then
@@ -3929,25 +3946,48 @@ ArenaGameplay = {
                 GlobalsSetValue("arena_items_controlled", "")
             end
 
-            for i = #data.controlled_physics_entities, 1, -1 do
-                local entity = data.controlled_physics_entities[i]
-                if(not EntityGetIsAlive(entity))then
-                    table.remove(data.controlled_physics_entities, i)
+            for i = #data.controlled_entities, 1, -1 do
+                local entity = data.controlled_entities[i]
+                if(not EntityGetIsAlive(entity) or EntityGetRootEntity(entity) ~= entity)then
+                    table.remove(data.controlled_entities, i)
                 else
                     local arena_entity_id = EntityHelper.GetVariable(entity, "arena_entity_id")
 
                     if(arena_entity_id ~= nil)then
+                        if(first_update[entity] and GameHasFlagRun("was_item_throw"))then
+                            print("Item was thrown")
+                            -- serialize entity 
+                            local entity_data = np.SerializeEntity(entity)
+                            if(data.state == "arena")then
+                                networking.send.sync_entity(lobby, arena_entity_id, entity_data)
+                            else
+                                networking.send.sync_entity(lobby, arena_entity_id, entity_data, true)
+                            end
+                        end
+
                         local body_ids = PhysicsBodyIDGetFromEntity( entity )
                         if(body_ids ~= nil and #body_ids > 0)then
                             local body_id = body_ids[1]
                             local x, y, r, vel_x, vel_y, vel_a =  PhysicsBodyIDGetTransform( body_id )
                             
                             networking.send.physics_update(lobby, arena_entity_id, gameplay_handler.round_to_decimal(x, 2), gameplay_handler.round_to_decimal(y, 2), gameplay_handler.round_to_decimal(r, 2), gameplay_handler.round_to_decimal(vel_x, 2), gameplay_handler.round_to_decimal(vel_y, 2), gameplay_handler.round_to_decimal(vel_a, 2), first_update[entity], GameHasFlagRun("was_item_kick"))
+                        else
+                            -- if not physics body, update manually!!
+                            local velocity_comp = EntityGetFirstComponentIncludingDisabled(entity, "VelocityComponent")
+                            local vel_x, vel_y = 0, 0
+                            local x, y, r = EntityGetTransform(entity)
+
+                            if(velocity_comp ~= nil)then
+                                vel_x, vel_y = ComponentGetValue2(velocity_comp, "mVelocity")
+                            end
+
+                            networking.send.entity_update(lobby, arena_entity_id, gameplay_handler.round_to_decimal(x, 2), gameplay_handler.round_to_decimal(y, 2), gameplay_handler.round_to_decimal(r, 2), gameplay_handler.round_to_decimal(vel_x, 2), gameplay_handler.round_to_decimal(vel_y, 2), first_update[entity])
                         end
                     end
                 end
             end
             GameRemoveFlagRun("was_item_kick")
+            GameRemoveFlagRun("was_item_throw")
 
             local fungal_shift_from = GlobalsGetValue("arena_fungal_shift_from", "")
             local fungal_shift_to = GlobalsGetValue("arena_fungal_shift_to", "")
@@ -4286,7 +4326,7 @@ ArenaGameplay = {
 
                 --[[if(is_physics)then
                     EntityHelper.NetworkRegister(projectile_id, position_x, position_y, rng)
-                    table.insert(data.controlled_physics_entities, projectile_id)
+                    table.insert(data.controlled_entities, projectile_id)
                 end]]
                 --data.client.spread_index = data.client.spread_index + 1
 
@@ -4299,7 +4339,7 @@ ArenaGameplay = {
                     np.SetProjectileSpreadRNG(new_seed)
                     --[[if(is_physics)then
                         EntityHelper.NetworkRegister(projectile_id, position_x, position_y, new_seed)
-                        table.insert(data.controlled_physics_entities, projectile_id)
+                        table.insert(data.controlled_entities, projectile_id)
                     end]]
                     data.projectile_seeds[entity_that_shot] = data.projectile_seeds[entity_that_shot] + 10
                     data.projectile_seeds[projectile_id] = new_seed
@@ -4328,7 +4368,7 @@ ArenaGameplay = {
                     np.SetProjectileSpreadRNG(rng)
                     --[[if(is_physics)then
                         EntityHelper.NetworkRegister(projectile_id, position_x, position_y, rng)
-                        table.insert(data.controlled_physics_entities, projectile_id)
+                        table.insert(data.controlled_entities, projectile_id)
                     end]]
 
                     data.players[EntityGetName(shooter_id)].next_rng = rng + 1
@@ -4338,7 +4378,7 @@ ArenaGameplay = {
                         np.SetProjectileSpreadRNG(new_seed)
                         --[[if(is_physics)then
                             EntityHelper.NetworkRegister(projectile_id, position_x, position_y, new_seed)
-                            table.insert(data.controlled_physics_entities, projectile_id)
+                            table.insert(data.controlled_entities, projectile_id)
                         end]]
                         data.projectile_seeds[entity_that_shot] = data.projectile_seeds[entity_that_shot] + 10
                     end
