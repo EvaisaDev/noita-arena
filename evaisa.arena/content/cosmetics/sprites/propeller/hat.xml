@@ -1,5 +1,5 @@
 <Sprite
-    filename="mods/evaisa.arena/content/cosmetics/propeller/hat_sheet.png"
+    filename="mods/evaisa.arena/content/cosmetics/sprites/propeller/hat_sheet.png"
     offset_x="4.5"
     offset_y="4"
     default_animation="spin">

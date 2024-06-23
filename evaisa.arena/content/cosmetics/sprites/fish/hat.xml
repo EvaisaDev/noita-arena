@@ -1,5 +1,5 @@
 <Sprite
-    filename="mods/evaisa.arena/content/cosmetics/fish/spritesheet.png"
+    filename="mods/evaisa.arena/content/cosmetics/sprites/fish/spritesheet.png"
     offset_x="32"
     offset_y="32"
     default_animation="spin">

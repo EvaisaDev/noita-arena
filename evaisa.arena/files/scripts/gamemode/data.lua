@@ -22,7 +22,7 @@ function data:New()
         spectator_mode = false,
         spectator_quick_switch_trigger = 0,
         spectator_lobby_loaded = false,
-        controlled_physics_entities = {},
+        controlled_entities = {},
         cosmetics = {},
 
         spectator_fonts = {

@@ -435,6 +435,19 @@ skins.init = function()
                 end
                 local item_count = #listeable_items
 
+                -- sort listeable_items by unlock status and then by price
+                table.sort(listeable_items, function(a, b)
+                    -- use cosmetics_handler.IsUnlocked(item) to check if item is unlocked, unlocked items are always at the front
+                    -- if both items are not unlocked, sort by price
+                    if(cosmetics_handler.IsUnlocked(a) and not cosmetics_handler.IsUnlocked(b))then
+                        return true
+                    elseif(not cosmetics_handler.IsUnlocked(a) and cosmetics_handler.IsUnlocked(b))then
+                        return false
+                    else
+                        return a.price < b.price
+                    end
+                end)
+
                 local currency = ModSettingGet("arena_cosmetics_currency") or 0
 
                 local rows = math.max(math.ceil(item_count / slots_per_row), 5)

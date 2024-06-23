@@ -14,7 +14,7 @@
 		area_circle_radius.max="5000"
 		cosmetic_force_create="0"
 		render_ultrabright="1"
-		airflow_force="0.3"
+		airflow_force="0"
 		airflow_time="0.01"
 		airflow_scale="0.05"
 		emission_interval_min_frames="0"

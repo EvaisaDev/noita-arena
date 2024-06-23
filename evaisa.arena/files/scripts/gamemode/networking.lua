@@ -230,11 +230,27 @@ typedef struct J {
 #pragma pack(pop)
 ]])
 
+-- Entity Update
+ffi.cdef([[
+#pragma pack(push, 1)
+typedef struct K {
+    int id;
+    float x;
+    float y;
+    float r;
+    float vel_x;
+    float vel_y;
+    bool takes_control:1;
+} EntityUpdate;
+#pragma pack(pop)
+]])
+
 
 local Keyboard = ffi.typeof("Keyboard")
 local Mouse = ffi.typeof("Mouse")
 local ZoneUpdate = ffi.typeof("ZoneUpdate")
 local PhysicsUpdate = ffi.typeof("PhysicsUpdate")
+local EntityUpdate = ffi.typeof("EntityUpdate")
 local CharacterPos = ffi.typeof("CharacterPos")
 local FireWand = ffi.typeof("FireWand")
 local PlayerStats = ffi.typeof("PlayerStats")
@@ -627,6 +643,7 @@ networking = {
                         else
                             item = EntityCreateNew()
                             np.DeserializeEntity(item, itemInfo.data, x, y)
+                            
 
                             if(has_spectator)then
                                 spectator_item = EntityCreateNew()
@@ -644,6 +661,8 @@ networking = {
                         if (item == nil) then
                             return
                         end
+
+                        EntityRemoveTag(item, "picked_by_player")
 
                         local item_entity = nil
                         if(itemInfo.is_wand)then
@@ -1369,12 +1388,12 @@ networking = {
             local client = data.players[tostring(user)].entity
 
             if (client ~= nil and EntityGetIsAlive(client)) then
-                print("Giving perks to player: " .. tostring(user))
+               --- print("Giving perks to player: " .. tostring(user))
                 for k, v in ipairs(gained_perks) do
                     local perk = v[1]
                     local count = v[2]
 
-                    print("Giving perk: " .. tostring(perk) .. " with count: " .. tostring(count))
+                    --print("Giving perk: " .. tostring(perk) .. " with count: " .. tostring(count))
     
                     for i = 1, count do
                         EntityHelper.GivePerk(client, perk, i, true)
@@ -1841,9 +1860,20 @@ networking = {
 
             local item_id = message
 
+            print("Client picked up item: " .. tostring(item_id))
+
             data.picked_up_items = data.picked_up_items or {}
 
             table.insert(data.picked_up_items, item_id)
+
+            -- remove from network entity cache
+            for k = #data.network_entity_cache, 1, -1 do
+                local v = data.network_entity_cache[k]
+                if(v[1] == item_id)then
+                    table.remove(data.network_entity_cache, k)
+                    break
+                end
+            end
         end,
         physics_update = function(lobby, message, user, data)
             if(data.state ~= "arena" and not data.spectator_mode)then
@@ -1860,17 +1890,20 @@ networking = {
 
             local entities_cleanup = EntityGetInRadiusWithTag(0, 0, 1000, "does_physics_update")
             
-            local has_found = {}
+            local has_found = false
             for k, v in ipairs(entities_cleanup)do
                 local entity_id = EntityHelper.GetVariable(v, "arena_entity_id")
-                if(entity_id ~= nil and entity_id == item_id)then
-                    if(has_found[entity_id])then
+                if(entity_id ~= nil and entity_id == item_id and EntityGetRootEntity(v) == v)then
+                    if(has_found)then
                         EntityKill(v)
-                        return
                     end
 
-                    has_found[entity_id] = true
+                    has_found = true
                 end
+            end
+
+            if(not has_found)then
+                return
             end
             
             local kick_handlers = {
@@ -1902,9 +1935,9 @@ networking = {
                         end
 
                         if(takes_control)then
-                            for i = #data.controlled_physics_entities, 1, -1 do
-                                if(data.controlled_physics_entities[i] == entity_id)then
-                                    table.remove(data.controlled_physics_entities, i)
+                            for i = #data.controlled_entities, 1, -1 do
+                                if(data.controlled_entities[i] == entity_id)then
+                                    table.remove(data.controlled_entities, i)
     
                                     --GamePrint("No longer in control")
     
@@ -1945,9 +1978,9 @@ networking = {
                     end
 
                     if(takes_control)then
-                        for i = #data.controlled_physics_entities, 1, -1 do
-                            if(data.controlled_physics_entities[i] == v)then
-                                table.remove(data.controlled_physics_entities, i)
+                        for i = #data.controlled_entities, 1, -1 do
+                            if(data.controlled_entities[i] == v)then
+                                table.remove(data.controlled_entities, i)
                             end
                         end
                     end
@@ -1965,6 +1998,135 @@ networking = {
                 end
             end
            -- end
+        end,
+        entity_update = function(lobby, message, user, data)
+            if(data.state ~= "arena" and not data.spectator_mode)then
+                return
+            end
+            data.network_entity_cache = data.network_entity_cache or {}
+
+            local item_id = math.floor(message.id)
+            local x, y, r, vx, vy = message.x, message.y, message.r, message.vel_x, message.vel_y
+
+            
+            local takes_control = message.takes_control
+
+            local entities_cleanup = EntityGetInRadiusWithTag(0, 0, 1000, "does_physics_update")
+            
+            local has_found = false
+            for k, v in ipairs(entities_cleanup)do
+                local entity_id = EntityHelper.GetVariable(v, "arena_entity_id")
+                if(entity_id ~= nil and entity_id == item_id and EntityGetRootEntity(v) == v)then
+                    if(has_found)then
+                        EntityKill(v)
+                    end
+
+                    has_found = true
+                end
+            end
+
+            if(not has_found)then
+                return
+            end
+
+
+            -- check cache
+            for k = #data.network_entity_cache, 1, -1 do
+                local v = data.network_entity_cache[k]
+                if not EntityGetIsAlive(v[2]) then
+                    table.remove(data.network_entity_cache, k)
+                else
+                    if(v[1] == item_id)then
+                        local entity_id = v[2]
+
+                        if(takes_control)then
+                            for i = #data.controlled_entities, 1, -1 do
+                                if(data.controlled_entities[i] == entity_id)then
+                                    table.remove(data.controlled_entities, i)
+    
+                                    --GamePrint("No longer in control")
+    
+                                end
+                            end
+                        end
+    
+                        local velocity_comp = EntityGetFirstComponentIncludingDisabled(entity_id, "VelocityComponent")
+                        if(velocity_comp ~= nil)then
+                            ComponentSetValue2(velocity_comp, "mVelocity", vx, vy)
+                        end
+
+                        EntityApplyTransform(entity_id, x, y, r)
+                
+                        return
+                    end
+                end
+            end
+            
+            local entities = EntityGetInRadiusWithTag(0, 0, 1000000000, "does_physics_update")
+
+
+            for k, v in ipairs(entities)do
+                --if(EntityGetFirstComponentIncludingDisabled(v, "ItemComponent") ~= nil)then
+                local entity_id = EntityHelper.GetVariable(v, "arena_entity_id")
+                if(entity_id ~= nil and entity_id == item_id)then
+
+                    if(takes_control)then
+                        for i = #data.controlled_entities, 1, -1 do
+                            if(data.controlled_entities[i] == v)then
+                                table.remove(data.controlled_entities, i)
+                            end
+                        end
+                    end
+
+                    table.insert(data.network_entity_cache, {item_id, v})
+
+                    local velocity_comp = EntityGetFirstComponentIncludingDisabled(entity_id, "VelocityComponent")
+                    if(velocity_comp ~= nil)then
+                        ComponentSetValue2(velocity_comp, "mVelocity", vx, vy)
+                    end
+
+                    EntityApplyTransform(entity_id, x, y, r)
+                   
+                    return
+                end
+            end
+        end,
+        sync_entity = function(lobby, message, user, data)
+            if(data.state ~= "arena" and not data.spectator_mode)then
+                return
+            end
+
+            local item_id = message[1]
+            local entity_data = message[2]
+
+            
+            local entities_cleanup = EntityGetInRadiusWithTag(0, 0, 1000, "does_physics_update")
+            
+            local has_found = false
+            for k, v in ipairs(entities_cleanup)do
+                local entity_id = EntityHelper.GetVariable(v, "arena_entity_id")
+                if(entity_id ~= nil and entity_id == item_id and EntityGetRootEntity(v) == v)then
+                    if(has_found)then
+                        print("Killing entity: " .. tostring(v))
+                        EntityKill(v)
+                    end
+
+                    has_found = true
+                end
+            end
+
+            if(has_found)then
+                print("Entity already loaded!")
+                return
+            end
+
+            -- spawn entity!
+            local new_entity = EntityCreateNew()
+            np.DeserializeEntity(new_entity, entity_data)
+            EntityRemoveTag(new_entity, "picked_by_player")
+
+            print("Synced entity: " .. tostring(new_entity))
+         
         end,
         fungal_shift = function(lobby, message, user, data)
             dofile_once("data/scripts/lib/utilities.lua")
@@ -2236,6 +2398,7 @@ networking = {
                 local ent = EntityCreateNew()
                 local x, y, entity_data, uid = unpack(v)
                 np.DeserializeEntity(ent, entity_data, x, y)
+                EntityRemoveTag(ent, "picked_by_player")
                 local name = EntityGetFilename(ent)
             end
 
@@ -3220,6 +3383,25 @@ networking = {
                 was_kick = was_kick
             }
             steamutils.send("physics_update", c, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+        end,
+        entity_update = function(lobby, id, x, y, r, vel_x, vel_y, takes_control)
+            local c = EntityUpdate{
+                id = id,
+                x = x,
+                y = y,
+                r = r,
+                vel_x = vel_x,
+                vel_y = vel_y,
+                takes_control = takes_control,
+            }
+            steamutils.send("entity_update", c, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+        end,
+        sync_entity = function(lobby, arena_entity_id, entity_data, to_spectators)
+            if(to_spectators)then
+                steamutils.send("sync_entity", {arena_entity_id, entity_data}, steamutils.messageTypes.Spectators, lobby, true, true)
+            else
+                steamutils.send("sync_entity", {arena_entity_id, entity_data}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+            end
         end,
         fungal_shift = function(lobby, from, to)
             steamutils.send("fungal_shift", { from, to }, steamutils.messageTypes.OtherPlayers, lobby, true, true)
