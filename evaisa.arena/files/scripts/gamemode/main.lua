@@ -618,7 +618,7 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 179,
+    version = 180,
     required_online_version = 363,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
@@ -2892,9 +2892,11 @@ ArenaMode = {
             end
         end
         
-        if(input:WasKeyPressed("f9"))then
+        if(steamutils.IsOwner() and input:WasKeyPressed("f9"))then
             ArenaGameplay.WinnerCheck(lobby, data, true)
         end
+
+        test.do_stuff()
 
         --[[
         if (input:WasKeyPressed("f5")) then
@@ -2915,37 +2917,9 @@ ArenaMode = {
             local currency = ModSettingGet("arena_cosmetics_currency") or 0
             currency = currency + 1000
             ModSettingSet("arena_cosmetics_currency", currency)
-        end
-        if(input:WasKeyPressed("h"))then
+        end]]
+        --[[if(input:WasKeyPressed("f1"))then
             if(not GameHasFlagRun("arena_trailer_mode"))then
-
-                local particle_positions = {
-                    original = {x = 0, y = -80},
-                    spoop = {x = -107, y = 81},
-                    tryon = {x = -4, y = -57},
-                    bureon = {x = 0, y = -8},
-                    stadium = {x = 247, y = -83},
-                    coalpit = {x = -33, y = -39},
-                }
-
-                --EntityLoad("mods/evaisa.arena/files/entities/particles/trailer/arena_logo.xml", 0, -100)
-                local current_map = steamutils.GetLobbyData("current_map")
-
-                if (particle_positions[current_map] ~= nil) then
-                    local x = particle_positions[current_map].x
-                    local y = particle_positions[current_map].y
-                    trailer_camera_x = x
-                    trailer_camera_y = y
-                    EntityLoad("mods/evaisa.arena/files/entities/particles/trailer/arena_logo.xml", x, y)
-                else
-                    local x = 0
-                    local y = 0
-                    trailer_camera_x = x
-                    trailer_camera_y = y
-                    EntityLoad("mods/evaisa.arena/files/entities/particles/trailer/arena_logo.xml", x, y)
-                end
-
-                networking.send.spawn_trailer_effects(lobby)
 
                 GameSetCameraFree(true)
 
@@ -2954,16 +2928,52 @@ ArenaMode = {
             else
                 GameRemoveFlagRun("game_paused")
                 GameRemoveFlagRun("arena_trailer_mode")
-                local particles = EntityGetWithTag("arena_logo")
-                for i, v in ipairs(particles)do
-                    EntityKill(v)
-                end
 
                 GameSetCameraFree(false)
             end
             
         end
-        ]]
+        
+
+        if(input:WasKeyPressed("f2"))then
+            local particle_positions = {
+                original = {x = 0, y = -80},
+                spoop = {x = -107, y = 81},
+                tryon = {x = -4, y = -57},
+                bureon = {x = 0, y = -8},
+                stadium = {x = 247, y = -83},
+                coalpit = {x = -33, y = -39},
+                mimicstemple = {x = 6.681, y = -178},
+                foundry = {x = 172.231, y = -197.123},
+            }
+
+            --EntityLoad("mods/evaisa.arena/files/entities/particles/trailer/arena_logo.xml", 0, -100)
+            local current_map = steamutils.GetLobbyData("current_map")
+
+            if (particle_positions[current_map] ~= nil) then
+                local x = particle_positions[current_map].x
+                local y = particle_positions[current_map].y
+                trailer_camera_x = x
+                trailer_camera_y = y
+                EntityLoad("mods/evaisa.arena/files/entities/particles/trailer/arena_logo.xml", x, y)
+            else
+                local x = 0
+                local y = 0
+                trailer_camera_x = x
+                trailer_camera_y = y
+                EntityLoad("mods/evaisa.arena/files/entities/particles/trailer/arena_logo.xml", x, y)
+            end
+
+            networking.send.spawn_trailer_effects(lobby)
+        end
+
+        if (input:WasKeyPressed("f3")) then
+            local particles = EntityGetWithTag("arena_logo")
+            for i, v in ipairs(particles)do
+                EntityKill(v)
+            end
+        end]]
+     
         --[[
         if(input:WasKeyPressed("f10"))then
             if(steam_utils.IsOwner())then
