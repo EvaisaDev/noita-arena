@@ -580,6 +580,22 @@ SpectatorMode = {
         local members = steamutils.getLobbyMembers(lobby)
         local spectated_player = data.spectated_player
 
+        -- check if spectated player is still in the lobby
+        local found = false
+        for k, v in ipairs(members)do
+            if(v.id == spectated_player)then
+                found = true
+                break
+            end
+        end
+
+        if(not found)then
+            data.spectated_player = nil
+            data.selected_player_name = nil
+            data.spectator_active_player = nil
+        end
+
+
         if(spectated_player == nil and members ~= nil and #members > 0)then
             data.spectated_player = members[1].id
             data.selected_player_name = steamutils.getTranslatedPersonaName(data.spectated_player)

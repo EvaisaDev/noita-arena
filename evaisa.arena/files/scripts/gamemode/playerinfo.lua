@@ -43,6 +43,18 @@ function playerinfo:New(lobby, user)
     end
 
     obj.Death = function(self, damage_details, attacker)
+        arena_log:print("Player "..self.id.." died and is being cleaned up")
+        self.last_velocity = nil
+        self.held_item = nil
+        if(self.hp_bar)then
+            self.hp_bar:destroy()
+            self.hp_bar = nil
+        end
+        self.ready = false
+        self.alive = false
+        self.last_cosmetics = nil
+        self.previous_positions = {}
+
         if(self.entity ~= nil and EntityGetIsAlive(self.entity))then
 
             for i, v in ipairs(GameGetAllInventoryItems( self.entity) or {})do
@@ -100,19 +112,7 @@ function playerinfo:New(lobby, user)
             end
             self.entity = nil
         end)
-            
-        self.last_velocity = nil
-        self.held_item = nil
-        if(self.hp_bar)then
-            self.hp_bar:destroy()
-            self.hp_bar = nil
-        end
-        self.ready = false
-        self.alive = false
-        self.last_cosmetics = nil
-        --[[self.last_position_x = nil
-        self.last_position_y = nil]]
-        self.previous_positions = {}
+    
     end
     obj.Clean = function(self, lobby)
 

@@ -1495,6 +1495,7 @@ networking = {
             if (data.state == "arena") then
                 local username = steamutils.getTranslatedPersonaName(user)
 
+                arena_log:print("Received death for user: " .. tostring(username))
                 print("Player " .. tostring(username) .. " died.")
 
                 local killer = message[1]
@@ -2093,6 +2094,11 @@ networking = {
         end,
         sync_entity = function(lobby, message, user, data)
             if(data.state ~= "arena" and not data.spectator_mode)then
+                return
+            end
+
+            -- if spectator, check if we are spectating the user
+            if(data.spectator_mode and data.state ~= "arena" and data.spectated_player ~= user)then
                 return
             end
 
@@ -2750,6 +2756,8 @@ networking = {
                 bureon = {x = 0, y = -8},
                 stadium = {x = 247, y = -83},
                 coalpit = {x = -33, y = -39},
+                mimicstemple = {x = 6.681, y = -178},
+                foundry = {x = 172.231, y = -197.123},
             }
 
             --EntityLoad("mods/evaisa.arena/files/entities/particles/trailer/arena_logo.xml", 0, -100)

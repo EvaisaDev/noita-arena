@@ -733,7 +733,7 @@ ArenaGameplay = {
                         local step_size = default_size / (zone_time * 60)
                     
 
-                        GamePrint("step_size: " .. step_size)
+                        --GamePrint("step_size: " .. step_size)
 
                         data.zone_size = data.zone_size - step_size
 
@@ -3260,7 +3260,7 @@ ArenaGameplay = {
 
         networking.send.dummy_target(lobby, new_target)
 
-        ArenaGameplay.UpdateDummyData(dummy, lobby, data)
+        GameAddFlagRun("refresh_dummy")
 
     end,
     UpdateDummy = function(lobby, data, pre)
@@ -3611,7 +3611,7 @@ ArenaGameplay = {
                         if(EntityGetRootEntity(v) == v)then
                             EntityLoad("data/entities/particles/image_emitters/shop_effect.xml", entity_x, entity_y - 8)
                             EntityKill(v)
-                        elseif(not EntityHasTag(EntityGetRootEntity(v), "client"))then
+                        elseif(not EntityHasTag(EntityGetRootEntity(v), "client") and not EntityHasTag(EntityGetRootEntity(v), "spectator"))then
                             EntityKill(v)
                         end
 

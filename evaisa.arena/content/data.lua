@@ -586,7 +586,7 @@ cosmetics = {
         id = "gold_dust",
         name = "$arena_cosmetics_gold_dust_name",
         description = "$arena_cosmetics_gold_dust_description",
-        icon = "mods/evaisa.arena/content/cosmetics/particles/gold_dust/icon.png",
+        icon = "mods/evaisa.arena/content/cosmetics/icons/gold_dust.png",
         credits = "Evaisa",
         type = "particles",
         can_be_unlocked = true,
@@ -608,7 +608,7 @@ cosmetics = {
         on_update = function(self, lobby, data, entity) -- runs every frame while hat is worn
         end,
         on_load = function(self, lobby, data, entity) -- runs when cosmetic is loaded, can be used to load entities etc.
-            local ent = EntityLoad("mods/evaisa.arena/content/cosmetics/particles/gold_dust/gold_dust.xml")
+            local ent = EntityLoad("mods/evaisa.arena/content/cosmetics/particles/gold_dust.xml")
             EntityAddChild(entity, ent)
 
         end,
@@ -616,6 +616,129 @@ cosmetics = {
             local children = EntityGetAllChildren(entity)
             for _, child in ipairs(children or {}) do
                 if(EntityGetName(child) == "gold_dust")then
+                    EntityKill(child)
+                end
+            end
+        end,
+        on_arena_unlocked = function(self, lobby, data, entity) -- runs when player is unlocked in arena.
+        end,
+    },
+    {
+        id = "blue_fire",
+        name = "$arena_cosmetics_blue_fire_name",
+        description = "$arena_cosmetics_blue_fire_description",
+        icon = "mods/evaisa.arena/content/cosmetics/icons/blue_fire.png",
+        credits = "Evaisa",
+        type = "particles",
+        can_be_unlocked = true,
+        can_be_purchased = true,
+        unlocked_default = false,
+        price = 2500,
+        try_unlock = function(self, lobby, data) -- runs every frame, if true, unlock flag is added
+            --[[local steam_id = steam_utils.getSteamID()
+            
+            local id = tostring(steam_id)
+
+            return id == "76561198032563991"]]
+            return false
+        end,
+        try_force_enable = function(self, lobby, data) -- if this condition is true, the cosmetic will be enabled even if it's not unlocked
+
+            return false
+        end,
+        on_update = function(self, lobby, data, entity) -- runs every frame while hat is worn
+        end,
+        on_load = function(self, lobby, data, entity) -- runs when cosmetic is loaded, can be used to load entities etc.
+            local ent = EntityLoad("mods/evaisa.arena/content/cosmetics/particles/blue_fire.xml")
+            EntityAddChild(entity, ent)
+
+        end,
+        on_unload = function(self, lobby, data, entity) -- runs when cosmetic is unloaded, can be used to unload entities etc.
+            local children = EntityGetAllChildren(entity)
+            for _, child in ipairs(children or {}) do
+                if(EntityGetName(child) == "fire_head")then
+                    EntityKill(child)
+                end
+            end
+        end,
+        on_arena_unlocked = function(self, lobby, data, entity) -- runs when player is unlocked in arena.
+        end,
+    },
+    {
+        id = "trans_glitter",
+        name = "$arena_cosmetics_trans_glitter_name",
+        description = "$arena_cosmetics_trans_glitter_description",
+        icon = "mods/evaisa.arena/content/cosmetics/icons/trans_glitter.png",
+        credits = "Evaisa",
+        type = "particles",
+        can_be_unlocked = true,
+        can_be_purchased = true,
+        unlocked_default = false,
+        price = 2500,
+        try_unlock = function(self, lobby, data) -- runs every frame, if true, unlock flag is added
+            --[[local steam_id = steam_utils.getSteamID()
+            
+            local id = tostring(steam_id)
+
+            return id == "76561198032563991"]]
+            return false
+        end,
+        try_force_enable = function(self, lobby, data) -- if this condition is true, the cosmetic will be enabled even if it's not unlocked
+
+            return false
+        end,
+        on_update = function(self, lobby, data, entity) -- runs every frame while hat is worn
+        end,
+        on_load = function(self, lobby, data, entity) -- runs when cosmetic is loaded, can be used to load entities etc.
+            local ent = EntityLoad("mods/evaisa.arena/content/cosmetics/particles/trans_glitter.xml")
+            EntityAddChild(entity, ent)
+
+        end,
+        on_unload = function(self, lobby, data, entity) -- runs when cosmetic is unloaded, can be used to unload entities etc.
+            local children = EntityGetAllChildren(entity)
+            for _, child in ipairs(children or {}) do
+                if(EntityGetName(child) == "trans_glitter")then
+                    EntityKill(child)
+                end
+            end
+        end,
+        on_arena_unlocked = function(self, lobby, data, entity) -- runs when player is unlocked in arena.
+        end,
+    },
+    {
+        id = "haunted",
+        name = "$arena_cosmetics_haunted_name",
+        description = "$arena_cosmetics_haunted_description",
+        icon = "mods/evaisa.arena/content/cosmetics/icons/haunted.png",
+        credits = "Evaisa",
+        type = "particles",
+        can_be_unlocked = true,
+        can_be_purchased = true,
+        unlocked_default = false,
+        price = 3000,
+        try_unlock = function(self, lobby, data) -- runs every frame, if true, unlock flag is added
+            --[[local steam_id = steam_utils.getSteamID()
+            
+            local id = tostring(steam_id)
+
+            return id == "76561198032563991"]]
+            return false
+        end,
+        try_force_enable = function(self, lobby, data) -- if this condition is true, the cosmetic will be enabled even if it's not unlocked
+
+            return false
+        end,
+        on_update = function(self, lobby, data, entity) -- runs every frame while hat is worn
+        end,
+        on_load = function(self, lobby, data, entity) -- runs when cosmetic is loaded, can be used to load entities etc.
+            local ent = EntityLoad("mods/evaisa.arena/content/cosmetics/particles/haunted.xml")
+            EntityAddChild(entity, ent)
+
+        end,
+        on_unload = function(self, lobby, data, entity) -- runs when cosmetic is unloaded, can be used to unload entities etc.
+            local children = EntityGetAllChildren(entity)
+            for _, child in ipairs(children or {}) do
+                if(EntityGetName(child) == "haunted")then
                     EntityKill(child)
                 end
             end
@@ -947,7 +1070,7 @@ cosmetics = {
         end,
     },
     {
-        id = "fish_hat_2",
+        id = "fish_hat_red",
         name = "$arena_cosmetics_fish_hat_2_name",
         description = "$arena_cosmetics_fish_hat_2_description",
         icon = "mods/evaisa.arena/content/cosmetics/sprites/fish2/icon.png",
@@ -958,7 +1081,7 @@ cosmetics = {
         sprite = "mods/evaisa.arena/content/cosmetics/sprites/fish2/fish_02.xml",
         sprite_animation = "walk",
         can_be_unlocked = true,
-        can_be_purchased = true,
+        can_be_purchased = false,
         unlocked_default = false,
         always_run_kill_func = true, -- Run kill func even when not worn
         always_run_win_func = false, -- Run Win func even when not worn
