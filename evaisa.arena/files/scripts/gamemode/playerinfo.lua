@@ -54,6 +54,7 @@ function playerinfo:New(lobby, user)
         self.alive = false
         self.last_cosmetics = nil
         self.previous_positions = {}
+        
 
         if(self.entity ~= nil and EntityGetIsAlive(self.entity))then
 

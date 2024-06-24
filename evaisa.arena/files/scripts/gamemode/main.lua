@@ -618,7 +618,7 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 180,
+    version = 181,
     required_online_version = 363,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
@@ -2895,8 +2895,6 @@ ArenaMode = {
         if(steamutils.IsOwner() and input:WasKeyPressed("f9"))then
             ArenaGameplay.WinnerCheck(lobby, data, true)
         end
-
-        test.do_stuff()
 
         --[[
         if (input:WasKeyPressed("f5")) then
