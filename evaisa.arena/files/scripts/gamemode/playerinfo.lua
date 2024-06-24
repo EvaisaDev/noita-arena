@@ -43,7 +43,7 @@ function playerinfo:New(lobby, user)
     end
 
     obj.Death = function(self, damage_details, attacker)
-        arena_log:print("Player "..tostring(steamutils.getTranslatePersonaName(self.id)).." died and is being cleaned up")
+        arena_log:print("Player "..tostring(steamutils.getTranslatedPersonaName(self.id)).." died and is being cleaned up")
         self.last_velocity = nil
         self.held_item = nil
         if(self.hp_bar)then
