@@ -890,7 +890,7 @@ cosmetics = {
         --sprite_sheet_overlay = "mods/evaisa.arena/content/cosmetics/sprites/dunce_hat/sprite_sheet_overlay.png",
         type = "hat",
         can_be_unlocked = true,
-        can_be_purchased = true,
+        can_be_purchased = false,
         unlocked_default = false,
         price = 0,
         try_unlock = function(self, lobby, data) -- runs every frame, if true, unlock flag is added
@@ -898,7 +898,7 @@ cosmetics = {
             
             local id = tostring(steam_id)
 
-            return id == ""
+            return id == "76561198014887968"
         end,
         try_force_enable = function(self, lobby, data) -- if this condition is true, the cosmetic will be enabled even if it's not unlocked
             return false
