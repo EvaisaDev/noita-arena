@@ -22,12 +22,25 @@ end
 
 
 function loadImage(file)
-	local f = assert(fs.open(file))
-	local img = assert(spng.open{read = f:buffered_read()})
-	local bmp = assert(img:load{accept = {rgba8 = true}})
-	assert(f:close())
+    --local f = assert(fs.open(file))
+    -- pcall to catch errors, if the file doesn't exist, replace `mods/evaisa.arena/` with `../../workshop/content/881100/3035468502/`
+        local f, err = fs.open(file)
+
+    if not f then
+        file = file:gsub("mods/evaisa.arena/", "../../workshop/content/881100/3035468502/")
+        f, err = fs.open(file)
+    end
+
+    if not f then
+        print("File not found: " .. file)
+        return nil
+    end
+
+    local img = assert(spng.open{read = f:buffered_read()})
+    local bmp = assert(img:load{accept = {rgba8 = true}})
+    assert(f:close())
     img:free()
-	return bmp
+    return bmp
 end
 
 function loadImageFromString(png_string)
