@@ -882,6 +882,44 @@ cosmetics = {
         end,
     },
     {
+        id = "fury_hat",
+        name = "$arena_cosmetics_fury_hat_name",
+        description = "$arena_cosmetics_fury_hat_description",
+        icon = "mods/evaisa.arena/content/cosmetics/icons/fury.png",
+        credits = "Evaisa",
+        --sprite_sheet_overlay = "mods/evaisa.arena/content/cosmetics/sprites/dunce_hat/sprite_sheet_overlay.png",
+        type = "hat",
+        can_be_unlocked = true,
+        can_be_purchased = true,
+        unlocked_default = false,
+        price = 0,
+        try_unlock = function(self, lobby, data) -- runs every frame, if true, unlock flag is added
+            local steam_id = steam_utils.getSteamID()
+            
+            local id = tostring(steam_id)
+
+            return id == ""
+        end,
+        try_force_enable = function(self, lobby, data) -- if this condition is true, the cosmetic will be enabled even if it's not unlocked
+            return false
+        end,
+        on_load = function(self, lobby, data, entity) -- runs when cosmetic is loaded, can be used to load entities etc.
+            local ent = EntityLoad("mods/evaisa.arena/content/cosmetics/entities/fury_hat.xml")
+            EntityAddChild(entity, ent)
+        end,
+        on_unload = function(self, lobby, data, entity) -- runs when cosmetic is unloaded, can be used to unload entities etc.
+            local children = EntityGetAllChildren(entity)
+            for _, child in ipairs(children or {}) do
+                if(EntityGetName(child) == "fury_hat")then
+                    EntityKill(child)
+                end
+            end
+        end,
+        on_update = function(self, lobby, data, entity) -- runs every frame while hat is worn
+
+        end,
+    },
+    {
         id = "fish_hat",
         name = "$arena_cosmetics_fish_hat_name",
         description = "$arena_cosmetics_fish_hat_description",
