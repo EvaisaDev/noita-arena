@@ -618,12 +618,12 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 182,
+    version = 183,
     required_online_version = 363,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
     end,
-    version_flavor_text = "$arena_dev",
+    version_flavor_text = "$arena_release",
     custom_lobby_string = function(lobby)
         return string.format(GameTextGetTranslatedOrNot("$arena_lobby_string"), tostring(tonumber(steam.matchmaking.getLobbyData(lobby, "holyMountainCount")) or "0") + 1)
     end,
