@@ -615,11 +615,12 @@ local filter_types = {
 
 np.SetGameModeDeterministic(true)
 
+
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 184,
-    required_online_version = 363,
+    version = 186,
+    required_online_version = 367,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
     end,
@@ -2065,12 +2066,42 @@ ArenaMode = {
         end
     end,
     refresh = function(lobby)
+
+
+        if(MP_VERSION < ArenaMode.required_online_version)then
+            invalid_version_popup_active = invalid_version_popup_active or false
+            if(not invalid_version_popup_active)then
+                popup.create("bad_online", GameTextGetTranslatedOrNot("$arena_bad_online_version"), string.format(GameTextGetTranslatedOrNot("$arena_bad_online_version_desc"), ArenaMode.required_online_version), {
+                    {
+                        text = GameTextGetTranslatedOrNot("$arena_online_update"),
+                        callback = function()
+                            invalid_version_popup_active = false
+                            os.execute("start explorer \"" .. noita_online_download .. "\"")
+                        end
+                    },
+                    {
+                        text = GameTextGetTranslatedOrNot("$mp_close_popup"),
+                        callback = function()
+                            invalid_version_popup_active = false
+                        end
+                    }
+                }, -6000)
+
+                invalid_version_popup_active = true
+                        
+                disconnect({
+                    lobbyID = lobby,
+                    message = GameTextGetTranslatedOrNot("$arena_bad_online_version")
+                })
+            end
+        end
+
         print("refreshing arena settings")
         --GamePrint("refreshing arena settings")
 
         TryUpdateData(lobby)
 
-        if(tostring(content_hash) ~= steam.matchmaking.getLobbyData(lobby,"content_hash"))then
+        if(not invalid_version_popup_active and tostring(content_hash) ~= steam.matchmaking.getLobbyData(lobby,"content_hash"))then
             if(steam_utils.IsOwner())then
                 print("content hash mismatch, updating")
                 steam_utils.TrySetLobbyData(lobby, "content_hash", content_hash)
@@ -2491,6 +2522,9 @@ ArenaMode = {
         lobby_seed = applied_seed
     end,
     enter = function(lobby)
+        print("MP Version: " .. MP_VERSION .." < " .. ArenaMode.required_online_version)
+
+
 
         was_content_mismatched = false
 
@@ -2507,33 +2541,6 @@ ArenaMode = {
             steam_utils.TrySetLobbyData(lobby, "custom_lobby_string", "( round 0 )")
         end
 
-        print("MP Version: " .. MP_VERSION .." < " .. ArenaMode.required_online_version)
-
-        if(MP_VERSION < ArenaMode.required_online_version)then
-            invalid_version_popup_active = invalid_version_popup_active or false
-            if(not invalid_version_popup_active)then
-                popup.create("bad_online", GameTextGetTranslatedOrNot("$arena_bad_online_version"), string.format(GameTextGetTranslatedOrNot("$arena_bad_online_version_desc"), ArenaMode.required_online_version), {
-                    {
-                        text = GameTextGetTranslatedOrNot("$arena_online_update"),
-                        callback = function()
-                            invalid_version_popup_active = false
-                            os.execute("start explorer \"" .. noita_online_download .. "\"")
-                        end
-                    },
-                    {
-                        text = GameTextGetTranslatedOrNot("$mp_close_popup"),
-                        callback = function()
-                            invalid_version_popup_active = false
-                        end
-                    }
-                }, -6000)
-
-                disconnect({
-                    lobbyID = lobby,
-                    message = GameTextGetTranslatedOrNot("$arena_bad_online_version")
-                })
-            end
-        end
         
         GlobalsSetValue("holyMountainCount", "0")
         GameAddFlagRun("player_unloaded")
@@ -3201,5 +3208,9 @@ ArenaMode = {
         end
     end
 }
+
+
+
+
 
 table.insert(gamemodes, ArenaMode)

@@ -2,7 +2,7 @@ dofile("mods/evaisa.arena/files/scripts/gui/image.lua")
 
 local color_picker = dofile("mods/evaisa.arena/files/scripts/gui/color_picker.lua")
 local fs = require("fs")
-local lfs = require("lfs")
+--local lfs = require("lfs")
 
 
 local skins = {}
@@ -16,12 +16,16 @@ local cache_folder = "data/evaisa.arena/cache/"
 local skins_folder = "data/evaisa.arena/skins/"
 
 -- remove contents of cache folder with lfs
-for file in lfs.dir(cache_folder)do
+for file in fs.dir(cache_folder)do
+    if not file then break end
+    -- print debug trace
     if file ~= "." and file ~= ".." then
         local file_path = cache_folder..file
+        print("Removing: "..file_path)
         fs.remove(file_path)
     end
 end
+
 
 function make_verlet_color(r, g, b)
     return bit.bor(bit.bor(bit.bor(bit.lshift(0xFF, 24), bit.lshift(b, 16)), bit.lshift(g, 8)), r)
@@ -79,7 +83,8 @@ skins.init = function()
             table.insert(self.loaded_skins, {is_default = true, name = skin_name, path = "mods/evaisa.arena/files/gfx/skins/player_default.png", temp_path = temp_path, img = img})
         end
 
-        for file in lfs.dir(skins_folder)do
+        for file in fs.dir(skins_folder)do
+            print(file)
             if file ~= "." and file ~= ".." then
                 local file_path = skins_folder..file
                 local status, img = pcall(loadImage, file_path)
