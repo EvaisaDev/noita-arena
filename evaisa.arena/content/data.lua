@@ -2106,6 +2106,735 @@ cosmetics = {
         on_arena_unlocked = function(self, lobby, data, entity) -- runs when player is unlocked in arena.
         end,
     },
+    -- cat_tail_black
+    {
+        id = "cat_tail_black",
+        name = "$arena_cosmetics_cat_tail_black_name",
+        description = "$arena_cosmetics_cat_tail_black_description",
+        icon = "mods/evaisa.arena/content/cosmetics/icons/cat_tail_black.png",
+        credits = "Evaisa",
+        type = "tail",
+        can_be_unlocked = true,
+        can_be_purchased = true,
+        unlocked_default = false,
+        price = 1000,
+        try_unlock = function(self, lobby, data) -- runs every frame, if true, unlock flag is added
+            return false
+        end,
+        try_force_enable = function(self, lobby, data) -- if this condition is true, the cosmetic will be enabled even if it's not unlocked
+
+            return false
+        end,
+        on_update = function(self, lobby, data, entity) -- runs every frame while hat is worn
+        end,
+        on_load = function(self, lobby, data, entity) -- runs when cosmetic is loaded, can be used to load entities etc.
+            local ent = EntityLoad("mods/evaisa.arena/content/cosmetics/entities/cat_tail/tail_black.xml")
+            EntityAddChild(entity, ent)
+        end,
+        on_unload = function(self, lobby, data, entity) -- runs when cosmetic is unloaded, can be used to unload entities etc.
+            local children = EntityGetAllChildren(entity)
+            for _, child in ipairs(children or {}) do
+                if(EntityGetName(child) == "tail_cosmetic")then
+                    EntityKill(child)
+                end
+            end
+        end,
+        on_arena_unlocked = function(self, lobby, data, entity) -- runs when player is unlocked in arena.
+        end,
+    },
+    -- cat_tail_black_white_tip
+    {
+        id = "cat_tail_black_white_tip",
+        name = "$arena_cosmetics_cat_tail_black_white_tip_name",
+        description = "$arena_cosmetics_cat_tail_black_white_tip_description",
+        icon = "mods/evaisa.arena/content/cosmetics/icons/cat_tail_black_white_tip.png",
+        credits = "Evaisa",
+        type = "tail",
+        can_be_unlocked = true,
+        can_be_purchased = true,
+        unlocked_default = false,
+        price = 1000,
+        try_unlock = function(self, lobby, data) -- runs every frame, if true, unlock flag is added
+            return false
+        end,
+        try_force_enable = function(self, lobby, data) -- if this condition is true, the cosmetic will be enabled even if it's not unlocked
+
+            return false
+        end,
+        on_update = function(self, lobby, data, entity) -- runs every frame while hat is worn
+        end,
+        on_load = function(self, lobby, data, entity) -- runs when cosmetic is loaded, can be used to load entities etc.
+            local ent = EntityLoad("mods/evaisa.arena/content/cosmetics/entities/cat_tail/tail_black_white_tip.xml")
+            EntityAddChild(entity, ent)
+        end,
+        on_unload = function(self, lobby, data, entity) -- runs when cosmetic is unloaded, can be used to unload entities etc.
+            local children = EntityGetAllChildren(entity)
+            for _, child in ipairs(children or {}) do
+                if(EntityGetName(child) == "tail_cosmetic")then
+                    EntityKill(child)
+                end
+            end
+        end,
+        on_arena_unlocked = function(self, lobby, data, entity) -- runs when player is unlocked in arena.
+        end,
+    },
+    -- cat_tail_blue
+    {
+        id = "cat_tail_blue",
+        name = "$arena_cosmetics_cat_tail_blue_name",
+        description = "$arena_cosmetics_cat_tail_blue_description",
+        icon = "mods/evaisa.arena/content/cosmetics/icons/cat_tail_blue.png",
+        credits = "Evaisa",
+        type = "tail",
+        can_be_unlocked = true,
+        can_be_purchased = true,
+        unlocked_default = false,
+        price = 1000,
+        try_unlock = function(self, lobby, data) -- runs every frame, if true, unlock flag is added
+            return false
+        end,
+        try_force_enable = function(self, lobby, data) -- if this condition is true, the cosmetic will be enabled even if it's not unlocked
+
+            return false
+        end,
+        on_update = function(self, lobby, data, entity) -- runs every frame while hat is worn
+        end,
+        on_load = function(self, lobby, data, entity) -- runs when cosmetic is loaded, can be used to load entities etc.
+            local ent = EntityLoad("mods/evaisa.arena/content/cosmetics/entities/cat_tail/tail_blue.xml")
+            EntityAddChild(entity, ent)
+        end,
+        on_unload = function(self, lobby, data, entity) -- runs when cosmetic is unloaded, can be used to unload entities etc.
+            local children = EntityGetAllChildren(entity)
+            for _, child in ipairs(children or {}) do
+                if(EntityGetName(child) == "tail_cosmetic")then
+                    EntityKill(child)
+                end
+            end
+        end,
+        on_arena_unlocked = function(self, lobby, data, entity) -- runs when player is unlocked in arena.
+        end,
+    },
+    -- cat_tail_green
+    {
+        id = "cat_tail_green",
+        name = "$arena_cosmetics_cat_tail_green_name",
+        description = "$arena_cosmetics_cat_tail_green_description",
+        icon = "mods/evaisa.arena/content/cosmetics/icons/cat_tail_green.png",
+        credits = "Evaisa",
+        type = "tail",
+        can_be_unlocked = true,
+        can_be_purchased = true,
+        unlocked_default = false,
+        price = 1000,
+        try_unlock = function(self, lobby, data) -- runs every frame, if true, unlock flag is added
+            return false
+        end,
+        try_force_enable = function(self, lobby, data) -- if this condition is true, the cosmetic will be enabled even if it's not unlocked
+
+            return false
+        end,
+        on_update = function(self, lobby, data, entity) -- runs every frame while hat is worn
+        end,
+        on_load = function(self, lobby, data, entity) -- runs when cosmetic is loaded, can be used to load entities etc.
+            local ent = EntityLoad("mods/evaisa.arena/content/cosmetics/entities/cat_tail/tail_green.xml")
+            EntityAddChild(entity, ent)
+        end,
+        on_unload = function(self, lobby, data, entity) -- runs when cosmetic is unloaded, can be used to unload entities etc.
+            local children = EntityGetAllChildren(entity)
+            for _, child in ipairs(children or {}) do
+                if(EntityGetName(child) == "tail_cosmetic")then
+                    EntityKill(child)
+                end
+            end
+        end,
+        on_arena_unlocked = function(self, lobby, data, entity) -- runs when player is unlocked in arena.
+        end,
+    },
+    -- cat_tail_red
+    {
+        id = "cat_tail_red",
+        name = "$arena_cosmetics_cat_tail_red_name",
+        description = "$arena_cosmetics_cat_tail_red_description",
+        icon = "mods/evaisa.arena/content/cosmetics/icons/cat_tail_red.png",
+        credits = "Evaisa",
+        type = "tail",
+        can_be_unlocked = true,
+        can_be_purchased = true,
+        unlocked_default = false,
+        price = 1000,
+        try_unlock = function(self, lobby, data) -- runs every frame, if true, unlock flag is added
+            return false
+        end,
+        try_force_enable = function(self, lobby, data) -- if this condition is true, the cosmetic will be enabled even if it's not unlocked
+
+            return false
+        end,
+        on_update = function(self, lobby, data, entity) -- runs every frame while hat is worn
+        end,
+        on_load = function(self, lobby, data, entity) -- runs when cosmetic is loaded, can be used to load entities etc.
+            local ent = EntityLoad("mods/evaisa.arena/content/cosmetics/entities/cat_tail/tail_red.xml")
+            EntityAddChild(entity, ent)
+        end,
+        on_unload = function(self, lobby, data, entity) -- runs when cosmetic is unloaded, can be used to unload entities etc.
+            local children = EntityGetAllChildren(entity)
+            for _, child in ipairs(children or {}) do
+                if(EntityGetName(child) == "tail_cosmetic")then
+                    EntityKill(child)
+                end
+            end
+        end,
+        on_arena_unlocked = function(self, lobby, data, entity) -- runs when player is unlocked in arena.
+        end,
+    },
+    -- cat_tail_pink
+    {
+        id = "cat_tail_pink",
+        name = "$arena_cosmetics_cat_tail_pink_name",
+        description = "$arena_cosmetics_cat_tail_pink_description",
+        icon = "mods/evaisa.arena/content/cosmetics/icons/cat_tail_pink.png",
+        credits = "Evaisa",
+        type = "tail",
+        can_be_unlocked = true,
+        can_be_purchased = true,
+        unlocked_default = false,
+        price = 1000,
+        try_unlock = function(self, lobby, data) -- runs every frame, if true, unlock flag is added
+            return false
+        end,
+        try_force_enable = function(self, lobby, data) -- if this condition is true, the cosmetic will be enabled even if it's not unlocked
+
+            return false
+        end,
+        on_update = function(self, lobby, data, entity) -- runs every frame while hat is worn
+        end,
+        on_load = function(self, lobby, data, entity) -- runs when cosmetic is loaded, can be used to load entities etc.
+            local ent = EntityLoad("mods/evaisa.arena/content/cosmetics/entities/cat_tail/tail_pink.xml")
+            EntityAddChild(entity, ent)
+        end,
+        on_unload = function(self, lobby, data, entity) -- runs when cosmetic is unloaded, can be used to unload entities etc.
+            local children = EntityGetAllChildren(entity)
+            for _, child in ipairs(children or {}) do
+                if(EntityGetName(child) == "tail_cosmetic")then
+                    EntityKill(child)
+                end
+            end
+        end,
+        on_arena_unlocked = function(self, lobby, data, entity) -- runs when player is unlocked in arena.
+        end,
+    },
+    -- cat_tail_white
+    {
+        id = "cat_tail_white",
+        name = "$arena_cosmetics_cat_tail_white_name",
+        description = "$arena_cosmetics_cat_tail_white_description",
+        icon = "mods/evaisa.arena/content/cosmetics/icons/cat_tail_white.png",
+        credits = "Evaisa",
+        type = "tail",
+        can_be_unlocked = true,
+        can_be_purchased = true,
+        unlocked_default = false,
+        price = 1000,
+        try_unlock = function(self, lobby, data) -- runs every frame, if true, unlock flag is added
+            return false
+        end,
+        try_force_enable = function(self, lobby, data) -- if this condition is true, the cosmetic will be enabled even if it's not unlocked
+
+            return false
+        end,
+        on_update = function(self, lobby, data, entity) -- runs every frame while hat is worn
+        end,
+        on_load = function(self, lobby, data, entity) -- runs when cosmetic is loaded, can be used to load entities etc.
+            local ent = EntityLoad("mods/evaisa.arena/content/cosmetics/entities/cat_tail/tail_white.xml")
+            EntityAddChild(entity, ent)
+        end,
+        on_unload = function(self, lobby, data, entity) -- runs when cosmetic is unloaded, can be used to unload entities etc.
+            local children = EntityGetAllChildren(entity)
+            for _, child in ipairs(children or {}) do
+                if(EntityGetName(child) == "tail_cosmetic")then
+                    EntityKill(child)
+                end
+            end
+        end,
+        on_arena_unlocked = function(self, lobby, data, entity) -- runs when player is unlocked in arena.
+        end,
+    },
+    -- wolf_tail_black_white_tip
+    {
+        id = "wolf_tail_black_white_tip",
+        name = "$arena_cosmetics_wolf_tail_black_white_tip_name",
+        description = "$arena_cosmetics_wolf_tail_black_white_tip_description",
+        icon = "mods/evaisa.arena/content/cosmetics/icons/wolf_tail_black_white_tip.png",
+        credits = "Evaisa",
+        type = "tail",
+        can_be_unlocked = true,
+        can_be_purchased = true,
+        unlocked_default = false,
+        price = 1000,
+        try_unlock = function(self, lobby, data) -- runs every frame, if true, unlock flag is added
+            return false
+        end,
+        try_force_enable = function(self, lobby, data) -- if this condition is true, the cosmetic will be enabled even if it's not unlocked
+
+            return false
+        end,
+        on_update = function(self, lobby, data, entity) -- runs every frame while hat is worn
+        end,
+        on_load = function(self, lobby, data, entity) -- runs when cosmetic is loaded, can be used to load entities etc.
+            local ent = EntityLoad("mods/evaisa.arena/content/cosmetics/entities/wolf_tail/black_white_tip.xml")
+            EntityAddChild(entity, ent)
+        end,
+        on_unload = function(self, lobby, data, entity) -- runs when cosmetic is unloaded, can be used to unload entities etc.
+            local children = EntityGetAllChildren(entity)
+            for _, child in ipairs(children or {}) do
+                if(EntityGetName(child) == "tail_cosmetic")then
+                    EntityKill(child)
+                end
+            end
+        end,
+        on_arena_unlocked = function(self, lobby, data, entity) -- runs when player is unlocked in arena.
+        end,
+    },
+    -- wolf_tail_blue
+    {
+        id = "wolf_tail_blue",
+        name = "$arena_cosmetics_wolf_tail_blue_name",
+        description = "$arena_cosmetics_wolf_tail_blue_description",
+        icon = "mods/evaisa.arena/content/cosmetics/icons/wolf_tail_blue.png",
+        credits = "Evaisa",
+        type = "tail",
+        can_be_unlocked = true,
+        can_be_purchased = true,
+        unlocked_default = false,
+        price = 1000,
+        try_unlock = function(self, lobby, data) -- runs every frame, if true, unlock flag is added
+            return false
+        end,
+        try_force_enable = function(self, lobby, data) -- if this condition is true, the cosmetic will be enabled even if it's not unlocked
+
+            return false
+        end,
+        on_update = function(self, lobby, data, entity) -- runs every frame while hat is worn
+        end,
+        on_load = function(self, lobby, data, entity) -- runs when cosmetic is loaded, can be used to load entities etc.
+            local ent = EntityLoad("mods/evaisa.arena/content/cosmetics/entities/wolf_tail/blue.xml")
+            EntityAddChild(entity, ent)
+        end,
+        on_unload = function(self, lobby, data, entity) -- runs when cosmetic is unloaded, can be used to unload entities etc.
+            local children = EntityGetAllChildren(entity)
+            for _, child in ipairs(children or {}) do
+                if(EntityGetName(child) == "tail_cosmetic")then
+                    EntityKill(child)
+                end
+            end
+        end,
+        on_arena_unlocked = function(self, lobby, data, entity) -- runs when player is unlocked in arena.
+        end,
+    },
+    -- wolf_tail_pink
+    {
+        id = "wolf_tail_pink",
+        name = "$arena_cosmetics_wolf_tail_pink_name",
+        description = "$arena_cosmetics_wolf_tail_pink_description",
+        icon = "mods/evaisa.arena/content/cosmetics/icons/wolf_tail_pink.png",
+        credits = "Evaisa",
+        type = "tail",
+        can_be_unlocked = true,
+        can_be_purchased = true,
+        unlocked_default = false,
+        price = 1000,
+        try_unlock = function(self, lobby, data) -- runs every frame, if true, unlock flag is added
+            return false
+        end,
+        try_force_enable = function(self, lobby, data) -- if this condition is true, the cosmetic will be enabled even if it's not unlocked
+
+            return false
+        end,
+        on_update = function(self, lobby, data, entity) -- runs every frame while hat is worn
+        end,
+        on_load = function(self, lobby, data, entity) -- runs when cosmetic is loaded, can be used to load entities etc.
+            local ent = EntityLoad("mods/evaisa.arena/content/cosmetics/entities/wolf_tail/pink.xml")
+            EntityAddChild(entity, ent)
+        end,
+        on_unload = function(self, lobby, data, entity) -- runs when cosmetic is unloaded, can be used to unload entities etc.
+            local children = EntityGetAllChildren(entity)
+            for _, child in ipairs(children or {}) do
+                if(EntityGetName(child) == "tail_cosmetic")then
+                    EntityKill(child)
+                end
+            end
+        end,
+        on_arena_unlocked = function(self, lobby, data, entity) -- runs when player is unlocked in arena.
+        end,
+    },
+    -- wolf_tail_orange
+    {
+        id = "wolf_tail_orange",
+        name = "$arena_cosmetics_wolf_tail_orange_name",
+        description = "$arena_cosmetics_wolf_tail_orange_description",
+        icon = "mods/evaisa.arena/content/cosmetics/icons/wolf_tail_orange.png",
+        credits = "Evaisa",
+        type = "tail",
+        can_be_unlocked = true,
+        can_be_purchased = true,
+        unlocked_default = false,
+        price = 1000,
+        try_unlock = function(self, lobby, data) -- runs every frame, if true, unlock flag is added
+            return false
+        end,
+        try_force_enable = function(self, lobby, data) -- if this condition is true, the cosmetic will be enabled even if it's not unlocked
+
+            return false
+        end,
+        on_update = function(self, lobby, data, entity) -- runs every frame while hat is worn
+        end,
+        on_load = function(self, lobby, data, entity) -- runs when cosmetic is loaded, can be used to load entities etc.
+            local ent = EntityLoad("mods/evaisa.arena/content/cosmetics/entities/wolf_tail/orange.xml")
+            EntityAddChild(entity, ent)
+        end,
+        on_unload = function(self, lobby, data, entity) -- runs when cosmetic is unloaded, can be used to unload entities etc.
+            local children = EntityGetAllChildren(entity)
+            for _, child in ipairs(children or {}) do
+                if(EntityGetName(child) == "tail_cosmetic")then
+                    EntityKill(child)
+                end
+            end
+        end,
+        on_arena_unlocked = function(self, lobby, data, entity) -- runs when player is unlocked in arena.
+        end,
+    },
+    -- wolf_tail_white
+    {
+        id = "wolf_tail_white",
+        name = "$arena_cosmetics_wolf_tail_white_name",
+        description = "$arena_cosmetics_wolf_tail_white_description",
+        icon = "mods/evaisa.arena/content/cosmetics/icons/wolf_tail_white.png",
+        credits = "Evaisa",
+        type = "tail",
+        can_be_unlocked = true,
+        can_be_purchased = true,
+        unlocked_default = false,
+        price = 1000,
+        try_unlock = function(self, lobby, data) -- runs every frame, if true, unlock flag is added
+            return false
+        end,
+        try_force_enable = function(self, lobby, data) -- if this condition is true, the cosmetic will be enabled even if it's not unlocked
+
+            return false
+        end,
+        on_update = function(self, lobby, data, entity) -- runs every frame while hat is worn
+        end,
+        on_load = function(self, lobby, data, entity) -- runs when cosmetic is loaded, can be used to load entities etc.
+            local ent = EntityLoad("mods/evaisa.arena/content/cosmetics/entities/wolf_tail/white.xml")
+            EntityAddChild(entity, ent)
+        end,
+        on_unload = function(self, lobby, data, entity) -- runs when cosmetic is unloaded, can be used to unload entities etc.
+            local children = EntityGetAllChildren(entity)
+            for _, child in ipairs(children or {}) do
+                if(EntityGetName(child) == "tail_cosmetic")then
+                    EntityKill(child)
+                end
+            end
+        end,
+        on_arena_unlocked = function(self, lobby, data, entity) -- runs when player is unlocked in arena.
+        end,
+    },
+    -- wolf_tail_regular
+    {
+        id = "wolf_tail_regular",
+        name = "$arena_cosmetics_wolf_tail_regular_name",
+        description = "$arena_cosmetics_wolf_tail_regular_description",
+        icon = "mods/evaisa.arena/content/cosmetics/icons/wolf_tail_regular.png",
+        credits = "Evaisa",
+        type = "tail",
+        can_be_unlocked = true,
+        can_be_purchased = true,
+        unlocked_default = false,
+        price = 1000,
+        try_unlock = function(self, lobby, data) -- runs every frame, if true, unlock flag is added
+            return false
+        end,
+        try_force_enable = function(self, lobby, data) -- if this condition is true, the cosmetic will be enabled even if it's not unlocked
+
+            return false
+        end,
+        on_update = function(self, lobby, data, entity) -- runs every frame while hat is worn
+        end,
+        on_load = function(self, lobby, data, entity) -- runs when cosmetic is loaded, can be used to load entities etc.
+            local ent = EntityLoad("mods/evaisa.arena/content/cosmetics/entities/wolf_tail/regular.xml")
+            EntityAddChild(entity, ent)
+        end,
+        on_unload = function(self, lobby, data, entity) -- runs when cosmetic is unloaded, can be used to unload entities etc.
+            local children = EntityGetAllChildren(entity)
+            for _, child in ipairs(children or {}) do
+                if(EntityGetName(child) == "tail_cosmetic")then
+                    EntityKill(child)
+                end
+            end
+        end,
+        on_arena_unlocked = function(self, lobby, data, entity) -- runs when player is unlocked in arena.
+        end,
+    },
+    -- wolf_tail_rainbow
+    {
+        id = "wolf_tail_rainbow",
+        name = "$arena_cosmetics_wolf_tail_rainbow_name",
+        description = "$arena_cosmetics_wolf_tail_rainbow_description",
+        icon = "mods/evaisa.arena/content/cosmetics/icons/wolf_tail_rainbow.png",
+        credits = "Evaisa",
+        type = "tail",
+        can_be_unlocked = true,
+        can_be_purchased = true,
+        unlocked_default = false,
+        price = 1000,
+        try_unlock = function(self, lobby, data) -- runs every frame, if true, unlock flag is added
+            return false
+        end,
+        try_force_enable = function(self, lobby, data) -- if this condition is true, the cosmetic will be enabled even if it's not unlocked
+
+            return false
+        end,
+        on_update = function(self, lobby, data, entity) -- runs every frame while hat is worn
+        end,
+        on_load = function(self, lobby, data, entity) -- runs when cosmetic is loaded, can be used to load entities etc.
+            local ent = EntityLoad("mods/evaisa.arena/content/cosmetics/entities/wolf_tail/rainbow.xml")
+            EntityAddChild(entity, ent)
+        end,
+        on_unload = function(self, lobby, data, entity) -- runs when cosmetic is unloaded, can be used to unload entities etc.
+            local children = EntityGetAllChildren(entity)
+            for _, child in ipairs(children or {}) do
+                if(EntityGetName(child) == "tail_cosmetic")then
+                    EntityKill(child)
+                end
+            end
+        end,
+        on_arena_unlocked = function(self, lobby, data, entity) -- runs when player is unlocked in arena.
+        end,
+    },
+    -- fox_tail
+    {
+        id = "fox_tail",
+        name = "$arena_cosmetics_fox_tail_name",
+        description = "$arena_cosmetics_fox_tail_description",
+        icon = "mods/evaisa.arena/content/cosmetics/icons/fox_tail.png",
+        credits = "Evaisa",
+        type = "tail",
+        can_be_unlocked = true,
+        can_be_purchased = true,
+        unlocked_default = false,
+        price = 1000,
+        try_unlock = function(self, lobby, data) -- runs every frame, if true, unlock flag is added
+            return false
+        end,
+        try_force_enable = function(self, lobby, data) -- if this condition is true, the cosmetic will be enabled even if it's not unlocked
+
+            return false
+        end,
+        on_update = function(self, lobby, data, entity) -- runs every frame while hat is worn
+        end,
+        on_load = function(self, lobby, data, entity) -- runs when cosmetic is loaded, can be used to load entities etc.
+            local ent = EntityLoad("mods/evaisa.arena/content/cosmetics/entities/misc_tail/fox.xml")
+            EntityAddChild(entity, ent)
+        end,
+        on_unload = function(self, lobby, data, entity) -- runs when cosmetic is unloaded, can be used to unload entities etc.
+            local children = EntityGetAllChildren(entity)
+            for _, child in ipairs(children or {}) do
+                if(EntityGetName(child) == "tail_cosmetic")then
+                    EntityKill(child)
+                end
+            end
+        end,
+        on_arena_unlocked = function(self, lobby, data, entity) -- runs when player is unlocked in arena.
+        end,
+    },
+    -- fox_tail_white
+    {
+        id = "fox_tail_white",
+        name = "$arena_cosmetics_fox_tail_white_name",
+        description = "$arena_cosmetics_fox_tail_white_description",
+        icon = "mods/evaisa.arena/content/cosmetics/icons/fox_tail_white.png",
+        credits = "Evaisa",
+        type = "tail",
+        can_be_unlocked = true,
+        can_be_purchased = true,
+        unlocked_default = false,
+        price = 1000,
+        try_unlock = function(self, lobby, data) -- runs every frame, if true, unlock flag is added
+            return false
+        end,
+        try_force_enable = function(self, lobby, data) -- if this condition is true, the cosmetic will be enabled even if it's not unlocked
+
+            return false
+        end,
+        on_update = function(self, lobby, data, entity) -- runs every frame while hat is worn
+        end,
+        on_load = function(self, lobby, data, entity) -- runs when cosmetic is loaded, can be used to load entities etc.
+            local ent = EntityLoad("mods/evaisa.arena/content/cosmetics/entities/misc_tail/fox_white.xml")
+            EntityAddChild(entity, ent)
+        end,
+        on_unload = function(self, lobby, data, entity) -- runs when cosmetic is unloaded, can be used to unload entities etc.
+            local children = EntityGetAllChildren(entity)
+            for _, child in ipairs(children or {}) do
+                if(EntityGetName(child) == "tail_cosmetic")then
+                    EntityKill(child)
+                end
+            end
+        end,
+        on_arena_unlocked = function(self, lobby, data, entity) -- runs when player is unlocked in arena.
+        end,
+    },
+    -- fox_tail_silver
+    {
+        id = "fox_tail_silver",
+        name = "$arena_cosmetics_fox_tail_silver_name",
+        description = "$arena_cosmetics_fox_tail_silver_description",
+        icon = "mods/evaisa.arena/content/cosmetics/icons/fox_tail_silver.png",
+        credits = "Evaisa",
+        type = "tail",
+        can_be_unlocked = true,
+        can_be_purchased = true,
+        unlocked_default = false,
+        price = 1000,
+        try_unlock = function(self, lobby, data) -- runs every frame, if true, unlock flag is added
+            return false
+        end,
+        try_force_enable = function(self, lobby, data) -- if this condition is true, the cosmetic will be enabled even if it's not unlocked
+
+            return false
+        end,
+        on_update = function(self, lobby, data, entity) -- runs every frame while hat is worn
+        end,
+        on_load = function(self, lobby, data, entity) -- runs when cosmetic is loaded, can be used to load entities etc.
+            local ent = EntityLoad("mods/evaisa.arena/content/cosmetics/entities/misc_tail/fox_silver.xml")
+            EntityAddChild(entity, ent)
+        end,
+        on_unload = function(self, lobby, data, entity) -- runs when cosmetic is unloaded, can be used to unload entities etc.
+            local children = EntityGetAllChildren(entity)
+            for _, child in ipairs(children or {}) do
+                if(EntityGetName(child) == "tail_cosmetic")then
+                    EntityKill(child)
+                end
+            end
+        end,
+        on_arena_unlocked = function(self, lobby, data, entity) -- runs when player is unlocked in arena.
+        end,
+    },
+    -- fox_tail_spotted
+    {
+        id = "fox_tail_spotted",
+        name = "$arena_cosmetics_fox_tail_spotted_name",
+        description = "$arena_cosmetics_fox_tail_spotted_description",
+        icon = "mods/evaisa.arena/content/cosmetics/icons/fox_tail_spotted.png",
+        credits = "Evaisa",
+        type = "tail",
+        can_be_unlocked = true,
+        can_be_purchased = true,
+        unlocked_default = false,
+        price = 1000,
+        try_unlock = function(self, lobby, data) -- runs every frame, if true, unlock flag is added
+            return false
+        end,
+        try_force_enable = function(self, lobby, data) -- if this condition is true, the cosmetic will be enabled even if it's not unlocked
+
+            return false
+        end,
+        on_update = function(self, lobby, data, entity) -- runs every frame while hat is worn
+        end,
+        on_load = function(self, lobby, data, entity) -- runs when cosmetic is loaded, can be used to load entities etc.
+            local ent = EntityLoad("mods/evaisa.arena/content/cosmetics/entities/misc_tail/fox_spotted.xml")
+            EntityAddChild(entity, ent)
+        end,
+        on_unload = function(self, lobby, data, entity) -- runs when cosmetic is unloaded, can be used to unload entities etc.
+            local children = EntityGetAllChildren(entity)
+            for _, child in ipairs(children or {}) do
+                if(EntityGetName(child) == "tail_cosmetic")then
+                    EntityKill(child)
+                end
+            end
+        end,
+        on_arena_unlocked = function(self, lobby, data, entity) -- runs when player is unlocked in arena.
+        end,
+    },
+    -- raccoon tail
+    {
+        id = "raccoon_tail",
+        name = "$arena_cosmetics_raccoon_tail_name",
+        description = "$arena_cosmetics_raccoon_tail_description",
+        icon = "mods/evaisa.arena/content/cosmetics/icons/raccoon_tail.png",
+        credits = "Evaisa",
+        type = "tail",
+        can_be_unlocked = true,
+        can_be_purchased = true,
+        unlocked_default = false,
+        price = 1000,
+        try_unlock = function(self, lobby, data) -- runs every frame, if true, unlock flag is added
+            return false
+        end,
+        try_force_enable = function(self, lobby, data) -- if this condition is true, the cosmetic will be enabled even if it's not unlocked
+
+            return false
+        end,
+        on_update = function(self, lobby, data, entity) -- runs every frame while hat is worn
+        end,
+        on_load = function(self, lobby, data, entity) -- runs when cosmetic is loaded, can be used to load entities etc.
+            local ent = EntityLoad("mods/evaisa.arena/content/cosmetics/entities/misc_tail/raccoon.xml")
+            EntityAddChild(entity, ent)
+        end,
+        on_unload = function(self, lobby, data, entity) -- runs when cosmetic is unloaded, can be used to unload entities etc.
+            local children = EntityGetAllChildren(entity)
+            for _, child in ipairs(children or {}) do
+                if(EntityGetName(child) == "tail_cosmetic")then
+                    EntityKill(child)
+                end
+            end
+        end,
+        on_arena_unlocked = function(self, lobby, data, entity) -- runs when player is unlocked in arena.
+        end,
+    },
+    -- lizard_tail
+    {
+        id = "lizard_tail",
+        name = "$arena_cosmetics_lizard_tail_name",
+        description = "$arena_cosmetics_lizard_tail_description",
+        icon = "mods/evaisa.arena/content/cosmetics/icons/lizard_tail.png",
+        credits = "Evaisa",
+        type = "tail",
+        can_be_unlocked = true,
+        can_be_purchased = true,
+        unlocked_default = false,
+        price = 1000,
+        try_unlock = function(self, lobby, data) -- runs every frame, if true, unlock flag is added
+            return false
+        end,
+        try_force_enable = function(self, lobby, data) -- if this condition is true, the cosmetic will be enabled even if it's not unlocked
+
+            return false
+        end,
+        on_update = function(self, lobby, data, entity) -- runs every frame while hat is worn
+            -- get tail cosmetic
+            local children = EntityGetAllChildren(entity)
+            for _, child in ipairs(children or {}) do
+                if(EntityGetName(child) == "tail_cosmetic")then
+                    local x, y, r, sx, sy = EntityGetTransform(entity)
+                    local tail_x, tail_y, tail_r, tail_sx, tail_sy = EntityGetTransform(child)
+                    EntitySetTransform(child, tail_x, tail_y, tail_r, tail_sx, sx)
+                end
+            end
+        end,
+        on_load = function(self, lobby, data, entity) -- runs when cosmetic is loaded, can be used to load entities etc.
+            local ent = EntityLoad("mods/evaisa.arena/content/cosmetics/entities/misc_tail/lizard.xml")
+            EntityAddChild(entity, ent)
+        end,
+        on_unload = function(self, lobby, data, entity) -- runs when cosmetic is unloaded, can be used to unload entities etc.
+            local children = EntityGetAllChildren(entity)
+            for _, child in ipairs(children or {}) do
+                if(EntityGetName(child) == "tail_cosmetic")then
+                    EntityKill(child)
+                end
+            end
+        end,
+        on_arena_unlocked = function(self, lobby, data, entity) -- runs when player is unlocked in arena.
+        end,
+    },
 }
 
 cosmetic_types = {
@@ -2123,5 +2852,8 @@ cosmetic_types = {
     },
     amulet = {
         max_stack = 2,
-    }
+    },
+    tail = {
+        max_stack = 1,
+    },
 }

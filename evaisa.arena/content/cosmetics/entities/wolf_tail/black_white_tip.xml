@@ -1,0 +1,26 @@
+<Entity name="tail_cosmetic" >
+	<InheritTransformComponent
+        parent_hotspot_tag="belt_root" >
+		<Transform 
+			position.x="1.5" 
+			position.y="0"
+			>
+		</Transform>
+    </InheritTransformComponent>  
+   
+    <VerletPhysicsComponent
+    	num_points="6"
+    	stiffness="1.2"
+		velocity_dampening="0.8"
+    	resting_distance="2" 
+    	pixelate_sprite_transforms="0"
+    	simulate_wind="1"
+        wind_change_speed="0.25"
+    	simulate_gravity="1"
+		constrain_stretching="1"
+		collide_with_cells="1"
+		>
+    </VerletPhysicsComponent>
+
+	<Base file="mods/evaisa.arena/content/cosmetics/entities/wolf_tail/black_white_tip_part_0.xml"/><Base file="mods/evaisa.arena/content/cosmetics/entities/wolf_tail/black_white_tip_part_1.xml"/><Base file="mods/evaisa.arena/content/cosmetics/entities/wolf_tail/black_white_tip_part_2.xml"/><Base file="mods/evaisa.arena/content/cosmetics/entities/wolf_tail/black_white_tip_part_3.xml"/><Base file="mods/evaisa.arena/content/cosmetics/entities/wolf_tail/black_white_tip_part_4.xml"/>
+</Entity>
