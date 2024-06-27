@@ -1,5 +1,4 @@
 local spng = require("libspng")
-
 local fs = require("fs")
 
 function setPixel(img, x, y, r, g, b, a)

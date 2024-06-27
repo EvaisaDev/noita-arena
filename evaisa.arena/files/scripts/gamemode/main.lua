@@ -41,11 +41,11 @@ gameplay_handler = dofile("mods/evaisa.arena/files/scripts/gamemode/gameplay.lua
 spectator_handler = dofile("mods/evaisa.arena/files/scripts/gamemode/spectator.lua")
 
 
+if(MP_VERSION > 350)then
+    skin_system = dofile("mods/evaisa.arena/files/scripts/gui/skins.lua").init()
 
-skin_system = dofile("mods/evaisa.arena/files/scripts/gui/skins.lua").init()
-
-scoreboard = dofile("mods/evaisa.arena/files/scripts/gui/scoreboard.lua")
-
+    scoreboard = dofile("mods/evaisa.arena/files/scripts/gui/scoreboard.lua")
+end
 
 if(ModSettingGet("evaisa.arena.custom_parallax"))then
     Parallax = dofile("mods/evaisa.arena/files/scripts/parallax/parallax.lua")
@@ -116,25 +116,27 @@ function RunWhenPlayerExists(func)
     table.insert(playerRunQueue, func)
 end
 
-np.CrossCallAdd("Swap", function(shooter_id)
-    if(data ~= nil and lobby_code)then
-        local user = gameplay_handler.FindUser(lobby_code, EntityGetName(shooter_id))
+if(MP_VERSION > 350)then
+    np.CrossCallAdd("Swap", function(shooter_id)
+        if(data ~= nil and lobby_code)then
+            local user = gameplay_handler.FindUser(lobby_code, EntityGetName(shooter_id))
 
-        local shooter_x, shooter_y = EntityGetTransform(shooter_id)
+            local shooter_x, shooter_y = EntityGetTransform(shooter_id)
 
-        local player_entity = player.Get()
+            local player_entity = player.Get()
 
-        if(player_entity and user)then
-            local x, y = EntityGetTransform(player_entity)
+            if(player_entity and user)then
+                local x, y = EntityGetTransform(player_entity)
 
-            EntityLoad("data/entities/particles/teleportation_source.xml", shooter_x, shooter_y)
-            EntityLoad("data/entities/particles/teleportation_target.xml", x, y)
+                EntityLoad("data/entities/particles/teleportation_source.xml", shooter_x, shooter_y)
+                EntityLoad("data/entities/particles/teleportation_target.xml", x, y)
 
-            networking.send.swap_positions(user, x, y)
-            EntityApplyTransform(player_entity, shooter_x, shooter_y)
+                networking.send.swap_positions(user, x, y)
+                EntityApplyTransform(player_entity, shooter_x, shooter_y)
+            end
         end
-    end
-end)
+    end)
+end
 
 local oldSetWorldSeed = SetWorldSeed
 SetWorldSeed = function(seed)
@@ -2714,10 +2716,11 @@ ArenaMode = {
             gameplay_handler.LoadPlayer(lobby, data)
         end
 
-        RunWhenPlayerExists(function()
-            skin_system.load(lobby, data)
-        end)
-
+        if(MP_VERSION > 350)then
+            RunWhenPlayerExists(function()
+                skin_system.load(lobby, data)
+            end)
+        end
 
         gameplay_handler.LoadLobby(lobby, data, true, true)
 
@@ -2830,8 +2833,10 @@ ArenaMode = {
             data.last_state = nil
         end
 
-        skin_system.editor_open = GameHasFlagRun("wardrobe_open") and not GameHasFlagRun("game_paused") and gui_closed
-        skin_system.draw(lobby, data)
+        if(MP_VERSION > 350)then
+            skin_system.editor_open = GameHasFlagRun("wardrobe_open") and not GameHasFlagRun("game_paused") and gui_closed
+            skin_system.draw(lobby, data)
+        end
 
         --[[
         if(GameGetFrameNum() % 10 == 0)then
