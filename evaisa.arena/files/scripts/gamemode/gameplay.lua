@@ -1993,7 +1993,6 @@ ArenaGameplay = {
                 player.Lock()
 
                 -- move player to correct position
-                data.spawn_point = arena.spawn_points[data.random.range(1, #arena.spawn_points)]
 
                 ArenaGameplay.LoadClientPlayers(lobby, data)
 
@@ -3376,6 +3375,12 @@ ArenaGameplay = {
 
                 SetRandomSeed(spawn_seed, spawn_seed * 4)
                 local spawn_points = ArenaGameplay.GetSpawnPoints()
+                local spawn_points_predefined = data.current_arena.spawn_points
+
+                if(type(data.current_arena.spawn_points) == "function")then
+                    print("Using spawn point function")
+                    spawn_points_predefined = data.current_arena:spawn_points(lobby, data)
+                end
                
                 -- shuffle spawn points randomly
                 for i = #spawn_points, 2, -1 do
@@ -3393,6 +3398,7 @@ ArenaGameplay = {
 
                 
                 if(spawn_points ~= nil and #spawn_points > 0)then
+                    print("Using entity spawn points")
                     local spawn_index = math.floor(ArenaGameplay.GetPlayerIndex(lobby) % #spawn_points)
     
                     if(spawn_index < 1)then
@@ -3401,8 +3407,16 @@ ArenaGameplay = {
     
                     local spawn_point = spawn_points[spawn_index]
                     x, y = EntityGetTransform(spawn_point)
-                elseif(data.spawn_point)then
-                    x, y = data.spawn_point.x, data.spawn_point.y
+                elseif(spawn_points_predefined and #spawn_points_predefined > 0)then
+                    print("Using predefined spawn points")
+                    local spawn_index = math.floor(ArenaGameplay.GetPlayerIndex(lobby) % #spawn_points_predefined)
+    
+                    if(spawn_index < 1)then
+                        spawn_index = 1
+                    end
+    
+                    local spawn_point = spawn_points_predefined[spawn_index]
+                    x, y = spawn_point.x, spawn_point.y
                 end
 
                 local spawn_loaded = DoesWorldExistAt(x - 100, y - 100, x + 100, y + 100)

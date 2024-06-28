@@ -541,7 +541,47 @@ arena_list = {
         },
         zone_size = 600, -- size of damage zone, should be max distance from 0, 0 players can travel
         zone_floor = 400 -- damage floor, if player falls below this they die.
-    }
+    },
+    {
+        id = "hills",
+        name = "$arena_maps_hills_name",
+        description = "$arena_maps_hills_description",
+        credits = "Evaisa",
+        thumbnail = "mods/evaisa.arena/content/arenas/hills/thumbnail.png",
+        frame = "mods/evaisa.arena/content/arenas/frame.png",
+        biome_map = "mods/evaisa.arena/content/arenas/hills/map.lua",
+        custom_biomes = {
+            {
+                biome_filename="mods/evaisa.arena/content/arenas/hills/biome_hills.xml",
+                height_index="1",
+                color="ff8cf23e"
+            }
+        },
+        spawn_points = function(self, lobby, data) -- function that returns a list of spawn points can also be used
+            local ray_y = -500
+            local function get_spawn_point()
+                local ray_x = Random(-self.zone_size / 2, self.zone_size / 2)
+                local hit, x, y = RaytracePlatforms(ray_x, ray_y, ray_x, ray_y + 1000)
+                if(hit)then
+                    -- check if is inside zone
+                    if(math.abs(x) < self.zone_size / 2 and math.abs(y) < self.zone_size / 2)then
+                        return {x = x, y = y}
+                    end
+                end
+                return get_spawn_point()
+            end
+
+            -- generate 32 spawn points
+            local spawn_points = {}
+            for i = 1, 32 do
+                table.insert(spawn_points, get_spawn_point())
+            end
+
+            return spawn_points
+        end,
+        zone_size = 850, -- size of damage zone, should be max distance from 0, 0 players can travel
+        zone_floor = 500 -- damage floor, if player falls below this they die.
+    },
 }
 
 cosmetics = {
@@ -2117,7 +2157,7 @@ cosmetics = {
         can_be_unlocked = true,
         can_be_purchased = true,
         unlocked_default = false,
-        price = 1000,
+        price = 500,
         try_unlock = function(self, lobby, data) -- runs every frame, if true, unlock flag is added
             return false
         end,
@@ -2153,7 +2193,7 @@ cosmetics = {
         can_be_unlocked = true,
         can_be_purchased = true,
         unlocked_default = false,
-        price = 1000,
+        price = 500,
         try_unlock = function(self, lobby, data) -- runs every frame, if true, unlock flag is added
             return false
         end,
@@ -2189,7 +2229,7 @@ cosmetics = {
         can_be_unlocked = true,
         can_be_purchased = true,
         unlocked_default = false,
-        price = 1000,
+        price = 500,
         try_unlock = function(self, lobby, data) -- runs every frame, if true, unlock flag is added
             return false
         end,
@@ -2225,7 +2265,7 @@ cosmetics = {
         can_be_unlocked = true,
         can_be_purchased = true,
         unlocked_default = false,
-        price = 1000,
+        price = 500,
         try_unlock = function(self, lobby, data) -- runs every frame, if true, unlock flag is added
             return false
         end,
@@ -2261,7 +2301,7 @@ cosmetics = {
         can_be_unlocked = true,
         can_be_purchased = true,
         unlocked_default = false,
-        price = 1000,
+        price = 500,
         try_unlock = function(self, lobby, data) -- runs every frame, if true, unlock flag is added
             return false
         end,
@@ -2297,7 +2337,7 @@ cosmetics = {
         can_be_unlocked = true,
         can_be_purchased = true,
         unlocked_default = false,
-        price = 1000,
+        price = 500,
         try_unlock = function(self, lobby, data) -- runs every frame, if true, unlock flag is added
             return false
         end,
@@ -2333,7 +2373,7 @@ cosmetics = {
         can_be_unlocked = true,
         can_be_purchased = true,
         unlocked_default = false,
-        price = 1000,
+        price = 500,
         try_unlock = function(self, lobby, data) -- runs every frame, if true, unlock flag is added
             return false
         end,
@@ -2369,7 +2409,7 @@ cosmetics = {
         can_be_unlocked = true,
         can_be_purchased = true,
         unlocked_default = false,
-        price = 1000,
+        price = 500,
         try_unlock = function(self, lobby, data) -- runs every frame, if true, unlock flag is added
             return false
         end,
@@ -2405,7 +2445,7 @@ cosmetics = {
         can_be_unlocked = true,
         can_be_purchased = true,
         unlocked_default = false,
-        price = 1000,
+        price = 500,
         try_unlock = function(self, lobby, data) -- runs every frame, if true, unlock flag is added
             return false
         end,
@@ -2441,7 +2481,7 @@ cosmetics = {
         can_be_unlocked = true,
         can_be_purchased = true,
         unlocked_default = false,
-        price = 1000,
+        price = 500,
         try_unlock = function(self, lobby, data) -- runs every frame, if true, unlock flag is added
             return false
         end,
@@ -2477,7 +2517,7 @@ cosmetics = {
         can_be_unlocked = true,
         can_be_purchased = true,
         unlocked_default = false,
-        price = 1000,
+        price = 500,
         try_unlock = function(self, lobby, data) -- runs every frame, if true, unlock flag is added
             return false
         end,
@@ -2513,7 +2553,7 @@ cosmetics = {
         can_be_unlocked = true,
         can_be_purchased = true,
         unlocked_default = false,
-        price = 1000,
+        price = 500,
         try_unlock = function(self, lobby, data) -- runs every frame, if true, unlock flag is added
             return false
         end,
@@ -2549,7 +2589,7 @@ cosmetics = {
         can_be_unlocked = true,
         can_be_purchased = true,
         unlocked_default = false,
-        price = 1000,
+        price = 500,
         try_unlock = function(self, lobby, data) -- runs every frame, if true, unlock flag is added
             return false
         end,
@@ -2585,7 +2625,7 @@ cosmetics = {
         can_be_unlocked = true,
         can_be_purchased = true,
         unlocked_default = false,
-        price = 1000,
+        price = 500,
         try_unlock = function(self, lobby, data) -- runs every frame, if true, unlock flag is added
             return false
         end,
@@ -2621,7 +2661,7 @@ cosmetics = {
         can_be_unlocked = true,
         can_be_purchased = true,
         unlocked_default = false,
-        price = 1000,
+        price = 500,
         try_unlock = function(self, lobby, data) -- runs every frame, if true, unlock flag is added
             return false
         end,
@@ -2657,7 +2697,7 @@ cosmetics = {
         can_be_unlocked = true,
         can_be_purchased = true,
         unlocked_default = false,
-        price = 1000,
+        price = 500,
         try_unlock = function(self, lobby, data) -- runs every frame, if true, unlock flag is added
             return false
         end,
@@ -2693,7 +2733,7 @@ cosmetics = {
         can_be_unlocked = true,
         can_be_purchased = true,
         unlocked_default = false,
-        price = 1000,
+        price = 500,
         try_unlock = function(self, lobby, data) -- runs every frame, if true, unlock flag is added
             return false
         end,
@@ -2729,7 +2769,7 @@ cosmetics = {
         can_be_unlocked = true,
         can_be_purchased = true,
         unlocked_default = false,
-        price = 1000,
+        price = 500,
         try_unlock = function(self, lobby, data) -- runs every frame, if true, unlock flag is added
             return false
         end,
@@ -2765,7 +2805,7 @@ cosmetics = {
         can_be_unlocked = true,
         can_be_purchased = true,
         unlocked_default = false,
-        price = 1000,
+        price = 500,
         try_unlock = function(self, lobby, data) -- runs every frame, if true, unlock flag is added
             return false
         end,
@@ -2801,7 +2841,7 @@ cosmetics = {
         can_be_unlocked = true,
         can_be_purchased = true,
         unlocked_default = false,
-        price = 1000,
+        price = 500,
         try_unlock = function(self, lobby, data) -- runs every frame, if true, unlock flag is added
             return false
         end,
