@@ -429,13 +429,15 @@ function spawn_potion_altar(x, y)
 end
 
 function spawn_physics_fungus(x, y)
-	if(Random(0, 100) < 20)then
+	if(Random(0, 100) < 15)then
 		spawn(g_physics_fungi,x,y)
 	end
 end
 
 function spawn_physics_acid_fungus(x, y)
-	--spawn(g_physics_fungi_acid,x,y)
+	if(Random(0, 100) < 10)then
+		spawn(g_physics_fungi_acid,x,y)
+	end
 end
 
 function spawn_lamp(x, y) end
