@@ -1,3 +1,35 @@
+REQUIRED_ONLINE_VERSION = 367
+
+-- INVALID VERSION HANDLER
+if(MP_VERSION < REQUIRED_ONLINE_VERSION)then
+    local old_player_spawned = OnPlayerSpawned
+    OnPlayerSpawned = function(player)
+        old_player_spawned(player)
+        invalid_version_popup_active = invalid_version_popup_active or false
+        if(not invalid_version_popup_active)then
+            popup.create("bad_online", GameTextGetTranslatedOrNot("$arena_bad_online_version"), function() return string.format(GameTextGetTranslatedOrNot("$arena_bad_online_version_desc"), REQUIRED_ONLINE_VERSION) end, {
+                {
+                    text = GameTextGetTranslatedOrNot("$arena_online_update"),
+                    callback = function()
+                        invalid_version_popup_active = false
+                        os.execute("start explorer \"" .. noita_online_download .. "\"")
+                    end
+                },
+                {
+                    text = GameTextGetTranslatedOrNot("$mp_close_popup"),
+                    callback = function()
+                        invalid_version_popup_active = false
+                    end
+                }
+            }, -6000)
+
+            invalid_version_popup_active = true
+        end
+    end
+    -- Nuh uh uh not playing this today.
+    return
+end
+
 arena_log = logger.init("noita-arena.log")
 perk_log = logger.init("noita-arena-perk.log")
 perk_info_saved = logger.init("perk_info_saved.lua")
@@ -622,7 +654,6 @@ ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
     version = 188,
-    required_online_version = 367,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
     end,
@@ -2070,32 +2101,11 @@ ArenaMode = {
     refresh = function(lobby)
 
 
-        if(MP_VERSION < ArenaMode.required_online_version)then
-            invalid_version_popup_active = invalid_version_popup_active or false
-            if(not invalid_version_popup_active)then
-                popup.create("bad_online", GameTextGetTranslatedOrNot("$arena_bad_online_version"), string.format(GameTextGetTranslatedOrNot("$arena_bad_online_version_desc"), ArenaMode.required_online_version), {
-                    {
-                        text = GameTextGetTranslatedOrNot("$arena_online_update"),
-                        callback = function()
-                            invalid_version_popup_active = false
-                            os.execute("start explorer \"" .. noita_online_download .. "\"")
-                        end
-                    },
-                    {
-                        text = GameTextGetTranslatedOrNot("$mp_close_popup"),
-                        callback = function()
-                            invalid_version_popup_active = false
-                        end
-                    }
-                }, -6000)
-
-                invalid_version_popup_active = true
-                        
-                disconnect({
-                    lobbyID = lobby,
-                    message = GameTextGetTranslatedOrNot("$arena_bad_online_version")
-                })
-            end
+        if(MP_VERSION < REQUIRED_ONLINE_VERSION)then
+            disconnect({
+                lobbyID = lobby,
+                message = GameTextGetTranslatedOrNot("$arena_bad_online_version")
+            })
         end
 
         print("refreshing arena settings")
