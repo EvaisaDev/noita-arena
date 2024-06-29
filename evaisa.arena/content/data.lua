@@ -539,6 +539,9 @@ arena_list = {
         spawn_points = { -- optional, can also use spawn pixels, 0,0 is there as a backup in case spawn pixels fail somehow.
             {x = 0, y = 0}
         },
+        load = function(self, lobby, data)
+            GameAddFlagRun("forge_reset")
+        end,
         zone_size = 600, -- size of damage zone, should be max distance from 0, 0 players can travel
         zone_floor = 400 -- damage floor, if player falls below this they die.
     },
