@@ -8,6 +8,10 @@ local pos_x, pos_y = EntityGetTransform( entity_id )
 -- convert items
 local converted = false
 
+if GameHasFlagRun("forge_reset") then
+	forge_converts = 0
+	GameRemoveFlagRun("forge_reset")
+end
 
 for _,id in pairs(EntityGetInRadiusWithTag(pos_x, pos_y, 70, "leukaluu")) do
 	-- make sure item is not carried in inventory or wand
@@ -52,8 +56,13 @@ end
 for _,id in pairs(EntityGetInRadiusWithTag(pos_x, pos_y, 70, "broken_wand")) do
 	-- make sure item is not carried in inventory or wand
 	if EntityGetRootEntity(id) == id then
+		SetRandomSeed( pos_x, pos_y )
+		local offset_x = ProceduralRandomi( forge_converts, 0, -35, 35 )
+		local offset_y = ProceduralRandomi( forge_converts, 0, -10, 5 )
+		forge_converts = forge_converts + 1
+		-- GamePrint("Forged items:"..forge_converts)
 		local x,y = EntityGetTransform(id)
-		EntityHelper.NetworkRegister(EntityLoad("data/entities/items/wand_level_05_better.xml", x, y - 5), math.floor(pos_x + x), math.floor(pos_y + y))
+		EntityHelper.NetworkRegister(EntityLoad("data/entities/items/wand_level_05_better.xml", pos_x + offset_x, pos_y + offset_y + 15), math.floor(pos_x + offset_x ), math.floor(pos_y + offset_y + 15))
 		EntityLoad("data/entities/projectiles/explosion.xml", x, y - 10)
 		EntityKill(id)
 		converted = true
