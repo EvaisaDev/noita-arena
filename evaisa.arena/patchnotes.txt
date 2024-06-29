@@ -1,8 +1,1 @@
-- A certain fish was accidentally buyable and free.
-- Fixed items crossing dimensions if spectating players in the HM
-- Fixed items getting removed from spectator inventory randomly.
-- Fixed dummy gaining double perks occasionally
-
-
-
-Fix clients not despawning? wtf
+Currently completely the same as main version.
