@@ -828,8 +828,10 @@ networking = {
                         ComponentSetValue2(controlsComp, "mButtonDownKick", false)
                         controls_data.kick = false
                     end
+                    
+                    EntityHelper.BlockFiring(data.players[tostring(user)].entity, false, false)
+                    EntityHelper.BlockFiring(data.players[tostring(user)].entity, true, true)
 
-                    EntityHelper.BlockFiring(data.players[tostring(user)].entity, true)
 
                     if(message.fire)then
                         ComponentSetValue2(controlsComp, "mButtonDownFire", true)
@@ -1473,14 +1475,16 @@ networking = {
                         local target_x = x + aim_x
                         local target_y = y + aim_y
 
-                        EntityHelper.BlockFiring(client_entity, false)
+                        EntityHelper.BlockFiring(client_entity, false, true)
+
+                        print("Using item!")
 
                         -- Add player_unit tag to fix physics projectile lob strength
                         EntityAddTag(client_entity, "player_unit")
                         np.UseItem(client_entity, mActiveItem, true, true, true, x, y, target_x, target_y)
                         EntityRemoveTag(client_entity, "player_unit")
 
-                        EntityHelper.BlockFiring(client_entity, true)
+                        EntityHelper.BlockFiring(client_entity, true, true)
 
                         ComponentSetValue2(controlsComp, "mButtonDownFire", firing)
                     end
@@ -2879,7 +2883,9 @@ networking = {
                 return;
             end
 
-            local item_data, spell_data = player_helper.GetItemData()
+            local all_data = player_helper.GetItemData()
+
+            local item_data, spell_data = all_data[1], all_data[2]
 
 
             local message = { item_data or {}, force, GameHasFlagRun( "arena_unlimited_spells" ), spell_data or {}, GameGetFrameNum() }

@@ -562,6 +562,7 @@ arena_list = {
         },
         spawn_points = function(self, lobby, data) -- function that returns a list of spawn points can also be used
             local ray_y = -500
+            local max_iterations = 500
             local function get_spawn_point()
                 local ray_x = Random(-self.zone_size / 2, self.zone_size / 2)
                 local hit, x, y = RaytracePlatforms(ray_x, ray_y, ray_x, ray_y + 1000)
@@ -570,6 +571,10 @@ arena_list = {
                     if(math.abs(x) < self.zone_size / 2 and math.abs(y) < self.zone_size / 2)then
                         return {x = x, y = y}
                     end
+                end
+                max_iterations = max_iterations - 1
+                if(max_iterations <= 0)then
+                    return {x = 0, y = 0}
                 end
                 return get_spawn_point()
             end
@@ -583,8 +588,67 @@ arena_list = {
             return spawn_points
         end,
         zone_size = 850, -- size of damage zone, should be max distance from 0, 0 players can travel
-        zone_floor = 500 -- damage floor, if player falls below this they die.
+        zone_floor = 500, -- damage floor, if player falls below this they die.
+        update = function(self, lobby, data) -- Ran every frame while in the arena.
+            local world_state = GameGetWorldStateEntity()
+            local world_state_component = EntityGetFirstComponentIncludingDisabled(world_state, "WorldStateComponent")
+            
+            ComponentSetValue2(world_state_component, "time", 0)
+            ComponentSetValue2(world_state_component, "time_dt", 0)
+        end,
     },
+    --[[{
+        id = "skylands",
+        name = "Skylands",
+        description = "Islands in the sky",
+        credits = "Evaisa",
+        thumbnail = "mods/evaisa.arena/content/arenas/skylands/thumbnail.png",
+        frame = "mods/evaisa.arena/content/arenas/frame.png",
+        biome_map = "mods/evaisa.arena/content/arenas/skylands/map.lua",
+        custom_biomes = {
+            {
+                biome_filename="mods/evaisa.arena/content/arenas/skylands/biome.xml",
+                height_index="1",
+                color="ff44cbda"
+            }
+        },
+        spawn_points = function(self, lobby, data) -- function that returns a list of spawn points can also be used
+            local ray_y = -500
+            local max_iterations = 500
+            local function get_spawn_point()
+                local ray_x = Random(-self.zone_size / 2, self.zone_size / 2)
+                local hit, x, y = RaytracePlatforms(ray_x, ray_y, ray_x, ray_y + 1000)
+                if(hit)then
+                    -- check if is inside zone
+                    if(math.abs(x) < self.zone_size / 2 and math.abs(y) < self.zone_size / 2)then
+                        return {x = x, y = y}
+                    end
+                end
+                max_iterations = max_iterations - 1
+                if(max_iterations <= 0)then
+                    return {x = 0, y = 0}
+                end
+                return get_spawn_point()
+            end
+
+            -- generate 32 spawn points
+            local spawn_points = {}
+            for i = 1, 32 do
+                table.insert(spawn_points, get_spawn_point())
+            end
+
+            return spawn_points
+        end,
+        zone_size = 850, -- size of damage zone, should be max distance from 0, 0 players can travel
+        zone_floor = 500, -- damage floor, if player falls below this they die.
+        update = function(self, lobby, data) -- Ran every frame while in the arena.
+            local world_state = GameGetWorldStateEntity()
+            local world_state_component = EntityGetFirstComponentIncludingDisabled(world_state, "WorldStateComponent")
+            
+            ComponentSetValue2(world_state_component, "time", 0)
+            ComponentSetValue2(world_state_component, "time_dt", 0)
+        end,
+    },]]
 }
 
 cosmetics = {
