@@ -1,4 +1,4 @@
-REQUIRED_ONLINE_VERSION = 367
+REQUIRED_ONLINE_VERSION = 370
 
 -- INVALID VERSION HANDLER
 if(MP_VERSION < REQUIRED_ONLINE_VERSION)then
@@ -637,9 +637,30 @@ local function SendLobbyData(lobby)
     steam.matchmaking.sendLobbyChatMsg(lobby, "refresh")
 end
 
+-- THIS IS NOT HOW LUA WORKS, ANYTHING THAT HAS A REFERENCE WILL KEEP THE TABLE ALIVE :sob:
 function DestroyDataTable()
     data = nil
 end
+
+--- Check if a file or directory exists in this path
+function exists(file)
+    local ok, err, code = os.rename(file, file)
+    if not ok then
+       if code == 13 then
+          -- Permission denied, but it exists
+          return true
+       end
+    end
+    return ok, err
+end
+
+--- Check if a directory exists in this path
+function isdir(path)
+    -- "/" works on both Unix and Windows
+    return exists(path.."/")
+end
+
+
 
 local filter_types = {
     all = "$arena_blacklist_filter_all",
@@ -653,7 +674,7 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 189,
+    version = 191,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
     end,
@@ -749,12 +770,17 @@ ArenaMode = {
     preset_registry = function()
         local presets = {}
 
-        local default_preset_folder = "mods/evaisa.arena/content/default_presets"
+        local default_preset_folder = tostring(GetGamemodeFilePath()).."/content/default_presets"
+
 
         local files = {}
+
+        print("Checking for presets in " .. default_preset_folder)
+        
         local pfile = io.popen([[dir "]] .. default_preset_folder .. [[" /b]])
 
         for filename in pfile:lines() do
+            print(filename)
 
             -- if filename ends in .mp_preset
             if(filename:sub(-10) == ".mp_preset")then

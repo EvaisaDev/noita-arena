@@ -1,1 +1,1 @@
-Fix gamemode button
+- Fixed default presets not loading from folder.
