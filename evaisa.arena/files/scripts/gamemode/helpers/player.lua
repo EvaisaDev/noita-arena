@@ -305,7 +305,7 @@ player_helper.GetItemData = function(fresh)
         end
     end
 
-    return wandData, spellData
+    return {wandData, spellData}
 end
 
 player_helper.GetInventoryItems = function(inventory_name)
@@ -352,7 +352,7 @@ player_helper.SetItemData = function(item_data)
     if (item_data ~= nil) then
         local active_item_entity = nil
 
-        for k, itemInfo in ipairs(item_data) do
+        local function add_item(itemInfo, inventory)
             local x, y = EntityGetTransform(player)
             local item_entity = nil
 
@@ -371,7 +371,7 @@ player_helper.SetItemData = function(item_data)
             end
 
             if(itemInfo.is_wand)then
-                entity.PickItem(player, item.entity_id)
+                entity.PickItem(player, item.entity_id, inventory)
                 EntityAddTag(item.entity_id, "picked_by_player")
                 local itemComp = EntityGetFirstComponentIncludingDisabled(item.entity_id, "ItemComponent")
                 if (itemComp ~= nil) then
@@ -382,7 +382,7 @@ player_helper.SetItemData = function(item_data)
                     active_item_entity = item.entity_id
                 end
             else
-                entity.PickItem(player, item)
+                entity.PickItem(player, item, inventory)
                 EntityAddTag(item, "picked_by_player")
                 local itemComp = EntityGetFirstComponentIncludingDisabled(item, "ItemComponent")
                 if (itemComp ~= nil) then
@@ -420,7 +420,14 @@ player_helper.SetItemData = function(item_data)
                 })
             end
 
-            --GlobalsSetValue(tostring(active_item_entity).."_item", tostring(itemInfo.id))
+        end
+
+        for k, itemInfo in ipairs(item_data[1]) do
+            add_item(itemInfo, "QUICK")
+        end
+
+        for k, itemInfo in ipairs(item_data[2]) do
+            add_item(itemInfo, "FULL")
         end
 
         if (active_item_entity ~= nil) then
@@ -939,7 +946,7 @@ player_helper.Serialize = function(dont_stringify)
         health = 100,
         max_health = 100,
         item_data = player_helper.GetItemData(),
-        spells = player_helper.GetSpells(),
+       -- spells = player_helper.GetSpells(),
         perks = player_helper.GetPerks(),
         gold = player_helper.GetGold(),
     }
@@ -953,7 +960,7 @@ player_helper.Serialize = function(dont_stringify)
         health = data.health,
         max_health = data.max_health,
         item_data = player_helper.GetItemData(true),
-        spells = data.spells,
+        --spells = data.spells,
         perks = data.perks,
         gold = data.gold,
     }
@@ -985,9 +992,9 @@ player_helper.Deserialize = function(data, skip_perk_count, lobby, lobby_data)
     if (data.item_data ~= nil) then
         player_helper.SetItemData(data.item_data)
     end
-    if (data.spells ~= nil) then
+    --[[if (data.spells ~= nil) then
         player_helper.SetSpells(data.spells)
-    end
+    end]]
     if (data.perks ~= nil) then
         delay.new(function ()
             return DoesWorldExistAt(x - 5, y - 5, x + 5, y + 5)

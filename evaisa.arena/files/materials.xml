@@ -203,6 +203,29 @@
       gfx_glow="1" >
     </CellData>
 
+    
+    <CellData
+      name="fake_air"
+      ui_name="air"
+      tags="[gas]"
+      burnable="0"
+      density="1"
+      cell_type="gas"
+      wang_color="7f848487"
+      generates_smoke="0"
+      lifetime="1"
+      liquid_gravity="0.5"
+      liquid_sand="0"
+      liquid_static="1"
+      on_fire="0"
+      requires_oxygen="0"
+      temperature_of_fire="60"  >
+      <Graphics
+      color="00469943" >
+      </Graphics>
+      
+    </CellData>	
+
     <Reaction probability="100"
         input_cell1="rock_static_mountain_drain" 			input_cell2="[liquid]"
         output_cell1="rock_static_mountain_drain" 		output_cell2="air"  
