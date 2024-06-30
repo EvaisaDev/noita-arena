@@ -21,15 +21,17 @@ end
 
 
 function loadImage(file)
-    --local f = assert(fs.open(file))
-    -- pcall to catch errors, if the file doesn't exist, replace `mods/evaisa.arena/` with `../../workshop/content/881100/3035468502/`
-    local f, err = fs.open(file)
+    local gamemode_path = GetGamemodeFilePath()
+    print("Gamemode path: " .. gamemode_path)
 
-    if not f then
-        file = file:gsub("mods/evaisa.arena/", "../../workshop/content/881100/3035468502/")
-        arena_log:print("File not found, trying: " .. file)
-        f, err = fs.open(file)
+    if(gamemode_path)then
+        -- replace mods/evaisa.arena from start of file path with gamemode path
+        file = file:gsub("mods/evaisa.arena", gamemode_path)
     end
+
+    print("image path: " .. file)
+
+    local f, err = fs.open(file)
 
     if not f then
         if(exception_log ~= nil)then
