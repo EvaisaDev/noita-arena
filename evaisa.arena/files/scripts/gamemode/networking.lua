@@ -2806,15 +2806,15 @@ networking = {
                 return
             end
 
-            message = message or {}
+            --[[message = message or {}
 
             for i = 0, #message do 
                 local v = message[i]
                 if(v)then
                     world_sync.apply(v)
                 end
-            end
-            --world_sync.apply(message)
+            end]]
+            world_sync.apply(message)
         end,
     },
     send = {

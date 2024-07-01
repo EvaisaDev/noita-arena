@@ -48,7 +48,7 @@ world_sync.chunks = function(callback)
         rect_optimiser:submit(rectangle)
     end
 
-    if GameGetFrameNum() % 1 == 0 then
+    if GameGetFrameNum() % 5 == 0 then
         rect_optimiser:scan()
 
         local result = {}
@@ -56,9 +56,9 @@ world_sync.chunks = function(callback)
             local area = world.encode_area(chunk_map, rect.left, rect.top, rect.right, rect.bottom, encoded_area)
             if area ~= nil then
                 local str = ffi.string(area, world.encoded_size(area))
-                if(#result < 10)then
+                --if(#result < 10)then
                     table.insert(result, str)
-                end
+                --end
             end
         end
 
@@ -68,6 +68,8 @@ world_sync.chunks = function(callback)
     end
 end
 
+local chunk_stack = {}
+local chunks_per_frame = 5
 
 world_sync.collect = function(lobby, data)
     local spectators = 0
@@ -83,15 +85,25 @@ world_sync.collect = function(lobby, data)
     end
 
     world_sync.chunks(function(chunks)
-        for k, v in pairs(data.spectators)do
-            local user = gameplay_handler.FindUser(lobby, k)
-            if(user)then
-                networking.send.sync_world(user, chunks)
-            else
-                data.spectators[k] = false
-            end
+        for i, chunk in ipairs(chunks)do
+            table.insert(chunk_stack, chunk)
         end
     end)
+    
+
+    if(#chunk_stack > 0)then
+        for i = 0, math.min(chunks_per_frame, #chunk_stack) - 1 do
+            local chunk = table.remove(chunk_stack, 1)
+            for k, v in pairs(data.spectators)do
+                local user = gameplay_handler.FindUser(lobby, k)
+                if(user)then
+                    networking.send.sync_world(user, chunk)
+                else
+                    data.spectators[k] = false
+                end
+            end
+        end
+    end
 end
 
 world_sync.apply = function(received)
