@@ -56,7 +56,9 @@ world_sync.chunks = function(callback)
             local area = world.encode_area(chunk_map, rect.left, rect.top, rect.right, rect.bottom, encoded_area)
             if area ~= nil then
                 local str = ffi.string(area, world.encoded_size(area))
-                table.insert(result, str)
+                if(#result < 10)then
+                    table.insert(result, str)
+                end
             end
         end
 
