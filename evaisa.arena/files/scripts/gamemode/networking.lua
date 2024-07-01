@@ -675,7 +675,7 @@ networking = {
 
                                 ComponentSetValue2(spectator_pickupper, "only_pick_this_entity", spectator_item.entity_id)
                                 
-                                EntityHelper.PickItem(data.players[tostring(user)].entity, spectator_item.entity_id, "QUICK")
+                                EntityHelper.PickItem(data.spectator_entity, spectator_item.entity_id, "QUICK")
                                -- spectator_item:PickUp(data.spectator_entity)
                                 spectator_item_entity = spectator_item.entity_id
 
@@ -2777,6 +2777,45 @@ networking = {
                 EntityLoad("mods/evaisa.arena/files/entities/particles/trailer/arena_logo.xml", x, y)
             end
         end,
+        is_spectating = function(lobby, message, user, data)
+            if(data.spectator_mode)then
+                return
+            end
+
+            print("Setting spectator mode for player ["..tostring(user).."] to "..tostring(message))
+
+            data.spectators = data.spectators or {}
+
+            if(message)then
+                data.spectators[tostring(user)] = true
+            else
+                data.spectators[tostring(user)] = nil
+            end
+        end,
+        sync_world = function(lobby, message, user, data)
+            if(data.state ~= "lobby")then
+                return
+            end
+
+            if(not data.spectator_mode)then
+                return
+            end
+
+            if(data.spectated_player ~= user)then
+                networking.send.is_spectating(user, false)
+                return
+            end
+
+            message = message or {}
+
+            for i = 0, #message do 
+                local v = message[i]
+                if(v)then
+                    world_sync.apply(v)
+                end
+            end
+            --world_sync.apply(message)
+        end,
     },
     send = {
         handshake = function(lobby)
@@ -2865,11 +2904,11 @@ networking = {
                     last_update_frame = current_frame
         
                     if(user ~= nil)then
-                        steamutils.sendToPlayer("character_position", c, user, true)
+                        steamutils.sendToPlayer("character_position", c, user, true, 4)
                     elseif to_spectators then
-                        steamutils.send("character_position", c, steamutils.messageTypes.Spectators, lobby, true, true)
+                        steamutils.send("character_position", c, steamutils.messageTypes.Spectators, lobby, true, true, 4)
                     else
-                        steamutils.send("character_position", c, steamutils.messageTypes.OtherPlayers, lobby, false, true)
+                        steamutils.send("character_position", c, steamutils.messageTypes.OtherPlayers, lobby, false, true, 4)
                     end
                 end
 
@@ -2963,9 +3002,9 @@ networking = {
                 end
                 
                 if(to_spectators)then
-                    steamutils.send("keyboard", c, steamutils.messageTypes.Spectators, lobby, true, true)
+                    steamutils.send("keyboard", c, steamutils.messageTypes.Spectators, lobby, true, true, 6)
                 else
-                    steamutils.send("keyboard", c, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+                    steamutils.send("keyboard", c, steamutils.messageTypes.OtherPlayers, lobby, true, true, 6)
                 end
 
                 data.client.previous_keyboard = c
@@ -3009,9 +3048,9 @@ networking = {
                 end
                 
                 if(to_spectators)then
-                    steamutils.send("mouse", c, steamutils.messageTypes.Spectators, lobby, true, true)
+                    steamutils.send("mouse", c, steamutils.messageTypes.Spectators, lobby, true, true, 7)
                 else
-                    steamutils.send("mouse", c, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+                    steamutils.send("mouse", c, steamutils.messageTypes.OtherPlayers, lobby, true, true, 7)
                 end
 
                 data.client.previous_mouse = c
@@ -3396,7 +3435,7 @@ networking = {
                 takes_control = takes_control,
                 was_kick = was_kick
             }
-            steamutils.send("physics_update", c, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+            steamutils.send("physics_update", c, steamutils.messageTypes.OtherPlayers, lobby, true, true, 2)
         end,
         entity_update = function(lobby, id, x, y, r, vel_x, vel_y, takes_control)
             local c = EntityUpdate{
@@ -3408,7 +3447,7 @@ networking = {
                 vel_y = vel_y,
                 takes_control = takes_control,
             }
-            steamutils.send("entity_update", c, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+            steamutils.send("entity_update", c, steamutils.messageTypes.OtherPlayers, lobby, true, true, 3)
         end,
         sync_entity = function(lobby, arena_entity_id, entity_data, to_spectators)
             if(to_spectators)then
@@ -3639,6 +3678,12 @@ networking = {
         end,
         spawn_trailer_effects = function(lobby)
             steamutils.send("spawn_trailer_effects", {}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+        end,
+        is_spectating = function(user, value)
+            steamutils.sendToPlayer("is_spectating", value, user, true)
+        end,
+        sync_world = function(user, msg)
+            steamutils.sendToPlayer("sync_world", msg, user, false, 1)
         end,
     },
 }

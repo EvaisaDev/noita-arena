@@ -399,6 +399,13 @@ function generate_shop_potion( x, y, biome_id )
 
 	offsetx = textwidth * 0.5 - 0.5
 
+	local camera_bounds = EntityGetComponent( eid, "CameraBoundComponent" )
+	if( camera_bounds ~= nil ) then
+		for i,bound in ipairs(camera_bounds) do
+			EntityRemoveComponent( eid, bound )
+		end
+	end
+
 	if( GlobalsGetValue("no_shop_cost") == "false")then
 
 		EntityAddComponent( eid, "SpriteComponent", { 

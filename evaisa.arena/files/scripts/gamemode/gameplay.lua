@@ -4,6 +4,7 @@ local EntityHelper = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/en
 local counter = dofile_once("mods/evaisa.arena/files/scripts/utilities/ready_counter.lua")
 local countdown = dofile_once("mods/evaisa.arena/files/scripts/utilities/countdown.lua")
 local EZWand = dofile("mods/evaisa.arena/files/scripts/utilities/EZWand.lua")
+world_sync = dofile("mods/evaisa.arena/files/scripts/gamemode/world_sync.lua")
 dofile("mods/evaisa.arena/files/scripts/gamemode/cosmetics/cosmetics.lua")
 
 ArenaLoadCountdown = ArenaLoadCountdown or nil
@@ -503,7 +504,7 @@ ArenaGameplay = {
         end
     end,
     FindUser = function(lobby, user_string, debug)
-        local members = steamutils.getLobbyMembers(lobby)
+        local members = steamutils.getLobbyMembers(lobby, true)
         for k, member in pairs(members) do
             if (tostring(member.id) == user_string) then
                 if (debug) then
@@ -2587,6 +2588,8 @@ ArenaGameplay = {
             data.ready_counter:update(lobby, data)
         end
 
+
+
         --[[
         if (not IsPaused()) then
             if(data.unstuck_ui == nil)then
@@ -2907,6 +2910,7 @@ ArenaGameplay = {
                 if (v.entity ~= nil and EntityGetIsAlive(v.entity)) then
                     local x, y = EntityGetTransform(v.entity)
                     y = y + 10
+                    --print("Updating hp bar for "..tostring(k).." at "..tostring(x).." "..tostring(y))
                     v.hp_bar:update(x, y)
                 end
             end
@@ -3022,6 +3026,9 @@ ArenaGameplay = {
         networking.send.request_skin(lobby, user)
         networking.send.request_perk_update(lobby, user)
         
+        if(data.spectated_player == user)then
+            networking.send.is_spectating(data.spectated_player, true)
+        end
         --print(debug.traceback())
 
         if(data.spectator_mode and data.state == "lobby" and data.spectated_player == user)then
@@ -3595,6 +3602,8 @@ ArenaGameplay = {
             end
         end
 
+        world_sync.collect(lobby, data)
+
 
         data.picked_up_items = data.picked_up_items or {}
         local network_entities = EntityGetWithTag("does_physics_update") or {}
@@ -3921,7 +3930,7 @@ ArenaGameplay = {
                         end
                     end
                 end
-                if (not IsPaused() and GameHasFlagRun("player_is_unlocked") and (not GameHasFlagRun("no_shooting"))) then
+                if (not IsPaused() and (data.spectator_mode or (GameHasFlagRun("player_is_unlocked") and (not GameHasFlagRun("no_shooting"))))) then
                     --print("drawing markers!!")
                     game_funcs.RenderOffScreenMarkers(player_entities)
                     game_funcs.RenderAboveHeadMarkers(player_entities, 0, 37)

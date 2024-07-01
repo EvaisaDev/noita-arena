@@ -340,6 +340,9 @@ SpectatorMode = {
 
                 if (keys_pressed.w or keys_pressed.a or keys_pressed.s or keys_pressed.d or stick_average >= 0.1 or stick_average <= -0.1) then
                     data.selected_player = nil
+                    if(data.spectated_player)then
+                        networking.send.is_spectating(data.spectated_player, false)
+                    end
                     data.spectated_player = nil
                     data.selected_player_name = nil
                     
@@ -374,7 +377,17 @@ SpectatorMode = {
                         data.selected_player_name = "Unknown Player"
                         if (player ~= nil) then
                             data.selected_player_name = steamutils.getTranslatedPersonaName(player)
+                            
+                            if(data.spectated_player)then
+                                networking.send.is_spectating(data.spectated_player, false)
+                            end
+
                             data.spectated_player = player
+
+                            if(data.spectated_player)then
+                                networking.send.is_spectating(data.spectated_player, true)
+                            end
+
                             data.spectator_active_player = player
 
                             networking.send.request_item_update(lobby, player)
@@ -411,7 +424,17 @@ SpectatorMode = {
                         data.selected_player_name = "Unknown Player"
                         if (player ~= nil) then
                             data.selected_player_name = steamutils.getTranslatedPersonaName(player)
+                            
+                            if(data.spectated_player)then
+                                networking.send.is_spectating(data.spectated_player, false)
+                            end
+                            
                             data.spectated_player = player
+
+                            if(data.spectated_player)then
+                                networking.send.is_spectating(data.spectated_player, true)
+                            end
+
                             data.spectator_active_player = player
 
                             networking.send.request_item_update(lobby, player)
@@ -495,7 +518,17 @@ SpectatorMode = {
                                 data.selected_player_name = "Unknown Player"
                                 if (player ~= nil) then
                                     data.selected_player_name = steamutils.getTranslatedPersonaName(player)
+                                    
+                                    if(data.spectated_player)then
+                                        networking.send.is_spectating(data.spectated_player, false)
+                                    end
+                                    
                                     data.spectated_player = player
+
+                                    if(data.spectated_player)then
+                                        networking.send.is_spectating(data.spectated_player, true)
+                                    end
+
                                     data.spectator_active_player = player
 
                                     networking.send.request_item_update(lobby, player)
@@ -590,6 +623,9 @@ SpectatorMode = {
         end
 
         if(not found)then
+            if(data.spectated_player)then
+                networking.send.is_spectating(data.spectated_player, false)
+            end
             data.spectated_player = nil
             data.selected_player_name = nil
             data.spectator_active_player = nil
@@ -597,7 +633,13 @@ SpectatorMode = {
 
 
         if(spectated_player == nil and members ~= nil and #members > 0)then
+            if(data.spectated_player)then
+                networking.send.is_spectating(data.spectated_player, false)
+            end
             data.spectated_player = members[1].id
+            if(data.spectated_player)then
+                networking.send.is_spectating(data.spectated_player, true)
+            end
             data.selected_player_name = steamutils.getTranslatedPersonaName(data.spectated_player)
             data.spectator_lobby_loaded = false
 
@@ -632,8 +674,13 @@ SpectatorMode = {
                     end
     
                     SpectatorMode.ClearHM()
-
+                    if(data.spectated_player)then
+                        networking.send.is_spectating(data.spectated_player, false)
+                    end
                     data.spectated_player = members[index].id
+                    if(data.spectated_player)then
+                        networking.send.is_spectating(data.spectated_player, true)
+                    end
                     data.spectator_active_player = members[index].id
                     data.selected_player_name = steamutils.getTranslatedPersonaName(data.spectated_player)
                     data.spectator_lobby_loaded = false
@@ -667,12 +714,18 @@ SpectatorMode = {
                     GameSetCameraPos(camera_x_new, camera_y_new)
                 else
                     data.selected_player = nil
+                    if(data.spectated_player)then
+                        networking.send.is_spectating(data.spectated_player, false)
+                    end
                     data.spectated_player = nil
                     data.selected_player_name = nil
                     data.spectator_active_player = nil
                 end
             else
                 data.selected_player = nil
+                if(data.spectated_player)then
+                    networking.send.is_spectating(data.spectated_player, false)
+                end
                 data.spectated_player = nil
                 data.selected_player_name = nil
                 data.spectator_active_player = nil
@@ -781,7 +834,13 @@ SpectatorMode = {
     
                     SpectatorMode.ClearHM()
 
+                    if(data.spectated_player)then
+                        networking.send.is_spectating(data.spectated_player, false)
+                    end
                     data.spectated_player = members[index].id
+                    if(data.spectated_player)then
+                        networking.send.is_spectating(data.spectated_player, true)
+                    end
                     data.spectator_active_player = members[index].id
                     data.selected_player_name = steamutils.getTranslatedPersonaName(data.spectated_player)
                     data.spectator_lobby_loaded = false
@@ -863,8 +922,13 @@ SpectatorMode = {
                             EntityKill(v)
                         end
                     end
-
+                    if(data.spectated_player)then
+                        networking.send.is_spectating(data.spectated_player, false)
+                    end
                     data.spectated_player = members[index].id
+                    if(data.spectated_player)then
+                        networking.send.is_spectating(data.spectated_player, true)
+                    end
                     data.spectator_active_player = members[index].id
                     data.selected_player_name = steamutils.getTranslatedPersonaName(data.spectated_player)
                     data.spectator_lobby_loaded = false

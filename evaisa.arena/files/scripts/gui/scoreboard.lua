@@ -181,26 +181,27 @@ scoreboard.apply_data = function(lobby, data)
     scoreboard.win_condition_value = value
 
     -- Add our own entry
-    local player_id = steamutils.getSteamID()
-    local self_name = steamutils.getTranslatedPersonaName(player_id)
+    if(not data.spectator_mode)then
+        local player_id = steamutils.getSteamID()
+        local self_name = steamutils.getTranslatedPersonaName(player_id)
 
-    local own_wins = ArenaGameplay.GetWins(lobby, player_id, data)
-    local own_streak = ArenaGameplay.GetWinstreak(lobby, player_id, data)
-    local own_kills = ArenaGameplay.GetKills(lobby, player_id, data)
-    local own_deaths = ArenaGameplay.GetDeaths(lobby, player_id, data)
+        local own_wins = ArenaGameplay.GetWins(lobby, player_id, data)
+        local own_streak = ArenaGameplay.GetWinstreak(lobby, player_id, data)
+        local own_kills = ArenaGameplay.GetKills(lobby, player_id, data)
+        local own_deaths = ArenaGameplay.GetDeaths(lobby, player_id, data)
 
-    table.insert(scoreboard.data, {
-        id = player_id,
-        id_string = tostring(player_id),
-        name = self_name,
-        wins = own_wins,
-        streak = own_streak,
-        kills = own_kills,
-        deaths = own_deaths,
-        ping = 0,
-        delay_frames = 0
-    })
-
+        table.insert(scoreboard.data, {
+            id = player_id,
+            id_string = tostring(player_id),
+            name = self_name,
+            wins = own_wins,
+            streak = own_streak,
+            kills = own_kills,
+            deaths = own_deaths,
+            ping = 0,
+            delay_frames = 0
+        })
+    end
     -- Add other players
     for k, v in pairs(data.players)do
      
