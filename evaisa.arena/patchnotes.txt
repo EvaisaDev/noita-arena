@@ -1,2 +1,1 @@
-Fixed Bombs Materialized duplicating spells.
-Spell cards are now serialized differently, which might improve mod compatibility.. maybe.
+update arena version number

@@ -1,4 +1,4 @@
-REQUIRED_ONLINE_VERSION = 370
+REQUIRED_ONLINE_VERSION = 372
 
 -- INVALID VERSION HANDLER
 if(MP_VERSION < REQUIRED_ONLINE_VERSION)then
@@ -674,7 +674,7 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 191,
+    version = 192,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
     end,
