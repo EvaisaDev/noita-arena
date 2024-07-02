@@ -843,7 +843,7 @@ ArenaMode = {
             name = "$arena_settings_map_picker_name",
             description = "$arena_settings_map_picker_description",
             type = "enum",
-            options = { { "ordered", "$arena_settings_map_picker_enum_order" }, { "random", "$arena_settings_map_picker_enum_random" }, { "vote", "$arena_settings_map_picker_enum_vote" } },
+            options = { { "ordered", "$arena_settings_map_picker_enum_order" }, { "random", "$arena_settings_map_picker_enum_random" }, { "ordered_random", "$arena_settings_map_picker_enum_ordered_random" }, { "vote", "$arena_settings_map_picker_enum_vote" } },
             default = "random"
         },
         {

@@ -10,9 +10,27 @@ local rect_optimiser = rect.Optimiser_new()
 local PixelRun_const_ptr = ffi.typeof("struct PixelRun const*")
 local encoded_area = world.EncodedArea()
 
-world_sync.chunks = function(callback)
+local area_header_size = ffi.sizeof(world.EncodedAreaHeader)
+
+local chunk_size = 64
+
+-- doesn't seem to work?
+world_sync.add_chunks = function(x, y, w, h)
+
     local grid_world = world_ffi.get_grid_world()
     local chunk_map = grid_world.vtable.get_chunk_map(grid_world)
+
+    for y = y, y + h, chunk_size do
+        for x = x, x + w, chunk_size do
+            world_sync.sync_world_part(chunk_map, x, y, x + chunk_size, y + chunk_size)
+        end
+    end
+end
+
+-- collects updated chunks and adds them to the rect optimiser
+world_sync.collect_chunks = function()
+    local grid_world = world_ffi.get_grid_world()
+
     local thread_impl = grid_world.mThreadImpl
 
     local begin = thread_impl.updated_grid_worlds.begin
@@ -47,31 +65,50 @@ world_sync.chunks = function(callback)
         local rectangle = rect.Rectangle(start_x, start_y, end_x, end_y)
         rect_optimiser:submit(rectangle)
     end
+end
 
-    if GameGetFrameNum() % 5 == 0 then
-        rect_optimiser:scan()
+-- function with callback that will optimize the chunks and return them
+world_sync.chunks = function(callback)
+    local grid_world = world_ffi.get_grid_world()
+    local chunk_map = grid_world.vtable.get_chunk_map(grid_world)
 
-        local result = {}
-        for rect in rect.parts(rect_optimiser:iterate(), 256) do
-            local area = world.encode_area(chunk_map, rect.left, rect.top, rect.right, rect.bottom, encoded_area)
-            if area ~= nil then
-                local str = ffi.string(area, world.encoded_size(area))
-                --if(#result < 10)then
-                    table.insert(result, str)
-                --end
-            end
+
+    rect_optimiser:scan()
+
+    local result = {}
+    for rect in rect.parts(rect_optimiser:iterate(), 256) do
+        local area = world.encode_area(chunk_map, rect.left, rect.top, rect.right, rect.bottom, encoded_area)
+        if area ~= nil then
+            local str = ffi.string(area, world.encoded_size(area))
+
+            table.insert(result, str)
+
         end
-
-        callback(result)
-
-        rect_optimiser:reset()
     end
+
+    callback(result)
+
+    rect_optimiser:reset()
+
 end
 
 local chunk_stack = {}
-local chunks_per_frame = 5
+local chunks_per_frame = 10
 
-world_sync.collect = function(lobby, data)
+world_sync.sync_world_part = function(chunk_map, start_x, start_y, end_x, end_y)
+    if(DoesWorldExistAt(start_x, start_y, end_x, end_y))then
+        local area = world.encode_area(chunk_map, start_x, start_y, end_x, end_y, encoded_area)
+        if area == nil then
+            return
+        end
+
+        local str = ffi.string(area, world.encoded_size(area))
+
+        table.insert(chunk_stack, str)
+    end
+end
+
+world_sync.update = function(lobby, data)
     local spectators = 0
 
     for k, v in pairs(data.spectators or {})do
@@ -83,38 +120,55 @@ world_sync.collect = function(lobby, data)
     if(spectators == 0)then
         return
     end
-
-    world_sync.chunks(function(chunks)
-        for i, chunk in ipairs(chunks)do
-            table.insert(chunk_stack, chunk)
-        end
-    end)
     
+    world_sync.collect_chunks()
+
+    if(GameGetFrameNum() % 5 == 0)then
+        world_sync.chunks(function(chunks)
+            for i, chunk in ipairs(chunks)do
+                table.insert(chunk_stack, chunk)
+            end
+        end)
+    end
 
     if(#chunk_stack > 0)then
+        local chunks = {}
         for i = 0, math.min(chunks_per_frame, #chunk_stack) - 1 do
             local chunk = table.remove(chunk_stack, 1)
-            for k, v in pairs(data.spectators)do
-                local user = gameplay_handler.FindUser(lobby, k)
-                if(user)then
-                    networking.send.sync_world(user, chunk)
-                else
-                    data.spectators[k] = false
-                end
+            table.insert(chunks, chunk)
+        end
+
+        local chunk_str = zstd:compress(table.concat(chunks, ""))
+        for k, v in pairs(data.spectators)do
+            local user = gameplay_handler.FindUser(lobby, k)
+            if(user)then
+                networking.send.sync_world(user, chunk_str)
+            else
+                data.spectators[k] = false
             end
         end
     end
+
 end
 
-world_sync.apply = function(received)
-    --print("applying world changes")
+world_sync.apply = function(msg)
+    -- decompress
+
+    local chunks_str = zstd:decompress(msg)
+
     local grid_world = world_ffi.get_grid_world()
-    local header = ffi.cast("struct EncodedAreaHeader const*", ffi.cast('char const*', received))
+    local world_data = chunks_str
+    local data_ptr = ffi.cast('char const*', world_data)
+    local index = 0
+    while #world_data - index > area_header_size do
+        local header = ffi.cast("struct EncodedAreaHeader const*", data_ptr + index)
+        local run_length = header.pixel_run_count * ffi.sizeof(world.PixelRun)
+        local runs = ffi.cast(ffi.typeof("struct PixelRun const*"), data_ptr + index + area_header_size)
+        index = index + run_length + area_header_size
+    
+        world.decode(grid_world, header, runs)
+    end
 
-    --print(tostring(header.x), tostring(header.y), tostring(header.width), tostring(header.height), tostring(header.pixel_run_count))
-
-    local runs = ffi.cast(PixelRun_const_ptr, ffi.cast("const char*", received) + ffi.sizeof(world.EncodedAreaHeader))
-    world.decode(grid_world, header, runs)
 end
 
 return world_sync

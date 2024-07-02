@@ -2787,6 +2787,24 @@ networking = {
             data.spectators = data.spectators or {}
 
             if(message)then
+                if(not data.spectators[tostring(user)])then
+                    -- send updates
+                    
+
+                    local second_row_spots = smallfolk.loads(GlobalsGetValue("temple_second_row_spots", "{}"))
+                    steamutils.sendToPlayer("second_row_spots", second_row_spots, user, true, true)
+
+                    networking.send.sync_hm(lobby, data, user)
+                    networking.send.item_update(lobby, data, user, true)
+                    networking.send.send_skin(lobby, skin_system.active_skin_data, user)
+                    networking.send.perk_update(lobby, data, user)
+                    networking.send.character_position(lobby, data, true, user)
+                    networking.send.dummy_target(lobby, data.target_dummy_player, user)
+                    networking.send.card_list(lobby, data, user)
+
+
+                    world_sync.add_chunks(-512, -512, 1280, 1280)
+                end
                 data.spectators[tostring(user)] = true
             else
                 data.spectators[tostring(user)] = nil
@@ -2815,6 +2833,19 @@ networking = {
                 end
             end]]
             world_sync.apply(message)
+        end,
+        did_spectate = function(lobby, message, user, data)
+            if(not data.spectator_mode)then
+                return
+            end
+
+            if(data.spectated_player ~= user)then
+                networking.send.is_spectating(user, false)
+            else
+                networking.send.is_spectating(user, true)
+            end
+
+            
         end,
     },
     send = {
@@ -3683,7 +3714,10 @@ networking = {
             steamutils.sendToPlayer("is_spectating", value, user, true)
         end,
         sync_world = function(user, msg)
-            steamutils.sendToPlayer("sync_world", msg, user, false, 1)
+            steamutils.sendToPlayer("sync_world", msg, user, false, 1, true)
+        end,
+        did_spectate = function(lobby)
+            steamutils.send("did_spectate", {}, steamutils.messageTypes.Spectators, lobby, true, true)
         end,
     },
 }

@@ -579,7 +579,10 @@ ArenaGameplay = {
 
         cosmetics_handler.LoadPlayerCosmetics(lobby, data, current_player)
 
-        
+        if(data.state == "lobby")then
+            networking.send.did_spectate(lobby)
+        end
+
         GameRemoveFlagRun("player_unloaded")
     end,
     AllowFiring = function(data)
@@ -1910,6 +1913,8 @@ ArenaGameplay = {
             table.insert(available_map_list, arena_list[1])
         end
 
+
+
         -- load map
         if(map)then
             print("Loading map: "..tostring(map))
@@ -1921,11 +1926,22 @@ ArenaGameplay = {
             end
         else
             local map_picker = GlobalsGetValue("map_picker", "random")
-            
+
             if(map_picker == "random")then
                 SetRandomSeed(ArenaGameplay.GetNumRounds(lobby), (tonumber(GlobalsGetValue("world_seed", "0")) or 1) + GameGetFrameNum())
                 arena = available_map_list[Random(1, #available_map_list)]
-            elseif(map_picker == "ordered")then
+            elseif(map_picker == "ordered" or map_picker == "ordered_random")then
+
+                if(map_picker == "ordered_random")then
+                    local seed = tonumber(GlobalsGetValue("original_seed", "1")) or 1
+                    -- random shuffle map list
+                    math.randomseed(seed)
+                    for i = #available_map_list, 2, -1 do
+                        local j = math.random(1, i)
+                        available_map_list[i], available_map_list[j] = available_map_list[j], available_map_list[i]
+                    end
+                end
+
                 local last_arena = data.current_arena and data.current_arena.id or nil
                 print("Last arena: "..tostring(last_arena) )
                 if(last_arena == nil)then
@@ -3602,7 +3618,7 @@ ArenaGameplay = {
             end
         end
 
-        world_sync.collect(lobby, data)
+        world_sync.update(lobby, data)
 
 
         data.picked_up_items = data.picked_up_items or {}
