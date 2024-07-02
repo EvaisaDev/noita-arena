@@ -165,6 +165,73 @@ SpectatorMode = {
 
             data.last_selected_perk_string = perk_string
 
+
+            -- handle wand uses remaining
+            local items = GameGetAllInventoryItems(player.entity)
+            local spectator_items = GameGetAllInventoryItems(data.spectator_entity)
+            -- find spells
+            for k, v in ipairs(items or {})do
+                local item_comp = EntityGetFirstComponentIncludingDisabled(v, "ItemComponent")
+                if(item_comp ~= nil)then
+                    local uses_remaining = ComponentGetValue2(item_comp, "uses_remaining")
+                    local inventory_slot = ComponentGetValue2(item_comp, "inventory_slot")
+                    local inventory_name = EntityGetName(EntityGetParent(v))
+
+                    -- if item is a wand
+                    local ability_comp = EntityGetFirstComponentIncludingDisabled(v, "AbilityComponent")
+                    if(ability_comp and ComponentGetValue2(ability_comp, "use_gun_script"))then
+                        -- add sub actions
+                        local children = EntityGetAllChildren(v) or {}
+                        for k, v in ipairs(children)do
+                            local item_action_comp = EntityGetFirstComponentIncludingDisabled(v, "ItemActionComponent")
+                            local item_comp = EntityGetFirstComponentIncludingDisabled(v, "ItemComponent")
+                            if(item_action_comp ~= nil and item_comp ~= nil)then
+                                local uses_remaining_child = ComponentGetValue2(item_comp, "uses_remaining")
+                                local inventory_slot_child = ComponentGetValue2(item_comp, "inventory_slot")
+                                
+                                -- find spectator item in same slot, then find child item in same slot
+                                for k2, v2 in ipairs(spectator_items or {})do
+                                    local item_comp2 = EntityGetFirstComponentIncludingDisabled(v2, "ItemComponent")
+                                    if(item_comp2 ~= nil)then
+                                        local inventory_slot2 = ComponentGetValue2(item_comp2, "inventory_slot")
+                                        local inventory_name2 = EntityGetName(EntityGetParent(v2))
+                                        if(inventory_slot == inventory_slot2 and inventory_name == inventory_name2)then
+                                            local children2 = EntityGetAllChildren(v2) or {}
+                                            for k3, v3 in ipairs(children2)do
+                                                local item_action_comp2 = EntityGetFirstComponentIncludingDisabled(v3, "ItemActionComponent")
+                                                local item_comp2 = EntityGetFirstComponentIncludingDisabled(v3, "ItemComponent")
+                                                if(item_action_comp2 ~= nil and item_comp2 ~= nil)then
+                                                    local inventory_slot_child2 = ComponentGetValue2(item_comp2, "inventory_slot")
+                                                    if(inventory_slot_child == inventory_slot_child2)then
+                                                        ComponentSetValue2(item_comp2, "uses_remaining", uses_remaining_child)
+                                                    end
+                                                end
+                                            end
+                                        end
+                                    end
+                                end
+                            end
+                        end
+
+                    else
+                        -- find spectator item in same slot
+                        for k2, v2 in ipairs(spectator_items or {})do
+                            local item_comp2 = EntityGetFirstComponentIncludingDisabled(v2, "ItemComponent")
+                            if(item_comp2 ~= nil)then
+                                local inventory_slot2 = ComponentGetValue2(item_comp2, "inventory_slot")
+                                local inventory_name2 = EntityGetName(EntityGetParent(v2))
+                                if(inventory_slot == inventory_slot2 and inventory_name == inventory_name2)then
+                                    ComponentSetValue2(item_comp2, "uses_remaining", uses_remaining)
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+                        
+
+
+
             --[[
             local effects = {}
             local effect_names = {}

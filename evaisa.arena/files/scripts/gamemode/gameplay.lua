@@ -3616,6 +3616,8 @@ ArenaGameplay = {
                     EntityRemoveTag(v, "homing_target")
                 end
             end
+
+            networking.send.uses_update(lobby, data)
         end
 
         world_sync.update(lobby, data)

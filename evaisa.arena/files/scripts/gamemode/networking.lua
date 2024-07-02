@@ -800,7 +800,6 @@ networking = {
             networking.send.item_update(lobby, data, user, true)
             networking.send.switch_item(lobby, data, user, true)
         end,
-       
         keyboard = function(lobby, message, user, data)
             if(data.state ~= "arena" and not data.spectator_mode)then
                 return
@@ -2444,6 +2443,8 @@ networking = {
                     if(EntityGetIsAlive(entity))then
                         local was_refresh = false
 
+                        print(EntityGetFilename(entity))
+
                         local entity_x, entity_y = EntityGetTransform(entity)
                         if(EntityHasTag(entity, "perk"))then
 
@@ -2480,6 +2481,7 @@ networking = {
                         end
 
                         if(not was_refresh)then
+                            print("Wand refresh!")
                             networking.send.request_item_update(lobby, user)
                             networking.send.request_sync_hm(lobby, user)
                         end
@@ -2846,6 +2848,77 @@ networking = {
             end
 
             
+        end,
+        uses_update = function(lobby, message, user, data)
+            if(data.state == "lobby" and not data.spectator_mode) then
+                return
+            end
+        
+            local dat = zstd:decompress(message)
+        
+            local info2 = {}
+            for item in string.gmatch(dat, "([^;]+)") do
+                local item2 = {}
+                for sub_item in string.gmatch(item, "([^,]+)") do
+                    local sub_item2 = {}
+                    for sub_sub_item in string.gmatch(sub_item, "([^%-]+)") do
+                        table.insert(sub_item2, sub_sub_item)
+                    end
+                    table.insert(item2, sub_item2)
+                end
+                table.insert(info2, item2)
+            end
+        
+            local player_data = data.players[tostring(user)]
+        
+            if player_data == nil then
+                return
+            end
+        
+            local entity = player_data.entity
+        
+            if entity == nil then
+                return
+            end
+
+            print("Updating uses for player ["..tostring(user).."]")
+        
+            local items = GameGetAllInventoryItems(entity)
+        
+            for k, v in ipairs(items or {}) do
+                local item_comp = EntityGetFirstComponentIncludingDisabled(v, "ItemComponent")
+                if item_comp ~= nil then
+                    for _, item_info in ipairs(info2) do
+                        local uses_remaining = tonumber(item_info[1][1])
+                        local inventory_slot = tonumber(item_info[1][2])
+        
+                        if inventory_slot == ComponentGetValue2(item_comp, "inventory_slot") then
+                            ComponentSetValue2(item_comp, "uses_remaining", uses_remaining)
+                        end
+        
+                        -- if item is a wand, update sub actions
+                        local ability_comp = EntityGetFirstComponentIncludingDisabled(v, "AbilityComponent")
+                        if ability_comp and ComponentGetValue2(ability_comp, "use_gun_script") then
+                            local children = EntityGetAllChildren(v) or {}
+                            for _, child in ipairs(children) do
+                                local item_action_comp = EntityGetFirstComponentIncludingDisabled(child, "ItemActionComponent")
+                                if item_action_comp ~= nil then
+                                    for _, sub_item_info in ipairs(item_info) do
+                                        if #sub_item_info == 2 then
+                                            local sub_uses_remaining = tonumber(sub_item_info[1])
+                                            local sub_inventory_slot = tonumber(sub_item_info[2])
+        
+                                            if sub_inventory_slot == ComponentGetValue2(item_action_comp, "inventory_slot") then
+                                                ComponentSetValue2(item_action_comp, "uses_remaining", sub_uses_remaining)
+                                            end
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end
         end,
     },
     send = {
@@ -3718,6 +3791,86 @@ networking = {
         end,
         did_spectate = function(lobby)
             steamutils.send("did_spectate", {}, steamutils.messageTypes.Spectators, lobby, true, true)
+        end,
+        uses_update = function(lobby, data)
+            -- get all inventory items
+            local player = player_helper.Get()
+            if(player == nil)then
+                return
+            end
+
+            local items = GameGetAllInventoryItems(player)
+            -- find spells
+            local info = {}
+            local hash = 0
+            for k, v in ipairs(items or {})do
+                local item_comp = EntityGetFirstComponentIncludingDisabled(v, "ItemComponent")
+                if(item_comp ~= nil)then
+                    local uses_remaining = ComponentGetValue2(item_comp, "uses_remaining")
+                    local inventory_slot = ComponentGetValue2(item_comp, "inventory_slot")
+
+                    local item = {
+                        uses_remaining,
+                        inventory_slot
+                    }
+
+                    hash = hash + uses_remaining + inventory_slot
+
+                    -- if item is a wand
+                    local ability_comp = EntityGetFirstComponentIncludingDisabled(v, "AbilityComponent")
+                    if(ability_comp and ComponentGetValue2(ability_comp, "use_gun_script"))then
+                        -- add sub actions
+                        local children = EntityGetAllChildren(v) or {}
+                        for k, v in ipairs(children)do
+                            local item_action_comp = EntityGetFirstComponentIncludingDisabled(v, "ItemActionComponent")
+                            local item_comp = EntityGetFirstComponentIncludingDisabled(v, "ItemComponent")
+                            if(item_action_comp ~= nil and item_comp ~= nil)then
+                                local uses_remaining = ComponentGetValue2(item_comp, "uses_remaining")
+                                local inventory_slot = ComponentGetValue2(item_comp, "inventory_slot")
+
+                                local item2 = {
+                                    uses_remaining,
+                                    inventory_slot
+                                }
+
+                                hash = hash + uses_remaining + inventory_slot
+
+                                table.insert(item, item2)
+                            end
+                        end
+                    end
+                    
+                    table.insert(info, item)
+                end
+            end
+
+
+            local last_uses_update = data.last_uses_update or ""
+
+            if(last_uses_update == hash)then
+                return
+            end
+
+            data.last_uses_update = hash
+
+            local msg_parts = {}
+            for k, v in ipairs(info) do
+                local item_parts = {}
+                for k2, v2 in ipairs(v) do
+                    if type(v2) == "table" then
+                        table.insert(item_parts, table.concat({tostring(v2[1]), tostring(v2[2])}, "-"))
+                    else
+                        table.insert(item_parts, tostring(v2))
+                    end
+                end
+                table.insert(msg_parts, table.concat(item_parts, ","))
+            end
+            local msg = table.concat(msg_parts, ";")
+
+
+            local dat = zstd:compress(msg)
+
+            steamutils.send("uses_update", dat, steamutils.messageTypes.OtherPlayers, lobby, true, true, 5)
         end,
     },
 }
