@@ -552,7 +552,7 @@ local rewrites = {
 
 			GetRandomActionWithType = function( x, y, level, type, i)
 				--print("Custom get action called!")
-				return RandomActionWithType( level, type ) or "LIGHT_BULLET"
+				return RandomActionWithType( level, type ) or ""
 			end
 
 			local good_cards = {}

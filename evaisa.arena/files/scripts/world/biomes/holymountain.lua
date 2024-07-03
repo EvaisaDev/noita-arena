@@ -210,8 +210,10 @@ function spawn_all_shopitems( x, y )
 	-- "Choose" shop type is something i guess the player chooses what type of shop they want but idk how eba wants to implement this.
 	elseif (shop_type == "choose") then
 		print("just kidding, its not implemented yet, ha ha ha!")
-	-- "Random" shop type is basically vanilla and we default to this if no other shop type is match is found.
+	elseif (shop_type == "disabled")then
+		-- we do nothing! hahaha
 	else
+		-- "Random" shop type is basically vanilla and we default to this if no other shop type is match is found.
 		local shop_random_ratio = tonumber(GlobalsGetValue("shop_random_ratio", "50"))
 		if( Random( 0, 100 ) >= shop_random_ratio ) then
 			for i=1,count do

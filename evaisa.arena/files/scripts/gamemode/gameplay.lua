@@ -10,6 +10,135 @@ dofile("mods/evaisa.arena/files/scripts/gamemode/cosmetics/cosmetics.lua")
 ArenaLoadCountdown = ArenaLoadCountdown or nil
 
 ArenaGameplay = {
+    SaveShiftData = function(lobby, from_materials, to_mat)
+        if(steamutils.IsOwner())then
+            local shifts = ArenaGameplay.GetShiftData(lobby)
+
+            table.insert(shifts, {from_materials, to_mat})
+            
+            steamutils.TrySetLobbyData(lobby, "fungal_shifts", bitser.dumps(shifts))
+        end
+    end,
+    GetShiftData = function()
+        local shifts_data = steamutils.GetLobbyData("fungal_shifts") or ""
+        local shifts = {}
+        if(shifts_data == "")then
+            shifts = {}
+        else
+            shifts = bitser.loads(shifts_data)
+        end
+        return shifts
+    end,
+    FungalShift = function(from_materials, to_mat, no_effects)
+        local iter = tonumber( GlobalsGetValue( "fungal_shift_iteration", "0" ) )
+        GlobalsSetValue( "fungal_shift_iteration", tostring(iter+1) )
+        if iter > 20 then
+            return
+        end
+        local frame = GameGetFrameNum()
+
+        SetRandomSeed( 89346, 42345+iter )
+
+        local converted_any = false
+    
+        local player_entity = player.Get()
+
+        if(no_effects)then
+            player_entity = nil
+        end
+
+        local from_material_name = nil
+        
+        for i,it in ipairs(from_materials) do
+            local from_material = CellFactory_GetType( it )
+            local to_material = CellFactory_GetType( to_mat )
+            
+            from_material_name = string.upper( GameTextGetTranslatedOrNot( CellFactory_GetUIName( from_material ) ) )
+           
+            -- convert
+            if from_material ~= to_material then
+                print(CellFactory_GetUIName(from_material) .. " -> " .. CellFactory_GetUIName(to_material))
+                ConvertMaterialEverywhere( from_material, to_material )
+                converted_any = true
+    
+                
+                if (player_entity) then
+                    local x, y = EntityGetTransform(player_entity)
+                    -- shoot particles of new material
+                    GameCreateParticle( CellFactory_GetName(from_material), x-10, y-10, 20, Random(-100,100), Random(-100,-30), true, true )
+                    GameCreateParticle( CellFactory_GetName(from_material), x+10, y-10, 20, Random(-100,100), Random(-100,-30), true, true )
+                end
+            end
+        end
+
+        local log_messages = 
+        {
+            "$log_reality_mutation_00",
+            "$log_reality_mutation_01",
+            "$log_reality_mutation_02",
+            "$log_reality_mutation_03",
+            "$log_reality_mutation_04",
+            "$log_reality_mutation_05",
+        }
+        
+
+        if converted_any then
+            -- remove tripping effect
+            if(player_entity ~= nil)then
+                EntityRemoveIngestionStatusEffect( player_entity, "TRIP" );
+            end
+        
+            local x, y = GameGetCameraPos()
+
+            -- audio
+            if(no_effects)then
+                GameTriggerMusicFadeOutAndDequeueAll( 5.0 )
+                GameTriggerMusicEvent( "music/oneshot/tripping_balls_01", false, x, y )
+            end
+            -- particle fx
+            if(player_entity ~= nil)then
+                local eye = EntityLoad( "data/entities/particles/treble_eye.xml", x,y-10 )
+                if eye ~= 0 then
+                    EntityAddChild( player_entity, eye )
+                end
+            end
+            -- log
+            if no_effects then
+                local log_msg = ""
+                if from_material_name ~= "" then
+                    log_msg = GameTextGet( "$logdesc_reality_mutation", from_material_name )
+                    GamePrint( log_msg )
+                end
+                GamePrintImportant( random_from_array( log_messages ), log_msg, "data/ui_gfx/decorations/3piece_fungal_shift.png" )
+            end
+            GlobalsSetValue( "fungal_shift_last_frame", tostring(frame) )
+    
+            -- add ui icon
+            local add_icon = true
+            if(player_entity ~= nil)then
+                local children = EntityGetAllChildren(player_entity)
+                if children ~= nil then
+                    for i,it in ipairs(children) do
+                        if ( EntityGetName(it) == "fungal_shift_ui_icon" ) then
+                            add_icon = false
+                            break
+                        end
+                    end
+                end
+        
+                if add_icon then
+                    local icon_entity = EntityCreateNew( "fungal_shift_ui_icon" )
+                    EntityAddComponent( icon_entity, "UIIconComponent", 
+                    { 
+                        name = "$status_reality_mutation",
+                        description = "$statusdesc_reality_mutation",
+                        icon_sprite_file = "data/ui_gfx/status_indicators/fungal_shift.png"
+                    })
+                    EntityAddChild( player_entity, icon_entity )
+                end
+            end
+        end
+    end,
     GetNumRounds = function(lobby)
         local holyMountainCount = tonumber(GlobalsGetValue("holyMountainCount", "0"))
         return holyMountainCount
@@ -314,6 +443,12 @@ ArenaGameplay = {
                 end
             end
         end
+
+        -- reapply fungal shifts
+        local shifts = ArenaGameplay.GetShiftData(lobby)
+        for i, shift in ipairs(shifts) do
+            ArenaGameplay.FungalShift(shift[1], shift[2])
+        end
     end,
     GracefulReset = function(lobby, data)
         if(data.unstuck_ui)then
@@ -352,6 +487,22 @@ ArenaGameplay = {
         local player_entity = player.Get()
 
         scoreboard.open = false
+
+        -- FUNGAL SHIFT RESET
+        local world_state = GameGetWorldStateEntity()
+        local world_comp = EntityGetFirstComponent(world_state, "WorldStateComponent")
+        if world_comp then
+            ComponentSetValue(world_comp, "changed_materials", "")
+        end
+
+        ffi = require("ffi")
+        arg = ffi.cast("int**", 0x012216cc)[0][6]
+        remove_materials = ffi.cast("void(__fastcall*)(int)", 0x006fa100)
+        remove_materials(arg)
+        load_materials = ffi.cast("void(__thiscall*)(int, char)", 0x00706e30)
+        load_materials(arg, 1)
+        -- END FUNGAL SHIFT RESET
+                
 
         dofile_once("data/scripts/perks/perk_list.lua")
         for i, perk_data in ipairs(perk_list) do
@@ -581,6 +732,21 @@ ArenaGameplay = {
 
         if(data.state == "lobby")then
             networking.send.did_spectate(lobby)
+        end
+        
+        local shifts = gameplay_handler.GetShiftData(lobby)
+        if(#shifts > 0)then
+            print("Fungal shift data found!!!")
+
+            local icon_entity = EntityCreateNew( "fungal_shift_ui_icon" )
+            EntityAddComponent( icon_entity, "UIIconComponent", 
+            { 
+                name = "$status_reality_mutation",
+                description = "$statusdesc_reality_mutation",
+                icon_sprite_file = "data/ui_gfx/status_indicators/fungal_shift.png"
+            })
+            EntityAddChild( current_player, icon_entity )
+
         end
 
         GameRemoveFlagRun("player_unloaded")
@@ -4039,6 +4205,8 @@ ArenaGameplay = {
                 for material in string.gmatch(fungal_shift_from, "([^;]+)") do
                     table.insert(from_table, material)
                 end
+
+                gameplay_handler.SaveShiftData(lobby, from_table, to)
 
                 networking.send.fungal_shift(lobby, from_table, to)
             end

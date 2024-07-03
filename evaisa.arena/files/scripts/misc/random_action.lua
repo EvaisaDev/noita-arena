@@ -134,7 +134,7 @@ function RandomAction(max_level, x, y)
         end
     end
 
-    return "LIGHT_BULLET"
+    return ""
 end
 
 -- GetRandomActionWithType function to find a random action with the specified action_type and max_level
@@ -174,5 +174,5 @@ function RandomActionWithType(max_level, action_type, x, y)
         end
     end
 
-    return "LIGHT_BULLET"
+    return ""
 end

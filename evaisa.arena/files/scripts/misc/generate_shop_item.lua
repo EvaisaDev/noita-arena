@@ -106,6 +106,10 @@ function generate_shop_item( x, y, cheap_item, biomeid_, is_stealable, sync )
 	end
 	
 
+	if(item == nil or item == "")then
+		return
+	end
+
 	local eid = CreateItemActionEntity( item, x, y )
 
 	if( cheap_item ) then
