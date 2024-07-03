@@ -3,6 +3,7 @@ local remove_list = {
     CHAOS_POLYMORPH_FIELD = true,
     SUMMON_EGG = true,
     DESTRUCTION = true,
+    CESSATION = true,
 }
 
 local hook_list = {

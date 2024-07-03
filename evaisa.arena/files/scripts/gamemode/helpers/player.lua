@@ -144,29 +144,32 @@ player_helper.GetGold = function()
 end
 
 player_helper.GiveStartingGear = function()
-    local player = player_helper.Get()
-    if (player == nil) then
-        return
+
+    if(GameHasFlagRun("starting_loadout_enabled"))then
+        local player = player_helper.Get()
+        if (player == nil) then
+            return
+        end
+        local x, y = EntityGetTransform(player)
+
+        local network_id_base = tonumber(tostring(steam_utils.getSteamID())) % 2431252
+
+        print("Network ID base: " .. network_id_base)
+        
+        local wand = EntityLoad("data/entities/items/starting_wand_rng.xml", x, y)
+        arena_log:print("Starting gear granted to player entity: " .. tostring(player))
+        GamePickUpInventoryItem(player, wand, false)
+        EntityAddTag(wand, "picked_by_player")
+        entity.NetworkRegister(wand, nil, nil, network_id_base) 
+        local wand2 = EntityLoad("data/entities/items/starting_bomb_wand_rng.xml", x, y)
+        GamePickUpInventoryItem(player, wand2, false)
+        EntityAddTag(wand2, "picked_by_player")
+        entity.NetworkRegister(wand2, nil, nil, network_id_base + 1) 
+        local potion = EntityLoad("data/entities/items/pickup/potion_starting.xml", x, y)
+        GamePickUpInventoryItem(player, potion, false)
+        EntityAddTag(potion, "picked_by_player")
+        entity.NetworkRegister(potion, nil, nil, network_id_base + 2) 
     end
-    local x, y = EntityGetTransform(player)
-
-    local network_id_base = tonumber(tostring(steam_utils.getSteamID())) % 2431252
-
-    print("Network ID base: " .. network_id_base)
-    
-    local wand = EntityLoad("data/entities/items/starting_wand_rng.xml", x, y)
-    arena_log:print("Starting gear granted to player entity: " .. tostring(player))
-    GamePickUpInventoryItem(player, wand, false)
-    EntityAddTag(wand, "picked_by_player")
-    entity.NetworkRegister(wand, nil, nil, network_id_base) 
-    local wand2 = EntityLoad("data/entities/items/starting_bomb_wand_rng.xml", x, y)
-    GamePickUpInventoryItem(player, wand2, false)
-    EntityAddTag(wand2, "picked_by_player")
-    entity.NetworkRegister(wand2, nil, nil, network_id_base + 1) 
-    local potion = EntityLoad("data/entities/items/pickup/potion_starting.xml", x, y)
-    GamePickUpInventoryItem(player, potion, false)
-    EntityAddTag(potion, "picked_by_player")
-    entity.NetworkRegister(potion, nil, nil, network_id_base + 2) 
 end
 
 player_helper.Immortal = function(immortal)

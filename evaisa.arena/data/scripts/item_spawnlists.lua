@@ -144,11 +144,83 @@ item_spawnlist = {
 	  offset_y = -2
 	}, -- Thunderstone
 	{
+		id = "waterstone",
+		ui_name = "$item_waterstone",
+		ui_description = "$item_description_waterstone",
+		sprite = "data/ui_gfx/items/waterstone.png",
+		weight = 2,
+		load_entity = "data/entities/items/pickup/waterstone.xml",
+		offset_y = -2
+	},
+	{
+		id = "moon",
+		ui_name = "$item_moon",
+		ui_description = "$item_description_moon",
+		sprite = "data/ui_gfx/items/moon.png",
+		weight = 2,
+		load_entity = "data/entities/items/pickup/moon.xml",
+		offset_y = -2
+	},
+	{
+		id = "poopstone",
+		ui_name = "$item_kakka",
+		ui_description = "$itemdesc_kakka",
+		sprite = "data/ui_gfx/items/kakke.png",
+		weight = 2,
+		load_entity = "data/entities/items/pickup/poopstone.xml",
+		offset_y = -2
+	},
+	{
+		id = "stonestone",
+		ui_name = "$item_stonestone",
+		ui_description = "$itemdesc_stonestone",
+		sprite = "data/ui_gfx/items/stonestone.png",
+		weight = 2,
+		load_entity = "data/entities/items/pickup/stonestone.xml",
+		offset_y = -2
+	},
+	{
+		id = "evil_eye",
+		ui_name = "$item_evil_eye",
+		ui_description = "$item_description_evil_eye",
+		sprite = "data/ui_gfx/items/evil_eye.png",
+		weight = 2,
+		load_entity = "data/entities/items/pickup/evil_eye.xml",
+		offset_y = -2
+	},
+	{
+		id = "gourd",
+		ui_name = "$item_gourd",
+		ui_description = "$itemdesc_gourd",
+		sprite = "data/ui_gfx/items/gourd.png",
+		weight = 2,
+		load_entity = "data/entities/items/pickup/gourd.xml",
+		offset_y = -2
+	},
+	{
+		id = "sunseed",
+		ui_name = "$item_sunseed",
+		ui_description = "$itemdesc_sunseed",
+		sprite = "data/ui_gfx/items/sunseed.png",
+		weight = 2,
+		load_entity = "data/entities/items/pickup/sun/sunseed.xml",
+		offset_y = -2
+	},
+	{
+		id = "wandstone",
+		ui_name = "$item_wandstone",
+		ui_description = "$itemdesc_wandstone",
+		sprite = "data/ui_gfx/items/wandstone.png",
+		weight = 2,
+		load_entity = "data/entities/items/pickup/wandstone.xml",
+		offset_y = -2
+	},
+	{
 	  id = "broken_wand",
 	  ui_name = "$item_broken_wand",
 	  ui_description = "$item_description_broken_wand",
 	  sprite = "data/ui_gfx/items/broken_wand.png",
-	  weight = 3,
+	  weight = 4,
 	  load_entity = "data/entities/items/pickup/broken_wand.xml",
 	  offset_y = -2
 	}, -- Broken Wand

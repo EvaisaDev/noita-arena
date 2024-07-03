@@ -165,6 +165,75 @@ SpectatorMode = {
 
             data.last_selected_perk_string = perk_string
 
+
+
+            -- ONE OF THE WORST THINGS I HAVE EVER WRITTEN!!! LETS GOOOOOO
+            -- CURSE OF RA 𓀀 𓀁 𓀂 𓀃 𓀄 𓀅 𓀆 𓀇 𓀈 𓀉 𓀊 𓀋 𓀌 𓀍 𓀎 𓀏 𓀐 𓀑 𓀒 𓀓 𓀔 𓀕 𓀖 𓀗 𓀘 𓀙 𓀚 𓀛 𓀜 𓀝 𓀞 𓀟 𓀠 𓀡 𓀢 𓀣 𓀤 𓀥 𓀦 𓀧 𓀨 𓀩 𓀪 𓀫 𓀬 𓀭 𓀮 𓀯 𓀰 𓀱 𓀲 𓀳 𓀴 𓀵 𓀶 𓀷 𓀸 𓀹 𓀺 𓀻 𓀼 𓀽 𓀾 𓀿 𓁀 𓁁 𓁂 𓁃 𓁄 𓁅 𓁆 𓁇 𓁈 𓁉 𓁊 𓁋 𓁌 𓁍 𓁎 𓁏 𓁐 𓁑 𓀄 𓀅 𓀆 𓀇 𓀈 𓀉 𓀊
+            local items = GameGetAllInventoryItems(player.entity)
+            local spectator_items = GameGetAllInventoryItems(data.spectator_entity)
+            -- find spells
+            for k, v in ipairs(items or {})do
+                local item_comp = EntityGetFirstComponentIncludingDisabled(v, "ItemComponent")
+                if(item_comp ~= nil)then
+                    local uses_remaining = ComponentGetValue2(item_comp, "uses_remaining")
+                    local inventory_slot = ComponentGetValue2(item_comp, "inventory_slot")
+                    local inventory_name = EntityGetName(EntityGetParent(v))
+
+                    -- if item is a wand
+                    local ability_comp = EntityGetFirstComponentIncludingDisabled(v, "AbilityComponent")
+                    if(ability_comp and ComponentGetValue2(ability_comp, "use_gun_script"))then
+                        -- add sub actions
+                        local children = EntityGetAllChildren(v) or {}
+                        for k, v in ipairs(children)do
+                            local item_action_comp = EntityGetFirstComponentIncludingDisabled(v, "ItemActionComponent")
+                            local item_comp = EntityGetFirstComponentIncludingDisabled(v, "ItemComponent")
+                            if(item_action_comp ~= nil and item_comp ~= nil)then
+                                local uses_remaining_child = ComponentGetValue2(item_comp, "uses_remaining")
+                                local inventory_slot_child = ComponentGetValue2(item_comp, "inventory_slot")
+                                
+                                -- find spectator item in same slot, then find child item in same slot
+                                for k2, v2 in ipairs(spectator_items or {})do
+                                    local item_comp2 = EntityGetFirstComponentIncludingDisabled(v2, "ItemComponent")
+                                    if(item_comp2 ~= nil)then
+                                        local inventory_slot2 = ComponentGetValue2(item_comp2, "inventory_slot")
+                                        local inventory_name2 = EntityGetName(EntityGetParent(v2))
+                                        if(inventory_slot == inventory_slot2 and inventory_name == inventory_name2)then
+                                            local children2 = EntityGetAllChildren(v2) or {}
+                                            for k3, v3 in ipairs(children2)do
+                                                local item_action_comp2 = EntityGetFirstComponentIncludingDisabled(v3, "ItemActionComponent")
+                                                local item_comp2 = EntityGetFirstComponentIncludingDisabled(v3, "ItemComponent")
+                                                if(item_action_comp2 ~= nil and item_comp2 ~= nil)then
+                                                    local inventory_slot_child2 = ComponentGetValue2(item_comp2, "inventory_slot")
+                                                    if(inventory_slot_child == inventory_slot_child2)then
+                                                        ComponentSetValue2(item_comp2, "uses_remaining", uses_remaining_child)
+                                                    end
+                                                end
+                                            end
+                                        end
+                                    end
+                                end
+                            end
+                        end
+
+                    else
+                        -- find spectator item in same slot
+                        for k2, v2 in ipairs(spectator_items or {})do
+                            local item_comp2 = EntityGetFirstComponentIncludingDisabled(v2, "ItemComponent")
+                            if(item_comp2 ~= nil)then
+                                local inventory_slot2 = ComponentGetValue2(item_comp2, "inventory_slot")
+                                local inventory_name2 = EntityGetName(EntityGetParent(v2))
+                                if(inventory_slot == inventory_slot2 and inventory_name == inventory_name2)then
+                                    ComponentSetValue2(item_comp2, "uses_remaining", uses_remaining)
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+                        
+
+
+
             --[[
             local effects = {}
             local effect_names = {}
@@ -340,6 +409,9 @@ SpectatorMode = {
 
                 if (keys_pressed.w or keys_pressed.a or keys_pressed.s or keys_pressed.d or stick_average >= 0.1 or stick_average <= -0.1) then
                     data.selected_player = nil
+                    if(data.spectated_player)then
+                        networking.send.is_spectating(data.spectated_player, false)
+                    end
                     data.spectated_player = nil
                     data.selected_player_name = nil
                     
@@ -374,7 +446,17 @@ SpectatorMode = {
                         data.selected_player_name = "Unknown Player"
                         if (player ~= nil) then
                             data.selected_player_name = steamutils.getTranslatedPersonaName(player)
+                            
+                            if(data.spectated_player)then
+                                networking.send.is_spectating(data.spectated_player, false)
+                            end
+
                             data.spectated_player = player
+
+                            if(data.spectated_player)then
+                                networking.send.is_spectating(data.spectated_player, true)
+                            end
+
                             data.spectator_active_player = player
 
                             networking.send.request_item_update(lobby, player)
@@ -411,7 +493,17 @@ SpectatorMode = {
                         data.selected_player_name = "Unknown Player"
                         if (player ~= nil) then
                             data.selected_player_name = steamutils.getTranslatedPersonaName(player)
+                            
+                            if(data.spectated_player)then
+                                networking.send.is_spectating(data.spectated_player, false)
+                            end
+                            
                             data.spectated_player = player
+
+                            if(data.spectated_player)then
+                                networking.send.is_spectating(data.spectated_player, true)
+                            end
+
                             data.spectator_active_player = player
 
                             networking.send.request_item_update(lobby, player)
@@ -495,7 +587,17 @@ SpectatorMode = {
                                 data.selected_player_name = "Unknown Player"
                                 if (player ~= nil) then
                                     data.selected_player_name = steamutils.getTranslatedPersonaName(player)
+                                    
+                                    if(data.spectated_player)then
+                                        networking.send.is_spectating(data.spectated_player, false)
+                                    end
+                                    
                                     data.spectated_player = player
+
+                                    if(data.spectated_player)then
+                                        networking.send.is_spectating(data.spectated_player, true)
+                                    end
+
                                     data.spectator_active_player = player
 
                                     networking.send.request_item_update(lobby, player)
@@ -590,6 +692,9 @@ SpectatorMode = {
         end
 
         if(not found)then
+            if(data.spectated_player)then
+                networking.send.is_spectating(data.spectated_player, false)
+            end
             data.spectated_player = nil
             data.selected_player_name = nil
             data.spectator_active_player = nil
@@ -597,7 +702,13 @@ SpectatorMode = {
 
 
         if(spectated_player == nil and members ~= nil and #members > 0)then
+            if(data.spectated_player)then
+                networking.send.is_spectating(data.spectated_player, false)
+            end
             data.spectated_player = members[1].id
+            if(data.spectated_player)then
+                networking.send.is_spectating(data.spectated_player, true)
+            end
             data.selected_player_name = steamutils.getTranslatedPersonaName(data.spectated_player)
             data.spectator_lobby_loaded = false
 
@@ -632,8 +743,13 @@ SpectatorMode = {
                     end
     
                     SpectatorMode.ClearHM()
-
+                    if(data.spectated_player)then
+                        networking.send.is_spectating(data.spectated_player, false)
+                    end
                     data.spectated_player = members[index].id
+                    if(data.spectated_player)then
+                        networking.send.is_spectating(data.spectated_player, true)
+                    end
                     data.spectator_active_player = members[index].id
                     data.selected_player_name = steamutils.getTranslatedPersonaName(data.spectated_player)
                     data.spectator_lobby_loaded = false
@@ -667,12 +783,18 @@ SpectatorMode = {
                     GameSetCameraPos(camera_x_new, camera_y_new)
                 else
                     data.selected_player = nil
+                    if(data.spectated_player)then
+                        networking.send.is_spectating(data.spectated_player, false)
+                    end
                     data.spectated_player = nil
                     data.selected_player_name = nil
                     data.spectator_active_player = nil
                 end
             else
                 data.selected_player = nil
+                if(data.spectated_player)then
+                    networking.send.is_spectating(data.spectated_player, false)
+                end
                 data.spectated_player = nil
                 data.selected_player_name = nil
                 data.spectator_active_player = nil
@@ -781,7 +903,13 @@ SpectatorMode = {
     
                     SpectatorMode.ClearHM()
 
+                    if(data.spectated_player)then
+                        networking.send.is_spectating(data.spectated_player, false)
+                    end
                     data.spectated_player = members[index].id
+                    if(data.spectated_player)then
+                        networking.send.is_spectating(data.spectated_player, true)
+                    end
                     data.spectator_active_player = members[index].id
                     data.selected_player_name = steamutils.getTranslatedPersonaName(data.spectated_player)
                     data.spectator_lobby_loaded = false
@@ -863,8 +991,13 @@ SpectatorMode = {
                             EntityKill(v)
                         end
                     end
-
+                    if(data.spectated_player)then
+                        networking.send.is_spectating(data.spectated_player, false)
+                    end
                     data.spectated_player = members[index].id
+                    if(data.spectated_player)then
+                        networking.send.is_spectating(data.spectated_player, true)
+                    end
                     data.spectator_active_player = members[index].id
                     data.selected_player_name = steamutils.getTranslatedPersonaName(data.spectated_player)
                     data.spectator_lobby_loaded = false

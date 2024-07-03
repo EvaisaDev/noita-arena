@@ -13,7 +13,7 @@ GetRandomActionWithType = function( x, y, level, type, i)
 	--local seed_x, seed_y = get_new_seed( x + level, y + i, GameHasFlagRun("shop_sync") )
 	--SetRandomSeed( seed_x, seed_y )
 
-	local action = RandomActionWithType( level, type, x * 324 + i, y * 436 - (i * 45) ) or "LIGHT_BULLET"
+	local action = RandomActionWithType( level, type, x * 324 + i, y * 436 - (i * 45) ) or ""
 	return action
 end
 
@@ -35,6 +35,26 @@ end]]
 		random_seed = seed
 	end
 end]]
+
+local old_add_gun_action = AddGunAction
+function AddGunAction( entity_id, action_id )
+	-- if nil, return 0
+	if(action_id == nil)then
+		return 0
+	end
+
+	return old_add_gun_action( entity_id, action_id )
+end
+
+local old_add_gun_action_permanent = AddGunActionPermanent
+function AddGunActionPermanent( entity_id, action_id )
+	-- if nil, return 0
+	if(action_id == nil)then
+		return 0
+	end
+
+	return old_add_gun_action_permanent( entity_id, action_id )
+end
 
 local old_wand_add_random_cards = wand_add_random_cards
 function wand_add_random_cards( gun, entity_id, level, cost )

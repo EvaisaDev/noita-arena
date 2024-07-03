@@ -675,7 +675,7 @@ networking = {
 
                                 ComponentSetValue2(spectator_pickupper, "only_pick_this_entity", spectator_item.entity_id)
                                 
-                                EntityHelper.PickItem(data.players[tostring(user)].entity, spectator_item.entity_id, "QUICK")
+                                EntityHelper.PickItem(data.spectator_entity, spectator_item.entity_id, "QUICK")
                                -- spectator_item:PickUp(data.spectator_entity)
                                 spectator_item_entity = spectator_item.entity_id
 
@@ -800,7 +800,6 @@ networking = {
             networking.send.item_update(lobby, data, user, true)
             networking.send.switch_item(lobby, data, user, true)
         end,
-       
         keyboard = function(lobby, message, user, data)
             if(data.state ~= "arena" and not data.spectator_mode)then
                 return
@@ -2146,103 +2145,9 @@ networking = {
             local from_materials = message[1]
             local to_mat = message[2]
 
-            local iter = tonumber( GlobalsGetValue( "fungal_shift_iteration", "0" ) )
-            GlobalsSetValue( "fungal_shift_iteration", tostring(iter+1) )
-            if iter > 20 then
-                return
-            end
-            local frame = GameGetFrameNum()
+            gameplay_handler.FungalShift(from_materials, to_mat)
 
-            SetRandomSeed( 89346, 42345+iter )
-
-            local converted_any = false
-        
-            local player_entity = player_helper.Get()
-
-            local rnd = random_create(9123,58925+iter ) -- TODO: store for next change
-            local from_material_name = nil
-            
-            for i,it in ipairs(from_materials) do
-                local from_material = CellFactory_GetType( it )
-                local to_material = CellFactory_GetType( to_mat )
-                
-                from_material_name = string.upper( GameTextGetTranslatedOrNot( CellFactory_GetUIName( from_material ) ) )
-               
-                -- convert
-                if from_material ~= to_material then
-                    print(CellFactory_GetUIName(from_material) .. " -> " .. CellFactory_GetUIName(to_material))
-                    ConvertMaterialEverywhere( from_material, to_material )
-                    converted_any = true
-        
-                    
-                    if (player_entity) then
-                        local x, y = EntityGetTransform(player_entity)
-                        -- shoot particles of new material
-                        GameCreateParticle( CellFactory_GetName(from_material), x-10, y-10, 20, Random(-100,100), Random(-100,-30), true, true )
-                        GameCreateParticle( CellFactory_GetName(from_material), x+10, y-10, 20, Random(-100,100), Random(-100,-30), true, true )
-                    end
-                end
-            end
-
-            local log_messages = 
-            {
-                "$log_reality_mutation_00",
-                "$log_reality_mutation_01",
-                "$log_reality_mutation_02",
-                "$log_reality_mutation_03",
-                "$log_reality_mutation_04",
-                "$log_reality_mutation_05",
-            }
-            
-
-            if converted_any then
-                -- remove tripping effect
-                EntityRemoveIngestionStatusEffect( player_entity, "TRIP" );
-        
-                local x, y = GameGetCameraPos()
-
-                -- audio
-                GameTriggerMusicFadeOutAndDequeueAll( 5.0 )
-                GameTriggerMusicEvent( "music/oneshot/tripping_balls_01", false, x, y )
-        
-                -- particle fx
-                local eye = EntityLoad( "data/entities/particles/treble_eye.xml", x,y-10 )
-                if eye ~= 0 then
-                    EntityAddChild( player_entity, eye )
-                end
-        
-                -- log
-                local log_msg = ""
-                if from_material_name ~= "" then
-                    log_msg = GameTextGet( "$logdesc_reality_mutation", from_material_name )
-                    GamePrint( log_msg )
-                end
-                GamePrintImportant( random_from_array( log_messages ), log_msg, "data/ui_gfx/decorations/3piece_fungal_shift.png" )
-                GlobalsSetValue( "fungal_shift_last_frame", tostring(frame) )
-        
-                -- add ui icon
-                local add_icon = true
-                local children = EntityGetAllChildren(player_entity)
-                if children ~= nil then
-                    for i,it in ipairs(children) do
-                        if ( EntityGetName(it) == "fungal_shift_ui_icon" ) then
-                            add_icon = false
-                            break
-                        end
-                    end
-                end
-        
-                if add_icon then
-                    local icon_entity = EntityCreateNew( "fungal_shift_ui_icon" )
-                    EntityAddComponent( icon_entity, "UIIconComponent", 
-                    { 
-                        name = "$status_reality_mutation",
-                        description = "$statusdesc_reality_mutation",
-                        icon_sprite_file = "data/ui_gfx/status_indicators/fungal_shift.png"
-                    })
-                    EntityAddChild( player_entity, icon_entity )
-                end
-            end
+            gameplay_handler.SaveShiftData(lobby, from_materials, to_mat)
         end,
         start_map_vote = function(lobby, message, user, data)
             if (not steam_utils.IsOwner( user))then
@@ -2444,6 +2349,8 @@ networking = {
                     if(EntityGetIsAlive(entity))then
                         local was_refresh = false
 
+                        print(EntityGetFilename(entity))
+
                         local entity_x, entity_y = EntityGetTransform(entity)
                         if(EntityHasTag(entity, "perk"))then
 
@@ -2480,6 +2387,7 @@ networking = {
                         end
 
                         if(not was_refresh)then
+                            print("Wand refresh!")
                             networking.send.request_item_update(lobby, user)
                             networking.send.request_sync_hm(lobby, user)
                         end
@@ -2777,6 +2685,147 @@ networking = {
                 EntityLoad("mods/evaisa.arena/files/entities/particles/trailer/arena_logo.xml", x, y)
             end
         end,
+        is_spectating = function(lobby, message, user, data)
+            if(data.spectator_mode)then
+                return
+            end
+
+            print("Setting spectator mode for player ["..tostring(user).."] to "..tostring(message))
+
+            data.spectators = data.spectators or {}
+
+            if(message)then
+                if(not data.spectators[tostring(user)])then
+                    -- send updates
+                    
+
+                    local second_row_spots = smallfolk.loads(GlobalsGetValue("temple_second_row_spots", "{}"))
+                    steamutils.sendToPlayer("second_row_spots", second_row_spots, user, true, true)
+
+                    networking.send.sync_hm(lobby, data, user)
+                    networking.send.item_update(lobby, data, user, true)
+                    networking.send.send_skin(lobby, skin_system.active_skin_data, user)
+                    networking.send.perk_update(lobby, data, user)
+                    networking.send.character_position(lobby, data, true, user)
+                    networking.send.dummy_target(lobby, data.target_dummy_player, user)
+                    networking.send.card_list(lobby, data, user)
+
+
+                    world_sync.add_chunks(-512, -512, 1280, 1280)
+                end
+                data.spectators[tostring(user)] = true
+            else
+                data.spectators[tostring(user)] = nil
+            end
+        end,
+        sync_world = function(lobby, message, user, data)
+            if(data.state ~= "lobby")then
+                return
+            end
+
+            if(not data.spectator_mode)then
+                return
+            end
+
+            if(data.spectated_player ~= user)then
+                networking.send.is_spectating(user, false)
+                return
+            end
+
+            --[[message = message or {}
+
+            for i = 0, #message do 
+                local v = message[i]
+                if(v)then
+                    world_sync.apply(v)
+                end
+            end]]
+            world_sync.apply(message)
+        end,
+        did_spectate = function(lobby, message, user, data)
+            if(not data.spectator_mode)then
+                return
+            end
+
+            if(data.spectated_player ~= user)then
+                networking.send.is_spectating(user, false)
+            else
+                networking.send.is_spectating(user, true)
+            end
+
+            
+        end,
+        uses_update = function(lobby, message, user, data)
+            if(data.state == "lobby" and not data.spectator_mode) then
+                return
+            end
+        
+            local dat = zstd:decompress(message)
+        
+            local info2 = {}
+            for item in string.gmatch(dat, "([^;]+)") do
+                local item2 = {}
+                for sub_item in string.gmatch(item, "([^,]+)") do
+                    local sub_item2 = {}
+                    for sub_sub_item in string.gmatch(sub_item, "([^%-]+)") do
+                        table.insert(sub_item2, sub_sub_item)
+                    end
+                    table.insert(item2, sub_item2)
+                end
+                table.insert(info2, item2)
+            end
+        
+            local player_data = data.players[tostring(user)]
+        
+            if player_data == nil then
+                return
+            end
+        
+            local entity = player_data.entity
+        
+            if entity == nil then
+                return
+            end
+
+            print("Updating uses for player ["..tostring(user).."]")
+        
+            local items = GameGetAllInventoryItems(entity)
+        
+            for k, v in ipairs(items or {}) do
+                local item_comp = EntityGetFirstComponentIncludingDisabled(v, "ItemComponent")
+                if item_comp ~= nil then
+                    for _, item_info in ipairs(info2) do
+                        local uses_remaining = tonumber(item_info[1][1])
+                        local inventory_slot = tonumber(item_info[1][2])
+        
+                        if inventory_slot == ComponentGetValue2(item_comp, "inventory_slot") then
+                            ComponentSetValue2(item_comp, "uses_remaining", uses_remaining)
+                        end
+        
+                        -- if item is a wand, update sub actions
+                        local ability_comp = EntityGetFirstComponentIncludingDisabled(v, "AbilityComponent")
+                        if ability_comp and ComponentGetValue2(ability_comp, "use_gun_script") then
+                            local children = EntityGetAllChildren(v) or {}
+                            for _, child in ipairs(children) do
+                                local item_action_comp = EntityGetFirstComponentIncludingDisabled(child, "ItemActionComponent")
+                                if item_action_comp ~= nil then
+                                    for _, sub_item_info in ipairs(item_info) do
+                                        if #sub_item_info == 2 then
+                                            local sub_uses_remaining = tonumber(sub_item_info[1])
+                                            local sub_inventory_slot = tonumber(sub_item_info[2])
+        
+                                            if sub_inventory_slot == ComponentGetValue2(item_action_comp, "inventory_slot") then
+                                                ComponentSetValue2(item_action_comp, "uses_remaining", sub_uses_remaining)
+                                            end
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end,
     },
     send = {
         handshake = function(lobby)
@@ -2865,11 +2914,11 @@ networking = {
                     last_update_frame = current_frame
         
                     if(user ~= nil)then
-                        steamutils.sendToPlayer("character_position", c, user, true)
+                        steamutils.sendToPlayer("character_position", c, user, true, 4)
                     elseif to_spectators then
-                        steamutils.send("character_position", c, steamutils.messageTypes.Spectators, lobby, true, true)
+                        steamutils.send("character_position", c, steamutils.messageTypes.Spectators, lobby, true, true, 4)
                     else
-                        steamutils.send("character_position", c, steamutils.messageTypes.OtherPlayers, lobby, false, true)
+                        steamutils.send("character_position", c, steamutils.messageTypes.OtherPlayers, lobby, false, true, 4)
                     end
                 end
 
@@ -2963,9 +3012,9 @@ networking = {
                 end
                 
                 if(to_spectators)then
-                    steamutils.send("keyboard", c, steamutils.messageTypes.Spectators, lobby, true, true)
+                    steamutils.send("keyboard", c, steamutils.messageTypes.Spectators, lobby, true, true, 6)
                 else
-                    steamutils.send("keyboard", c, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+                    steamutils.send("keyboard", c, steamutils.messageTypes.OtherPlayers, lobby, true, true, 6)
                 end
 
                 data.client.previous_keyboard = c
@@ -3009,9 +3058,9 @@ networking = {
                 end
                 
                 if(to_spectators)then
-                    steamutils.send("mouse", c, steamutils.messageTypes.Spectators, lobby, true, true)
+                    steamutils.send("mouse", c, steamutils.messageTypes.Spectators, lobby, true, true, 7)
                 else
-                    steamutils.send("mouse", c, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+                    steamutils.send("mouse", c, steamutils.messageTypes.OtherPlayers, lobby, true, true, 7)
                 end
 
                 data.client.previous_mouse = c
@@ -3396,7 +3445,7 @@ networking = {
                 takes_control = takes_control,
                 was_kick = was_kick
             }
-            steamutils.send("physics_update", c, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+            steamutils.send("physics_update", c, steamutils.messageTypes.OtherPlayers, lobby, true, true, 2)
         end,
         entity_update = function(lobby, id, x, y, r, vel_x, vel_y, takes_control)
             local c = EntityUpdate{
@@ -3408,7 +3457,7 @@ networking = {
                 vel_y = vel_y,
                 takes_control = takes_control,
             }
-            steamutils.send("entity_update", c, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+            steamutils.send("entity_update", c, steamutils.messageTypes.OtherPlayers, lobby, true, true, 3)
         end,
         sync_entity = function(lobby, arena_entity_id, entity_data, to_spectators)
             if(to_spectators)then
@@ -3639,6 +3688,95 @@ networking = {
         end,
         spawn_trailer_effects = function(lobby)
             steamutils.send("spawn_trailer_effects", {}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+        end,
+        is_spectating = function(user, value)
+            steamutils.sendToPlayer("is_spectating", value, user, true)
+        end,
+        sync_world = function(user, msg)
+            steamutils.sendToPlayer("sync_world", msg, user, false, 1, true)
+        end,
+        did_spectate = function(lobby)
+            steamutils.send("did_spectate", {}, steamutils.messageTypes.Spectators, lobby, true, true)
+        end,
+        uses_update = function(lobby, data)
+            -- get all inventory items
+            local player = player_helper.Get()
+            if(player == nil)then
+                return
+            end
+
+            local items = GameGetAllInventoryItems(player)
+            -- find spells
+            local info = {}
+            local hash = 0
+            for k, v in ipairs(items or {})do
+                local item_comp = EntityGetFirstComponentIncludingDisabled(v, "ItemComponent")
+                if(item_comp ~= nil)then
+                    local uses_remaining = ComponentGetValue2(item_comp, "uses_remaining")
+                    local inventory_slot = ComponentGetValue2(item_comp, "inventory_slot")
+
+                    local item = {
+                        uses_remaining,
+                        inventory_slot
+                    }
+
+                    hash = hash + uses_remaining + inventory_slot
+
+                    -- if item is a wand
+                    local ability_comp = EntityGetFirstComponentIncludingDisabled(v, "AbilityComponent")
+                    if(ability_comp and ComponentGetValue2(ability_comp, "use_gun_script"))then
+                        -- add sub actions
+                        local children = EntityGetAllChildren(v) or {}
+                        for k, v in ipairs(children)do
+                            local item_action_comp = EntityGetFirstComponentIncludingDisabled(v, "ItemActionComponent")
+                            local item_comp = EntityGetFirstComponentIncludingDisabled(v, "ItemComponent")
+                            if(item_action_comp ~= nil and item_comp ~= nil)then
+                                local uses_remaining = ComponentGetValue2(item_comp, "uses_remaining")
+                                local inventory_slot = ComponentGetValue2(item_comp, "inventory_slot")
+
+                                local item2 = {
+                                    uses_remaining,
+                                    inventory_slot
+                                }
+
+                                hash = hash + uses_remaining + inventory_slot
+
+                                table.insert(item, item2)
+                            end
+                        end
+                    end
+                    
+                    table.insert(info, item)
+                end
+            end
+
+
+            local last_uses_update = data.last_uses_update or ""
+
+            if(last_uses_update == hash)then
+                return
+            end
+
+            data.last_uses_update = hash
+
+            local msg_parts = {}
+            for k, v in ipairs(info) do
+                local item_parts = {}
+                for k2, v2 in ipairs(v) do
+                    if type(v2) == "table" then
+                        table.insert(item_parts, table.concat({tostring(v2[1]), tostring(v2[2])}, "-"))
+                    else
+                        table.insert(item_parts, tostring(v2))
+                    end
+                end
+                table.insert(msg_parts, table.concat(item_parts, ","))
+            end
+            local msg = table.concat(msg_parts, ";")
+
+
+            local dat = zstd:compress(msg)
+
+            steamutils.send("uses_update", dat, steamutils.messageTypes.OtherPlayers, lobby, true, true, 5)
         end,
     },
 }
