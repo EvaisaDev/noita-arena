@@ -252,7 +252,7 @@ player_helper.GetItemData = function(fresh)
         local item_id = entity.GetVariable(item, "arena_entity_id")
 
         --GlobalsSetValue(tostring(item) .. "_item", tostring(k))
-        if(entity_is_wand(item))then
+        --[[if(entity_is_wand(item))then
             local wand = EZWand(item)
             table.insert(wandData,
                 {
@@ -263,7 +263,7 @@ player_helper.GetItemData = function(fresh)
                     active = (mActiveItem == item),
                     is_wand = true
                 })
-        else
+        else]]
             table.insert(wandData,
                 {
                     data = np.SerializeEntity(item),
@@ -272,7 +272,7 @@ player_helper.GetItemData = function(fresh)
                     slot_y = slot_y,
                     active = (mActiveItem == item)
                 })
-        end
+        --end
     end
 
     for k, item in ipairs(player_helper.GetInventoryItems("inventory_full") or {}) do
@@ -285,7 +285,7 @@ player_helper.GetItemData = function(fresh)
         local item_id = entity.GetVariable(item, "arena_entity_id")
 
         --GlobalsSetValue(tostring(item) .. "_item", tostring(k))
-        if(entity_is_wand(item))then
+        --[[if(entity_is_wand(item))then
             local wand = EZWand(item)
             table.insert(spellData,
                 {
@@ -296,7 +296,7 @@ player_helper.GetItemData = function(fresh)
                     active = (mActiveItem == item),
                     is_wand = true
                 })
-        else
+        else]]
             table.insert(spellData,
                 {
                     data = np.SerializeEntity(item),
@@ -305,7 +305,7 @@ player_helper.GetItemData = function(fresh)
                     slot_y = slot_y,
                     active = (mActiveItem == item)
                 })
-        end
+       -- end
     end
 
     return {wandData, spellData}
@@ -360,14 +360,14 @@ player_helper.SetItemData = function(item_data)
             local item_entity = nil
 
             local item = nil
-            if(itemInfo.is_wand)then
+            --[[if(itemInfo.is_wand)then
                 item = EZWand(itemInfo.data, x, y, GameHasFlagRun("refresh_all_charges"))
                 
-            else
+            else]]
                 item = EntityCreateNew()
                 np.DeserializeEntity(item, itemInfo.data, x, y)
 
-            end
+            --end
 
             if (item == nil) then
                 return

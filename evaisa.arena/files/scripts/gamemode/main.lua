@@ -208,6 +208,7 @@ sorted_material_list_ids = sorted_material_list_ids or nil
 sorted_card_list = sorted_card_list or nil
 sorted_card_list_ids = sorted_card_list_ids or nil
 checksum_materials_done = false
+hash_string = ""
 
 local reset_lists = function()
     sorted_spell_list = nil
@@ -334,6 +335,7 @@ local function TryUpdateData(lobby)
         content_hash = 0
         sorted_spell_list = {}
         sorted_spell_list_ids = {}
+        content_string = ""
 
         for _, spell in pairs(actions)do
             table.insert(sorted_spell_list, spell)
@@ -385,6 +387,7 @@ local function TryUpdateData(lobby)
         for _, mat_list in ipairs(mats)do
             for _, material in ipairs(mat_list)do
                 content_hash = content_hash + (string.bytes(material) * index)
+                content_string = content_string .. material .. "\n"
                 index = index + 1
             end
         end
@@ -700,7 +703,7 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 194,
+    version = 195,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
     end,
@@ -2192,7 +2195,8 @@ ArenaMode = {
 
         TryUpdateData(lobby)
 
-
+        print(content_string)
+        steam.utils.setClipboard(content_string)
         local server_hash = steam.matchmaking.getLobbyData(lobby,"content_hash")
         print("Comparing content hash: "..tostring(content_hash).." with "..tostring(server_hash))
 
@@ -2218,7 +2222,11 @@ ArenaMode = {
 						text = GameTextGetTranslatedOrNot("$arena_content_mismatch_description_2"),
 						color = {214 / 255, 60 / 255, 60 / 255, 1}
 					},
-                    GameTextGetTranslatedOrNot("$arena_content_mismatch_description_3")
+                    {
+						text = GameTextGetTranslatedOrNot("$arena_content_mismatch_description_3"),
+						color = {214 / 255, 60 / 255, 60 / 255, 1}
+					},
+                    GameTextGetTranslatedOrNot("$arena_content_mismatch_description_4")
 				}, {
 					{
 						text = GameTextGetTranslatedOrNot("$mp_close_popup"),

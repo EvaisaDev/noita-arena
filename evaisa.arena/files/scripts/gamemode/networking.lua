@@ -632,7 +632,7 @@ networking = {
                         
                         local item = nil
                         local spectator_item = nil
-                        if(itemInfo.is_wand)then
+                        --[[if(itemInfo.is_wand)then
                             item = EZWand(itemInfo.data, x, y)
 
 
@@ -640,7 +640,7 @@ networking = {
                                 spectator_item = EZWand(itemInfo.data, x, y)
                             end
                             
-                        else
+                        else]]
                             item = EntityCreateNew()
                             np.DeserializeEntity(item, itemInfo.data, x, y)
                             
@@ -656,7 +656,7 @@ networking = {
                                     ComponentSetValue2(material_inventory_comp, "last_frame_drank", GameGetFrameNum() + frame_offset)
                                 end
                             end
-                        end
+                        --end
             
                         if (item == nil) then
                             return
@@ -739,13 +739,13 @@ networking = {
                         local x, y = EntityGetTransform(data.players[tostring(user)].entity)
                         
                         local spectator_item = nil
-                        if(itemInfo.is_wand)then
+                        --[[if(itemInfo.is_wand)then
                             spectator_item = EZWand(itemInfo.data, x, y)
-                        else
+                        else]]
                             spectator_item = EntityCreateNew()
                             np.DeserializeEntity(spectator_item, itemInfo.data, x, y)
 
-                        end
+                        --end
             
                         if (spectator_item == nil) then
                             return
