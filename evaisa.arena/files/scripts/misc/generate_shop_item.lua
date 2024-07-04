@@ -52,6 +52,10 @@ function generate_shop_item( x, y, cheap_item, biomeid_, is_stealable, sync )
 		is_stealable = false
 	end
 
+	if(biomeid == nil)then
+		biomeid = 5
+	end
+
 	local item = ""
 	local cardcost = 0
 

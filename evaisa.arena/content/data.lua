@@ -1125,7 +1125,7 @@ cosmetics = {
             
             local id = tostring(steam_id)
 
-            return id == "76561198032563991"
+            return id == "76561198078340341"
         end,
         on_load = function(self, lobby, data, entity) -- runs when cosmetic is loaded, can be used to load entities etc.
             local cosmetic = self
