@@ -816,11 +816,12 @@ ArenaGameplay = {
             if (distance > max_distance) then
                 local healthComp = EntityGetFirstComponentIncludingDisabled(v, "DamageModelComponent")
                 if (healthComp ~= nil) then
+                    print("inflicted zone damage!")
                     local health = tonumber(ComponentGetValue(healthComp, "hp"))
                     local max_health = tonumber(ComponentGetValue(healthComp, "max_hp"))
                     local base_health = 4
                     local damage_percentage = (distance - max_distance) / distance_cap
-                    local damage = max_health * damage_percentage
+                    local damage = (max_health * damage_percentage) + 0.04
                     EntityInflictDamage(v, damage, "DAMAGE_HEALING", "Out of bounds", "BLOOD_EXPLOSION", 0, 0, GameGetWorldStateEntity())
                 end
             end
@@ -834,11 +835,12 @@ ArenaGameplay = {
             if(y >= depth)then
                 local healthComp = EntityGetFirstComponentIncludingDisabled(v, "DamageModelComponent")
                 if (healthComp ~= nil) then
+                    print("inflicted zone damage!")
                     local health = tonumber(ComponentGetValue(healthComp, "hp"))
                     local max_health = tonumber(ComponentGetValue(healthComp, "max_hp"))
                     local base_health = 4
                     local damage_percentage = (y - depth) / max_depth
-                    local damage = max_health * damage_percentage
+                    local damage = (max_health * damage_percentage)  + 0.04
                     EntityInflictDamage(v, damage, "DAMAGE_FALL", "Out of bounds", "BLOOD_EXPLOSION", 0, 0, GameGetWorldStateEntity())
                 end
             end
@@ -3205,6 +3207,8 @@ ArenaGameplay = {
     TransformPlayer = function(lobby, user, data, target_entity)
         local player_data = data.players[tostring(user)]
 
+        print("Transforming player "..tostring(user).." to "..tostring(target_entity))
+
         local target_file = ""
         if(target_entity)then
             local poly_effect_file = "mods/evaisa.arena/playerpoly/" .. target_entity
@@ -4000,7 +4004,8 @@ ArenaGameplay = {
         local player_entity = player.Get()
 
         if(player_entity)then
-            if(EntityHasTag(player_entity, "polymorphed_player") and not data.is_polymorphed)then
+            if(EntityHasTag(player_entity, "polymorphed_player") and not data.is_polymorphed and EntityGetFilename(player_entity) ~= "")then
+
                 data.is_polymorphed = true
 
                 -- SEVERAL FIXES
@@ -4038,16 +4043,6 @@ ArenaGameplay = {
                         script_damage_about_to_be_received = "mods/evaisa.arena/files/scripts/gamemode/misc/kill_check.lua",
                         script_damage_received = "mods/evaisa.arena/files/scripts/gamemode/misc/kill_check.lua"
                     })
-                end
-
-                -- get child entities
-                for k, v in ipairs(EntityGetAllChildren(player_entity) or {})do
-                    -- get GameEffectComponent
-                    local game_effect = EntityGetFirstComponentIncludingDisabled(v, "GameEffectComponent")
-                    if(game_effect and ComponentGetValue2(game_effect, "mSerializedData") ~= "")then
-                        -- set frames to -1
-                        ComponentSetValue2(game_effect, "frames", -1)
-                    end
                 end
 
             elseif(not EntityHasTag(player_entity, "polymorphed_player") and data.is_polymorphed)then

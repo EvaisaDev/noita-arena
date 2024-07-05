@@ -3801,23 +3801,19 @@ networking = {
             steamutils.send("uses_update", dat, steamutils.messageTypes.OtherPlayers, lobby, true, true, 5)
         end,
         polymorphed = function(lobby, is_poly)
-            local players = GetPlayers()
-            if(players[1])then
-                local data = false
+            local player_entity = player_helper.Get()
+            if(player_entity)then
+                local msg = nil
 
-                if is_poly and EntityHasTag(players[1], "polymorphed_player") then
 
-                    local children = EntityGetAllChildren(players[1]) or {}
+                if is_poly and EntityHasTag(player_entity, "polymorphed_player") then
+                    msg = EntityGetFilename(player_entity)
 
-                    -- find game effect 
-                    for k, v in ipairs(children)do
-                        local game_effect = EntityGetFirstComponentIncludingDisabled(v, "GameEffectComponent")
-                        if(game_effect ~= nil)then
-                            local mSerializedData = ComponentGetValue2(game_effect, "mSerializedData")
-                            if(mSerializedData ~= "")then
-                                data = ComponentGetValue2(game_effect, "polymorph_target")
-                            end
-                        end
+                    print("Polymorphed into "..msg)
+
+                    if msg == "" or msg == "data/entities/player.xml" then
+                        print("No game effect found")
+                        return
                     end
 
                     print("polymorphed")
@@ -3825,7 +3821,7 @@ networking = {
                     print("unpolymorphed")
                 end
 
-                steamutils.send("polymorphed", data, steamutils.messageTypes.OtherPlayers, lobby, true, true, 4)
+                steamutils.send("polymorphed", msg, steamutils.messageTypes.OtherPlayers, lobby, true, true, 4)
                
             end
         end,
