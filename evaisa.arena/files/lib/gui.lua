@@ -189,7 +189,7 @@ end
 
 function block_held_wand_firing()
     local now = GameGetFrameNum();
-    for _,entity in pairs( EntityGetWithTag( "player_unit" ) or {} ) do
+    for _,entity in pairs( GetPlayers() ) do
         local held_wand = get_entity_held_or_random_wand( entity, false );
         if held_wand ~= 0 then
             local ability = EntityGetFirstComponentIncludingDisabled( held_wand, "AbilityComponent" );
@@ -207,7 +207,8 @@ function handle_input( x, y )
     local mouse_x, mouse_y = DEBUG_GetMouseWorld();
     local left_click = false;
     local right_click = false;
-    local entity = EntityGetWithTag( "player_unit" )[1];
+    local entity = GetPlayers()[1];
+    if entity == nil then return; end
     local controls = EntityGetFirstComponent( entity, "ControlsComponent" );
     if controls ~= nil then
         local use_button_frame = ComponentGetValue2( controls, "mButtonFrameFire" );

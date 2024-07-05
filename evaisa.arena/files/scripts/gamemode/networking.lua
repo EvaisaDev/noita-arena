@@ -2455,10 +2455,8 @@ networking = {
             local frames = message
 
             if(data.hm_timer == nil)then
-                local hm_timer_time = tonumber(GlobalsGetValue("hm_timer_time", "60"))
                 
-                local timer_frames = tonumber(hm_timer_time) * 60
-                data.hm_timer = delay.new(timer_frames, function()
+                data.hm_timer = delay.new(frames, function()
                     if(steam_utils.IsOwner())then
                         ArenaGameplay.ForceReady(lobby, data)
                     end
@@ -2467,6 +2465,8 @@ networking = {
                         data.hm_timer_gui = nil
                     end
                 end, function(frame)
+                    data.time_remaining = math.floor(frame)
+
                     --print("HM Tick: "..tostring(frame))
                     local seconds_left = math.floor((frame) / 60)
                     
@@ -2690,14 +2690,14 @@ networking = {
                 return
             end
 
-            print("Setting spectator mode for player ["..tostring(user).."] to "..tostring(message))
+            --print("Setting spectator mode for player ["..tostring(user).."] to "..tostring(message))
 
             data.spectators = data.spectators or {}
 
             if(message)then
                 if(not data.spectators[tostring(user)])then
                     -- send updates
-                    
+                    print("Sending spectator updates!")
 
                     local second_row_spots = smallfolk.loads(GlobalsGetValue("temple_second_row_spots", "{}"))
                     steamutils.sendToPlayer("second_row_spots", second_row_spots, user, true, true)
@@ -2825,6 +2825,27 @@ networking = {
                     end
                 end
             end
+        end,
+        polymorphed = function(lobby, message, user, data)
+            if(data.state == "lobby" and not data.spectator_mode) then
+                return
+            end
+
+        
+            local player_data = data.players[tostring(user)]
+        
+            if player_data == nil then
+                return
+            end
+        
+            if(not player_data.alive)then
+                return
+            end
+
+            player_data.polymorph_entity = message
+
+
+            ArenaGameplay.TransformPlayer(lobby, user, data, player_data.polymorph_entity)
         end,
     },
     send = {
@@ -3083,7 +3104,7 @@ networking = {
                         max_hp = ComponentGetValue2(damage_model_comp, "max_hp"),
                         max_hp_cap = ComponentGetValue2(damage_model_comp, "max_hp_cap"),
                         max_hp_old = ComponentGetValue2(damage_model_comp, "max_hp_old"),
-                        money = ComponentGetValue2(wallet_comp, "money"),
+                        money = wallet_comp ~= nil and ComponentGetValue2(wallet_comp, "money") or nil,
                     }
 
                     -- memcmp
@@ -3690,6 +3711,7 @@ networking = {
             steamutils.send("spawn_trailer_effects", {}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
         end,
         is_spectating = function(user, value)
+            print("is_spectating: "..tostring(value))
             steamutils.sendToPlayer("is_spectating", value, user, true)
         end,
         sync_world = function(user, msg)
@@ -3777,6 +3799,35 @@ networking = {
             local dat = zstd:compress(msg)
 
             steamutils.send("uses_update", dat, steamutils.messageTypes.OtherPlayers, lobby, true, true, 5)
+        end,
+        polymorphed = function(lobby, is_poly)
+            local players = GetPlayers()
+            if(players[1])then
+                local data = false
+
+                if is_poly and EntityHasTag(players[1], "polymorphed_player") then
+
+                    local children = EntityGetAllChildren(players[1]) or {}
+
+                    -- find game effect 
+                    for k, v in ipairs(children)do
+                        local game_effect = EntityGetFirstComponentIncludingDisabled(v, "GameEffectComponent")
+                        if(game_effect ~= nil)then
+                            local mSerializedData = ComponentGetValue2(game_effect, "mSerializedData")
+                            if(mSerializedData ~= "")then
+                                data = ComponentGetValue2(game_effect, "polymorph_target")
+                            end
+                        end
+                    end
+
+                    print("polymorphed")
+                else
+                    print("unpolymorphed")
+                end
+
+                steamutils.send("polymorphed", data, steamutils.messageTypes.OtherPlayers, lobby, true, true, 4)
+               
+            end
         end,
     },
 }

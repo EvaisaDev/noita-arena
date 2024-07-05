@@ -3,6 +3,7 @@ local genomes = dofile("mods/evaisa.arena/files/scripts/utilities/genomes.lua")
 genomes:start()
 genomes:add("pvp", 0, 0, 0, {})
 genomes:add("pvp_client", 0, 0, 0, {})
+genomes:add("dummy", 0, 0, 0, {})
 genomes:finish()
 
 popup = dofile("mods/evaisa.arena/lib/popup.lua")

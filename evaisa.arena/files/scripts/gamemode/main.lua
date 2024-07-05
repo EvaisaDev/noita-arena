@@ -703,7 +703,7 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 195,
+    version = 196,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
     end,
@@ -964,7 +964,7 @@ ArenaMode = {
 			description = "$arena_settings_shop_type_description",
 			type = "enum",
 			options = { { "alternating", "$arena_settings_shop_type_alternating" }, { "random", "$arena_settings_shop_type_random" }, { "mixed", "$arena_settings_shop_type_mixed" },
-				{ "spell_only", "$arena_settings_shop_type_spell_only" }, { "wand_only", "$arena_settings_shop_type_wand_only" }, {"disabled", "$arena_settings_shop_type_disabled"} },
+				{ "spell_only", "$arena_settings_shop_type_spell_only" }, { "wand_only", "$arena_settings_shop_type_wand_only" }, {"disabled", "$arena_settings_disabled"} },
 			default = "random"
 		},
         {
@@ -1111,7 +1111,7 @@ ArenaMode = {
             description = "$arena_settings_damage_cap_description",
             type = "enum",
             options = { { "0.25", "$arena_settings_damage_cap_25" }, { "0.5", "$arena_settings_damage_cap_50" }, { "0.75", "$arena_settings_damage_cap_75" },
-                { "disabled", "$arena_settings_damage_cap_disabled" } },
+                { "disabled", "$arena_settings_disabled" } },
             default = "0.25"
         },
         {
@@ -1119,7 +1119,7 @@ ArenaMode = {
             name = "$arena_settings_zone_shrink_name",
             description = "$arena_settings_zone_shrink_description",
             type = "enum",
-            options = { { "disabled", "$arena_settings_zone_shrink_disabled" }, { "static", "$arena_settings_zone_shrink_static" }, { "shrinking_Linear", "$arena_settings_zone_shrink_linear" },
+            options = { { "disabled", "$arena_settings_disabled" }, { "static", "$arena_settings_zone_shrink_static" }, { "shrinking_Linear", "$arena_settings_zone_shrink_linear" },
                 { "shrinking_step", "$arena_settings_zone_shrink_stepped" } },
             default = "static"
         },
@@ -1184,7 +1184,7 @@ ArenaMode = {
             name = "$arena_settings_wand_removal_name",
             description = "$arena_settings_wand_removal_description",
             type = "enum",
-            options = { { "disabled", "$arena_settings_wand_removal_enum_none" }, { "random", "$arena_settings_wand_removal_enum_random" }, { "all", "$arena_settings_wand_removal_enum_all" } },
+            options = { { "disabled", "$arena_settings_disabled" }, { "random", "$arena_settings_wand_removal_enum_random" }, { "all", "$arena_settings_wand_removal_enum_all" } },
             default = "disabled"
         },
         {
@@ -1251,6 +1251,31 @@ ArenaMode = {
                 else
                     -- round to 1 decimal
                     return " "..tostring(math.floor((value / 60) * 100) / 100) .. "m"
+                end
+            end,
+			width = 100
+		},
+        {
+			id = "hm_timer_passive",
+			name = "$arena_settings_hm_timer_passive_name",
+			description = "$arena_settings_hm_timer_passive_description",
+			type = "slider",
+			min = 0,
+			max = 10 * 60,
+			default = 0;
+			display_multiplier = 1,
+			formatting_func = function(value)
+                value = math.floor(value)
+
+                if(value == 0)then
+                    return GameTextGetTranslatedOrNot("$arena_settings_disabled")
+                end
+
+                if(value < 60)then
+                    return " "..tostring(value) .. "s"
+                else
+                    -- round to 1 decimal
+                    return " "..tostring(math.floor((value / 60) * 10) / 10) .. "m"
                 end
             end,
 			width = 100
@@ -1339,6 +1364,16 @@ ArenaMode = {
             description = "$arena_settings_starting_loadout_description",
             type = "bool",
             default = true
+        },  
+        {
+            id = "super_secret_hämis_mode",
+            require = function(setting_self)
+                return HasFlagPersistent("evaisa.arena.super_secret_hämis_mode")
+            end,
+            name = "Super Secret Hämis Mode",
+            description = "Idk why you did that but have this as a reward",
+            type = "bool",
+            default = false
         },  
     },
     lobby_menus = {
@@ -2561,6 +2596,12 @@ ArenaMode = {
         end
         GlobalsSetValue("hm_timer_time", tostring(math.floor(hm_timer_time)))
 
+        local hm_timer_passive = steam.matchmaking.getLobbyData(lobby, "setting_hm_timer_passive")
+        if (hm_timer_passive == nil) then
+            hm_timer_passive = 0
+        end
+        GlobalsSetValue("hm_timer_passive", tostring(math.floor(hm_timer_passive)))
+
         local homing_mult = tonumber(steam.matchmaking.getLobbyData(lobby, "setting_homing_mult"))
         if (homing_mult == nil) then
             homing_mult = 100
@@ -2731,7 +2772,7 @@ ArenaMode = {
     end,
     start = function(lobby, was_in_progress)
 
-        for i, v in ipairs(EntityGetWithTag("player_unit"))do
+        for i, v in ipairs(GetPlayers())do
             EntityKill(v)
         end
         

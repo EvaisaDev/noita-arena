@@ -6,7 +6,7 @@ dofile_once("data/scripts/perks/perk_list.lua")
 local player_helper = {}
 
 player_helper.Get = function()
-    local player = EntityGetWithTag("player_unit")
+    local player = GetPlayers()
 
     if (player == nil) then
         return
@@ -127,6 +127,11 @@ player_helper.GiveGold = function(amount)
         return
     end
     local wallet_component = EntityGetFirstComponentIncludingDisabled(player, "WalletComponent")
+    
+    if(wallet_component == nil)then
+        return
+    end
+
     local money = ComponentGetValue2(wallet_component, "money")
     local add_amount = amount
     ComponentSetValue2(wallet_component, "money", money + add_amount)
@@ -139,6 +144,11 @@ player_helper.GetGold = function()
         return
     end
     local wallet_component = EntityGetFirstComponentIncludingDisabled(player, "WalletComponent")
+
+    if(wallet_component == nil)then
+        return 0
+    end
+
     local money = ComponentGetValue2(wallet_component, "money")
     return money
 end
@@ -239,6 +249,9 @@ player_helper.GetItemData = function(fresh)
 
     local player = player_helper.Get()
     local inventory2Comp = EntityGetFirstComponentIncludingDisabled(player, "Inventory2Component")
+    if (inventory2Comp == nil) then
+        return {{}, {}}
+    end
     local mActiveItem = ComponentGetValue2(inventory2Comp, "mActiveItem")
     local wandData = {}
     local spellData = {}
@@ -493,6 +506,11 @@ player_helper.GetActiveHeldItem = function()
         return
     end
     local inventory2Comp = EntityGetFirstComponentIncludingDisabled(player, "Inventory2Component")
+
+    if(inventory2Comp == nil)then
+        return
+    end
+
     local mActiveItem = ComponentGetValue2(inventory2Comp, "mActiveItem")
     return mActiveItem
 end
