@@ -1365,7 +1365,7 @@ ArenaMode = {
             type = "bool",
             default = true
         },  
-        {
+        --[[{
             id = "super_secret_hämis_mode",
             require = function(setting_self)
                 return HasFlagPersistent("evaisa.arena.super_secret_hämis_mode")
@@ -1374,7 +1374,7 @@ ArenaMode = {
             description = "Idk why you did that but have this as a reward",
             type = "bool",
             default = false
-        },  
+        },  ]]
     },
     lobby_menus = {
 

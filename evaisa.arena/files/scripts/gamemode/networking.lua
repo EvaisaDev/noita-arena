@@ -3803,7 +3803,7 @@ networking = {
         polymorphed = function(lobby, is_poly)
             local player_entity = player_helper.Get()
             if(player_entity)then
-                local msg = nil
+                local msg = false
 
 
                 if is_poly and EntityHasTag(player_entity, "polymorphed_player") then
