@@ -4,6 +4,7 @@ local remove_list = {
     SUMMON_EGG = true,
     DESTRUCTION = true,
     CESSATION = true,
+    MASS_POLYMORPH = true,
 }
 
 local hook_list = {
