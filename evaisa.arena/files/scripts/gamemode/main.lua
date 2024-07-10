@@ -2230,8 +2230,8 @@ ArenaMode = {
 
         TryUpdateData(lobby)
 
-        print(content_string)
-        steam.utils.setClipboard(content_string)
+        --print(content_string)
+        --steam.utils.setClipboard(content_string)
         local server_hash = steam.matchmaking.getLobbyData(lobby,"content_hash")
         print("Comparing content hash: "..tostring(content_hash).." with "..tostring(server_hash))
 
