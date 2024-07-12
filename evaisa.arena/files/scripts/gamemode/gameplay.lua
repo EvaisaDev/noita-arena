@@ -751,6 +751,11 @@ ArenaGameplay = {
 
         GameRemoveFlagRun("player_unloaded")
     end,
+    ResetPlayerData = function(lobby, data)
+        for k, v in pairs(data.players) do
+            v.polymorph_entity = nil
+        end
+    end,
     AllowFiring = function(data)
         GameRemoveFlagRun("no_shooting")
         data.client.spread_index = 0
@@ -793,7 +798,7 @@ ArenaGameplay = {
         end
     end,
     IsInBounds = function(x, y, max_distance)
-        local players = EntityGetWithTag("player_unit") or {}
+        local players = GetPlayers()
         for k, v in pairs(players) do
             local x2, y2 = EntityGetTransform(v)
             local distance = math.sqrt((x2 - x) ^ 2 + (y2 - y) ^ 2)
@@ -804,18 +809,19 @@ ArenaGameplay = {
         return true
     end,
     DamageZoneCheck = function(x, y, max_distance, distance_cap)
-        local players = EntityGetWithTag("player_unit") or {}
+        local players = GetPlayers()
         for k, v in pairs(players) do
             local x2, y2 = EntityGetTransform(v)
             local distance = math.sqrt((x2 - x) ^ 2 + (y2 - y) ^ 2)
             if (distance > max_distance) then
                 local healthComp = EntityGetFirstComponentIncludingDisabled(v, "DamageModelComponent")
                 if (healthComp ~= nil) then
+                    print("inflicted zone damage!")
                     local health = tonumber(ComponentGetValue(healthComp, "hp"))
                     local max_health = tonumber(ComponentGetValue(healthComp, "max_hp"))
                     local base_health = 4
                     local damage_percentage = (distance - max_distance) / distance_cap
-                    local damage = max_health * damage_percentage
+                    local damage = (max_health * damage_percentage) + 0.04
                     EntityInflictDamage(v, damage, "DAMAGE_HEALING", "Out of bounds", "BLOOD_EXPLOSION", 0, 0, GameGetWorldStateEntity())
                 end
             end
@@ -823,17 +829,18 @@ ArenaGameplay = {
     end,
     DamageFloorCheck = function(depth, max_depth)
         -- if player goes under depth, do proportional damage based on depth
-        local players = EntityGetWithTag("player_unit") or {}
+        local players = GetPlayers()
         for k, v in pairs(players) do
             local x, y = EntityGetTransform(v)
             if(y >= depth)then
                 local healthComp = EntityGetFirstComponentIncludingDisabled(v, "DamageModelComponent")
                 if (healthComp ~= nil) then
+                    print("inflicted zone damage!")
                     local health = tonumber(ComponentGetValue(healthComp, "hp"))
                     local max_health = tonumber(ComponentGetValue(healthComp, "max_hp"))
                     local base_health = 4
                     local damage_percentage = (y - depth) / max_depth
-                    local damage = max_health * damage_percentage
+                    local damage = (max_health * damage_percentage)  + 0.04
                     EntityInflictDamage(v, damage, "DAMAGE_FALL", "Out of bounds", "BLOOD_EXPLOSION", 0, 0, GameGetWorldStateEntity())
                 end
             end
@@ -1441,10 +1448,11 @@ ArenaGameplay = {
         end
     end,
     SavePlayerData = function(lobby, data, force)
-        if ((not GameHasFlagRun("player_unloaded")) and player.Get()) then
+        local player_entity = player.Get()
+        if ((not GameHasFlagRun("player_unloaded")) and player_entity and not EntityHasTag( player_entity, "polymorphed_player") ) then
             --[[local profile = profiler.new()
             profile:start()]]
-            local serialized_player_data, compare_string = player.Serialize()
+            local serialized_player_data, compare_string = player.Serialize(nil, data)
 
 
             if (force or compare_string ~= data.client.player_data_old) then
@@ -1545,7 +1553,11 @@ ArenaGameplay = {
         return extra_gold
     end,
     LoadLobby = function(lobby, data, show_message, first_entry)
+        ArenaGameplay.ResetPlayerData(lobby, data)
+        data.is_polymorphed = false
         data.picked_up_items = {}
+
+        data.time_remaining = nil
 
         if(GameHasFlagRun("shop_sync"))then
             GameAddFlagRun("sync_item_generation")
@@ -1968,6 +1980,8 @@ ArenaGameplay = {
         return math.floor(num * mult + 0.5) / mult
     end,
     LoadArena = function(lobby, data, show_message, map)
+        ArenaGameplay.ResetPlayerData(lobby, data)
+        data.is_polymorphed = false
         data.picked_up_items = {}
         
         GameAddFlagRun("sync_item_generation")
@@ -2960,11 +2974,19 @@ ArenaGameplay = {
 
         local hm_timer_percentage = tonumber(GlobalsGetValue("hm_timer_count", "80"))
         local hm_timer_time = tonumber(GlobalsGetValue("hm_timer_time", "60"))
-        if(hm_timer_percentage < 100 and not ArenaGameplay.ReadyCheck(lobby, data) and ready_percentage >= tonumber(hm_timer_percentage))then
+        local hm_timer_passive = tonumber(GlobalsGetValue("hm_timer_passive", "0"))
+        if(hm_timer_passive > 0 or (hm_timer_percentage < 100 and not ArenaGameplay.ReadyCheck(lobby, data) and ready_percentage >= tonumber(hm_timer_percentage)))then
             if(data.hm_timer == nil)then
-            
-                local timer_frames = tonumber(hm_timer_time) * 60
-                data.hm_timer = delay.new(timer_frames, function()
+                local second_valid = (hm_timer_percentage < 100 and not ArenaGameplay.ReadyCheck(lobby, data) and ready_percentage >= tonumber(hm_timer_percentage))
+                local timer_frames = tonumber(hm_timer_passive) * 60
+
+                if(second_valid)then
+                    timer_frames = tonumber(hm_timer_time) * 60
+                end
+
+                local time_remaining = math.min(data.time_remaining or timer_frames, timer_frames)
+
+                data.hm_timer = delay.new(time_remaining, function()
                     if(steam_utils.IsOwner())then
                         ArenaGameplay.ForceReady(lobby, data)
                     end
@@ -2973,6 +2995,10 @@ ArenaGameplay = {
                         data.hm_timer_gui = nil
                     end
                 end, function(frame)
+
+                    -- update time remaining
+                    data.time_remaining = math.floor(frame)
+
                     --print("HM Tick: "..tostring(frame))
                     local seconds_left = math.floor((frame) / 60)
                     
@@ -3003,6 +3029,25 @@ ArenaGameplay = {
                     GuiZSetForNextWidget(data.hm_timer_gui, -11)
                     GuiText(data.hm_timer_gui, (screen_w / 2) - (text_width / 2), screen_h - text_height - 10, message)
                 end)
+            else
+                print("Timer already exists, should be reduced??")
+                local second_valid = (hm_timer_percentage < 100 and not ArenaGameplay.ReadyCheck(lobby, data) and ready_percentage >= tonumber(hm_timer_percentage))
+               
+
+                if(second_valid)then
+                    local timer_frames = tonumber(hm_timer_time) * 60
+
+                    local time_remaining = math.min(data.time_remaining or timer_frames, timer_frames)
+
+                    print("Time remaining: "..tostring(time_remaining))
+    
+                    -- if time is below timer frame
+                    if(time_remaining < data.hm_timer.frames)then
+                        data.hm_timer.frames = time_remaining
+                    end
+                end
+
+
             end
         else
             if(data.hm_timer ~= nil)then
@@ -3159,6 +3204,159 @@ ArenaGameplay = {
         end)
 
     end,
+    TransformPlayer = function(lobby, user, data, target_entity)
+        local player_data = data.players[tostring(user)]
+
+        print("Transforming player "..tostring(user).." to "..tostring(target_entity))
+
+        local target_file = ""
+        if(target_entity)then
+            local poly_effect_file = "mods/evaisa.arena/playerpoly/" .. target_entity
+            if not ModDoesFileExist(poly_effect_file) then
+                local template = get_content("mods/evaisa.arena/files/entities/misc/polymorph_template.xml")
+                set_content(poly_effect_file, template:gsub("{TARGET}", target_entity))
+            end
+            target_file = poly_effect_file
+        end
+
+        if(player_data.entity)then
+            if(target_entity)then
+                EntityRemoveTag(player_data.entity, "polymorphable_NOT")
+
+                GameDestroyInventoryItems(player_data.entity)
+
+                local effect =  LoadGameEffectEntityTo(player_data.entity, target_file)
+                local new_entity = EntityGetRootEntity(effect)
+                
+                -- update name
+                EntitySetName(new_entity, tostring(user))
+                EntityRemoveTag(new_entity, "polymorphed_player")
+                EntityAddTag(new_entity, "client")
+
+                EntityAddComponent2(new_entity, "LuaComponent", {
+                    script_source_file = "mods/evaisa.arena/files/scripts/gamemode/misc/viewer_player_poly.lua",
+                    enable_coroutines = true,
+                    execute_on_added = true,
+                    execute_every_n_frame = -1,
+                })
+
+                local genome_component = EntityGetFirstComponentIncludingDisabled(new_entity, "GenomeDataComponent")
+                if(genome_component)then
+                    ComponentSetValue2(genome_component, "herd_id", StringToHerdId("pvp_client"))
+                end
+
+                for k, v in ipairs(EntityGetComponentIncludingDisabled(new_entity, "LuaComponent", "remote_polymorph_remove") or {})do
+                    EntityRemoveComponent(new_entity, v)
+                end
+
+
+                --[[ Add these to make sure the game doesn't break
+                    <LuaComponent
+                        script_damage_about_to_be_received = "mods/evaisa.arena/files/scripts/gamemode/misc/immortal_client.lua"
+                        script_damage_received = "mods/evaisa.arena/files/scripts/gamemode/misc/immortal_client.lua"
+                        >
+                    </LuaComponent>
+
+                    <LuaComponent
+                        script_wand_fired = "mods/evaisa.arena/files/scripts/gamemode/misc/on_wand_fire_client.lua"
+                        >
+                    </LuaComponent>
+                ]]
+
+                -- remove components marked for removal
+
+                EntityAddComponent2(new_entity, "LuaComponent", {
+                    script_damage_about_to_be_received = "mods/evaisa.arena/files/scripts/gamemode/misc/immortal_client.lua",
+                    script_damage_received = "mods/evaisa.arena/files/scripts/gamemode/misc/immortal_client.lua",
+                })
+
+                EntityAddComponent2(new_entity, "LuaComponent", {
+                    script_wand_fired = "mods/evaisa.arena/files/scripts/gamemode/misc/on_wand_fire_client.lua",
+                })
+
+
+                -- get child entities
+                for k, v in ipairs(EntityGetAllChildren(new_entity) or {})do
+                   -- get GameEffectComponent
+                   local game_effect = EntityGetFirstComponentIncludingDisabled(v, "GameEffectComponent")
+                   if(game_effect)then
+                       EntityRemoveComponent(v, game_effect)
+                   end
+                end
+
+                EntityKill(effect)
+                
+                player_data.entity = new_entity
+                if(data.spectated_player == user)then
+                    data.selected_player = new_entity
+                end
+                return new_entity
+            else
+                local entity = ArenaGameplay.SpawnClientPlayer(lobby, user, data)
+                if(data.spectated_player == user)then
+                    data.selected_player = entity
+                end
+                data.players[tostring(user)].polymorph_entity = nil
+                return entity
+            end
+        else
+            if(target_entity)then
+                EntityRemoveTag(player_data.entity, "polymorphable_NOT")
+
+                GameDestroyInventoryItems(player_data.entity)
+
+                local effect =  LoadGameEffectEntityTo(player_data.entity, target_file)
+                local new_entity = EntityGetRootEntity(effect)
+                
+                -- update name
+                EntitySetName(new_entity, tostring(user))
+                EntityRemoveTag(new_entity, "polymorphed_player")
+                EntityAddTag(new_entity, "client")
+
+                EntityAddComponent2(new_entity, "LuaComponent", {
+                    script_source_file = "mods/evaisa.arena/files/scripts/gamemode/misc/viewer_player_poly.lua",
+                    enable_coroutines = true,
+                    execute_on_added = true,
+                    execute_every_n_frame = -1,
+                })
+
+                local genome_component = EntityGetFirstComponentIncludingDisabled(new_entity, "GenomeDataComponent")
+                if(genome_component)then
+                    ComponentSetValue2(genome_component, "herd_id", StringToHerdId("pvp_client"))
+                end
+
+                for k, v in ipairs(EntityGetComponentIncludingDisabled(new_entity, "LuaComponent", "remote_polymorph_remove") or {})do
+                    EntityRemoveComponent(new_entity, v)
+                end
+
+
+                EntityAddComponent2(new_entity, "LuaComponent", {
+                    script_damage_about_to_be_received = "mods/evaisa.arena/files/scripts/gamemode/misc/immortal_client.lua",
+                    script_damage_received = "mods/evaisa.arena/files/scripts/gamemode/misc/immortal_client.lua",
+                })
+
+                EntityAddComponent2(new_entity, "LuaComponent", {
+                    script_wand_fired = "mods/evaisa.arena/files/scripts/gamemode/misc/on_wand_fire_client.lua",
+                })
+
+
+                EntityKill(effect)
+
+                player_data.entity = new_entity
+                if(data.spectated_player == user)then
+                    data.selected_player = new_entity
+                end
+                return new_entity
+            else
+                local entity = ArenaGameplay.SpawnClientPlayer(lobby, user, data)
+                if(data.spectated_player == user)then
+                    data.selected_player = entity
+                end
+                data.players[tostring(user)].polymorph_entity = nil
+                return entity
+            end
+        end
+    end,
     SpawnClientPlayer = function(lobby, user, data, x, y)
 
         if((not data.state == "arena" and not data.spectator_mode) or (data.state == "lobby" and data.spectator_mode and (data.spectator_entity == nil or not EntityGetIsAlive(data.spectator_entity))))then
@@ -3174,7 +3372,20 @@ ArenaGameplay = {
             data.client_spawn_y = nil
         end
 
-        local client = EntityLoad("mods/evaisa.arena/files/entities/client.xml", x or -1000, y or -1000)
+
+
+        local client = nil
+
+        local was_poly = false
+
+        if(data.players[tostring(user)].polymorph_entity)then
+            print("Spawned polymorphed player!")
+            client = ArenaGameplay.TransformPlayer(lobby, user, data, data.players[tostring(user)].polymorph_entity)
+            was_poly = true
+        else
+            client = EntityLoad("mods/evaisa.arena/files/entities/client.xml", x or -1000, y or -1000)
+        end
+
         EntitySetName(client, tostring(user))
         --local usernameSprite = EntityGetFirstComponentIncludingDisabled(client, "SpriteComponent", "username")
         local name = steamutils.getTranslatedPersonaName(user)
@@ -3187,28 +3398,29 @@ ArenaGameplay = {
 
         arena_log:print("Spawned client player for " .. name)
 
-        if (data.players[tostring(user)].perks) then
-            for k, v in ipairs(data.players[tostring(user)].perks) do
-                local perk = v[1]
-                local count = v[2]
+        if(not was_poly)then
+            if (data.players[tostring(user)].perks) then
+                for k, v in ipairs(data.players[tostring(user)].perks) do
+                    local perk = v[1]
+                    local count = v[2]
 
-                for i = 1, count do
-                    EntityHelper.GivePerk(client, perk, i, true)
+                    for i = 1, count do
+                        EntityHelper.GivePerk(client, perk, i, true)
+                    end
                 end
             end
-        end
 
-        if(skin_system and lobby)then
-            skin_system.apply_skin_to_entity(lobby, client, user, data)
+            if(skin_system and lobby)then
+                skin_system.apply_skin_to_entity(lobby, client, user, data)
+            end
         end
-
         networking.send.request_sync_hm(lobby, user)
         networking.send.request_item_update(lobby, user)
         --networking.send.request_spectate_data(lobby, user)
         networking.send.request_skin(lobby, user)
         networking.send.request_perk_update(lobby, user)
         
-        if(data.spectated_player == user)then
+        if(not was_poly and data.spectated_player == user)then
             networking.send.is_spectating(data.spectated_player, true)
         end
         --print(debug.traceback())
@@ -3222,15 +3434,17 @@ ArenaGameplay = {
 
         --cosmetics_handler.LoadClientCosmetics(lobby, data, client)
 
-        local cosmetics = {}
-        
-        for k, v in pairs(data.players[tostring(user)].cosmetics or {})do
-            print("Applying cosmetic: "..tostring(k))
-            table.insert(cosmetics, k)
+        if(not was_poly)then
+            local cosmetics = {}
+            
+            for k, v in pairs(data.players[tostring(user)].cosmetics or {})do
+                print("Applying cosmetic: "..tostring(k))
+                table.insert(cosmetics, k)
+            end
+
+            cosmetics_handler.ApplyCosmeticsList(lobby, data, client, cosmetics, true, user)
         end
-
-        cosmetics_handler.ApplyCosmeticsList(lobby, data, client, cosmetics, true, user)
-
+        
         return client
     end,
     CheckPlayer = function(lobby, user, data)
@@ -3721,6 +3935,7 @@ ArenaGameplay = {
                 if(GameGetFrameNum() % 15 == 0)then
                     networking.send.player_data_update(lobby, data)
                 end
+                
                 networking.send.player_stats_update(lobby, data)
 
                 networking.send.keyboard(lobby, data)
@@ -3786,6 +4001,56 @@ ArenaGameplay = {
             networking.send.uses_update(lobby, data)
         end
 
+        local player_entity = player.Get()
+
+        if(player_entity)then
+            if(EntityHasTag(player_entity, "polymorphed_player") and not data.is_polymorphed and EntityGetFilename(player_entity) ~= "")then
+
+                data.is_polymorphed = true
+
+                -- SEVERAL FIXES
+
+                --[[We need to add these to make sure the game still works
+                <LuaComponent
+                    script_wand_fired = "mods/evaisa.arena/files/scripts/gamemode/misc/on_wand_fire.lua"
+                    >
+                </LuaComponent>
+
+                    <LuaComponent
+                    script_damage_about_to_be_received = "mods/evaisa.arena/files/scripts/gamemode/misc/kill_check.lua"
+                    script_damage_received = "mods/evaisa.arena/files/scripts/gamemode/misc/kill_check.lua"
+                    >
+                </LuaComponent>
+                ]]
+
+                
+                networking.send.polymorphed(lobby, true)
+
+
+                local genome_comp = EntityGetFirstComponentIncludingDisabled(player_entity, "GenomeDataComponent")
+                if(genome_comp)then
+                    ComponentSetValue2(genome_comp, "herd_id", StringToHerdId("pvp"))
+                end
+
+                local add_comps = #(EntityGetComponentIncludingDisabled(player_entity, "LuaComponent", "remote_polymorph_remove") or {}) == 0
+                
+                if(add_comps)then
+                    EntityAddComponent2(player_entity, "LuaComponent", {
+                        script_wand_fired = "mods/evaisa.arena/files/scripts/gamemode/misc/on_wand_fire.lua"
+                    })
+
+                    EntityAddComponent2(player_entity, "LuaComponent", {
+                        script_damage_about_to_be_received = "mods/evaisa.arena/files/scripts/gamemode/misc/kill_check.lua",
+                        script_damage_received = "mods/evaisa.arena/files/scripts/gamemode/misc/kill_check.lua"
+                    })
+                end
+
+            elseif(not EntityHasTag(player_entity, "polymorphed_player") and data.is_polymorphed)then
+                data.is_polymorphed = false
+                networking.send.polymorphed(lobby, false)
+            end
+        end
+
         world_sync.update(lobby, data)
 
 
@@ -3846,8 +4111,6 @@ ArenaGameplay = {
         username_gui = username_gui or GuiCreate()
 
         GuiStartFrame(username_gui)
-
-        local player_entity = player.Get()
 
         if(player_entity ~= nil)then
             --[[gameplay_handler.UpdateCosmetics(lobby, data, "try_unlock", player_entity, false)
@@ -4224,53 +4487,56 @@ ArenaGameplay = {
             if(player_entity)then
                 local inventory_gui_comp = EntityGetFirstComponentIncludingDisabled(player_entity, "InventoryGuiComponent")
 
-                local inventory_open = ComponentGetValue2(inventory_gui_comp, "mActive")
-                if(inventory_open)then
-                    if(not data.client.inventory_was_open)then
-                        --GamePrint("inventory_was_opened")
-                    end
-                    data.client.inventory_was_open = true
-                else
-                    if(data.client.inventory_was_open)then
-                        --GamePrint("inventory_was_closed")
-                        networking.send.item_update(lobby, data, nil, true, false)
-                        networking.send.switch_item(lobby, data, nil, true, false)
-                        GameAddFlagRun("should_save_player")
-                    end
-                    data.client.inventory_was_open = false
-                end
+                if(inventory_gui_comp ~= nil)then
 
-                local items = GameGetAllInventoryItems(player_entity) or {}
-
-                last_edited_times = last_edited_times or {}
-                local was_wand = {}
-
-                for i, v in ipairs(items)do
-                    local ability_comp = EntityGetFirstComponentIncludingDisabled(v, "AbilityComponent")
-                    if(ability_comp)then
-                        local edited_times = ComponentGetValue2(ability_comp, "stat_times_player_has_edited")
-
-                        if(last_edited_times[v] ~= edited_times)then
+                    local inventory_open = ComponentGetValue2(inventory_gui_comp, "mActive")
+                    if(inventory_open)then
+                        if(not data.client.inventory_was_open)then
+                            --GamePrint("inventory_was_opened")
+                        end
+                        data.client.inventory_was_open = true
+                    else
+                        if(data.client.inventory_was_open)then
+                            --GamePrint("inventory_was_closed")
                             networking.send.item_update(lobby, data, nil, true, false)
                             networking.send.switch_item(lobby, data, nil, true, false)
+                            GameAddFlagRun("should_save_player")
                         end
-
-                        was_wand[v] = true
-                        last_edited_times[v] = edited_times
+                        data.client.inventory_was_open = false
                     end
-                    local material_inventory_comp = EntityGetFirstComponentIncludingDisabled(v, "MaterialInventoryComponent")
-                    if(material_inventory_comp)then
-                        local last_frame_drank = ComponentGetValue2(material_inventory_comp, "last_frame_drank")
-                        if(last_frame_drank == GameGetFrameNum())then
-                            networking.send.item_update(lobby, data, nil, true, false)
-                            networking.send.switch_item(lobby, data, nil, true, false)
+
+                    local items = GameGetAllInventoryItems(player_entity) or {}
+
+                    last_edited_times = last_edited_times or {}
+                    local was_wand = {}
+
+                    for i, v in ipairs(items)do
+                        local ability_comp = EntityGetFirstComponentIncludingDisabled(v, "AbilityComponent")
+                        if(ability_comp)then
+                            local edited_times = ComponentGetValue2(ability_comp, "stat_times_player_has_edited")
+
+                            if(last_edited_times[v] ~= edited_times)then
+                                networking.send.item_update(lobby, data, nil, true, false)
+                                networking.send.switch_item(lobby, data, nil, true, false)
+                            end
+
+                            was_wand[v] = true
+                            last_edited_times[v] = edited_times
+                        end
+                        local material_inventory_comp = EntityGetFirstComponentIncludingDisabled(v, "MaterialInventoryComponent")
+                        if(material_inventory_comp)then
+                            local last_frame_drank = ComponentGetValue2(material_inventory_comp, "last_frame_drank")
+                            if(last_frame_drank == GameGetFrameNum())then
+                                networking.send.item_update(lobby, data, nil, true, false)
+                                networking.send.switch_item(lobby, data, nil, true, false)
+                            end
                         end
                     end
-                end
 
-                for k, v in pairs(last_edited_times)do
-                    if(not was_wand[k])then
-                        last_edited_times[k] = nil
+                    for k, v in pairs(last_edited_times)do
+                        if(not was_wand[k])then
+                            last_edited_times[k] = nil
+                        end
                     end
                 end
             end

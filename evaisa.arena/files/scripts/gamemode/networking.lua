@@ -624,6 +624,8 @@ networking = {
 
                     has_spectator = true
                 end
+
+                data.players[tostring(user)].wands = {}
         
 
                 if (items_data ~= nil) then
@@ -632,68 +634,49 @@ networking = {
                         
                         local item = nil
                         local spectator_item = nil
-                        --[[if(itemInfo.is_wand)then
-                            item = EZWand(itemInfo.data, x, y)
+       
+                        item = EntityCreateNew()
+                        np.DeserializeEntity(item, itemInfo.data, x, y)
 
+                        --[[
+                        if(itemInfo.is_wand)then
+                            local ez_wand = EZWand(item, nil, nil, false, true)
 
-                            if(has_spectator)then
-                                spectator_item = EZWand(itemInfo.data, x, y)
-                            end
+                            table.insert(data.players[tostring(user)].wands, ez_wand)
+                        end
+                        ]]
+                        
+
+                        if(has_spectator)then
+                            spectator_item = EntityCreateNew()
+                            np.DeserializeEntity(spectator_item, itemInfo.data, x, y)
                             
-                        else]]
-                            item = EntityCreateNew()
-                            np.DeserializeEntity(item, itemInfo.data, x, y)
-                            
-
-                            if(has_spectator)then
-                                spectator_item = EntityCreateNew()
-                                np.DeserializeEntity(spectator_item, itemInfo.data, x, y)
-                                
-                                local material_inventory_comp = EntityGetFirstComponentIncludingDisabled(spectator_item, "MaterialInventoryComponent")
-                                if(material_inventory_comp)then
-                                    local last_frame_drank = ComponentGetValue2(material_inventory_comp, "last_frame_drank")
-                                    local frame_offset = last_frame_drank - frame
-                                    ComponentSetValue2(material_inventory_comp, "last_frame_drank", GameGetFrameNum() + frame_offset)
-                                end
+                            local material_inventory_comp = EntityGetFirstComponentIncludingDisabled(spectator_item, "MaterialInventoryComponent")
+                            if(material_inventory_comp)then
+                                local last_frame_drank = ComponentGetValue2(material_inventory_comp, "last_frame_drank")
+                                local frame_offset = last_frame_drank - frame
+                                ComponentSetValue2(material_inventory_comp, "last_frame_drank", GameGetFrameNum() + frame_offset)
                             end
-                        --end
-            
+                        end
+                
                         if (item == nil) then
                             return
                         end
 
                         EntityRemoveTag(item, "picked_by_player")
 
-                        local item_entity = nil
-                        if(itemInfo.is_wand)then
-                            --item:PickUp(data.players[tostring(user)].entity)
-                            EntityHelper.PickItem(data.players[tostring(user)].entity, item.entity_id, "QUICK")
-                            --print("forcing pickup of wand")
-                            item_entity = item.entity_id
 
-                            if(has_spectator)then
+                        EntityHelper.PickItem(data.players[tostring(user)].entity, item, "QUICK")
+                        local item_entity = item
 
-                                ComponentSetValue2(spectator_pickupper, "only_pick_this_entity", spectator_item.entity_id)
-                                
-                                EntityHelper.PickItem(data.spectator_entity, spectator_item.entity_id, "QUICK")
-                               -- spectator_item:PickUp(data.spectator_entity)
-                                spectator_item_entity = spectator_item.entity_id
+                        if(has_spectator)then
 
-                                --print("Adding spectator item to spectator.")
-                            end
-                        else
-                            --print("forcing pickup of item")
-                            EntityHelper.PickItem(data.players[tostring(user)].entity, item, "QUICK")
-                            item_entity = item
+                            ComponentSetValue2(spectator_pickupper, "only_pick_this_entity", spectator_item)
 
-                            if(has_spectator)then
-
-                                ComponentSetValue2(spectator_pickupper, "only_pick_this_entity", spectator_item)
-
-                                EntityHelper.PickItem(data.spectator_entity, spectator_item, "QUICK")
-                                spectator_item_entity = spectator_item
-                            end
+                            EntityHelper.PickItem(data.spectator_entity, spectator_item, "QUICK")
+                            spectator_item_entity = spectator_item
                         end
+                    
 
                         local itemComp = EntityGetFirstComponentIncludingDisabled(item_entity, "ItemComponent")
                         if (itemComp ~= nil) then
@@ -738,34 +721,19 @@ networking = {
                     for k, itemInfo in ipairs(spells) do
                         local x, y = EntityGetTransform(data.players[tostring(user)].entity)
                         
-                        local spectator_item = nil
-                        --[[if(itemInfo.is_wand)then
-                            spectator_item = EZWand(itemInfo.data, x, y)
-                        else]]
-                            spectator_item = EntityCreateNew()
-                            np.DeserializeEntity(spectator_item, itemInfo.data, x, y)
+        
+                        local spectator_item = EntityCreateNew()
+                        np.DeserializeEntity(spectator_item, itemInfo.data, x, y)
 
-                        --end
-            
+        
                         if (spectator_item == nil) then
                             return
                         end
 
-                        if(itemInfo.is_wand)then
+                        ComponentSetValue2(spectator_pickupper, "only_pick_this_entity", spectator_item)
 
-                            ComponentSetValue2(spectator_pickupper, "only_pick_this_entity", spectator_item.entity_id)
-                            
-                            --spectator_item:PickUp(data.spectator_entity)
-                            EntityHelper.PickItem(data.players[tostring(user)].entity, spectator_item.entity_id, "QUICK")
-                            spectator_item_entity = spectator_item.entity_id
-
-                        else
-                            ComponentSetValue2(spectator_pickupper, "only_pick_this_entity", spectator_item)
-
-                            EntityHelper.PickItem(data.spectator_entity, spectator_item, "FULL")
-                            spectator_item_entity = spectator_item
-
-                        end
+                        EntityHelper.PickItem(data.spectator_entity, spectator_item, "FULL")
+                        spectator_item_entity = spectator_item
 
 
                     end
@@ -2455,10 +2423,8 @@ networking = {
             local frames = message
 
             if(data.hm_timer == nil)then
-                local hm_timer_time = tonumber(GlobalsGetValue("hm_timer_time", "60"))
                 
-                local timer_frames = tonumber(hm_timer_time) * 60
-                data.hm_timer = delay.new(timer_frames, function()
+                data.hm_timer = delay.new(frames, function()
                     if(steam_utils.IsOwner())then
                         ArenaGameplay.ForceReady(lobby, data)
                     end
@@ -2467,6 +2433,8 @@ networking = {
                         data.hm_timer_gui = nil
                     end
                 end, function(frame)
+                    data.time_remaining = math.floor(frame)
+
                     --print("HM Tick: "..tostring(frame))
                     local seconds_left = math.floor((frame) / 60)
                     
@@ -2690,14 +2658,14 @@ networking = {
                 return
             end
 
-            print("Setting spectator mode for player ["..tostring(user).."] to "..tostring(message))
+            --print("Setting spectator mode for player ["..tostring(user).."] to "..tostring(message))
 
             data.spectators = data.spectators or {}
 
             if(message)then
                 if(not data.spectators[tostring(user)])then
                     -- send updates
-                    
+                    print("Sending spectator updates!")
 
                     local second_row_spots = smallfolk.loads(GlobalsGetValue("temple_second_row_spots", "{}"))
                     steamutils.sendToPlayer("second_row_spots", second_row_spots, user, true, true)
@@ -2825,6 +2793,27 @@ networking = {
                     end
                 end
             end
+        end,
+        polymorphed = function(lobby, message, user, data)
+            if(data.state == "lobby" and not data.spectator_mode) then
+                return
+            end
+
+        
+            local player_data = data.players[tostring(user)]
+        
+            if player_data == nil then
+                return
+            end
+        
+            if(not player_data.alive)then
+                return
+            end
+
+            player_data.polymorph_entity = message
+
+
+            ArenaGameplay.TransformPlayer(lobby, user, data, player_data.polymorph_entity)
         end,
     },
     send = {
@@ -3083,7 +3072,7 @@ networking = {
                         max_hp = ComponentGetValue2(damage_model_comp, "max_hp"),
                         max_hp_cap = ComponentGetValue2(damage_model_comp, "max_hp_cap"),
                         max_hp_old = ComponentGetValue2(damage_model_comp, "max_hp_old"),
-                        money = ComponentGetValue2(wallet_comp, "money"),
+                        money = wallet_comp ~= nil and ComponentGetValue2(wallet_comp, "money") or nil,
                     }
 
                     -- memcmp
@@ -3690,6 +3679,7 @@ networking = {
             steamutils.send("spawn_trailer_effects", {}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
         end,
         is_spectating = function(user, value)
+            print("is_spectating: "..tostring(value))
             steamutils.sendToPlayer("is_spectating", value, user, true)
         end,
         sync_world = function(user, msg)
@@ -3777,6 +3767,31 @@ networking = {
             local dat = zstd:compress(msg)
 
             steamutils.send("uses_update", dat, steamutils.messageTypes.OtherPlayers, lobby, true, true, 5)
+        end,
+        polymorphed = function(lobby, is_poly)
+            local player_entity = player_helper.Get()
+            if(player_entity)then
+                local msg = false
+
+
+                if is_poly and EntityHasTag(player_entity, "polymorphed_player") then
+                    msg = EntityGetFilename(player_entity)
+
+                    print("Polymorphed into "..msg)
+
+                    if msg == "" or msg == "data/entities/player.xml" then
+                        print("No game effect found")
+                        return
+                    end
+
+                    print("polymorphed")
+                else
+                    print("unpolymorphed")
+                end
+
+                steamutils.send("polymorphed", msg, steamutils.messageTypes.OtherPlayers, lobby, true, true, 4)
+               
+            end
         end,
     },
 }

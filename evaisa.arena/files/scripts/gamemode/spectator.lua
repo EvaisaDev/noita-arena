@@ -66,8 +66,14 @@ SpectatorMode = {
         end
 
         if(GameGetFrameNum() % 30 == 0 and player.entity and EntityGetIsAlive(player.entity) and data.spectator_entity and EntityGetIsAlive(data.spectator_entity))then
+            
             -- We will sync wand stats and stuff.
             local inventory2_comp = EntityGetFirstComponentIncludingDisabled(player.entity, "Inventory2Component")
+
+            if(inventory2_comp == nil)then
+                return
+            end
+
             local spectator_inventory2_comp = EntityGetFirstComponentIncludingDisabled(data.spectator_entity, "Inventory2Component")
             local inventory_gui_comp = EntityGetFirstComponentIncludingDisabled(player.entity, "InventoryGuiComponent")
             local spectator_inventory_gui_comp = EntityGetFirstComponentIncludingDisabled(data.spectator_entity, "InventoryGuiComponent")
@@ -791,15 +797,25 @@ SpectatorMode = {
                     data.spectator_active_player = nil
                 end
             else
-                data.selected_player = nil
-                if(data.spectated_player)then
-                    networking.send.is_spectating(data.spectated_player, false)
-                end
-                data.spectated_player = nil
-                data.selected_player_name = nil
-                data.spectator_active_player = nil
 
-                print("Deselected player!!")
+                local new_ent = nil
+                if(data.spectated_player)then
+                    new_ent = EntityGetWithName(tostring(data.spectated_player))
+                end
+                
+                if(new_ent)then
+                    data.selected_player = new_ent
+                else
+                    data.selected_player = nil
+                    if(data.spectated_player)then
+                        networking.send.is_spectating(data.spectated_player, false)
+                    end
+                    data.spectated_player = nil
+                    data.selected_player_name = nil
+                    data.spectator_active_player = nil
+
+                    print("Deselected player!!")
+                end
             end
         end
 

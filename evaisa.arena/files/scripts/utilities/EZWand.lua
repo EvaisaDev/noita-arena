@@ -646,7 +646,7 @@ wand.__index = function(table, key)
   return table:GetProperties({ key })[key]
 end
 
-function wand:new(from, rng_seed_x, rng_seed_y, refresh)
+function wand:new(from, rng_seed_x, rng_seed_y, refresh, no_entity)
     refresh = refresh or false
 
     -- 'protected' should not be accessed by end users!
@@ -657,9 +657,11 @@ function wand:new(from, rng_seed_x, rng_seed_y, refresh)
     setmetatable(o, self)
     if type(from) == "table" or from == nil then
         -- Just load some existing wand that we alter later instead of creating one from scratch
-        protected.entity_id = EntityLoad("mods/evaisa.arena/files/entities/misc/wand_ezwand.xml", rng_seed_x or 0, rng_seed_y or 0)
-        protected.ability_component = EntityGetFirstComponentIncludingDisabled(protected.entity_id, "AbilityComponent")
-        protected.item_component = EntityGetFirstComponentIncludingDisabled(protected.entity_id, "ItemComponent")
+        if(not no_entity)then
+          protected.entity_id = EntityLoad("mods/evaisa.arena/files/entities/misc/wand_ezwand.xml", rng_seed_x or 0, rng_seed_y or 0)
+          protected.ability_component = EntityGetFirstComponentIncludingDisabled(protected.entity_id, "AbilityComponent")
+          protected.item_component = EntityGetFirstComponentIncludingDisabled(protected.entity_id, "ItemComponent")
+        end
         -- Copy all validated props over or initialize with defaults
         local props = from or {}
         validate_wand_properties(props)
@@ -671,12 +673,19 @@ function wand:new(from, rng_seed_x, rng_seed_y, refresh)
         protected.entity_id = from
         protected.ability_component = EntityGetFirstComponentIncludingDisabled(protected.entity_id, "AbilityComponent")
         protected.item_component = EntityGetFirstComponentIncludingDisabled(protected.entity_id, "ItemComponent")
+
+        -- if no_entity, serialized and deserialized wand is passed
+        if(no_entity)then
+          return wand:new(o:Serialize(), 0, 0, false, true)
+        end
     else
         if starts_with(from, "EZW") then
         local values = deserialize_wand(from)
-        protected.entity_id = EntityLoad("mods/evaisa.arena/files/entities/misc/wand_ezwand.xml", rng_seed_x or 0, rng_seed_y or 0)
-        protected.ability_component = EntityGetFirstComponentIncludingDisabled(protected.entity_id, "AbilityComponent")
-        protected.item_component = EntityGetFirstComponentIncludingDisabled(protected.entity_id, "ItemComponent")
+        if(not no_entity)then
+          protected.entity_id = EntityLoad("mods/evaisa.arena/files/entities/misc/wand_ezwand.xml", rng_seed_x or 0, rng_seed_y or 0)
+          protected.ability_component = EntityGetFirstComponentIncludingDisabled(protected.entity_id, "AbilityComponent")
+          protected.item_component = EntityGetFirstComponentIncludingDisabled(protected.entity_id, "ItemComponent")
+        end
         validate_wand_properties(values.props)
         o:SetProperties(values.props)
         o:RemoveSpells()
@@ -734,6 +743,9 @@ function wand:_SetProperty(key, value)
   local mapped_key = variable_mappings[key].name
   local target_setters = {
     ability_component = function(key, value)
+      if(not self.entity_id)then
+        return
+      end
       if key == "mNextFrameUsable" then
         ComponentSetValue2(self.ability_component, key, GameGetFrameNum() + value)
         ComponentSetValue2(self.ability_component, "mCastDelayStartFrame", GameGetFrameNum())
@@ -746,9 +758,15 @@ function wand:_SetProperty(key, value)
       end
     end,
     gunaction_config = function(key, value)
+      if(not self.entity_id)then
+        return
+      end
       ComponentObjectSetValue2(self.ability_component, "gunaction_config", key, value)
     end,
     gun_config = function(key, value)
+      if(not self.entity_id)then
+        return
+      end
       ComponentObjectSetValue2(self.ability_component, "gun_config", key, value)
     end,
   }
@@ -819,6 +837,9 @@ function wand:GetProperties(keys)
 end
 -- For making the interface nicer, this allows us to use this one function here for
 function wand:_AddSpells(spells, attach)
+  if(not self.entity_id)then
+    return
+  end
   -- Check if capacity is sufficient
   local count = 0
   for i, v in ipairs(spells) do
@@ -904,6 +925,9 @@ function wand:GetFreeSlotsCount()
 end
 -- Returns: spells_count, always_cast_spells_count
 function wand:GetSpellsCount()
+  if(not self.entity_id)then
+    return 0, 0
+  end
 	local children = EntityGetAllChildren(self.entity_id)
   if children == nil then
     return 0, 0
@@ -925,6 +949,9 @@ end
 -- inventory_x should give the position in the wand slots, 1 = first up to num_slots
 -- inventory_x is not working yet
 function wand:GetSpells()
+  if(not self.entity_id)then
+    return {}, {}
+  end
 	local spells = {}
 	local always_cast_spells = {}
 	local children = EntityGetAllChildren(self.entity_id)
@@ -987,6 +1014,9 @@ function wand:GetSpells()
 end
 
 function wand:_RemoveSpells(spells_to_remove, detach)
+  if(not self.entity_id)then
+    return
+  end
 	local spells, attached_spells = self:GetSpells()
   local which = detach and attached_spells or spells
   local spells_to_remove_remaining = {}
@@ -1021,6 +1051,9 @@ function wand:DetachSpells(...)
 end
 
 function wand:RemoveSpellAtIndex(index)
+  if(not self.entity_id)then
+    return
+  end
   if index+1 > self.capacity then
     return false, "index is bigger than capacity"
   end
@@ -1040,6 +1073,9 @@ end
 -- freeze_wand prevents spells from being added to the wand or moved
 -- freeze_spells prevents the spells from being removed
 function wand:SetFrozen(freeze_wand, freeze_spells)
+  if(not self.entity_id)then
+    return
+  end
   local item_component = EntityGetFirstComponentIncludingDisabled(self.entity_id, "ItemComponent")
   ComponentSetValue2(item_component, "is_frozen", freeze_wand)
   local spells = self:GetSpells()
@@ -1050,6 +1086,9 @@ function wand:SetFrozen(freeze_wand, freeze_spells)
 end
 
 function wand:SetSprite(item_file, offset_x, offset_y, tip_x, tip_y)
+  if(not self.entity_id)then
+    return
+  end
 	if self.ability_component then
     ComponentSetValue2(self.ability_component, "sprite_file", item_file)
 	end
@@ -1067,6 +1106,9 @@ function wand:SetSprite(item_file, offset_x, offset_y, tip_x, tip_y)
 end
 
 function wand:GetSprite()
+  if(not self.entity_id)then
+    return
+  end
   local sprite_file, offset_x, offset_y, tip_x, tip_y = "", 0, 0, 0, 0
 	if self.ability_component then
 		sprite_file = ComponentGetValue2(self.ability_component, "sprite_file")
@@ -1087,6 +1129,9 @@ function wand:GetSprite()
 end
 
 function wand:Clone()
+  if(not self.entity_id)then
+    return
+  end
   local new_wand = wand:new(self:GetProperties())
   local spells, attached_spells = self:GetSpells()
   for k, v in pairs(spells) do
@@ -1183,6 +1228,9 @@ function wand:GetName()
 end
 
 function wand:PlaceAt(x, y)
+  if(not self.entity_id)then
+    return
+  end
 	EntitySetComponentIsEnabled(self.entity_id, self.ability_component, true)
 	local hotspot_comp = EntityGetFirstComponentIncludingDisabled(self.entity_id, "HotspotComponent")
 	EntitySetComponentIsEnabled(self.entity_id, hotspot_comp, true)
@@ -1212,6 +1260,9 @@ function wand:PlaceAt(x, y)
 end
 
 function wand:PutInPlayersInventory()
+  if(not self.entity_id)then
+    return
+  end
   local inventory_id = EntityGetWithName("inventory_quick")
   -- Get number of wands currently already in inventory
   local count = 0
@@ -1334,8 +1385,8 @@ local function get_all_wands()
 end
 
 return setmetatable({}, {
-  __call = function(self, from, rng_seed_x, rng_seed_y, refresh)
-    return wand:new(from, rng_seed_x, rng_seed_y, refresh)
+  __call = function(self, from, rng_seed_x, rng_seed_y, refresh, no_entity)
+    return wand:new(from, rng_seed_x, rng_seed_y, refresh, no_entity)
   end,
   __newindex = function(self)
     error("Can't assign to this object.", 2)
