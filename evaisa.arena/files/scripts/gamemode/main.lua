@@ -1,4 +1,4 @@
-REQUIRED_ONLINE_VERSION = 370
+REQUIRED_ONLINE_VERSION = 373
 
 -- INVALID VERSION HANDLER
 if(MP_VERSION < REQUIRED_ONLINE_VERSION)then
@@ -178,7 +178,7 @@ end
 
 lobby_member_names = {}
 
-content_hash = content_hash or 0
+content_hash = 0
 content_string = content_string or ""
 
 perk_blacklist_data = perk_blacklist_data or {}
@@ -205,8 +205,33 @@ sorted_item_list = sorted_item_list or nil
 sorted_item_list_ids = sorted_item_list_ids or nil
 sorted_material_list = sorted_material_list or nil
 sorted_material_list_ids = sorted_material_list_ids or nil
-
+sorted_card_list = sorted_card_list or nil
+sorted_card_list_ids = sorted_card_list_ids or nil
 checksum_materials_done = false
+hash_string = ""
+
+local reset_lists = function()
+    sorted_spell_list = nil
+    sorted_spell_list_ids = nil
+    sorted_perk_list = nil
+    sorted_perk_list_ids = nil
+    sorted_map_list = nil
+    sorted_map_list_ids = nil
+    sorted_item_list = nil
+    sorted_item_list_ids = nil
+    sorted_material_list = nil
+    sorted_material_list_ids = nil
+    sorted_card_list = nil
+    sorted_card_list_ids = nil
+
+
+    checksum_materials_done = false
+
+    content_hash = 0
+    content_string = ""
+end
+
+
 
 
 local function ifind(s, pattern, init, plain)
@@ -301,6 +326,7 @@ local function UpdateMaterials()
     end
 end
 
+
 local function TryUpdateData(lobby)
 
     
@@ -309,6 +335,7 @@ local function TryUpdateData(lobby)
         content_hash = 0
         sorted_spell_list = {}
         sorted_spell_list_ids = {}
+        content_string = ""
 
         for _, spell in pairs(actions)do
             table.insert(sorted_spell_list, spell)
@@ -355,11 +382,12 @@ local function TryUpdateData(lobby)
             CellFactory_GetAllSolids(true, true),
             CellFactory_GetAllSands(true, true),
         }
-        
+
         local index = 1
         for _, mat_list in ipairs(mats)do
             for _, material in ipairs(mat_list)do
                 content_hash = content_hash + (string.bytes(material) * index)
+                content_string = content_string .. material .. "\n"
                 index = index + 1
             end
         end
@@ -369,6 +397,7 @@ local function TryUpdateData(lobby)
         -- sort map list blah
         sorted_map_list = {}
         sorted_map_list_ids = {}
+
         for _, map in pairs(arena_list)do
             table.insert(sorted_map_list, map)
             table.insert(sorted_map_list_ids, map)
@@ -429,7 +458,7 @@ local function TryUpdateData(lobby)
         -- sort material list blah
         sorted_material_list = {}
         sorted_material_list_ids = {}
-        
+
         UpdateMaterials()
 
         
@@ -674,7 +703,7 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 191,
+    version = 198,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
     end,
@@ -772,9 +801,6 @@ ArenaMode = {
 
         local default_preset_folder = tostring(GetGamemodeFilePath()).."/content/default_presets"
 
-
-        local files = {}
-
         print("Checking for presets in " .. default_preset_folder)
         
         local pfile = io.popen([[dir "]] .. default_preset_folder .. [[" /b]])
@@ -843,7 +869,7 @@ ArenaMode = {
             name = "$arena_settings_map_picker_name",
             description = "$arena_settings_map_picker_description",
             type = "enum",
-            options = { { "ordered", "$arena_settings_map_picker_enum_order" }, { "random", "$arena_settings_map_picker_enum_random" }, { "vote", "$arena_settings_map_picker_enum_vote" } },
+            options = { { "ordered", "$arena_settings_map_picker_enum_order" }, { "random", "$arena_settings_map_picker_enum_random" }, { "ordered_random", "$arena_settings_map_picker_enum_ordered_random" }, { "vote", "$arena_settings_map_picker_enum_vote" } },
             default = "random"
         },
         {
@@ -938,11 +964,14 @@ ArenaMode = {
 			description = "$arena_settings_shop_type_description",
 			type = "enum",
 			options = { { "alternating", "$arena_settings_shop_type_alternating" }, { "random", "$arena_settings_shop_type_random" }, { "mixed", "$arena_settings_shop_type_mixed" },
-				{ "spell_only", "$arena_settings_shop_type_spell_only" }, { "wand_only", "$arena_settings_shop_type_wand_only" } },
+				{ "spell_only", "$arena_settings_shop_type_spell_only" }, { "wand_only", "$arena_settings_shop_type_wand_only" }, {"disabled", "$arena_settings_disabled"} },
 			default = "random"
 		},
         {
             id = "shop_sync",
+            require = function(setting_self)
+                return GlobalsGetValue("setting_next_shop_type", "random") ~= "disabled"
+            end,
             name = "$arena_settings_shop_sync_name",
             description = "$arena_settings_shop_sync_description",
             type = "bool",
@@ -965,6 +994,9 @@ ArenaMode = {
 		},
         {
             id = "shop_start_level",
+            require = function(setting_self)
+                return GlobalsGetValue("setting_next_shop_type", "random") ~= "disabled"
+            end,
 			name = "$arena_settings_shop_start_level_name",
 			description = "$arena_settings_shop_start_level_description",
 			type = "slider",
@@ -992,6 +1024,9 @@ ArenaMode = {
 		},
         {
             id = "shop_scaling",
+            require = function(setting_self)
+                return GlobalsGetValue("setting_next_shop_type", "random") ~= "disabled"
+            end,
 			name = "$arena_settings_shop_scaling_name",
 			description = "$arena_settings_shop_scaling_description",
 			type = "slider",
@@ -1004,6 +1039,9 @@ ArenaMode = {
         },
         {
             id = "shop_jump",
+            require = function(setting_self)
+                return GlobalsGetValue("setting_next_shop_type", "random") ~= "disabled"
+            end,
 			name = "$arena_settings_shop_jump_name",
 			description = "$arena_settings_shop_jump_description",
 			type = "slider",
@@ -1016,6 +1054,9 @@ ArenaMode = {
         },
         {
             id = "max_shop_level",
+            require = function(setting_self)
+                return GlobalsGetValue("setting_next_shop_type", "random") ~= "disabled"
+            end,
 			name = "$arena_settings_max_shop_level_name",
 			description = "$arena_settings_max_shop_level_description",
 			type = "slider",
@@ -1028,6 +1069,9 @@ ArenaMode = {
         },
         {
             id = "max_tier_true_random",
+            require = function(setting_self)
+                return GlobalsGetValue("setting_next_shop_type", "random") ~= "disabled"
+            end,
             name = "$arena_settings_max_tier_true_random_name",
             description = "$arena_settings_max_tier_true_random_desc",
             type = "bool",
@@ -1035,6 +1079,9 @@ ArenaMode = {
         },  
         {
             id = "shop_price_multiplier",
+            require = function(setting_self)
+                return GlobalsGetValue("setting_next_shop_type", "random") ~= "disabled"
+            end,
 			name = "$arena_settings_shop_price_multiplier_name",
 			description = "$arena_settings_shop_price_multiplier_description",
 			type = "slider",
@@ -1064,7 +1111,7 @@ ArenaMode = {
             description = "$arena_settings_damage_cap_description",
             type = "enum",
             options = { { "0.25", "$arena_settings_damage_cap_25" }, { "0.5", "$arena_settings_damage_cap_50" }, { "0.75", "$arena_settings_damage_cap_75" },
-                { "disabled", "$arena_settings_damage_cap_disabled" } },
+                { "disabled", "$arena_settings_disabled" } },
             default = "0.25"
         },
         {
@@ -1072,7 +1119,7 @@ ArenaMode = {
             name = "$arena_settings_zone_shrink_name",
             description = "$arena_settings_zone_shrink_description",
             type = "enum",
-            options = { { "disabled", "$arena_settings_zone_shrink_disabled" }, { "static", "$arena_settings_zone_shrink_static" }, { "shrinking_Linear", "$arena_settings_zone_shrink_linear" },
+            options = { { "disabled", "$arena_settings_disabled" }, { "static", "$arena_settings_zone_shrink_static" }, { "shrinking_Linear", "$arena_settings_zone_shrink_linear" },
                 { "shrinking_step", "$arena_settings_zone_shrink_stepped" } },
             default = "static"
         },
@@ -1137,7 +1184,7 @@ ArenaMode = {
             name = "$arena_settings_wand_removal_name",
             description = "$arena_settings_wand_removal_description",
             type = "enum",
-            options = { { "disabled", "$arena_settings_wand_removal_enum_none" }, { "random", "$arena_settings_wand_removal_enum_random" }, { "all", "$arena_settings_wand_removal_enum_all" } },
+            options = { { "disabled", "$arena_settings_disabled" }, { "random", "$arena_settings_wand_removal_enum_random" }, { "all", "$arena_settings_wand_removal_enum_all" } },
             default = "disabled"
         },
         {
@@ -1204,6 +1251,31 @@ ArenaMode = {
                 else
                     -- round to 1 decimal
                     return " "..tostring(math.floor((value / 60) * 100) / 100) .. "m"
+                end
+            end,
+			width = 100
+		},
+        {
+			id = "hm_timer_passive",
+			name = "$arena_settings_hm_timer_passive_name",
+			description = "$arena_settings_hm_timer_passive_description",
+			type = "slider",
+			min = 0,
+			max = 10 * 60,
+			default = 0;
+			display_multiplier = 1,
+			formatting_func = function(value)
+                value = math.floor(value)
+
+                if(value == 0)then
+                    return GameTextGetTranslatedOrNot("$arena_settings_disabled")
+                end
+
+                if(value < 60)then
+                    return " "..tostring(value) .. "s"
+                else
+                    -- round to 1 decimal
+                    return " "..tostring(math.floor((value / 60) * 10) / 10) .. "m"
                 end
             end,
 			width = 100
@@ -1286,6 +1358,23 @@ ArenaMode = {
             options = { { "none", "$arena_settings_gold_scaling_type_none" }, { "exponential", "$arena_settings_gold_scaling_type_exponential" }, { "old", "$arena_settings_gold_scaling_type_old" }},
             default = "none"
         },
+        {
+            id = "starting_loadout",
+            name = "$arena_settings_starting_loadout_name",
+            description = "$arena_settings_starting_loadout_description",
+            type = "bool",
+            default = true
+        },  
+        --[[{
+            id = "super_secret_hämis_mode",
+            require = function(setting_self)
+                return HasFlagPersistent("evaisa.arena.super_secret_hämis_mode")
+            end,
+            name = "Super Secret Hämis Mode",
+            description = "Idk why you did that but have this as a reward",
+            type = "bool",
+            default = false
+        },  ]]
     },
     lobby_menus = {
 
@@ -2137,9 +2226,17 @@ ArenaMode = {
         print("refreshing arena settings")
         --GamePrint("refreshing arena settings")
 
+        reset_lists()
+
         TryUpdateData(lobby)
 
-        if(not invalid_version_popup_active and tostring(content_hash) ~= steam.matchmaking.getLobbyData(lobby,"content_hash"))then
+        --print(content_string)
+        --steam.utils.setClipboard(content_string)
+        local server_hash = steam.matchmaking.getLobbyData(lobby,"content_hash")
+        print("Comparing content hash: "..tostring(content_hash).." with "..tostring(server_hash))
+
+
+        if(not invalid_version_popup_active and tostring(content_hash) ~= server_hash)then
             if(steam_utils.IsOwner())then
                 print("content hash mismatch, updating")
                 steam_utils.TrySetLobbyData(lobby, "content_hash", content_hash)
@@ -2160,7 +2257,11 @@ ArenaMode = {
 						text = GameTextGetTranslatedOrNot("$arena_content_mismatch_description_2"),
 						color = {214 / 255, 60 / 255, 60 / 255, 1}
 					},
-                    GameTextGetTranslatedOrNot("$arena_content_mismatch_description_3")
+                    {
+						text = GameTextGetTranslatedOrNot("$arena_content_mismatch_description_3"),
+						color = {214 / 255, 60 / 255, 60 / 255, 1}
+					},
+                    GameTextGetTranslatedOrNot("$arena_content_mismatch_description_4")
 				}, {
 					{
 						text = GameTextGetTranslatedOrNot("$mp_close_popup"),
@@ -2495,6 +2596,12 @@ ArenaMode = {
         end
         GlobalsSetValue("hm_timer_time", tostring(math.floor(hm_timer_time)))
 
+        local hm_timer_passive = steam.matchmaking.getLobbyData(lobby, "setting_hm_timer_passive")
+        if (hm_timer_passive == nil) then
+            hm_timer_passive = 0
+        end
+        GlobalsSetValue("hm_timer_passive", tostring(math.floor(hm_timer_passive)))
+
         local homing_mult = tonumber(steam.matchmaking.getLobbyData(lobby, "setting_homing_mult"))
         if (homing_mult == nil) then
             homing_mult = 100
@@ -2545,6 +2652,15 @@ ArenaMode = {
         end
         GlobalsSetValue("gold_scaling_type", tostring(gold_scaling_type))
 
+        local starting_loadout = steam.matchmaking.getLobbyData(lobby, "setting_starting_loadout")
+        if (starting_loadout == nil) then
+            starting_loadout = "false"
+        end
+        if(starting_loadout == "true")then
+            GameAddFlagRun("starting_loadout_enabled")
+        else
+            GameRemoveFlagRun("starting_loadout_enabled")
+        end
         
 
 
@@ -2560,7 +2676,7 @@ ArenaMode = {
         lobby_seed = applied_seed
     end,
     enter = function(lobby)
-        print("MP Version: " .. MP_VERSION .." < " .. ArenaMode.required_online_version)
+        print("MP Version: " .. MP_VERSION .." < " .. REQUIRED_ONLINE_VERSION)
 
 
 
@@ -2656,7 +2772,7 @@ ArenaMode = {
     end,
     start = function(lobby, was_in_progress)
 
-        for i, v in ipairs(EntityGetWithTag("player_unit"))do
+        for i, v in ipairs(GetPlayers())do
             EntityKill(v)
         end
         
@@ -3152,6 +3268,7 @@ ArenaMode = {
             return
         end
 
+        reset_lists()
 
         gameplay_handler.ResetEverything(lobby, true)
 
@@ -3181,8 +3298,6 @@ ArenaMode = {
 
     end,
     disconnected = function(lobby, user)
-        print("round should end!!")
-
         local k = tostring(user)
 
         if(data == nil)then

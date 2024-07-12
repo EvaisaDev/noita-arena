@@ -52,6 +52,10 @@ if inventory ~= nil then
     local held_item = ComponentGetValue2(inventory, "mActiveItem")
 
     if held_item ~= nil and held_item ~= 0 and held_item ~= last_held_entity and EntityGetIsAlive(held_item) then
+        local ability_comp = EntityGetFirstComponentIncludingDisabled(held_item, "AbilityComponent")
+        if(ability_comp ~= nil)then
+            ComponentSetValue2(ability_comp, "click_to_use", false)
+        end
         -- surely this is sane.
         hide_entity(held_item)
         last_held_entity = held_item

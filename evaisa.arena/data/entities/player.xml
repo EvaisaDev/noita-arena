@@ -1,6 +1,6 @@
 <Entity 
   name="DEBUG_NAME:player"
-  tags="mortal,human,hittable,peasant,prey,player_unit,teleportable,polymorphable_NOT,homing_target" >
+  tags="mortal,human,hittable,peasant,prey,player_unit,teleportable,homing_target" >
   
   <Base file="mods/evaisa.arena/files/entities/player_base.xml" include_children="1"> 
 
@@ -20,12 +20,16 @@
       >
   </LuaComponent>
 -->
-    <LuaComponent
+
+
+  <LuaComponent
+      _tags="remote_polymorph_remove"
       script_wand_fired = "mods/evaisa.arena/files/scripts/gamemode/misc/on_wand_fire.lua"
       >
   </LuaComponent>
 
     <LuaComponent
+      _tags="remote_polymorph_remove"
       script_damage_about_to_be_received = "mods/evaisa.arena/files/scripts/gamemode/misc/kill_check.lua"
       script_damage_received = "mods/evaisa.arena/files/scripts/gamemode/misc/kill_check.lua"
       >

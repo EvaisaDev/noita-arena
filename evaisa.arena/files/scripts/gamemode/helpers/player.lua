@@ -6,7 +6,7 @@ dofile_once("data/scripts/perks/perk_list.lua")
 local player_helper = {}
 
 player_helper.Get = function()
-    local player = EntityGetWithTag("player_unit")
+    local player = GetPlayers()
 
     if (player == nil) then
         return
@@ -127,6 +127,11 @@ player_helper.GiveGold = function(amount)
         return
     end
     local wallet_component = EntityGetFirstComponentIncludingDisabled(player, "WalletComponent")
+    
+    if(wallet_component == nil)then
+        return
+    end
+
     local money = ComponentGetValue2(wallet_component, "money")
     local add_amount = amount
     ComponentSetValue2(wallet_component, "money", money + add_amount)
@@ -139,34 +144,42 @@ player_helper.GetGold = function()
         return
     end
     local wallet_component = EntityGetFirstComponentIncludingDisabled(player, "WalletComponent")
+
+    if(wallet_component == nil)then
+        return 0
+    end
+
     local money = ComponentGetValue2(wallet_component, "money")
     return money
 end
 
 player_helper.GiveStartingGear = function()
-    local player = player_helper.Get()
-    if (player == nil) then
-        return
+
+    if(GameHasFlagRun("starting_loadout_enabled"))then
+        local player = player_helper.Get()
+        if (player == nil) then
+            return
+        end
+        local x, y = EntityGetTransform(player)
+
+        local network_id_base = tonumber(tostring(steam_utils.getSteamID())) % 2431252
+
+        print("Network ID base: " .. network_id_base)
+        
+        local wand = EntityLoad("data/entities/items/starting_wand_rng.xml", x, y)
+        arena_log:print("Starting gear granted to player entity: " .. tostring(player))
+        GamePickUpInventoryItem(player, wand, false)
+        EntityAddTag(wand, "picked_by_player")
+        entity.NetworkRegister(wand, nil, nil, network_id_base) 
+        local wand2 = EntityLoad("data/entities/items/starting_bomb_wand_rng.xml", x, y)
+        GamePickUpInventoryItem(player, wand2, false)
+        EntityAddTag(wand2, "picked_by_player")
+        entity.NetworkRegister(wand2, nil, nil, network_id_base + 1) 
+        local potion = EntityLoad("data/entities/items/pickup/potion_starting.xml", x, y)
+        GamePickUpInventoryItem(player, potion, false)
+        EntityAddTag(potion, "picked_by_player")
+        entity.NetworkRegister(potion, nil, nil, network_id_base + 2) 
     end
-    local x, y = EntityGetTransform(player)
-
-    local network_id_base = tonumber(tostring(steam_utils.getSteamID())) % 2431252
-
-    print("Network ID base: " .. network_id_base)
-    
-    local wand = EntityLoad("data/entities/items/starting_wand_rng.xml", x, y)
-    arena_log:print("Starting gear granted to player entity: " .. tostring(player))
-    GamePickUpInventoryItem(player, wand, false)
-    EntityAddTag(wand, "picked_by_player")
-    entity.NetworkRegister(wand, nil, nil, network_id_base) 
-    local wand2 = EntityLoad("data/entities/items/starting_bomb_wand_rng.xml", x, y)
-    GamePickUpInventoryItem(player, wand2, false)
-    EntityAddTag(wand2, "picked_by_player")
-    entity.NetworkRegister(wand2, nil, nil, network_id_base + 1) 
-    local potion = EntityLoad("data/entities/items/pickup/potion_starting.xml", x, y)
-    GamePickUpInventoryItem(player, potion, false)
-    EntityAddTag(potion, "picked_by_player")
-    entity.NetworkRegister(potion, nil, nil, network_id_base + 2) 
 end
 
 player_helper.Immortal = function(immortal)
@@ -222,23 +235,20 @@ local function entity_is_wand(entity_id)
 	return ComponentGetValue2(ability_component, "use_gun_script") == true
 end
 
-player_helper.GetItemData = function(fresh)
+player_helper.GetItemData = function(fresh, data)
     fresh = fresh or false
-
-    --[[
-    local wand = EZWand.GetHeldWand()
-    if(wand == nil)then
-        return nil
-    end
-    local wandData = wand:Serialize()
-    return wandData
-    ]]
 
     local player = player_helper.Get()
     local inventory2Comp = EntityGetFirstComponentIncludingDisabled(player, "Inventory2Component")
+    if (inventory2Comp == nil) then
+        return {{}, {}}
+    end
     local mActiveItem = ComponentGetValue2(inventory2Comp, "mActiveItem")
     local wandData = {}
     local spellData = {}
+    if(data)then
+        data.client.wands = {}
+    end
     for k, item in ipairs(player_helper.GetInventoryItems("inventory_quick") or {}) do
         local item_comp = EntityGetFirstComponentIncludingDisabled(item, "ItemComponent")
         local slot_x, slot_y = ComponentGetValue2(item_comp, "inventory_slot")
@@ -248,28 +258,21 @@ player_helper.GetItemData = function(fresh)
 
         local item_id = entity.GetVariable(item, "arena_entity_id")
 
-        --GlobalsSetValue(tostring(item) .. "_item", tostring(k))
-        if(entity_is_wand(item))then
-            local wand = EZWand(item)
-            table.insert(wandData,
-                {
-                    data = wand:Serialize(not fresh, not fresh),
-                    id = item_id or (item + Random(1, 10000000)),
-                    slot_x = slot_x,
-                    slot_y = slot_y,
-                    active = (mActiveItem == item),
-                    is_wand = true
-                })
-        else
-            table.insert(wandData,
-                {
-                    data = np.SerializeEntity(item),
-                    id = item_id or (item + Random(1, 10000000)),
-                    slot_x = slot_x,
-                    slot_y = slot_y,
-                    active = (mActiveItem == item)
-                })
+        if(data and entity_is_wand(item))then
+            local ez_wand = EZWand(item, nil, nil, false, true)
+
+            table.insert(data.client.wands, ez_wand)
         end
+
+        table.insert(wandData,
+            {
+                data = np.SerializeEntity(item),
+                id = item_id or (item + Random(1, 10000000)),
+                slot_x = slot_x,
+                slot_y = slot_y,
+                active = (mActiveItem == item),
+                is_wand = entity_is_wand(item)
+            })
     end
 
     for k, item in ipairs(player_helper.GetInventoryItems("inventory_full") or {}) do
@@ -281,28 +284,16 @@ player_helper.GetItemData = function(fresh)
 
         local item_id = entity.GetVariable(item, "arena_entity_id")
 
-        --GlobalsSetValue(tostring(item) .. "_item", tostring(k))
-        if(entity_is_wand(item))then
-            local wand = EZWand(item)
-            table.insert(spellData,
-                {
-                    data = wand:Serialize(not fresh, not fresh),
-                    id = item_id or (item + Random(1, 10000000)),
-                    slot_x = slot_x,
-                    slot_y = slot_y,
-                    active = (mActiveItem == item),
-                    is_wand = true
-                })
-        else
-            table.insert(spellData,
-                {
-                    data = np.SerializeEntity(item),
-                    id = item_id or (item + Random(1, 10000000)),
-                    slot_x = slot_x,
-                    slot_y = slot_y,
-                    active = (mActiveItem == item)
-                })
-        end
+
+        table.insert(spellData,
+            {
+                data = np.SerializeEntity(item),
+                id = item_id or (item + Random(1, 10000000)),
+                slot_x = slot_x,
+                slot_y = slot_y,
+                active = (mActiveItem == item)
+            })
+
     end
 
     return {wandData, spellData}
@@ -357,43 +348,27 @@ player_helper.SetItemData = function(item_data)
             local item_entity = nil
 
             local item = nil
-            if(itemInfo.is_wand)then
-                item = EZWand(itemInfo.data, x, y, GameHasFlagRun("refresh_all_charges"))
-                
-            else
-                item = EntityCreateNew()
-                np.DeserializeEntity(item, itemInfo.data, x, y)
 
-            end
+            item = EntityCreateNew()
+            np.DeserializeEntity(item, itemInfo.data, x, y)
 
+    
             if (item == nil) then
                 return
             end
 
-            if(itemInfo.is_wand)then
-                entity.PickItem(player, item.entity_id, inventory)
-                EntityAddTag(item.entity_id, "picked_by_player")
-                local itemComp = EntityGetFirstComponentIncludingDisabled(item.entity_id, "ItemComponent")
-                if (itemComp ~= nil) then
-                    ComponentSetValue2(itemComp, "inventory_slot", itemInfo.slot_x, itemInfo.slot_y)
-                end
-                item_entity = item.entity_id
-                if (itemInfo.active) then
-                    active_item_entity = item.entity_id
-                end
-            else
-                entity.PickItem(player, item, inventory)
-                EntityAddTag(item, "picked_by_player")
-                local itemComp = EntityGetFirstComponentIncludingDisabled(item, "ItemComponent")
-                if (itemComp ~= nil) then
-                    ComponentSetValue2(itemComp, "inventory_slot", itemInfo.slot_x, itemInfo.slot_y)
-                end
-                item_entity = item
-                if (itemInfo.active) then
-                    active_item_entity = item
-                end
-            end
 
+            entity.PickItem(player, item, inventory)
+            EntityAddTag(item, "picked_by_player")
+            local itemComp = EntityGetFirstComponentIncludingDisabled(item, "ItemComponent")
+            if (itemComp ~= nil) then
+                ComponentSetValue2(itemComp, "inventory_slot", itemInfo.slot_x, itemInfo.slot_y)
+            end
+            item_entity = item
+            if (itemInfo.active) then
+                active_item_entity = item
+            end
+        
             --wand:PickUp(player)
 
 
@@ -490,6 +465,11 @@ player_helper.GetActiveHeldItem = function()
         return
     end
     local inventory2Comp = EntityGetFirstComponentIncludingDisabled(player, "Inventory2Component")
+
+    if(inventory2Comp == nil)then
+        return
+    end
+
     local mActiveItem = ComponentGetValue2(inventory2Comp, "mActiveItem")
     return mActiveItem
 end
@@ -942,30 +922,31 @@ player_helper.Serialize = function(dont_stringify)
     --GamePrint("Serializing player...")
     --print("Serializing player...")
 
-    local data = {
+    local pdata = {
         health = 100,
         max_health = 100,
-        item_data = player_helper.GetItemData(),
+        item_data = player_helper.GetItemData(false),
        -- spells = player_helper.GetSpells(),
         perks = player_helper.GetPerks(),
         gold = player_helper.GetGold(),
     }
+
     local healthComponent = EntityGetFirstComponentIncludingDisabled(player, "DamageModelComponent")
     if (healthComponent ~= nil) then
-        data.health = ComponentGetValue2(healthComponent, "hp")
-        data.max_health = ComponentGetValue2(healthComponent, "max_hp")
+        pdata.health = ComponentGetValue2(healthComponent, "hp")
+        pdata.max_health = ComponentGetValue2(healthComponent, "max_hp")
     end
 
     local compare_data = {
-        health = data.health,
-        max_health = data.max_health,
+        health = pdata.health,
+        max_health = pdata.max_health,
         item_data = player_helper.GetItemData(true),
         --spells = data.spells,
-        perks = data.perks,
-        gold = data.gold,
+        perks = pdata.perks,
+        gold = pdata.gold,
     }
 
-    local data_out = dont_stringify and data or bitser.dumps(data)
+    local data_out = dont_stringify and pdata or bitser.dumps(pdata)
 
     local compare_string = bitser.dumps(compare_data)
 

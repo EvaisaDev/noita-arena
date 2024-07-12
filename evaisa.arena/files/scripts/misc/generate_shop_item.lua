@@ -52,6 +52,10 @@ function generate_shop_item( x, y, cheap_item, biomeid_, is_stealable, sync )
 		is_stealable = false
 	end
 
+	if(biomeid == nil)then
+		biomeid = 5
+	end
+
 	local item = ""
 	local cardcost = 0
 
@@ -105,6 +109,10 @@ function generate_shop_item( x, y, cheap_item, biomeid_, is_stealable, sync )
 		cardcost = 0.5 * cardcost
 	end
 	
+
+	if(item == nil or item == "")then
+		return
+	end
 
 	local eid = CreateItemActionEntity( item, x, y )
 
@@ -398,6 +406,13 @@ function generate_shop_potion( x, y, biome_id )
 	end
 
 	offsetx = textwidth * 0.5 - 0.5
+
+	local camera_bounds = EntityGetComponent( eid, "CameraBoundComponent" )
+	if( camera_bounds ~= nil ) then
+		for i,bound in ipairs(camera_bounds) do
+			EntityRemoveComponent( eid, bound )
+		end
+	end
 
 	if( GlobalsGetValue("no_shop_cost") == "false")then
 

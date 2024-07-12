@@ -1,8 +1,10 @@
 local remove_list = {
-    POLYMORPH_FIELD = true,
-    CHAOS_POLYMORPH_FIELD = true,
+    --POLYMORPH_FIELD = true,
+    --CHAOS_POLYMORPH_FIELD = true,
     SUMMON_EGG = true,
     DESTRUCTION = true,
+    CESSATION = true,
+    --MASS_POLYMORPH = true,
 }
 
 local hook_list = {

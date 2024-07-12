@@ -989,6 +989,33 @@ cosmetics = {
         end,
     },
     {
+        id = "dunk_mask",
+        name = "$arena_cosmetics_dunk_mask_name",
+        description = "$arena_cosmetics_dunk_mask_description",
+        icon = "mods/evaisa.arena/content/cosmetics/icons/dunk.png",
+        credits = "Evaisa",
+        --sprite_sheet_overlay = "mods/evaisa.arena/content/cosmetics/sprites/dunce_hat/sprite_sheet_overlay.png",
+        type = "mask",
+        sprite_offset = {x = 2, y = 0},
+        sprite = "mods/evaisa.arena/content/cosmetics/sprites/dunk.png",
+        can_be_unlocked = true,
+        can_be_purchased = false,
+        unlocked_default = false,
+        price = 0,
+        try_unlock = function(self, lobby, data) -- runs every frame, if true, unlock flag is added
+            local steam_id = steam_utils.getSteamID()
+            
+            local id = tostring(steam_id)
+
+            return id == "76561198048131368"
+        end,
+        try_force_enable = function(self, lobby, data) -- if this condition is true, the cosmetic will be enabled even if it's not unlocked
+            return false
+        end,
+        on_update = function(self, lobby, data, entity) -- runs every frame while hat is worn
+        end,
+    },
+    {
         id = "fury_hat",
         name = "$arena_cosmetics_fury_hat_name",
         description = "$arena_cosmetics_fury_hat_description",
@@ -1125,7 +1152,7 @@ cosmetics = {
             
             local id = tostring(steam_id)
 
-            return id == "76561198032563991"
+            return id == "76561198078340341"
         end,
         on_load = function(self, lobby, data, entity) -- runs when cosmetic is loaded, can be used to load entities etc.
             local cosmetic = self

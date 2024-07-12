@@ -159,13 +159,17 @@ end
 entity.PickItem = function(ent, item, inventory)
     local item_component = EntityGetFirstComponentIncludingDisabled(item, "ItemComponent")
     local preferred_inv = "QUICK"
-    if item_component then
+    if item_component and item_component ~= 0 then
       ComponentSetValue2(item_component, "has_been_picked_by_player", true)
       preferred_inv = ComponentGetValue2(item_component, "preferred_inventory")
       ComponentSetValue2(item_component, "mFramePickedUp", GameGetFrameNum())
       -- play_spinning_animation
-      ComponentSetValue2(item_component, "play_spinning_animation", true)
-      ComponentSetValue2(item_component, "play_hover_animation", false)
+      local ability_comp = EntityGetFirstComponentIncludingDisabled(item, "AbilityComponent")
+      if(ability_comp and ability_comp ~= 0 and ComponentGetValue2(ability_comp, "use_gun_script"))then
+        ComponentSetValue2(item_component, "play_spinning_animation", true)
+        ComponentSetValue2(item_component, "play_hover_animation", false)
+      end
+
     end
     if inventory ~= nil then
       preferred_inv = inventory

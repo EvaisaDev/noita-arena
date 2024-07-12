@@ -13,5 +13,7 @@
   VIRTUAL_RESOLUTION_Y="242" 
   VIRTUAL_RESOLUTION_OFFSET_X="-1" 
   VIRTUAL_RESOLUTION_OFFSET_Y="-1" 
+
+  WORLD_SEED="1"
   > <!-- Overwriting virtual resolution as changes to this can break stuff. -->
 </MagicNumbers>
