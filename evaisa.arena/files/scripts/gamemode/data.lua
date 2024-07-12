@@ -193,6 +193,7 @@ function data:New()
             max_hp = 100,
             perks = {},
             last_inventory = {},
+            wands = {},
         },
         state = "lobby",
         preparing = false,

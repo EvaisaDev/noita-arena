@@ -624,6 +624,8 @@ networking = {
 
                     has_spectator = true
                 end
+
+                data.players[tostring(user)].wands = {}
         
 
                 if (items_data ~= nil) then
@@ -632,68 +634,49 @@ networking = {
                         
                         local item = nil
                         local spectator_item = nil
-                        --[[if(itemInfo.is_wand)then
-                            item = EZWand(itemInfo.data, x, y)
+       
+                        item = EntityCreateNew()
+                        np.DeserializeEntity(item, itemInfo.data, x, y)
 
+                        --[[
+                        if(itemInfo.is_wand)then
+                            local ez_wand = EZWand(item, nil, nil, false, true)
 
-                            if(has_spectator)then
-                                spectator_item = EZWand(itemInfo.data, x, y)
-                            end
+                            table.insert(data.players[tostring(user)].wands, ez_wand)
+                        end
+                        ]]
+                        
+
+                        if(has_spectator)then
+                            spectator_item = EntityCreateNew()
+                            np.DeserializeEntity(spectator_item, itemInfo.data, x, y)
                             
-                        else]]
-                            item = EntityCreateNew()
-                            np.DeserializeEntity(item, itemInfo.data, x, y)
-                            
-
-                            if(has_spectator)then
-                                spectator_item = EntityCreateNew()
-                                np.DeserializeEntity(spectator_item, itemInfo.data, x, y)
-                                
-                                local material_inventory_comp = EntityGetFirstComponentIncludingDisabled(spectator_item, "MaterialInventoryComponent")
-                                if(material_inventory_comp)then
-                                    local last_frame_drank = ComponentGetValue2(material_inventory_comp, "last_frame_drank")
-                                    local frame_offset = last_frame_drank - frame
-                                    ComponentSetValue2(material_inventory_comp, "last_frame_drank", GameGetFrameNum() + frame_offset)
-                                end
+                            local material_inventory_comp = EntityGetFirstComponentIncludingDisabled(spectator_item, "MaterialInventoryComponent")
+                            if(material_inventory_comp)then
+                                local last_frame_drank = ComponentGetValue2(material_inventory_comp, "last_frame_drank")
+                                local frame_offset = last_frame_drank - frame
+                                ComponentSetValue2(material_inventory_comp, "last_frame_drank", GameGetFrameNum() + frame_offset)
                             end
-                        --end
-            
+                        end
+                
                         if (item == nil) then
                             return
                         end
 
                         EntityRemoveTag(item, "picked_by_player")
 
-                        local item_entity = nil
-                        if(itemInfo.is_wand)then
-                            --item:PickUp(data.players[tostring(user)].entity)
-                            EntityHelper.PickItem(data.players[tostring(user)].entity, item.entity_id, "QUICK")
-                            --print("forcing pickup of wand")
-                            item_entity = item.entity_id
 
-                            if(has_spectator)then
+                        EntityHelper.PickItem(data.players[tostring(user)].entity, item, "QUICK")
+                        local item_entity = item
 
-                                ComponentSetValue2(spectator_pickupper, "only_pick_this_entity", spectator_item.entity_id)
-                                
-                                EntityHelper.PickItem(data.spectator_entity, spectator_item.entity_id, "QUICK")
-                               -- spectator_item:PickUp(data.spectator_entity)
-                                spectator_item_entity = spectator_item.entity_id
+                        if(has_spectator)then
 
-                                --print("Adding spectator item to spectator.")
-                            end
-                        else
-                            --print("forcing pickup of item")
-                            EntityHelper.PickItem(data.players[tostring(user)].entity, item, "QUICK")
-                            item_entity = item
+                            ComponentSetValue2(spectator_pickupper, "only_pick_this_entity", spectator_item)
 
-                            if(has_spectator)then
-
-                                ComponentSetValue2(spectator_pickupper, "only_pick_this_entity", spectator_item)
-
-                                EntityHelper.PickItem(data.spectator_entity, spectator_item, "QUICK")
-                                spectator_item_entity = spectator_item
-                            end
+                            EntityHelper.PickItem(data.spectator_entity, spectator_item, "QUICK")
+                            spectator_item_entity = spectator_item
                         end
+                    
 
                         local itemComp = EntityGetFirstComponentIncludingDisabled(item_entity, "ItemComponent")
                         if (itemComp ~= nil) then
@@ -738,34 +721,19 @@ networking = {
                     for k, itemInfo in ipairs(spells) do
                         local x, y = EntityGetTransform(data.players[tostring(user)].entity)
                         
-                        local spectator_item = nil
-                        --[[if(itemInfo.is_wand)then
-                            spectator_item = EZWand(itemInfo.data, x, y)
-                        else]]
-                            spectator_item = EntityCreateNew()
-                            np.DeserializeEntity(spectator_item, itemInfo.data, x, y)
+        
+                        local spectator_item = EntityCreateNew()
+                        np.DeserializeEntity(spectator_item, itemInfo.data, x, y)
 
-                        --end
-            
+        
                         if (spectator_item == nil) then
                             return
                         end
 
-                        if(itemInfo.is_wand)then
+                        ComponentSetValue2(spectator_pickupper, "only_pick_this_entity", spectator_item)
 
-                            ComponentSetValue2(spectator_pickupper, "only_pick_this_entity", spectator_item.entity_id)
-                            
-                            --spectator_item:PickUp(data.spectator_entity)
-                            EntityHelper.PickItem(data.players[tostring(user)].entity, spectator_item.entity_id, "QUICK")
-                            spectator_item_entity = spectator_item.entity_id
-
-                        else
-                            ComponentSetValue2(spectator_pickupper, "only_pick_this_entity", spectator_item)
-
-                            EntityHelper.PickItem(data.spectator_entity, spectator_item, "FULL")
-                            spectator_item_entity = spectator_item
-
-                        end
+                        EntityHelper.PickItem(data.spectator_entity, spectator_item, "FULL")
+                        spectator_item_entity = spectator_item
 
 
                     end

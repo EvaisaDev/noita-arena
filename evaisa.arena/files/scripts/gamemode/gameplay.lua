@@ -489,7 +489,7 @@ ArenaGameplay = {
         scoreboard.open = false
 
         -- FUNGAL SHIFT RESET
-        --[[local world_state = GameGetWorldStateEntity()
+        local world_state = GameGetWorldStateEntity()
         local world_comp = EntityGetFirstComponent(world_state, "WorldStateComponent")
         if world_comp then
             ComponentSetValue(world_comp, "changed_materials", "")
@@ -500,7 +500,7 @@ ArenaGameplay = {
         remove_materials = ffi.cast("void(__fastcall*)(int)", 0x006fa100)
         remove_materials(arg)
         load_materials = ffi.cast("void(__thiscall*)(int, char)", 0x00706e30)
-        load_materials(arg, 1)]]
+        load_materials(arg, 1)
         -- END FUNGAL SHIFT RESET
                 
 
@@ -1452,7 +1452,7 @@ ArenaGameplay = {
         if ((not GameHasFlagRun("player_unloaded")) and player_entity and not EntityHasTag( player_entity, "polymorphed_player") ) then
             --[[local profile = profiler.new()
             profile:start()]]
-            local serialized_player_data, compare_string = player.Serialize()
+            local serialized_player_data, compare_string = player.Serialize(nil, data)
 
 
             if (force or compare_string ~= data.client.player_data_old) then
