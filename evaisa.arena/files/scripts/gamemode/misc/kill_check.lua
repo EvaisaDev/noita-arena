@@ -182,7 +182,13 @@ function damage_received( damage, message, entity_thats_responsible, is_fatal, p
 
             --print("SMASH KNOCKBACK: " .. tostring(smash_knockback))
             --print("IMPULSE: " .. tostring(impulse_x) .. ", " .. tostring(impulse_y))
+            ComponentSetValue2(character_data_comp, "is_on_ground", true)
+ 
+            local controls_comp = EntityGetFirstComponentIncludingDisabled(entity_id, "ControlsComponent")
 
+            if(controls_comp ~= nil)then
+                ComponentSetValue2(controls_comp, "mJumpVelocity", impulse_x * smash_knockback, impulse_y * smash_knockback)
+            end
             ComponentSetValue2(character_data_comp, "mVelocity", impulse_x * smash_knockback, impulse_y * smash_knockback)
 
         end

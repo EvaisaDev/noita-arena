@@ -488,7 +488,7 @@ local rewrites = {
 	},
     RESPAWN = {
 		id = "RESPAWN",
-		ui_name = "$perk_respawn",
+		ui_name = "$arena_perk_respawn_alt_name",
 		ui_description = "$perkdesc_respawn",
 		ui_icon = "data/ui_gfx/perk_icons/respawn.png",
 		perk_icon = "data/items_gfx/perks/respawn.png",

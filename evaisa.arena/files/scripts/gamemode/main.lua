@@ -703,7 +703,7 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 198,
+    version = 199,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
     end,
@@ -1365,16 +1365,16 @@ ArenaMode = {
             type = "bool",
             default = true
         },  
-        --[[{
-            id = "super_secret_hämis_mode",
+        {
+            id = "super_secret_hamis_mode",
             require = function(setting_self)
-                return HasFlagPersistent("evaisa.arena.super_secret_hämis_mode")
+                return HasFlagPersistent("super_secret_hamis_mode")
             end,
             name = "Super Secret Hämis Mode",
             description = "Idk why you did that but have this as a reward",
             type = "bool",
             default = false
-        },  ]]
+        },
     },
     lobby_menus = {
 
@@ -2215,7 +2215,6 @@ ArenaMode = {
     end,
     refresh = function(lobby)
 
-
         if(MP_VERSION < REQUIRED_ONLINE_VERSION)then
             disconnect({
                 lobbyID = lobby,
@@ -2662,7 +2661,15 @@ ArenaMode = {
             GameRemoveFlagRun("starting_loadout_enabled")
         end
         
-
+        local super_secret_hamis_mode = steam.matchmaking.getLobbyData(lobby, "setting_super_secret_hamis_mode")
+        if (super_secret_hamis_mode == nil) then
+            super_secret_hamis_mode = "false"
+        end
+        if(super_secret_hamis_mode == "true")then
+            GameAddFlagRun("super_secret_hamis_mode")
+        else
+            GameRemoveFlagRun("super_secret_hamis_mode")
+        end
 
         arena_log:print("Lobby data refreshed")
     end,

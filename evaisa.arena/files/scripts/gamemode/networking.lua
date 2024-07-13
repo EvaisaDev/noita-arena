@@ -588,12 +588,6 @@ networking = {
             if(data.state ~= "arena" and not data.spectator_mode)then
                 return
             end
-            print("Received item update")
-
-            if (not gameplay_handler.CheckPlayer(lobby, user, data)) then
-                print("Player was missing")
-                return
-            end
 
             if (data.players[tostring(user)].entity and EntityGetIsAlive(data.players[tostring(user)].entity)) then
                 print("weewoo update items")
@@ -1603,7 +1597,6 @@ networking = {
 
             ]]
             if (not gameplay_handler.CheckPlayer(lobby, user, data)) then
-                print("not a player")
                 return
             end
             local client_entity = data.players[tostring(user)].entity
@@ -1620,15 +1613,13 @@ networking = {
 
                     local cosmetics_string = table.concat(player_data.cosmetics, ",")
 
-                    --print("Received cosmetics: " .. cosmetics_string)
-                    --print("Last cosmetics: " .. tostring(client_data.last_cosmetics))
-                    
-                    if(client_data.last_cosmetics ~= cosmetics_string)then
+      
+                    if(client_data.last_cosmetics ~= cosmetics_string and client_data.polymorph_entity == nil)then
                         print("Applying cosmetics!!")
                         cosmetics_handler.ApplyCosmeticsList(lobby, data, client_entity, player_data.cosmetics, true, user)
+                        client_data.last_cosmetics = cosmetics_string
                     end
 
-                    client_data.last_cosmetics = cosmetics_string
 
                     local valid_ids = {}
 
@@ -2194,7 +2185,7 @@ networking = {
             SetWorldSeed( message )
         end,
         send_skin = function(lobby, message, user, data)
-            if data.players[tostring(user)] then
+            if data.players[tostring(user)] and not data.players[tostring(user)].polymorph_entity then
                 data.players[tostring(user)].skin_data = message
 
                 if(skin_system and lobby)then
@@ -2812,8 +2803,29 @@ networking = {
 
             player_data.polymorph_entity = message
 
+            if(not GameHasFlagRun("no_shooting"))then
+                return
+            end
 
             ArenaGameplay.TransformPlayer(lobby, user, data, player_data.polymorph_entity)
+        end,
+        hamis_attack = function(lobby, message, user, data)
+            if(not GameHasFlagRun("super_secret_hamis_mode"))then
+                return
+            end
+            
+            if (not gameplay_handler.CheckPlayer(lobby, user, data)) then
+                return
+            end
+
+            if (data.spectator_mode or (GameHasFlagRun("player_is_unlocked") and (not GameHasFlagRun("no_shooting"))) and data.players[tostring(user)].entity ~= nil and EntityGetIsAlive(data.players[tostring(user)].entity)) then
+
+                local controlsComp = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity, "ControlsComponent")
+
+                if (controlsComp ~= nil) then
+                    GamePlayAnimation(data.players[tostring(user)].entity, "attack", 100, "idle", 1)
+                end
+            end
         end,
     },
     send = {
@@ -3792,6 +3804,9 @@ networking = {
                 steamutils.send("polymorphed", msg, steamutils.messageTypes.OtherPlayers, lobby, true, true, 4)
                
             end
+        end,
+        hamis_attack = function(lobby)
+            steamutils.send("hamis_attack", {}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
         end,
     },
 }

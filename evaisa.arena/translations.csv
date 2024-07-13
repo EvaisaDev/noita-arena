@@ -542,5 +542,6 @@ arena_settings_starting_loadout_description,Do players start with wands / potion
 arena_settings_hm_timer_passive_name,Maximum HM Time,,,,,,,,,,,,,
 arena_settings_hm_timer_passive_description,Maximum time users can spend in the holy mountain.,,,,,,,,,,,,,
 arena_settings_no,No,,,,,,,,,,,,,
-arena_cosmetics_dunk_mask_name,Sweatling Mask,,,,,,,,,,,,,
+arena_cosmetics_dunk_mask_name,Sweatling,,,,,,,,,,,,,
 arena_cosmetics_dunk_mask_description,Unique cosmetic for DunkOrSlam,,,,,,,,,,,,,
+arena_perk_respawn_alt_name,Extra Life,,,,,,,,,,,,,
