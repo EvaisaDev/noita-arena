@@ -155,7 +155,7 @@ end
 
 player_helper.GiveStartingGear = function()
 
-    if(GameHasFlagRun("starting_loadout_enabled"))then
+    if(GameHasFlagRun("starting_loadout_enabled") and not GameHasFlagRun("super_secret_hamis_mode"))then
         local player = player_helper.Get()
         if (player == nil) then
             return

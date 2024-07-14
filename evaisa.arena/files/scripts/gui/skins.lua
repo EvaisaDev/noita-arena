@@ -1,6 +1,7 @@
 dofile("mods/evaisa.arena/files/scripts/gui/image.lua")
 
 local color_picker = dofile("mods/evaisa.arena/files/scripts/gui/color_picker.lua")
+dofile("mods/evaisa.arena/files/scripts/utilities/utils.lua")
 local fs = require("fs")
 --local lfs = require("lfs")
 
@@ -15,24 +16,10 @@ end
 local cache_folder = "data/evaisa.arena/cache/"
 local skins_folder = "data/evaisa.arena/skins/"
 
--- remove contents of cache folder with lfs
-for file in fs.dir(cache_folder)do
-    if not file then break end
-    -- print debug trace
-    if file ~= "." and file ~= ".." then
-        local file_path = cache_folder..file
-        print("Removing: "..file_path)
-        fs.remove(file_path)
-    end
-end
-
 
 function make_verlet_color(r, g, b)
     return bit.bor(bit.bor(bit.bor(bit.lshift(0xFF, 24), bit.lshift(b, 16)), bit.lshift(g, 8)), r)
 end
-
--- create skins folder
-fs.mkdir(skins_folder, true)
 
 skins.init = function()
     local self = {
@@ -53,8 +40,32 @@ skins.init = function()
         selected_cosmetics = {}
     }
 
-    local player_default_img = loadImage("mods/evaisa.arena/files/gfx/skins/player_default.png")
-    local player_modified_img = loadImage("mods/evaisa.arena/files/gfx/skins/player_default.png")
+    local default_sprite_path = "mods/evaisa.arena/files/gfx/skins/player_default.png"
+    if(GameHasFlagRun("super_secret_hamis_mode"))then
+        default_sprite_path = "mods/evaisa.arena/files/gfx/skins/hamis_default.png"
+        skins_folder = "data/evaisa.arena/hamis_skins/"
+    else
+        skins_folder = "data/evaisa.arena/skins/"
+    end
+
+    -- remove contents of cache folder with lfs
+    for file in fs.dir(cache_folder)do
+        if not file then break end
+        -- print debug trace
+        if file ~= "." and file ~= ".." then
+            local file_path = cache_folder..file
+            print("Removing: "..file_path)
+            fs.remove(file_path)
+        end
+    end
+
+
+
+    fs.mkdir(skins_folder, true)
+
+    local player_default_img = loadImage(default_sprite_path)
+    local player_modified_img = loadImage(default_sprite_path)
+
 
 
     self.loaded_skins = {}
@@ -65,22 +76,23 @@ skins.init = function()
         -- add default skin
         local skin_name = "Default"
         local temp_path = cache_folder..uniqueFileName()..".png"
-        local status, img = pcall(loadImage, "mods/evaisa.arena/files/gfx/skins/player_default.png")
+        local status, img = pcall(loadImage, default_sprite_path)
         if status then
             -- if top left pixel is transparent, set it to 9a6f9b
-            local r, g, b, a = getPixel(img, 0, 0)
-            if(a < 1)then
-                setPixel(img, 0, 0, 154, 111, 155, 255)
+            if(not GameHasFlagRun("super_secret_hamis_mode"))then
+                local r, g, b, a = getPixel(img, 0, 0)
+                if(a < 1)then
+                    setPixel(img, 0, 0, 154, 111, 155, 255)
+                end
+                -- if pixel below that is transparent, set it to 76547f
+                local r, g, b, a = getPixel(img, 0, 1)
+                if(a < 1)then
+                    setPixel(img, 0, 1, 118, 84, 127, 255)
+                end
             end
-            -- if pixel below that is transparent, set it to 76547f
-            local r, g, b, a = getPixel(img, 0, 1)
-            if(a < 1)then
-                setPixel(img, 0, 1, 118, 84, 127, 255)
-            end
-
             saveImage(img, temp_path)
 
-            table.insert(self.loaded_skins, {is_default = true, name = skin_name, path = "mods/evaisa.arena/files/gfx/skins/player_default.png", temp_path = temp_path, img = img})
+            table.insert(self.loaded_skins, {is_default = true, name = skin_name, path = default_sprite_path, temp_path = temp_path, img = img})
         end
 
         for file in fs.dir(skins_folder)do
@@ -94,24 +106,25 @@ skins.init = function()
                         local skin_name = file:match("(.+)%..+")
                         local temp_path = cache_folder..uniqueFileName()..".png"
 
-                        local was_missing_cape = false
-                        -- if top left pixel is transparent, set it to 9a6f9b
-                        local r, g, b, a = getPixel(img, 0, 0)
-                        if(a < 1)then
-                            setPixel(img, 0, 0, 154, 111, 155, 255)
-                            was_missing_cape = true
-                        end
-                        -- if pixel below that is transparent, set it to 76547f
-                        local r, g, b, a = getPixel(img, 0, 1)
-                        if(a < 1)then
-                            setPixel(img, 0, 1, 118, 84, 127, 255)
-                            was_missing_cape = true
-                        end
+                        if(not GameHasFlagRun("super_secret_hamis_mode"))then
+                            local was_missing_cape = false
+                            -- if top left pixel is transparent, set it to 9a6f9b
+                            local r, g, b, a = getPixel(img, 0, 0)
+                            if(a < 1)then
+                                setPixel(img, 0, 0, 154, 111, 155, 255)
+                                was_missing_cape = true
+                            end
+                            -- if pixel below that is transparent, set it to 76547f
+                            local r, g, b, a = getPixel(img, 0, 1)
+                            if(a < 1)then
+                                setPixel(img, 0, 1, 118, 84, 127, 255)
+                                was_missing_cape = true
+                            end
 
-                        if was_missing_cape then
-                            saveImage(img, file_path)
+                            if was_missing_cape then
+                                saveImage(img, file_path)
+                            end
                         end
-
                         saveImage(img, temp_path)
                         table.insert(self.loaded_skins, {name = skin_name, path = file_path, temp_path = temp_path, img = img})
                     end
@@ -644,6 +657,9 @@ skins.init = function()
         
         
         local last_skin = ModSettingGet("arena_last_skin")
+        if(GameHasFlagRun("super_secret_hamis_mode"))then
+            last_skin = ModSettingGet("arena_last_skin_hamis")
+        end
         if(last_skin ~= nil)then
             for i, skin in ipairs(self.loaded_skins)do
                 if(skin.name == last_skin)then
@@ -828,6 +844,10 @@ skins.init = function()
         GuiLayoutEnd(self.gui)
         
         if(GuiButton(self.gui, new_id(), 0, 3, GameTextGetTranslatedOrNot("$arena_skins_save_skin")))then
+            -- if skin name is not empty
+            if(self.selected_skin.name == "")then
+                return
+            end
 
             self.inputs_locked = true
             popup.create("save_skin_prompt", string.format(GameTextGetTranslatedOrNot("$arena_skins_confirm_save_name"), self.selected_skin.name),{
@@ -1111,6 +1131,11 @@ skins.init = function()
 
     self.generate_skin = function(texture, is_content)
         local uv_map = "mods/evaisa.arena/files/gfx/skins/player.png"
+
+        if(GameHasFlagRun("super_secret_hamis_mode"))then
+            uv_map = "mods/evaisa.arena/files/gfx/skins/hamis.png"
+        end
+
         local uv_map_img = loadImage(uv_map)
 
         local skin_texture_img = nil--loadImage(texture_path)
@@ -1143,50 +1168,60 @@ skins.init = function()
             end
         end
 
-        local arm_uv_map = "mods/evaisa.arena/files/gfx/skins/player_arm.png"
-        local arm_uv_map_img = loadImage(arm_uv_map)
+        if(not GameHasFlagRun("super_secret_hamis_mode"))then
+            local arm_uv_map = "mods/evaisa.arena/files/gfx/skins/player_arm.png"
+            local arm_uv_map_img = loadImage(arm_uv_map)
 
-        -- loop through uv map pixels
-        for y = 0, arm_uv_map_img.h - 1 do
-            for x = 0, arm_uv_map_img.w - 1 do
-                local uv_pixel = getPixel2(arm_uv_map_img, x, y)
-                if(uv_pixel[4] == 255)then
-                    local uv_x, uv_y = uv_pixel[1], uv_pixel[2]
-                    -- check if uv_x and uv_y are within bounds of player_modified_img
-                    if(uv_x >= 0 and uv_x < skin_texture_img.w and uv_y >= 0 and uv_y < skin_texture_img.h)then
-                        local pixel = getPixel2(skin_texture_img, uv_x, uv_y)
-                        setPixel(arm_uv_map_img, x, y, pixel[1], pixel[2], pixel[3], uv_pixel[4])
+            -- loop through uv map pixels
+            for y = 0, arm_uv_map_img.h - 1 do
+                for x = 0, arm_uv_map_img.w - 1 do
+                    local uv_pixel = getPixel2(arm_uv_map_img, x, y)
+                    if(uv_pixel[4] == 255)then
+                        local uv_x, uv_y = uv_pixel[1], uv_pixel[2]
+                        -- check if uv_x and uv_y are within bounds of player_modified_img
+                        if(uv_x >= 0 and uv_x < skin_texture_img.w and uv_y >= 0 and uv_y < skin_texture_img.h)then
+                            local pixel = getPixel2(skin_texture_img, uv_x, uv_y)
+                            setPixel(arm_uv_map_img, x, y, pixel[1], pixel[2], pixel[3], uv_pixel[4])
+                        end
                     end
                 end
             end
+
+            local cape = 0xFF9a6f9b
+            local cape_edge = 0xFF76547f
+
+
+
+            -- get cape pixels, top left and pixel below that
+            local cape_c = getPixel2(skin_texture_img, 0, 0)
+            local cape_edge_c = getPixel2(skin_texture_img, 0, 1)
+
+            if(cape_c[4] > 0)then
+                cape = make_verlet_color(cape_c[1], cape_c[2], cape_c[3])
+            end
+
+            if(cape_edge_c[4] > 0)then
+                cape_edge = make_verlet_color(cape_edge_c[1], cape_edge_c[2], cape_edge_c[3])
+            end
+
+            -- save uv_map_img to cache
+            local file_name = uniqueFileName()
+            local temp_path = cache_folder..file_name.."_base.png"
+            local temp_path_arm = cache_folder..file_name.."_arm.png"
+            saveImage(uv_map_img, temp_path)
+            saveImage(arm_uv_map_img, temp_path_arm)
+
+            return temp_path, temp_path_arm, file_name, cape, cape_edge
+
+        else
+
+            -- save uv_map_img to cache
+            local file_name = uniqueFileName()
+            local temp_path = cache_folder..file_name.."_base.png"
+            saveImage(uv_map_img, temp_path)
+
+            return temp_path, nil, file_name
         end
-
-        local cape = 0xFF9a6f9b
-        local cape_edge = 0xFF76547f
-
-
-
-        -- get cape pixels, top left and pixel below that
-        local cape_c = getPixel2(skin_texture_img, 0, 0)
-        local cape_edge_c = getPixel2(skin_texture_img, 0, 1)
-
-        if(cape_c[4] > 0)then
-            cape = make_verlet_color(cape_c[1], cape_c[2], cape_c[3])
-        end
-
-        if(cape_edge_c[4] > 0)then
-            cape_edge = make_verlet_color(cape_edge_c[1], cape_edge_c[2], cape_edge_c[3])
-        end
-
-        -- save uv_map_img to cache
-        local file_name = uniqueFileName()
-        local temp_path = cache_folder..file_name.."_base.png"
-        local temp_path_arm = cache_folder..file_name.."_arm.png"
-        saveImage(uv_map_img, temp_path)
-        saveImage(arm_uv_map_img, temp_path_arm)
-
-        return temp_path, temp_path_arm, file_name, cape, cape_edge
-
     end
 
     self.update_client_skin = function(lobby, entity, user, data)
@@ -1203,8 +1238,10 @@ skins.init = function()
                 local old_skin_path = self.last_player_skins[tostring(user)].path
                 fs.remove(old_skin_path)
 
-                local old_skin_path_arm = self.last_player_skins[tostring(user)].arm_path
-                fs.remove(old_skin_path_arm)
+                if(not GameHasFlagRun("super_secret_hamis_mode"))then
+                    local old_skin_path_arm = self.last_player_skins[tostring(user)].arm_path
+                    fs.remove(old_skin_path_arm)
+                end
             end
 
             -- generate skin
@@ -1213,24 +1250,36 @@ skins.init = function()
                 return
             end
 
-            local texture_file = string.format(get_content("mods/evaisa.arena/files/gfx/skins/player.xml"), temp_path)
-            local texture_file_name = "data/evaisa.arena/cache/skin_"..tostring(user).."_"..path_name..".xml"
-            set_content(texture_file_name, texture_file)
+            if(not GameHasFlagRun("super_secret_hamis_mode"))then
 
-            local texture_file_arm = string.format(get_content("mods/evaisa.arena/files/gfx/skins/player_arm.xml"), arm_path)
-            local texture_file_name_arm = "data/evaisa.arena/cache/skin_arm_"..tostring(user).."_"..path_name..".xml"
-            set_content(texture_file_name_arm, texture_file_arm)
+                local texture_file = string.format(get_content("mods/evaisa.arena/files/gfx/skins/player.xml"), temp_path)
+                local texture_file_name = "data/evaisa.arena/cache/skin_"..tostring(user).."_"..path_name..".xml"
+                set_content(texture_file_name, texture_file)
 
-            data.players[tostring(user)].generated_skin = {
-                texture_file_name = texture_file_name,
-                texture_file_name_arm = texture_file_name_arm,
-                cape = cape,
-                cape_edge = cape_edge
-            }
+                local texture_file_arm = string.format(get_content("mods/evaisa.arena/files/gfx/skins/player_arm.xml"), arm_path)
+                local texture_file_name_arm = "data/evaisa.arena/cache/skin_arm_"..tostring(user).."_"..path_name..".xml"
+                set_content(texture_file_name_arm, texture_file_arm)
 
-            
-            self.last_player_skins[tostring(user)] = {path = temp_path, xml_path = texture_file_name, arm_path = arm_path, arm_xml_path = texture_file_name_arm, cape = cape, cape_edge = cape_edge}
-            
+                data.players[tostring(user)].generated_skin = {
+                    texture_file_name = texture_file_name,
+                    texture_file_name_arm = texture_file_name_arm,
+                    cape = cape,
+                    cape_edge = cape_edge
+                }
+
+                
+                self.last_player_skins[tostring(user)] = {path = temp_path, xml_path = texture_file_name, arm_path = arm_path, arm_xml_path = texture_file_name_arm, cape = cape, cape_edge = cape_edge}
+            else
+                local texture_file = string.format(get_content("mods/evaisa.arena/files/gfx/skins/hamis.xml"), temp_path)
+                local texture_file_name = "data/evaisa.arena/cache/skin_"..tostring(user).."_"..path_name..".xml"
+                set_content(texture_file_name, texture_file)
+
+                data.players[tostring(user)].generated_skin = {
+                    texture_file_name = texture_file_name
+                }
+
+                self.last_player_skins[tostring(user)] = {path = temp_path, xml_path = texture_file_name}
+            end
             return true
         end
     end
@@ -1260,48 +1309,51 @@ skins.init = function()
                 ComponentSetValue2(comp, "image_file", generated_skin.texture_file_name)
             end
 
-            local children = EntityGetAllChildren(entity) or {}
-            for i, child in ipairs(children)do
-                if(EntityHasTag(child, "player_arm_r"))then
-                    local comp = EntityGetFirstComponent(child, "SpriteComponent")
-                    if(comp)then
-                        ComponentSetValue2(comp, "image_file", generated_skin.texture_file_name_arm)
-                    end
-                end
-                if(EntityGetName(child) == "cape")then
-                    local verlet_comp = EntityGetFirstComponent(child, "VerletPhysicsComponent")
+            if(not GameHasFlagRun("super_secret_hamis_mode"))then
 
-                    if(verlet_comp)then
-                        ComponentSetValue2(verlet_comp, "cloth_color", generated_skin.cape)
-                        ComponentSetValue2(verlet_comp, "cloth_color_edge", generated_skin.cape_edge)
+                local children = EntityGetAllChildren(entity) or {}
+                for i, child in ipairs(children)do
+                    if(EntityHasTag(child, "player_arm_r"))then
+                        local comp = EntityGetFirstComponent(child, "SpriteComponent")
+                        if(comp)then
+                            ComponentSetValue2(comp, "image_file", generated_skin.texture_file_name_arm)
+                        end
+                    end
+                    if(EntityGetName(child) == "cape")then
+                        local verlet_comp = EntityGetFirstComponent(child, "VerletPhysicsComponent")
+
+                        if(verlet_comp)then
+                            ComponentSetValue2(verlet_comp, "cloth_color", generated_skin.cape)
+                            ComponentSetValue2(verlet_comp, "cloth_color_edge", generated_skin.cape_edge)
+                        end
                     end
                 end
             end
-
         elseif(self.last_player_skins["self"])then
             local comp = EntityGetFirstComponentIncludingDisabled(entity, "SpriteComponent", "skin_root")
             if(comp)then
                 ComponentSetValue2(comp, "image_file", self.last_player_skins["self"].xml_path)
             end
 
-            local children = EntityGetAllChildren(entity) or {}
-            for i, child in ipairs(children)do
-                if(EntityHasTag(child, "player_arm_r"))then
-                    local comp = EntityGetFirstComponent(child, "SpriteComponent")
-                    if(comp)then
-                        ComponentSetValue2(comp, "image_file", self.last_player_skins["self"].arm_xml_path)
+            if(not GameHasFlagRun("super_secret_hamis_mode"))then
+                local children = EntityGetAllChildren(entity) or {}
+                for i, child in ipairs(children)do
+                    if(EntityHasTag(child, "player_arm_r"))then
+                        local comp = EntityGetFirstComponent(child, "SpriteComponent")
+                        if(comp)then
+                            ComponentSetValue2(comp, "image_file", self.last_player_skins["self"].arm_xml_path)
+                        end
                     end
-                end
-                if(EntityGetName(child) == "cape")then
-                    local verlet_comp = EntityGetFirstComponent(child, "VerletPhysicsComponent")
+                    if(EntityGetName(child) == "cape")then
+                        local verlet_comp = EntityGetFirstComponent(child, "VerletPhysicsComponent")
 
-                    if(verlet_comp)then
-                        ComponentSetValue2(verlet_comp, "cloth_color", self.last_player_skins["self"].cape)
-                        ComponentSetValue2(verlet_comp, "cloth_color_edge", self.last_player_skins["self"].cape_edge)
+                        if(verlet_comp)then
+                            ComponentSetValue2(verlet_comp, "cloth_color", self.last_player_skins["self"].cape)
+                            ComponentSetValue2(verlet_comp, "cloth_color_edge", self.last_player_skins["self"].cape_edge)
+                        end
                     end
                 end
             end
-            
            
         end
     end
@@ -1312,14 +1364,21 @@ skins.init = function()
             local old_skin_path = self.last_player_skins["self"].path
             fs.remove(old_skin_path)
 
-            local old_skin_path_arm = self.last_player_skins["self"].arm_path
-            fs.remove(old_skin_path_arm)
+            if(not GameHasFlagRun("super_secret_hamis_mode"))then
+                local old_skin_path_arm = self.last_player_skins["self"].arm_path
+                fs.remove(old_skin_path_arm)
+            end
         end
 
         print("Applying skin to self")
         
         if(self.selected_skin)then
-            ModSettingSet("arena_last_skin", self.selected_skin.name)
+            if(GameHasFlagRun("super_secret_hamis_mode"))then
+                ModSettingSet("arena_last_skin_hamis", self.selected_skin.name)
+            else
+                ModSettingSet("arena_last_skin", self.selected_skin.name)
+            end
+
         end
         
         
@@ -1344,45 +1403,64 @@ skins.init = function()
             networking.send.send_skin(lobby, file_data)
         end
 
-        local texture_file = string.format(get_content("mods/evaisa.arena/files/gfx/skins/player.xml"), temp_path)
-        local texture_file_name = "data/evaisa.arena/cache/skin_self_"..file_name..".xml"
-        set_content(texture_file_name, texture_file)
+        if(not GameHasFlagRun("super_secret_hamis_mode"))then
 
-        local texture_file_arm = string.format(get_content("mods/evaisa.arena/files/gfx/skins/player_arm.xml"), arm_path)
-        local texture_file_name_arm = "data/evaisa.arena/cache/skin_arm_self_"..file_name..".xml"
-        set_content(texture_file_name_arm, texture_file_arm)
+            local texture_file = string.format(get_content("mods/evaisa.arena/files/gfx/skins/player.xml"), temp_path)
+            local texture_file_name = "data/evaisa.arena/cache/skin_self_"..file_name..".xml"
+            set_content(texture_file_name, texture_file)
 
-        local players = EntityGetWithTag("player_unit")
-        for i, player in ipairs(players)do
-            local comp = EntityGetFirstComponentIncludingDisabled(player, "SpriteComponent", "skin_root")
-            if(comp)then
-                ComponentSetValue2(comp, "image_file", texture_file_name)
-            end
+            local texture_file_arm = string.format(get_content("mods/evaisa.arena/files/gfx/skins/player_arm.xml"), arm_path)
+            local texture_file_name_arm = "data/evaisa.arena/cache/skin_arm_self_"..file_name..".xml"
+            set_content(texture_file_name_arm, texture_file_arm)
 
-            local children = EntityGetAllChildren(player) or {}
-            for i, child in ipairs(children)do
-                if(EntityHasTag(child, "player_arm_r"))then
-                    local comp = EntityGetFirstComponent(child, "SpriteComponent")
-                    if(comp)then
-                        ComponentSetValue2(comp, "image_file", texture_file_name_arm)
+            local players = GetPlayers()
+            for i, player in ipairs(players)do
+                local comp = EntityGetFirstComponentIncludingDisabled(player, "SpriteComponent", "skin_root")
+                if(comp)then
+                    ComponentSetValue2(comp, "image_file", texture_file_name)
+                end
+
+                local children = EntityGetAllChildren(player) or {}
+                for i, child in ipairs(children)do
+                    if(EntityHasTag(child, "player_arm_r"))then
+                        local comp = EntityGetFirstComponent(child, "SpriteComponent")
+                        if(comp)then
+                            ComponentSetValue2(comp, "image_file", texture_file_name_arm)
+                        end
+                    end
+                    if(EntityGetName(child) == "cape")then
+                        local verlet_comp = EntityGetFirstComponent(child, "VerletPhysicsComponent")
+
+                        if(verlet_comp)then
+                            ComponentSetValue2(verlet_comp, "cloth_color", cape)
+                            ComponentSetValue2(verlet_comp, "cloth_color_edge", cape_edge)
+                        end
                     end
                 end
-                if(EntityGetName(child) == "cape")then
-                    local verlet_comp = EntityGetFirstComponent(child, "VerletPhysicsComponent")
-
-                    if(verlet_comp)then
-                        ComponentSetValue2(verlet_comp, "cloth_color", cape)
-                        ComponentSetValue2(verlet_comp, "cloth_color_edge", cape_edge)
-                    end
-                end
+                cosmetics_handler.ApplyCosmeticsList(lobby, data, player, self.selected_cosmetics)
             end
-            cosmetics_handler.ApplyCosmeticsList(lobby, data, player, self.selected_cosmetics)
+
+            
+
+            self.last_player_skins["self"] = {path = temp_path, xml_path = texture_file_name, arm_path = arm_path, arm_xml_path = texture_file_name_arm, cape = cape, cape_edge = cape_edge}
+        else
+            local texture_file = string.format(get_content("mods/evaisa.arena/files/gfx/skins/hamis.xml"), temp_path)
+            local texture_file_name = "data/evaisa.arena/cache/skin_self_"..file_name..".xml"
+            set_content(texture_file_name, texture_file)
+
+            local players = GetPlayers()
+            for i, player in ipairs(players)do
+                local comp = EntityGetFirstComponentIncludingDisabled(player, "SpriteComponent", "skin_root")
+                if(comp)then
+                    ComponentSetValue2(comp, "image_file", texture_file_name)
+                end
+
+                cosmetics_handler.ApplyCosmeticsList(lobby, data, player, self.selected_cosmetics)
+            end
+
+            self.last_player_skins["self"] = {path = temp_path, xml_path = texture_file_name}
+            
         end
-
-        
-
-        self.last_player_skins["self"] = {path = temp_path, xml_path = texture_file_name, arm_path = arm_path, arm_xml_path = texture_file_name_arm, cape = cape, cape_edge = cape_edge}
-
 
     end
 

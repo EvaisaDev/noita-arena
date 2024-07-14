@@ -1,4 +1,4 @@
-<Entity name="$animal_longleg" tags="mortal,human,hittable,peasant,prey,teleportable,spectator_no_clear,homing_target">
+<Entity name="DEBUG_NAME:player" tags="mortal,human,hittable,peasant,prey,player_unit,teleportable,spectator_no_clear,homing_target">
   
   <HotspotComponent
     _tags="hat"
@@ -11,6 +11,18 @@
     execute_every_n_frame="0"
   />
 
+    <LuaComponent
+      script_damage_about_to_be_received = "mods/evaisa.arena/files/scripts/gamemode/misc/immortal_client.lua"
+      script_damage_received = "mods/evaisa.arena/files/scripts/gamemode/misc/immortal_client.lua"
+      >
+    </LuaComponent>
+
+    <LuaComponent
+        script_wand_fired = "mods/evaisa.arena/files/scripts/gamemode/misc/on_wand_fire_client.lua"
+        >
+    </LuaComponent>
+
+
     <Inventory2Component 
         _enabled="1" 
         full_inventory_slots_x="0" 
@@ -20,12 +32,15 @@
 
     </Inventory2Component>
 
+    <InventoryGuiComponent/>
+
     <Entity name="inventory_quick">
     </Entity>
     <Base file="data/entities/base_enemy_basic.xml" >
         <ItemChestComponent level="1" > </ItemChestComponent>
         
         <AnimalAIComponent
+            _enabled="0"
             escape_if_damaged_probability="100"
             sense_creatures="1"
             attack_melee_max_distance="10" 
@@ -64,11 +79,15 @@
         
         <CharacterPlatformingComponent 
             jump_velocity_y="-140" 
+            fly_speed_change_spd="0"
+            fly_speed_max_down="90"
+            fly_speed_max_up="90"
+            fly_speed_mult="0"
             run_velocity="25"  >
         </CharacterPlatformingComponent>
 
         <GenomeDataComponent 
-            herd_id="spider">
+            herd_id="pvp">
         </GenomeDataComponent>
         
         <HitboxComponent 
@@ -88,8 +107,16 @@
 			mass="0.4"
 			>
 		</CharacterDataComponent>
+
+        <CameraBoundComponent
+            _enabled="0"
+            enabled="0"
+        />
     </Base>
 	
+    <FogOfWarRadiusComponent
+    radius="256" />
+
 	<AudioComponent
 		file="data/audio/Desktop/animals.bank"
 		event_root="animals/longleg" >

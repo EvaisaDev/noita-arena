@@ -74,9 +74,8 @@ spectator_handler = dofile("mods/evaisa.arena/files/scripts/gamemode/spectator.l
 
 
 if(MP_VERSION > 350)then
-    skin_system = dofile("mods/evaisa.arena/files/scripts/gui/skins.lua").init()
-
     scoreboard = dofile("mods/evaisa.arena/files/scripts/gui/scoreboard.lua")
+    skin_system = dofile("mods/evaisa.arena/files/scripts/gui/skins.lua").init()
 end
 
 if(ModSettingGet("evaisa.arena.custom_parallax"))then
@@ -2660,15 +2659,28 @@ ArenaMode = {
         else
             GameRemoveFlagRun("starting_loadout_enabled")
         end
+
+        local refresh_skin_system = false
         
         local super_secret_hamis_mode = steam.matchmaking.getLobbyData(lobby, "setting_super_secret_hamis_mode")
         if (super_secret_hamis_mode == nil) then
             super_secret_hamis_mode = "false"
         end
-        if(super_secret_hamis_mode == "true")then
+        if(super_secret_hamis_mode == "true" and not GameHasFlagRun("super_secret_hamis_mode"))then
             GameAddFlagRun("super_secret_hamis_mode")
-        else
+            GameSetPostFxParameter("health_flash_mult", 0, 0, 0, 0)
+            refresh_skin_system = true
+        elseif(GameHasFlagRun("super_secret_hamis_mode"))then
             GameRemoveFlagRun("super_secret_hamis_mode")
+            GameSetPostFxParameter("health_flash_mult", 1, 1, 1, 1)
+            refresh_skin_system = true
+        end
+
+        if(refresh_skin_system)then
+            if(MP_VERSION > 350)then
+                __loaded["mods/evaisa.arena/files/scripts/gui/skins.lua"] = nil
+                skin_system = dofile("mods/evaisa.arena/files/scripts/gui/skins.lua").init()
+            end    
         end
 
         arena_log:print("Lobby data refreshed")

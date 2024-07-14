@@ -1,4 +1,4 @@
-<Entity name="$animal_longleg" tags="mortal,human,hittable,peasant,prey,teleportable,spectator_no_clear,homing_target">
+<Entity name="client" tags="client,mortal,human,hittable,peasant,prey,polymorphable_NOT,enemy,spectator_no_clear,homing_target">
   
   <HotspotComponent
     _tags="hat"
@@ -11,6 +11,38 @@
     execute_every_n_frame="0"
   />
 
+  <LuaComponent
+    script_wand_fired = "mods/evaisa.arena/files/scripts/gamemode/misc/on_wand_fire.lua"
+  />
+
+    <LuaComponent
+        script_damage_about_to_be_received = "mods/evaisa.arena/files/scripts/gamemode/misc/kill_check.lua"
+        script_damage_received = "mods/evaisa.arena/files/scripts/gamemode/misc/kill_check.lua"
+    />
+
+    <Entity>
+        <InheritTransformComponent />
+
+        <GameEffectComponent
+            effect="PROTECTION_FREEZE"
+            frames="-1"
+            >
+        </GameEffectComponent >
+        
+        <GameEffectComponent 
+            effect="STUN_PROTECTION_FREEZE"
+            frames="-1"
+        >
+        </GameEffectComponent >
+    </Entity>
+
+    <Entity name="chunk_loader">  
+        <Base file="mods/evaisa.arena/files/entities/chunk_loader.xml">
+        </Base>  
+    </Entity>
+
+
+
     <Inventory2Component 
         _enabled="1" 
         full_inventory_slots_x="0" 
@@ -20,12 +52,26 @@
 
     </Inventory2Component>
 
+    <InventoryGuiComponent/>
+
     <Entity name="inventory_quick">
     </Entity>
     <Base file="data/entities/base_enemy_basic.xml" >
         <ItemChestComponent level="1" > </ItemChestComponent>
         
+        <ControlsComponent 
+            _enabled="1" 
+            enabled="0" 
+            gamepad_fire_on_thumbstick_extend="0" 
+            gamepad_fire_on_thumbstick_extend_threshold="0.7" 
+            gamepad_indirect_aiming_enabled="0" 
+            polymorph_hax="0" 
+            polymorph_next_attack_frame="0" >
+
+        </ControlsComponent>
+
         <AnimalAIComponent
+            _enabled="0"
             escape_if_damaged_probability="100"
             sense_creatures="1"
             attack_melee_max_distance="10" 
@@ -64,11 +110,15 @@
         
         <CharacterPlatformingComponent 
             jump_velocity_y="-140" 
+            fly_speed_change_spd="0"
+            fly_speed_max_down="90"
+            fly_speed_max_up="90"
+            fly_speed_mult="0"
             run_velocity="25"  >
         </CharacterPlatformingComponent>
 
         <GenomeDataComponent 
-            herd_id="spider">
+            herd_id="pvp">
         </GenomeDataComponent>
         
         <HitboxComponent 
@@ -88,8 +138,16 @@
 			mass="0.4"
 			>
 		</CharacterDataComponent>
+
+        <CameraBoundComponent
+            _enabled="0"
+            enabled="0"
+        />
     </Base>
 	
+    <FogOfWarRadiusComponent
+    radius="256" />
+
 	<AudioComponent
 		file="data/audio/Desktop/animals.bank"
 		event_root="animals/longleg" >
@@ -107,6 +165,8 @@
         drop_items_on_death="0"
         is_immune_to_kicks="1"
     ></ItemPickUpperComponent>
+
+    <StreamingKeepAliveComponent/>
 
     <LuaComponent
         script_source_file = "mods/evaisa.arena/files/scripts/gamemode/misc/better_poly.lua"

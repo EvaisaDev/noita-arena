@@ -679,10 +679,20 @@ ArenaGameplay = {
     end,
     LoadPlayer = function(lobby, data, x, y)
 
+        if(data.is_spectating)then
+            return
+        end
+
         data.is_polymorphed = false
         print("Loading player entity!!!")
 
-        local current_player = EntityLoad("data/entities/player.xml", x or 0, y or 0)
+        local player_xml = "data/entities/player.xml"
+
+        if(GameHasFlagRun("super_secret_hamis_mode"))then
+            player_xml = "mods/evaisa.arena/files/entities/hamis_player.xml"
+        end
+
+        local current_player = EntityLoad(player_xml, x or 0, y or 0)
 
         local aiming_reticle = EntityGetComponentIncludingDisabled(current_player, "SpriteComponent", "aiming_reticle") or {}
 
@@ -750,18 +760,14 @@ ArenaGameplay = {
 
         end
 
-        delay.new(1, function()
-            if(GameHasFlagRun("super_secret_hamis_mode"))then
-                local current_player = player.Get()
-                LoadGameEffectEntityTo( current_player, "mods/evaisa.arena/files/entities/misc/polymorph_hamis.xml" )
-            end
-        end)
-
         GameRemoveFlagRun("player_unloaded")
     end,
     ResetPlayerData = function(lobby, data)
         for k, v in pairs(data.players) do
             v.polymorph_entity = nil
+            if(GameHasFlagRun("super_secret_hamis_mode"))then
+                v.polymorph_entity = "mods/evaisa.arena/files/entities/hamis.xml"
+            end
         end
     end,
     AllowFiring = function(data)
@@ -1991,7 +1997,8 @@ ArenaGameplay = {
         ArenaGameplay.ResetPlayerData(lobby, data)
         data.is_polymorphed = false
         data.picked_up_items = {}
-        
+
+
         GameAddFlagRun("sync_item_generation")
 
         GameRemoveFlagRun("card_picked")
@@ -3213,9 +3220,10 @@ ArenaGameplay = {
 
     end,
     TransformPlayer = function(lobby, user, data, target_entity)
+
+        print("Attempting to transform player "..tostring(user).." to "..tostring(target_entity))
+
         local player_data = data.players[tostring(user)]
-        
-        print(debug.traceback())
 
         local target_file = ""
         if(target_entity)then
@@ -3240,8 +3248,23 @@ ArenaGameplay = {
 
                 GameDestroyInventoryItems(player_data.entity)
 
+                local original_entity = player_data.entity
+
                 local effect =  LoadGameEffectEntityTo(player_data.entity, target_file)
                 local new_entity = EntityGetRootEntity(effect)
+
+
+                -- if root entity is the same as original entity, return null
+                if(new_entity == effect)then
+                    return nil
+                end
+                
+                --[[delay.new(function()
+                    return EntityGetRootEntity(effect) ~= entity
+                end, function()
+
+                
+                end)]]
                 
                 -- update name
                 EntitySetName(new_entity, tostring(user))
@@ -3312,7 +3335,10 @@ ArenaGameplay = {
                     data.selected_player = new_entity
                 end
 
-                print("Transformed player "..tostring(user).." to "..tostring(new_entity))
+                -- stacktrace
+        
+                print("Transformed player "..tostring(user) .. "from " .. original_entity .." to "..tostring(new_entity))
+
 
                 return new_entity
             else
@@ -3325,6 +3351,12 @@ ArenaGameplay = {
         end
     end,
     SpawnClientPlayer = function(lobby, user, data, x, y)
+
+
+
+        if(GameHasFlagRun("super_secret_hamis_mode"))then
+            data.players[tostring(user)].polymorph_entity = "mods/evaisa.arena/files/entities/hamis.xml"
+        end
 
         if((not data.state == "arena" and not data.spectator_mode) or (data.state == "lobby" and data.spectator_mode and (data.spectator_entity == nil or not EntityGetIsAlive(data.spectator_entity))))then
             print("skipped spawn!!")
@@ -3339,13 +3371,15 @@ ArenaGameplay = {
             data.client_spawn_y = nil
         end
 
+        local client_xml = "mods/evaisa.arena/files/entities/client.xml"
 
+        if(GameHasFlagRun("super_secret_hamis_mode"))then
+            client_xml = "mods/evaisa.arena/files/entities/hamis_client.xml"
+        end
 
-        local client = EntityLoad("mods/evaisa.arena/files/entities/client.xml", x or -1000, y or -1000)
+        local client = EntityLoad(client_xml, x or -1000, y or -1000)
 
         local was_poly = false
-
-
 
 
         EntitySetName(client, tostring(user))
@@ -3364,6 +3398,10 @@ ArenaGameplay = {
             EntitySetName(client, tostring(user))
             was_poly = true
             data.players[tostring(user)].entity = client
+
+            EntitySetName(client, tostring(user))
+            EntityRemoveTag(client, "polymorphed_player")
+            EntityAddTag(client, "client")
         end
 
 
@@ -3380,10 +3418,11 @@ ArenaGameplay = {
                     end
                 end
             end
+        end
 
-            if(skin_system and lobby)then
-                skin_system.apply_skin_to_entity(lobby, client, user, data)
-            end
+        
+        if(skin_system and lobby)then
+            skin_system.apply_skin_to_entity(lobby, client, user, data)
         end
         
         networking.send.request_sync_hm(lobby, user)
@@ -3406,16 +3445,15 @@ ArenaGameplay = {
 
         --cosmetics_handler.LoadClientCosmetics(lobby, data, client)
 
-        if(not was_poly)then
-            local cosmetics = {}
-            
-            for k, v in pairs(data.players[tostring(user)].cosmetics or {})do
-                print("Applying cosmetic: "..tostring(k))
-                table.insert(cosmetics, k)
-            end
-
-            cosmetics_handler.ApplyCosmeticsList(lobby, data, client, cosmetics, true, user)
+        local cosmetics = {}
+        
+        for k, v in pairs(data.players[tostring(user)].cosmetics or {})do
+            print("Applying cosmetic: "..tostring(k))
+            table.insert(cosmetics, k)
         end
+
+        cosmetics_handler.ApplyCosmeticsList(lobby, data, client, cosmetics, true, user)
+
         
         return client
     end,
@@ -3972,9 +4010,17 @@ ArenaGameplay = {
 
         local player_entity = player.Get()
 
-        if(player_entity)then
+        if(player_entity and not data.is_spectating)then
 
             if(GameHasFlagRun("super_secret_hamis_mode"))then
+                local inventory_gui_comp = EntityGetFirstComponentIncludingDisabled(player_entity, "InventoryGuiComponent")
+                
+                if(inventory_gui_comp)then
+                    ComponentSetValue2(inventory_gui_comp, "mActive", false)
+                end
+
+
+                
                 local sprite_comp = EntityGetFirstComponentIncludingDisabled(player_entity, "SpriteComponent", "character")
 
                 local animation = ComponentGetValue2(sprite_comp, "rect_animation")
@@ -4037,13 +4083,18 @@ ArenaGameplay = {
     
                 local on_ground = ComponentGetValue2(characterDataComponent, "is_on_ground")
 
-                was_on_ground = was_on_ground or 3
+                on_ground_last_frame = on_ground_last_frame or false
+
+                if(on_ground)then
+                    on_ground_last_frame = true
+                end
+
+                was_on_ground = was_on_ground or tonumber(GlobalsGetValue("hamis_dash_count", "1"))
     
                 if(on_ground)then
-                    was_on_ground = 3
+                    was_on_ground = tonumber(GlobalsGetValue("hamis_dash_count", "1"))
                 end
-                --GamePrint(tostring(mouse2_frame) .. " " .. tostring(GameGetFrameNum()) .. " " .. tostring(on_ground))
-  
+
                 if(fire)then
                     GamePlayAnimation(player_entity, "attack", 100, "idle", 1)
                     networking.send.hamis_attack(lobby)
@@ -4055,19 +4106,11 @@ ArenaGameplay = {
                     ComponentSetValue2(characterDataComponent, "mVelocity", target_x, target_y)
                     networking.send.hamis_attack(lobby)
                     was_on_ground = was_on_ground - 1
-                elseif(jump and jump_frame == GameGetFrameNum())then
+                elseif(on_ground_last_frame and jump and jump_frame <= GameGetFrameNum() + 1)then
                     ComponentSetValue2(controlsComp, "mJumpVelocity", target_x, target_y)
                 end
-            end
 
-            if(not EntityHasTag(player_entity, "polymorphed_player") and GameHasFlagRun("super_secret_hamis_mode"))then
-                -- tomfoolery turn into hämis
-                delay.new(1, function()
-                    if(GameHasFlagRun("super_secret_hamis_mode"))then
-                        local current_player = player.Get()
-                        LoadGameEffectEntityTo( current_player, "mods/evaisa.arena/files/entities/misc/polymorph_hamis.xml" )
-                    end
-                end)
+                on_ground_last_frame = on_ground
             end
 
 
@@ -4105,6 +4148,11 @@ ArenaGameplay = {
                     ComponentSetValue2(character_platforming_comp, "fly_speed_mult", 0)
                     ComponentSetValue2(character_platforming_comp, "fly_speed_change_spd", 0)
                 end
+
+                EntityAddTag(player_entity, "player_unit")
+
+                -- add InventoryGuiComponent
+                EntityAddComponent2(player_entity, "InventoryGuiComponent")
 
                 EntityAddComponent2(player_entity, "LuaComponent", {
                     script_wand_fired = "mods/evaisa.arena/files/scripts/gamemode/misc/on_wand_fire.lua"
@@ -4260,6 +4308,13 @@ ArenaGameplay = {
 
         np.SetInventoryCursorEnabled(not data.is_spectating)
         if(data.is_spectating)then
+
+            local polymorph_players = EntityGetWithTag("polymorphed_player") or {}
+            for k, v in ipairs(polymorph_players)do
+                if(not EntityHasTag(v, "client"))then
+                    --EntityKill(v)
+                end
+            end
             
             
             -- handle hover tooltips for world wands

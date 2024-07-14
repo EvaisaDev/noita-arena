@@ -1614,7 +1614,7 @@ networking = {
                     local cosmetics_string = table.concat(player_data.cosmetics, ",")
 
       
-                    if(client_data.last_cosmetics ~= cosmetics_string and client_data.polymorph_entity == nil)then
+                    if(client_data.last_cosmetics ~= cosmetics_string)then
                         print("Applying cosmetics!!")
                         cosmetics_handler.ApplyCosmeticsList(lobby, data, client_entity, player_data.cosmetics, true, user)
                         client_data.last_cosmetics = cosmetics_string
@@ -2185,7 +2185,7 @@ networking = {
             SetWorldSeed( message )
         end,
         send_skin = function(lobby, message, user, data)
-            if data.players[tostring(user)] and not data.players[tostring(user)].polymorph_entity then
+            if data.players[tostring(user)] then
                 data.players[tostring(user)].skin_data = message
 
                 if(skin_system and lobby)then
@@ -2718,7 +2718,7 @@ networking = {
             if(data.state == "lobby" and not data.spectator_mode) then
                 return
             end
-        
+
             local dat = zstd:decompress(message)
         
             local info2 = {}
@@ -2739,6 +2739,12 @@ networking = {
             if player_data == nil then
                 return
             end
+
+            
+            if(player_data.polymorph_entity)then
+                return
+            end
+        
         
             local entity = player_data.entity
         
