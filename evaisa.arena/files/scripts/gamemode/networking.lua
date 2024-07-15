@@ -2825,12 +2825,9 @@ networking = {
             end
 
             if (data.spectator_mode or (GameHasFlagRun("player_is_unlocked") and (not GameHasFlagRun("no_shooting"))) and data.players[tostring(user)].entity ~= nil and EntityGetIsAlive(data.players[tostring(user)].entity)) then
-
-                local controlsComp = EntityGetFirstComponentIncludingDisabled(data.players[tostring(user)].entity, "ControlsComponent")
-
-                if (controlsComp ~= nil) then
-                    GamePlayAnimation(data.players[tostring(user)].entity, "attack", 100, "idle", 1)
-                end
+                data.players[tostring(user)].hamis_damage = message[1]
+                GamePlayAnimation(data.players[tostring(user)].entity, "attack", 100, "idle", 1)
+        
             end
         end,
     },
@@ -3811,8 +3808,8 @@ networking = {
                
             end
         end,
-        hamis_attack = function(lobby)
-            steamutils.send("hamis_attack", {}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+        hamis_attack = function(lobby, damage_mult)
+            steamutils.send("hamis_attack", {damage_mult}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
         end,
     },
 }

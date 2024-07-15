@@ -598,6 +598,7 @@ player_helper.GetPerks = function()
             end
         end
     else
+        apply_perk_fixes()
         for i, perk_data in ipairs(perk_list) do
             local perk_id = perk_data.id
             local flag_name = get_perk_picked_flag_name(perk_id)
@@ -627,7 +628,7 @@ player_helper.GivePerk = function(perk_id, amount, skip_count)
     local pos_x, pos_y
 
     pos_x, pos_y = EntityGetTransform(entity_who_picked)
-
+    apply_perk_fixes()
     local perk_data = get_perk_with_id(perk_list, perk_id)
     if perk_data == nil then
         return
@@ -771,7 +772,7 @@ player_helper.SetPerks = function(perks, skip_count)
         if(entity_who_picked == nil or entity_who_picked == 0 or not EntityGetIsAlive(entity_who_picked))then
             return
         end
-    
+        apply_perk_fixes()
         local perk_data = get_perk_with_id(perk_list, perk_id)
         if perk_data == nil then
             return

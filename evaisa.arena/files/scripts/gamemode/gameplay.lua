@@ -505,6 +505,7 @@ ArenaGameplay = {
                 
 
         dofile_once("data/scripts/perks/perk_list.lua")
+        apply_perk_fixes()
         for i, perk_data in ipairs(perk_list) do
             local perk_id = perk_data.id
             local flag_name = get_perk_picked_flag_name(perk_id)
@@ -4026,11 +4027,11 @@ ArenaGameplay = {
                 local animation = ComponentGetValue2(sprite_comp, "rect_animation")
                 local player_x, player_y = EntityGetTransform(player_entity)
     
-                local hearts = EntityGetInRadiusWithTag(player_x, player_y, 10, "heart") or {}
+                local allowed_items = MergeTables(EntityGetInRadiusWithTag(player_x, player_y, 10, "heart") or {}, EntityGetInRadiusWithTag(player_x, player_y, 10, "perk") or {}, EntityGetInRadiusWithTag(player_x, player_y, 10, "perk_reroll_machine") or {})
                 local itemPickUpperComp = EntityGetFirstComponentIncludingDisabled(player_entity, "ItemPickUpperComponent")
     
-                for k, v in ipairs(hearts)do
-                    ComponentSetValue2(itemPickUpperComp, "only_pick_this_entity", v)
+                for k, v in ipairs(allowed_items)do
+                    ComponentSetValue2(itemPickUpperComp, "only_pick_this_entity", v) 
                 end
     
                 last_damaged_targets = last_damaged_targets or {}
@@ -4042,9 +4043,11 @@ ArenaGameplay = {
                         -- if target is not us
                         if(v ~= player_entity)then
                             if(last_damaged_targets[v] == nil or GameGetFrameNum() > last_damaged_targets[v] + 50)then
-                                EntityInflictDamage(v, 0.8, "DAMAGE_BITE", "hämis", "BLOOD_EXPLOSION", 0, 0, player_entity, player_x, player_y, 200)
+                                local damage_mult = tonumber(GlobalsGetValue("hamis_damage_mult", "1"))
+                                EntityInflictDamage(v, 0.8 * damage_mult, "DAMAGE_BITE", "hämis", "BLOOD_EXPLOSION", 0, 0, player_entity, player_x, player_y, 200)
                                 last_damaged_targets[v] = GameGetFrameNum()
                             end
+                    
                         end
                     end
                 end
@@ -4097,14 +4100,14 @@ ArenaGameplay = {
 
                 if(fire)then
                     GamePlayAnimation(player_entity, "attack", 100, "idle", 1)
-                    networking.send.hamis_attack(lobby)
+                    networking.send.hamis_attack(lobby, tonumber(GlobalsGetValue("hamis_damage_mult", "1")))
                 elseif(mouse2 and mouse2_frame == GameGetFrameNum() and was_on_ground > 0)then
                     GamePlayAnimation(player_entity, "attack", 100, "idle", 1)
                     
                     ComponentSetValue2(characterDataComponent, "is_on_ground", true)
                     ComponentSetValue2(controlsComp, "mJumpVelocity", target_x, target_y)
                     ComponentSetValue2(characterDataComponent, "mVelocity", target_x, target_y)
-                    networking.send.hamis_attack(lobby)
+                    networking.send.hamis_attack(lobby, tonumber(GlobalsGetValue("hamis_damage_mult", "1")))
                     was_on_ground = was_on_ground - 1
                 elseif(on_ground_last_frame and jump and jump_frame <= GameGetFrameNum() + 1)then
                     ComponentSetValue2(controlsComp, "mJumpVelocity", target_x, target_y)
@@ -4494,8 +4497,11 @@ ArenaGameplay = {
                                     --print("Attacking target!")
                                     --print(tostring(v.last_damaged_targets[targ]))
                                     --print(tostring(GameGetFrameNum()))
+
+                                    local damage_mult = v.hamis_damage or 1
+
                                     if (v.last_damaged_targets[targ] == nil or GameGetFrameNum() > v.last_damaged_targets[targ] + 50) then
-                                        EntityInflictDamage(targ, 0.8, "DAMAGE_BITE", "hämis", "BLOOD_EXPLOSION", 0, 0, v.entity, x, y, 200)
+                                        EntityInflictDamage(targ, 0.8 * damage_mult, "DAMAGE_BITE", "hämis", "BLOOD_EXPLOSION", 0, 0, v.entity, x, y, 200)
                                         v.last_damaged_targets[targ] = GameGetFrameNum()
                                     end
                                 end

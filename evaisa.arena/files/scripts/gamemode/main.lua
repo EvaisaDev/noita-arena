@@ -94,7 +94,14 @@ perk_enum = {}
 all_perks = {}
 all_perks_by_name = {}
 perk_sprites = {}
-for k, perk in pairs(perk_list) do
+apply_perk_fixes()
+for k, perk in pairs(old_perk_list) do
+    perk_sprites[perk.id] = perk.ui_icon
+    table.insert(perks_sorted, perk.id)
+    all_perks[perk.id] = perk
+    all_perks_by_name[perk.ui_name] = perk
+end
+for k, perk in pairs(perk_list_hamis) do
     perk_sprites[perk.id] = perk.ui_icon
     table.insert(perks_sorted, perk.id)
     all_perks[perk.id] = perk
@@ -355,6 +362,7 @@ local function TryUpdateData(lobby)
     if(sorted_perk_list == nil)then
         sorted_perk_list = {}
         sorted_perk_list_ids = {}
+        apply_perk_fixes()
         for _, perk in pairs(perk_list)do
             table.insert(sorted_perk_list, perk)
             table.insert(sorted_perk_list_ids, perk)
@@ -2273,6 +2281,7 @@ ArenaMode = {
   
 
         dofile("data/scripts/perks/perk_list.lua")
+        apply_perk_fixes()
         dofile("data/scripts/gun/gun_actions.lua")
 
         for i, perk in ipairs(perk_list)do

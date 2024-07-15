@@ -207,6 +207,8 @@ entity.GivePerk = function( entity_who_picked, perk_id, amount )
 
     pos_x, pos_y = EntityGetTransform( entity_who_picked )
 
+    apply_perk_fixes()
+
     local perk_data = get_perk_with_id( perk_list, perk_id )
     if perk_data == nil then
         return

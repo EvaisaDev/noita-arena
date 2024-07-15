@@ -250,7 +250,7 @@ function spawn_all_shopitems( x, y )
 end
 
 function spawn_all_perks( x, y )
-	if(GameHasFlagRun("DeserializedHolyMountain") or GameHasFlagRun("super_secret_hamis_mode"))then
+	if(GameHasFlagRun("DeserializedHolyMountain"))then
 		return
 	end
 	if(GameHasFlagRun("first_death"))then
@@ -266,7 +266,7 @@ function spawn_all_perks( x, y )
 end
 
 function spawn_perk_reroll( x, y )
-	if(GameHasFlagRun("DeserializedHolyMountain") or GameHasFlagRun("super_secret_hamis_mode"))then
+	if(GameHasFlagRun("DeserializedHolyMountain"))then
 		return
 	end
 	if(GameHasFlagRun("first_death"))then
