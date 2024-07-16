@@ -6,6 +6,7 @@ local countdown = dofile_once("mods/evaisa.arena/files/scripts/utilities/countdo
 local EZWand = dofile("mods/evaisa.arena/files/scripts/utilities/EZWand.lua")
 world_sync = dofile("mods/evaisa.arena/files/scripts/gamemode/world_sync.lua")
 dofile("mods/evaisa.arena/files/scripts/gamemode/cosmetics/cosmetics.lua")
+dofile("mods/evaisa.arena/files/scripts/gamemode/misc/hamis_utils.lua")
 
 ArenaLoadCountdown = ArenaLoadCountdown or nil
 
@@ -4020,7 +4021,17 @@ ArenaGameplay = {
                     ComponentSetValue2(inventory_gui_comp, "mActive", false)
                 end
 
-
+    
+                local controlsComp = EntityGetFirstComponentIncludingDisabled(player_entity, "ControlsComponent")
+                local fire = ComponentGetValue2(controlsComp, "mButtonDownFire")
+                local fire2 = ComponentGetValue2(controlsComp, "mButtonDownFire2")
+                local fire2_frame = ComponentGetValue2(controlsComp, "mButtonFrameFire2")
+                local aim_x, aim_y = ComponentGetValue2(controlsComp, "mAimingVectorNormalized")
+                local throw = ComponentGetValue2(controlsComp, "mButtonDownThrow")
+                local throw_frame = ComponentGetValue2(controlsComp, "mButtonFrameThrow")
+                local jump = ComponentGetValue2(controlsComp, "mButtonDownFly")
+                local jump_frame = ComponentGetValue2(controlsComp, "mButtonFrameFly")
+                
                 
                 local sprite_comp = EntityGetFirstComponentIncludingDisabled(player_entity, "SpriteComponent", "character")
 
@@ -4035,9 +4046,35 @@ ArenaGameplay = {
                 end
     
                 last_damaged_targets = last_damaged_targets or {}
-
                 if(animation == "attack")then
+
+                    last_chomp = last_chomp or nil
+                    last_chomp_aim = last_chomp_aim or {0, 0}
+
+                    local big_chomper = GameHasFlagRun( "hamis_big_bite" )
+
                     local targets = EntityGetInRadiusWithTag(player_x, player_y, 5, "mortal") or {}
+
+                    if(big_chomper)then
+
+                        local attack_aim_x, attack_aim_y = aim_x, aim_y
+                        local aim_length = math.sqrt(attack_aim_x * attack_aim_x + attack_aim_y * attack_aim_y)
+                        if (aim_length > 0) then
+                            attack_aim_x = attack_aim_x / aim_length
+                            attack_aim_y = attack_aim_y / aim_length
+                        end
+
+                        if(not was_attack)then
+
+                            last_chomp = EntityLoad("mods/evaisa.arena/files/custom/perks/hamis/big_bite/chomp_entity.xml", player_x + attack_aim_x * 20, player_y + attack_aim_y * 20)
+                            GameShootProjectile(player_entity, player_x + attack_aim_x * 20, player_y + attack_aim_y * 20, player_x + attack_aim_x * 1000, player_y + attack_aim_y * 1000, last_chomp)
+                            last_chomp_aim = {attack_aim_x, attack_aim_y}
+                        end
+
+                        EntityApplyTransform(last_chomp, player_x + last_chomp_aim[1] * 20, player_y + last_chomp_aim[2] * 20)
+
+                        targets = MergeTables(targets, EntityGetInRadiusWithTag(player_x + last_chomp_aim[1] * 20, player_y + last_chomp_aim[2] * 20, 25, "mortal") or {})
+                    end
 
                     for k, v in ipairs(targets)do
                         -- if target is not us
@@ -4045,23 +4082,25 @@ ArenaGameplay = {
                             if(last_damaged_targets[v] == nil or GameGetFrameNum() > last_damaged_targets[v] + 50)then
                                 local damage_mult = tonumber(GlobalsGetValue("hamis_damage_mult", "1"))
                                 EntityInflictDamage(v, 0.8 * damage_mult, "DAMAGE_BITE", "hämis", "BLOOD_EXPLOSION", 0, 0, player_entity, player_x, player_y, 200)
+
+                                local explosion_count = tonumber( GlobalsGetValue( "hamis_explosive_dash_count", "0" ) )
+
+                                if(explosion_count > 0 and Random(0, 100) >= 50)then
+                                    local x, y = EntityGetTransform(v)
+                                    networking.send.hamis_explosion(lobby, explosion_count, x, y)
+                                    HamisMode.explode(player_entity, x, y, explosion_count)
+                                end
+
                                 last_damaged_targets[v] = GameGetFrameNum()
                             end
                     
                         end
                     end
+                    was_attack = true
+                else
+                    was_attack = false
                 end
-    
-                local controlsComp = EntityGetFirstComponentIncludingDisabled(player_entity, "ControlsComponent")
-                local fire = ComponentGetValue2(controlsComp, "mButtonDownFire")
-                local fire2 = ComponentGetValue2(controlsComp, "mButtonDownFire2")
-                local fire2_frame = ComponentGetValue2(controlsComp, "mButtonFrameFire2")
-                local aim_x, aim_y = ComponentGetValue2(controlsComp, "mAimingVectorNormalized")
-                local throw = ComponentGetValue2(controlsComp, "mButtonDownThrow")
-                local throw_frame = ComponentGetValue2(controlsComp, "mButtonFrameThrow")
-                local jump = ComponentGetValue2(controlsComp, "mButtonDownFly")
-                local jump_frame = ComponentGetValue2(controlsComp, "mButtonFrameFly")
-                
+
                 local mouse2 = false
                 local mouse2_frame = 0
                 
@@ -4093,10 +4132,46 @@ ArenaGameplay = {
                 end
 
                 was_on_ground = was_on_ground or tonumber(GlobalsGetValue("hamis_dash_count", "1"))
+                time_in_air = time_in_air or 0
+                last_time_in_air = last_time_in_air or 0
     
                 if(on_ground)then
                     was_on_ground = tonumber(GlobalsGetValue("hamis_dash_count", "1"))
+                else
+                    time_in_air = time_in_air + 1
                 end
+                
+                
+                local vel_x, vel_y = ComponentGetValue2(characterDataComponent, "mVelocity")
+
+                local velocity = math.sqrt(vel_x * vel_x + vel_y * vel_y)
+
+                last_velocity = last_velocity or velocity
+
+                print("Last velocity: " .. tostring(last_velocity) .. " Velocity: " .. tostring(velocity))
+                print("Time in air: " .. tostring(time_in_air))
+
+                if(last_velocity > 100 and velocity < 80 and last_time_in_air >= 50 and Random(0, 100) >= 50)then
+                    -- consider this an impact!
+
+                    local explosion_count = tonumber( GlobalsGetValue( "hamis_explosive_dash_count", "0" ) )
+
+                    if(explosion_count > 0)then
+                        print("Velocity: " .. tostring(velocity))
+                        local x, y = EntityGetTransform(player_entity)
+                        networking.send.hamis_explosion(lobby, explosion_count, x, y)
+                        HamisMode.explode(player_entity, x, y, explosion_count)
+                    end
+
+                end
+
+                if(on_ground and time_in_air ~= 0)then
+                    last_time_in_air = time_in_air
+                    time_in_air = 0
+                end
+
+
+                last_velocity = velocity
 
                 if(fire)then
                     GamePlayAnimation(player_entity, "attack", 100, "idle", 1)
@@ -4490,6 +4565,30 @@ ArenaGameplay = {
     
                         if (animation == "attack") then
                             local targets = EntityGetInRadiusWithTag(x, y, 15, "mortal") or {}
+
+                            local big_chomper = v.big_chomper
+
+
+
+                            if(big_chomper)then
+                                local controls_component = EntityGetFirstComponentIncludingDisabled(v.entity, "ControlsComponent")
+                                local aim_x, aim_y = ComponentGetValue2(controls_component, "mAimingVectorNormalized")
+
+                                local aim_length = math.sqrt(aim_x * aim_x + aim_y * aim_y)
+                                if (aim_length > 0) then
+                                    aim_x = aim_x / aim_length
+                                    aim_y = aim_y / aim_length
+                                end
+
+                                if(not v.was_attack)then
+                                    v.last_chomp = EntityLoad("mods/evaisa.arena/files/custom/perks/hamis/big_bite/chomp_entity.xml", x + aim_x * 20, y + aim_y * 20)
+                                    GameShootProjectile(v.entity, x + aim_x * 20, y + aim_y * 20, x + aim_x * 1000, y + aim_y * 1000, v.last_chomp)
+                                    v.last_chomp_x = aim_x
+                                    v.last_chomp_y = aim_y
+                                end
+                                EntityApplyTransform(v.last_chomp, x + v.last_chomp_x * 20, y + v.last_chomp_y * 20)
+                                targets = MergeTables(targets, EntityGetInRadiusWithTag(x + v.last_chomp_x * 20, y + v.last_chomp_y * 20, 25, "mortal") or {})
+                            end
     
                             for k, targ in ipairs(targets) do
                                 -- if target is not us
@@ -4506,6 +4605,10 @@ ArenaGameplay = {
                                     end
                                 end
                             end
+
+                            v.was_attack = true
+                        else
+                            v.was_attack = false
                         end
                         
                     end

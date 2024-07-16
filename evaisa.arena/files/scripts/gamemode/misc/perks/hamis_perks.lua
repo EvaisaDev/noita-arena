@@ -8,10 +8,10 @@ perk_list_hamis = {
         skip_functions_on_load = true,
 		stackable = STACKABLE_YES,
 		func = function( entity_perk_item, entity_who_picked, item_name )
-            local respawn_count = tonumber( GlobalsGetValue( "hamis_damage_mult", "1" ) )
-            respawn_count = respawn_count + 0.25
+            local count = tonumber( GlobalsGetValue( "hamis_damage_mult", "1" ) )
+            count = count + 0.25
 
-            GlobalsSetValue( "hamis_damage_mult", tostring( respawn_count ) )
+            GlobalsSetValue( "hamis_damage_mult", tostring( count ) )
 		end,
 	},
     {
@@ -23,15 +23,15 @@ perk_list_hamis = {
         skip_functions_on_load = true,
 		stackable = STACKABLE_YES,
 		func = function( entity_perk_item, entity_who_picked, item_name )
-            local respawn_count = tonumber( GlobalsGetValue( "hamis_dash_count", "1" ) )
-            respawn_count = respawn_count + 1
+            local count = tonumber( GlobalsGetValue( "hamis_dash_count", "1" ) )
+            count = count + 1
             
 
-            GlobalsSetValue( "hamis_dash_count", tostring( respawn_count ) )
+            GlobalsSetValue( "hamis_dash_count", tostring( count ) )
 		end,
 	},
     {
-		id = "BIG_BITE",
+		id = "HAMIS_BIG_BITE",
 		ui_name = "Big Chomp",
 		ui_description = "You are a hungry little guy aren't you?",
 		ui_icon = "mods/evaisa.arena/files/custom/perks/hamis/big_bite/ui_icon.png",
@@ -40,6 +40,22 @@ perk_list_hamis = {
 		stackable = STACKABLE_NO,
 		func = function( entity_perk_item, entity_who_picked, item_name )
             GameAddFlagRun( "hamis_big_bite" )
+		end,
+	},
+	{
+		id = "HAMIS_EXPLOSIVE_DASH",
+		ui_name = "Explosive Dash",
+		ui_description = "There is a chance you cause an explosion upon impact.",
+		ui_icon = "mods/evaisa.arena/files/custom/perks/hamis/explosive_dash/ui_icon.png",
+		perk_icon = "mods/evaisa.arena/files/custom/perks/hamis/explosive_dash/perk_icon.png",
+        skip_functions_on_load = true,
+		stackable = STACKABLE_NO,
+		func = function( entity_perk_item, entity_who_picked, item_name )
+            local count = tonumber( GlobalsGetValue( "hamis_explosive_dash_count", "0" ) )
+            count = count + 1
+            
+
+            GlobalsSetValue( "hamis_explosive_dash_count", tostring( count ) )
 		end,
 	},
 }

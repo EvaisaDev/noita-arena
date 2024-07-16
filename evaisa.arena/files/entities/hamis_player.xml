@@ -34,6 +34,9 @@
 
     <InventoryGuiComponent/>
 
+    <WalletComponent>
+    </WalletComponent>
+
     <Entity name="inventory_quick">
     </Entity>
     <Base file="data/entities/base_enemy_basic.xml" >

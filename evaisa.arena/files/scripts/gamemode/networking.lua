@@ -2826,10 +2826,24 @@ networking = {
 
             if (data.spectator_mode or (GameHasFlagRun("player_is_unlocked") and (not GameHasFlagRun("no_shooting"))) and data.players[tostring(user)].entity ~= nil and EntityGetIsAlive(data.players[tostring(user)].entity)) then
                 data.players[tostring(user)].hamis_damage = message[1]
+                data.players[tostring(user)].big_chomper = message[2]
                 GamePlayAnimation(data.players[tostring(user)].entity, "attack", 100, "idle", 1)
         
             end
         end,
+        hamis_explosion = function(lobby, message, user, data)
+            if(data.state == "lobby" and not data.spectator_mode) then
+                return
+            end
+
+            if(not GameHasFlagRun("super_secret_hamis_mode"))then
+                return
+            end
+
+            if(data.players[tostring(user)] and data.players[tostring(user)].entity and EntityGetIsAlive(data.players[tostring(user)].entity))then
+                HamisMode.explode(data.players[tostring(user)].entity, message[1], message[2], message[3])
+            end
+        end
     },
     send = {
         handshake = function(lobby)
@@ -3809,7 +3823,11 @@ networking = {
             end
         end,
         hamis_attack = function(lobby, damage_mult)
-            steamutils.send("hamis_attack", {damage_mult}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+            local big_chomper = GameHasFlagRun( "hamis_big_bite" )
+            steamutils.send("hamis_attack", {damage_mult, big_chomper}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+        end,
+        hamis_explosion = function(lobby, count, x, y)
+            steamutils.send("hamis_explosion", {x, y, count}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
         end,
     },
 }
