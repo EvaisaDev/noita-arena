@@ -1181,6 +1181,19 @@ networking = {
                         end
                     end
 
+                    if(attacker == tostring(steamutils.getSteamID()))then
+                        local count = tonumber( GlobalsGetValue( "hamis_leech_count", "0" ) )
+                        if(count > 0 and data.client.alive)then
+                            local players = GetPlayers()
+                            if(#players > 0)then
+                                local player_entity = players[1]
+                                EntityInflictDamage(player_entity, 0.04 * 5, "DAMAGE_HEALING", "leech", "NONE", 0, 0, player_entity)
+                                local player_x, player_y = EntityGetTransform(player_entity)
+                                EntityLoad("data/entities/particles/heal_effect.xml", player_x, player_y)
+                            end
+                        end
+                    end
+
                     --print("Received health update!!")
 
                     local last_health = maxHealth
@@ -2843,7 +2856,21 @@ networking = {
             if(data.players[tostring(user)] and data.players[tostring(user)].entity and EntityGetIsAlive(data.players[tostring(user)].entity))then
                 HamisMode.explode(data.players[tostring(user)].entity, message[1], message[2], message[3])
             end
-        end
+        end,
+        hamis_heal = function(lobby, message, user, data)
+            if(data.state == "lobby" and not data.spectator_mode) then
+                return
+            end
+
+            if(not GameHasFlagRun("super_secret_hamis_mode"))then
+                return
+            end
+
+            if(data.players[tostring(user)] and data.players[tostring(user)].entity and EntityGetIsAlive(data.players[tostring(user)].entity))then
+                local x, y = EntityGetTransform(data.players[tostring(user)].entity)
+                EntityLoad("data/entities/particles/heal_effect.xml", x, y)
+            end
+        end,
     },
     send = {
         handshake = function(lobby)
@@ -3828,6 +3855,9 @@ networking = {
         end,
         hamis_explosion = function(lobby, count, x, y)
             steamutils.send("hamis_explosion", {x, y, count}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+        end,
+        hamis_heal = function(lobby)
+            steamutils.send("hamis_heal", {}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
         end,
     },
 }

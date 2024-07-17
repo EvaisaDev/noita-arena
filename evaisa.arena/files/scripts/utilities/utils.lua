@@ -47,22 +47,13 @@ end
 
 function MergeTables(...)
 	local tables = {...}
-	local result = {}
+	local out = {}
 	for _,t in ipairs(tables) do
-		-- deep table merge
 		for k,v in pairs(t) do
-			if type(v) == "table" then
-				if type(result[k] or false) == "table" then
-					result[k] = MergeTables(result[k] or {}, v)
-				else
-					result[k] = v
-				end
-			else
-				result[k] = v
-			end
+			out[k] = v
 		end
 	end
-	return result
+	return out
 end
 
 function GetPlayers()

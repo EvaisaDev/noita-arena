@@ -95,13 +95,7 @@ all_perks = {}
 all_perks_by_name = {}
 perk_sprites = {}
 apply_perk_fixes()
-for k, perk in pairs(old_perk_list) do
-    perk_sprites[perk.id] = perk.ui_icon
-    table.insert(perks_sorted, perk.id)
-    all_perks[perk.id] = perk
-    all_perks_by_name[perk.ui_name] = perk
-end
-for k, perk in pairs(perk_list_hamis) do
+for k, perk in pairs(complete_perk_list) do
     perk_sprites[perk.id] = perk.ui_icon
     table.insert(perks_sorted, perk.id)
     all_perks[perk.id] = perk
@@ -363,9 +357,18 @@ local function TryUpdateData(lobby)
         sorted_perk_list = {}
         sorted_perk_list_ids = {}
         apply_perk_fixes()
-        for _, perk in pairs(perk_list)do
+
+        local curr_perk_list = old_perk_list
+        if(GameHasFlagRun("super_secret_hamis_mode"))then
+            curr_perk_list = perk_list_hamis
+        end
+
+        for _, perk in pairs(curr_perk_list)do
             table.insert(sorted_perk_list, perk)
             table.insert(sorted_perk_list_ids, perk)
+        end
+
+        for _, perk in pairs(complete_perk_list)do
             content_hash = content_hash + string.bytes(perk.id)
             content_string = content_string .. perk.id .. "\n"
         end
@@ -2221,125 +2224,6 @@ ArenaMode = {
         end
     end,
     refresh = function(lobby)
-
-        if(MP_VERSION < REQUIRED_ONLINE_VERSION)then
-            disconnect({
-                lobbyID = lobby,
-                message = GameTextGetTranslatedOrNot("$arena_bad_online_version")
-            })
-        end
-
-        print("refreshing arena settings")
-        --GamePrint("refreshing arena settings")
-
-        reset_lists()
-
-        TryUpdateData(lobby)
-
-        --print(content_string)
-        --steam.utils.setClipboard(content_string)
-        local server_hash = steam.matchmaking.getLobbyData(lobby,"content_hash")
-        print("Comparing content hash: "..tostring(content_hash).." with "..tostring(server_hash))
-
-
-        if(not invalid_version_popup_active and tostring(content_hash) ~= server_hash)then
-            if(steam_utils.IsOwner())then
-                print("content hash mismatch, updating")
-                steam_utils.TrySetLobbyData(lobby, "content_hash", content_hash)
-                steam_utils.TrySetLobbyData(lobby, "mod_list", player_mods)
-            else
-                was_content_mismatched = true
-                content_hash_popup_active = content_hash_popup_active or false
-                if(content_hash_popup_active)then
-                    return
-                end
-
-                popup.create("content_mismatch", GameTextGetTranslatedOrNot("$arena_content_mismatch_name"),{
-					{
-						text = GameTextGetTranslatedOrNot("$arena_content_mismatch_description"),
-						color = {214 / 255, 60 / 255, 60 / 255, 1}
-					},
-                    {
-						text = GameTextGetTranslatedOrNot("$arena_content_mismatch_description_2"),
-						color = {214 / 255, 60 / 255, 60 / 255, 1}
-					},
-                    {
-						text = GameTextGetTranslatedOrNot("$arena_content_mismatch_description_3"),
-						color = {214 / 255, 60 / 255, 60 / 255, 1}
-					},
-                    GameTextGetTranslatedOrNot("$arena_content_mismatch_description_4")
-				}, {
-					{
-						text = GameTextGetTranslatedOrNot("$mp_close_popup"),
-						callback = function()
-                            content_hash_popup_active = false
-						end
-					}
-				}, -6000)
-            end
-        end
-  
-
-        dofile("data/scripts/perks/perk_list.lua")
-        apply_perk_fixes()
-        dofile("data/scripts/gun/gun_actions.lua")
-
-        for i, perk in ipairs(perk_list)do
-            local is_blacklisted = perk_blacklist_data[perk.id]--steam.matchmaking.getLobbyData(lobby, "perk_blacklist_"..perk.id) == "true"
-            if(is_blacklisted)then
-                GameAddFlagRun("perk_blacklist_"..perk.id)
-            else
-                GameRemoveFlagRun("perk_blacklist_"..perk.id)
-            end
-        end
-
-        for _, spell in pairs(actions)do
-            local is_blacklisted = spell_blacklist_data[spell.id]--steam.matchmaking.getLobbyData(lobby, "spell_blacklist_"..spell.id) == "true"
-            if(is_blacklisted)then
-                GameAddFlagRun("spell_blacklist_"..spell.id)
-            else
-                GameRemoveFlagRun("spell_blacklist_"..spell.id)
-            end
-        end
-
-        for _, map in pairs(arena_list)do
-            local is_blacklisted = map_blacklist_data[map.id]--steam.matchmaking.getLobbyData(lobby, "map_blacklist_"..map.id) == "true"
-            if(is_blacklisted)then
-                GameAddFlagRun("map_blacklist_"..map.id)
-            else
-                GameRemoveFlagRun("map_blacklist_"..map.id)
-            end
-        end
-
-        for _, card in pairs(upgrades)do
-            local is_blacklisted = card_blacklist_data[card.id]--steam.matchmaking.getLobbyData(lobby, "card_blacklist_"..card.id) == "true"
-            if(is_blacklisted)then
-                GameAddFlagRun("card_blacklist_"..card.id)
-            else
-                GameRemoveFlagRun("card_blacklist_"..card.id)
-            end
-        end
-
-        for _, item in pairs(item_spawnlist)do
-            local is_blacklisted = item_blacklist_data[item.id]--steam.matchmaking.getLobbyData(lobby, "item_blacklist_"..item.id) == "true"
-            if(is_blacklisted)then
-                GameAddFlagRun("item_blacklist_"..item.id)
-            else
-                GameRemoveFlagRun("item_blacklist_"..item.id)
-            end
-        end
-
-        UpdateMaterials()
-
-        for _, material in pairs(materials)do
-            local is_blacklisted = material_blacklist_data[material.id]--steam.matchmaking.getLobbyData(lobby, "material_blacklist_"..material.id) == "true"
-            if(is_blacklisted)then
-                GameAddFlagRun("material_blacklist_"..material.id)
-            else
-                GameRemoveFlagRun("material_blacklist_"..material.id)
-            end
-        end
-
         local random_seeds = steam.matchmaking.getLobbyData(lobby, "setting_random_seed")
         if (random_seeds == nil) then
             random_seeds = "true"
@@ -2675,10 +2559,19 @@ ArenaMode = {
         if (super_secret_hamis_mode == nil) then
             super_secret_hamis_mode = "false"
         end
-        if(super_secret_hamis_mode == "true" and not GameHasFlagRun("super_secret_hamis_mode"))then
+
+        print("super secret hamis mode: "..tostring(super_secret_hamis_mode))
+
+        if(super_secret_hamis_mode == "true")then
+            print("WHAT THE ?FYUCCKAEZ EYOHKUHERWsdWHUJS DFSDFjnws")
+
+            if(not GameHasFlagRun("super_secret_hamis_mode"))then
+                refresh_skin_system = true
+            end
+
             GameAddFlagRun("super_secret_hamis_mode")
             GameSetPostFxParameter("health_flash_mult", 0, 0, 0, 0)
-            refresh_skin_system = true
+            
         elseif(GameHasFlagRun("super_secret_hamis_mode"))then
             GameRemoveFlagRun("super_secret_hamis_mode")
             GameSetPostFxParameter("health_flash_mult", 1, 1, 1, 1)
@@ -2691,6 +2584,127 @@ ArenaMode = {
                 skin_system = dofile("mods/evaisa.arena/files/scripts/gui/skins.lua").init()
             end    
         end
+
+
+        -- HANDLE CONTENT HASH STUFF NOW.
+        if(MP_VERSION < REQUIRED_ONLINE_VERSION)then
+            disconnect({
+                lobbyID = lobby,
+                message = GameTextGetTranslatedOrNot("$arena_bad_online_version")
+            })
+        end
+
+        print("Dumb fuck mode, hamis mode is: "..tostring(GameHasFlagRun("super_secret_hamis_mode")))
+
+        reset_lists()
+
+        TryUpdateData(lobby)
+
+        --print(content_string)
+        --steam.utils.setClipboard(content_string)
+        local server_hash = steam.matchmaking.getLobbyData(lobby,"content_hash")
+        print("Comparing content hash: "..tostring(content_hash).." with "..tostring(server_hash))
+
+
+        if(not invalid_version_popup_active and tostring(content_hash) ~= server_hash)then
+            if(steam_utils.IsOwner())then
+                print("content hash mismatch, updating")
+                steam_utils.TrySetLobbyData(lobby, "content_hash", content_hash)
+                steam_utils.TrySetLobbyData(lobby, "mod_list", player_mods)
+            else
+                was_content_mismatched = true
+                content_hash_popup_active = content_hash_popup_active or false
+                if(content_hash_popup_active)then
+                    return
+                end
+
+                popup.create("content_mismatch", GameTextGetTranslatedOrNot("$arena_content_mismatch_name"),{
+					{
+						text = GameTextGetTranslatedOrNot("$arena_content_mismatch_description"),
+						color = {214 / 255, 60 / 255, 60 / 255, 1}
+					},
+                    {
+						text = GameTextGetTranslatedOrNot("$arena_content_mismatch_description_2"),
+						color = {214 / 255, 60 / 255, 60 / 255, 1}
+					},
+                    {
+						text = GameTextGetTranslatedOrNot("$arena_content_mismatch_description_3"),
+						color = {214 / 255, 60 / 255, 60 / 255, 1}
+					},
+                    GameTextGetTranslatedOrNot("$arena_content_mismatch_description_4")
+				}, {
+					{
+						text = GameTextGetTranslatedOrNot("$mp_close_popup"),
+						callback = function()
+                            content_hash_popup_active = false
+						end
+					}
+				}, -6000)
+            end
+        end
+  
+
+        dofile("data/scripts/perks/perk_list.lua")
+        apply_perk_fixes()
+        dofile("data/scripts/gun/gun_actions.lua")
+
+        for i, perk in ipairs(complete_perk_list)do
+            local is_blacklisted = perk_blacklist_data[perk.id]--steam.matchmaking.getLobbyData(lobby, "perk_blacklist_"..perk.id) == "true"
+            if(is_blacklisted)then
+                GameAddFlagRun("perk_blacklist_"..perk.id)
+            else
+                GameRemoveFlagRun("perk_blacklist_"..perk.id)
+            end
+        end
+
+        for _, spell in pairs(actions)do
+            local is_blacklisted = spell_blacklist_data[spell.id]--steam.matchmaking.getLobbyData(lobby, "spell_blacklist_"..spell.id) == "true"
+            if(is_blacklisted)then
+                GameAddFlagRun("spell_blacklist_"..spell.id)
+            else
+                GameRemoveFlagRun("spell_blacklist_"..spell.id)
+            end
+        end
+
+        for _, map in pairs(arena_list)do
+            local is_blacklisted = map_blacklist_data[map.id]--steam.matchmaking.getLobbyData(lobby, "map_blacklist_"..map.id) == "true"
+            if(is_blacklisted)then
+                GameAddFlagRun("map_blacklist_"..map.id)
+            else
+                GameRemoveFlagRun("map_blacklist_"..map.id)
+            end
+        end
+
+        for _, card in pairs(upgrades)do
+            local is_blacklisted = card_blacklist_data[card.id]--steam.matchmaking.getLobbyData(lobby, "card_blacklist_"..card.id) == "true"
+            if(is_blacklisted)then
+                GameAddFlagRun("card_blacklist_"..card.id)
+            else
+                GameRemoveFlagRun("card_blacklist_"..card.id)
+            end
+        end
+
+        for _, item in pairs(item_spawnlist)do
+            local is_blacklisted = item_blacklist_data[item.id]--steam.matchmaking.getLobbyData(lobby, "item_blacklist_"..item.id) == "true"
+            if(is_blacklisted)then
+                GameAddFlagRun("item_blacklist_"..item.id)
+            else
+                GameRemoveFlagRun("item_blacklist_"..item.id)
+            end
+        end
+
+        UpdateMaterials()
+
+        for _, material in pairs(materials)do
+            local is_blacklisted = material_blacklist_data[material.id]--steam.matchmaking.getLobbyData(lobby, "material_blacklist_"..material.id) == "true"
+            if(is_blacklisted)then
+                GameAddFlagRun("material_blacklist_"..material.id)
+            else
+                GameRemoveFlagRun("material_blacklist_"..material.id)
+            end
+        end
+
+
 
         arena_log:print("Lobby data refreshed")
     end,

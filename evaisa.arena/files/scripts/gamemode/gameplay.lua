@@ -4148,9 +4148,6 @@ ArenaGameplay = {
 
                 last_velocity = last_velocity or velocity
 
-                print("Last velocity: " .. tostring(last_velocity) .. " Velocity: " .. tostring(velocity))
-                print("Time in air: " .. tostring(time_in_air))
-
                 if(last_velocity > 100 and velocity < 80 and last_time_in_air >= 50 and Random(0, 100) >= 50)then
                     -- consider this an impact!
 
@@ -4589,7 +4586,7 @@ ArenaGameplay = {
                                 EntityApplyTransform(v.last_chomp, x + v.last_chomp_x * 20, y + v.last_chomp_y * 20)
                                 targets = MergeTables(targets, EntityGetInRadiusWithTag(x + v.last_chomp_x * 20, y + v.last_chomp_y * 20, 25, "mortal") or {})
                             end
-    
+
                             for k, targ in ipairs(targets) do
                                 -- if target is not us
                                 if (targ ~= v.entity) then
@@ -4599,7 +4596,9 @@ ArenaGameplay = {
 
                                     local damage_mult = v.hamis_damage or 1
 
+
                                     if (v.last_damaged_targets[targ] == nil or GameGetFrameNum() > v.last_damaged_targets[targ] + 50) then
+                                        print("Dealing damage to target!")
                                         EntityInflictDamage(targ, 0.8 * damage_mult, "DAMAGE_BITE", "hämis", "BLOOD_EXPLOSION", 0, 0, v.entity, x, y, 200)
                                         v.last_damaged_targets[targ] = GameGetFrameNum()
                                     end

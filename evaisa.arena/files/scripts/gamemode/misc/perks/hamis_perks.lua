@@ -58,4 +58,20 @@ perk_list_hamis = {
             GlobalsSetValue( "hamis_explosive_dash_count", tostring( count ) )
 		end,
 	},
+	{
+		id = "HAMIS_LEECH",
+		ui_name = "Leeching Bites",
+		ui_description = "Theres a chance you regain health upon chomping an enemy.",
+		ui_icon = "mods/evaisa.arena/files/custom/perks/hamis/leeching_bite/ui_icon.png",
+		perk_icon = "mods/evaisa.arena/files/custom/perks/hamis/leeching_bite/perk_icon.png",
+        skip_functions_on_load = true,
+		stackable = STACKABLE_NO,
+		func = function( entity_perk_item, entity_who_picked, item_name )
+            local count = tonumber( GlobalsGetValue( "hamis_leech_count", "0" ) )
+            count = count + 1
+            
+
+            GlobalsSetValue( "hamis_leech_count", tostring( count ) )
+		end,
+	},
 }

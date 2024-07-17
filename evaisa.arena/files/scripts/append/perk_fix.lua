@@ -609,9 +609,22 @@ local rewrites = {
 	}
 }
 
+function MergeTables(...)
+	local tables = {...}
+	local out = {}
+	for _,t in ipairs(tables) do
+		for k,v in pairs(t) do
+			out[k] = v
+		end
+	end
+	return out
+end
+
 dofile("mods/evaisa.arena/files/scripts/gamemode/misc/perks/hamis_perks.lua")
 
 old_perk_list = old_perk_list or perk_list
+
+complete_perk_list = MergeTables(old_perk_list, perk_list_hamis)
 
 function apply_perk_fixes()
 	if(GameHasFlagRun("super_secret_hamis_mode"))then
