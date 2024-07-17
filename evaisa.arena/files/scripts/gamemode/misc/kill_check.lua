@@ -101,6 +101,9 @@ function damage_about_to_be_received( damage, x, y, entity_thats_responsible, cr
    
 
     GlobalsSetValue("last_damage_details", tostring(serialize_damage_details(damage_details)))
+
+
+
     --critical_hit_chance = 50
 
     return damage, critical_hit_chance
@@ -201,6 +204,7 @@ function damage_received( damage, message, entity_thats_responsible, is_fatal, p
     GameAddFlagRun("finished_damage")
     GameRemoveFlagRun("prepared_damage")
     GlobalsSetValue("last_damage_details", tostring(serialize_damage_details(damage_details)))
+    
     local invincibility_frames = 0
 
     local damageModelComponent = EntityGetFirstComponentIncludingDisabled( entity_id, "DamageModelComponent" )

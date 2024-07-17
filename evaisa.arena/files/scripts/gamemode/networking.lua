@@ -263,7 +263,7 @@ local ItemSwitch = ffi.typeof("ItemSwitch")
 local function deserialize_damage_details(str)
     local values = {}
     for value in str:gmatch("[^,]+") do
-        table.insert(values, tonumber(value))
+        table.insert(values, value)
     end
 
     local ragdoll_fx = values[1]
@@ -1187,7 +1187,7 @@ networking = {
                             local players = GetPlayers()
                             if(#players > 0)then
                                 local player_entity = players[1]
-                                EntityInflictDamage(player_entity, 0.04 * 5, "DAMAGE_HEALING", "leech", "NONE", 0, 0, player_entity)
+                                EntityInflictDamage(player_entity, -(0.04 * 5), "DAMAGE_HEALING", "leech", "NONE", 0, 0, player_entity)
                                 local player_x, player_y = EntityGetTransform(player_entity)
                                 EntityLoad("data/entities/particles/heal_effect.xml", player_x, player_y)
                             end

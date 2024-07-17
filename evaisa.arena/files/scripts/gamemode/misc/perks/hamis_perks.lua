@@ -61,7 +61,7 @@ perk_list_hamis = {
 	{
 		id = "HAMIS_LEECH",
 		ui_name = "Leeching Bites",
-		ui_description = "Theres a chance you regain health upon chomping an enemy.",
+		ui_description = "You regain health upon chomping an enemy.",
 		ui_icon = "mods/evaisa.arena/files/custom/perks/hamis/leeching_bite/ui_icon.png",
 		perk_icon = "mods/evaisa.arena/files/custom/perks/hamis/leeching_bite/perk_icon.png",
         skip_functions_on_load = true,
