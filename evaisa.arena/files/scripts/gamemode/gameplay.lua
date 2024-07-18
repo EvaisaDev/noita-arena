@@ -4083,6 +4083,21 @@ ArenaGameplay = {
                                 local damage_mult = tonumber(GlobalsGetValue("hamis_damage_mult", "1"))
                                 EntityInflictDamage(v, 0.8 * damage_mult, "DAMAGE_BITE", "hämis", "BLOOD_EXPLOSION", 0, 0, player_entity, player_x, player_y, 200)
 
+                                if(not EntityHasTag(v, "client"))then
+                                    local count = tonumber( GlobalsGetValue( "hamis_leech_count", "0" ) )
+                                    if(count > 0 and data.client.alive)then
+                                        local players = GetPlayers()
+                                        if(#players > 0)then
+                                            local player_entity = players[1]
+                                            EntityInflictDamage(player_entity, -(0.04 * 5), "DAMAGE_HEALING", "leech", "NONE", 0, 0, player_entity)
+                                            local player_x, player_y = EntityGetTransform(player_entity)
+                                            EntityLoad("data/entities/particles/heal_effect.xml", player_x, player_y)
+                                            networking.send.hamis_heal(lobby)
+                                        end
+                                    end
+                                end
+
+
                                 local explosion_count = tonumber( GlobalsGetValue( "hamis_explosive_dash_count", "0" ) )
 
                                 if(explosion_count > 0 and Random(0, 100) >= 50)then

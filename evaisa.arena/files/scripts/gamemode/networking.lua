@@ -1190,6 +1190,7 @@ networking = {
                                 EntityInflictDamage(player_entity, -(0.04 * 5), "DAMAGE_HEALING", "leech", "NONE", 0, 0, player_entity)
                                 local player_x, player_y = EntityGetTransform(player_entity)
                                 EntityLoad("data/entities/particles/heal_effect.xml", player_x, player_y)
+                                networking.send.hamis_heal(lobby)
                             end
                         end
                     end
