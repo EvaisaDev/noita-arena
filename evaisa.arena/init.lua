@@ -75,6 +75,7 @@ register_localizations("mods/evaisa.arena/translations.csv", 2)
 function OnModPostInit()
     if(ModIsEnabled("evaisa.mp"))then
         ModLuaFileAppend("mods/evaisa.mp/data/gamemodes.lua", "mods/evaisa.arena/files/scripts/gamemode/main.lua")
+        ModLuaFileAppend("mods/evaisa.mp/files/scripts/lobby_ui.lua", "mods/evaisa.arena/hamis.lua")
     end
 end
 
@@ -95,6 +96,7 @@ end
 local warning_shown_mp = false
 local warning_shown_save = false
 local ready = false
+
 
 function OnWorldPreUpdate()
     if(not ready)then
@@ -127,6 +129,8 @@ function OnWorldPreUpdate()
         }, {
         }, -6000)
     end
+
+
 end
 
 

@@ -692,7 +692,11 @@ ArenaGameplay = {
 
         if(GameHasFlagRun("super_secret_hamis_mode"))then
             player_xml = "mods/evaisa.arena/files/entities/hamis_player.xml"
+            np.MagicNumbersSetValue("UI_QUICKBAR_OFFSET_Y", "-1000")
+        else
+            np.MagicNumbersSetValue("UI_QUICKBAR_OFFSET_Y", "0")
         end
+        
 
         local current_player = EntityLoad(player_xml, x or 0, y or 0)
 
@@ -767,9 +771,6 @@ ArenaGameplay = {
     ResetPlayerData = function(lobby, data)
         for k, v in pairs(data.players) do
             v.polymorph_entity = nil
-            if(GameHasFlagRun("super_secret_hamis_mode"))then
-                v.polymorph_entity = "mods/evaisa.arena/files/entities/hamis.xml"
-            end
         end
     end,
     AllowFiring = function(data)
@@ -4091,7 +4092,8 @@ ArenaGameplay = {
                                             local player_entity = players[1]
                                             EntityInflictDamage(player_entity, -(0.04 * 5), "DAMAGE_HEALING", "leech", "NONE", 0, 0, player_entity)
                                             local player_x, player_y = EntityGetTransform(player_entity)
-                                            EntityLoad("data/entities/particles/heal_effect.xml", player_x, player_y)
+                                            local heal = EntityLoad("data/entities/particles/heal_effect.xml", player_x, player_y)
+                                            EntityAddChild(player_entity, heal)
                                             networking.send.hamis_heal(lobby)
                                         end
                                     end
@@ -4615,6 +4617,16 @@ ArenaGameplay = {
                                     if (v.last_damaged_targets[targ] == nil or GameGetFrameNum() > v.last_damaged_targets[targ] + 50) then
                                         print("Dealing damage to target!")
                                         EntityInflictDamage(targ, 0.8 * damage_mult, "DAMAGE_BITE", "hämis", "BLOOD_EXPLOSION", 0, 0, v.entity, x, y, 200)
+
+                                        local venom_count = tonumber(v.venom)
+
+                                        local effect = nil
+                                        for i = 0, venom_count do
+                                            if(Random(0, 100) > 60)then
+                                                EntityIngestMaterial( targ, CellFactory_GetType("poison"), 40 )
+                                            end
+                                        end
+
                                         v.last_damaged_targets[targ] = GameGetFrameNum()
                                     end
                                 end

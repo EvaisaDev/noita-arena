@@ -42,6 +42,10 @@
         </Base>  
     </Entity>
 
+  <StatusEffectDataComponent>
+  </StatusEffectDataComponent>
+
+  <IngestionComponent/>
 
 
     <Inventory2Component 
