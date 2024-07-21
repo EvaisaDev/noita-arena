@@ -692,6 +692,14 @@ ArenaGameplay = {
 
         if(GameHasFlagRun("super_secret_hamis_mode"))then
             player_xml = "mods/evaisa.arena/files/entities/hamis_player.xml"
+
+            if(not HasFlagPersistent("super_secret_hamis_mode"))then
+                AddFlagPersistent("super_secret_hamis_mode")
+            
+                GamePrint("Super Secret Hämis Mode Unlocked!")
+                GamePrintImportant("SUPER SECRET HÄMIS MODE UNLOCKED!")
+            end
+           
             np.MagicNumbersSetValue("UI_QUICKBAR_OFFSET_Y", "-1000")
         else
             np.MagicNumbersSetValue("UI_QUICKBAR_OFFSET_Y", "0")
@@ -3356,11 +3364,6 @@ ArenaGameplay = {
     SpawnClientPlayer = function(lobby, user, data, x, y)
 
 
-
-        if(GameHasFlagRun("super_secret_hamis_mode"))then
-            data.players[tostring(user)].polymorph_entity = "mods/evaisa.arena/files/entities/hamis.xml"
-        end
-
         if((not data.state == "arena" and not data.spectator_mode) or (data.state == "lobby" and data.spectator_mode and (data.spectator_entity == nil or not EntityGetIsAlive(data.spectator_entity))))then
             print("skipped spawn!!")
             return
@@ -4022,6 +4025,28 @@ ArenaGameplay = {
                     ComponentSetValue2(inventory_gui_comp, "mActive", false)
                 end
 
+                local regen = data.client.regen or 0
+                
+                if(GameGetFrameNum() % 40 == 0)then
+                    if(regen > 0)then
+                        local count = tonumber( GlobalsGetValue( "hamis_leech_count", "0" ) )
+
+                        local total_heal = 0.01 + (count * 0.005)
+                        
+
+                        data.client.regen = regen - total_heal
+
+
+                        EntityInflictDamage(player_entity, -math.abs(total_heal), "DAMAGE_HEALING", "leech", "NONE", 0, 0, player_entity)
+                        local player_x, player_y = EntityGetTransform(player_entity)
+                        local heal = EntityLoad("data/entities/particles/heal_effect.xml", player_x, player_y)
+                        EntityAddChild(player_entity, heal)
+                        networking.send.hamis_heal(lobby)
+                    end
+    
+                end
+               
+
     
                 local controlsComp = EntityGetFirstComponentIncludingDisabled(player_entity, "ControlsComponent")
                 local fire = ComponentGetValue2(controlsComp, "mButtonDownFire")
@@ -4046,78 +4071,6 @@ ArenaGameplay = {
                     ComponentSetValue2(itemPickUpperComp, "only_pick_this_entity", v) 
                 end
     
-                last_damaged_targets = last_damaged_targets or {}
-                if(animation == "attack")then
-
-                    last_chomp = last_chomp or nil
-                    last_chomp_aim = last_chomp_aim or {0, 0}
-
-                    local big_chomper = GameHasFlagRun( "hamis_big_bite" )
-
-                    local targets = EntityGetInRadiusWithTag(player_x, player_y, 5, "mortal") or {}
-
-                    if(big_chomper)then
-
-                        local attack_aim_x, attack_aim_y = aim_x, aim_y
-                        local aim_length = math.sqrt(attack_aim_x * attack_aim_x + attack_aim_y * attack_aim_y)
-                        if (aim_length > 0) then
-                            attack_aim_x = attack_aim_x / aim_length
-                            attack_aim_y = attack_aim_y / aim_length
-                        end
-
-                        if(not was_attack)then
-
-                            last_chomp = EntityLoad("mods/evaisa.arena/files/custom/perks/hamis/big_bite/chomp_entity.xml", player_x + attack_aim_x * 20, player_y + attack_aim_y * 20)
-                            GameShootProjectile(player_entity, player_x + attack_aim_x * 20, player_y + attack_aim_y * 20, player_x + attack_aim_x * 1000, player_y + attack_aim_y * 1000, last_chomp)
-                            last_chomp_aim = {attack_aim_x, attack_aim_y}
-                        end
-
-                        EntityApplyTransform(last_chomp, player_x + last_chomp_aim[1] * 20, player_y + last_chomp_aim[2] * 20)
-
-                        targets = MergeTables(targets, EntityGetInRadiusWithTag(player_x + last_chomp_aim[1] * 20, player_y + last_chomp_aim[2] * 20, 25, "mortal") or {})
-                    end
-
-                    for k, v in ipairs(targets)do
-                        -- if target is not us
-                        if(v ~= player_entity)then
-                            if(last_damaged_targets[v] == nil or GameGetFrameNum() > last_damaged_targets[v] + 50)then
-                                local damage_mult = tonumber(GlobalsGetValue("hamis_damage_mult", "1"))
-                                EntityInflictDamage(v, 0.8 * damage_mult, "DAMAGE_BITE", "hämis", "BLOOD_EXPLOSION", 0, 0, player_entity, player_x, player_y, 200)
-
-                                if(not EntityHasTag(v, "client"))then
-                                    local count = tonumber( GlobalsGetValue( "hamis_leech_count", "0" ) )
-                                    if(count > 0 and data.client.alive)then
-                                        local players = GetPlayers()
-                                        if(#players > 0)then
-                                            local player_entity = players[1]
-                                            EntityInflictDamage(player_entity, -(0.04 * 5), "DAMAGE_HEALING", "leech", "NONE", 0, 0, player_entity)
-                                            local player_x, player_y = EntityGetTransform(player_entity)
-                                            local heal = EntityLoad("data/entities/particles/heal_effect.xml", player_x, player_y)
-                                            EntityAddChild(player_entity, heal)
-                                            networking.send.hamis_heal(lobby)
-                                        end
-                                    end
-                                end
-
-
-                                local explosion_count = tonumber( GlobalsGetValue( "hamis_explosive_dash_count", "0" ) )
-
-                                if(explosion_count > 0 and Random(0, 100) >= 50)then
-                                    local x, y = EntityGetTransform(v)
-                                    networking.send.hamis_explosion(lobby, explosion_count, x, y)
-                                    HamisMode.explode(player_entity, x, y, explosion_count)
-                                end
-
-                                last_damaged_targets[v] = GameGetFrameNum()
-                            end
-                    
-                        end
-                    end
-                    was_attack = true
-                else
-                    was_attack = false
-                end
-
                 local mouse2 = false
                 local mouse2_frame = 0
                 
@@ -4164,6 +4117,81 @@ ArenaGameplay = {
                 local velocity = math.sqrt(vel_x * vel_x + vel_y * vel_y)
 
                 last_velocity = last_velocity or velocity
+
+
+                last_damaged_targets = last_damaged_targets or {}
+                if(animation == "attack")then
+
+                    last_chomp = last_chomp or nil
+                    last_chomp_aim = last_chomp_aim or {0, 0}
+
+                    local big_chomper = GameHasFlagRun( "hamis_big_bite" )
+
+                    local targets = EntityGetInRadiusWithTag(player_x, player_y, 5, "mortal") or {}
+
+                    if(big_chomper)then
+
+                        local attack_aim_x, attack_aim_y = aim_x, aim_y
+                        local aim_length = math.sqrt(attack_aim_x * attack_aim_x + attack_aim_y * attack_aim_y)
+                        if (aim_length > 0) then
+                            attack_aim_x = attack_aim_x / aim_length
+                            attack_aim_y = attack_aim_y / aim_length
+                        end
+
+                        if(not was_attack)then
+
+                            last_chomp = EntityLoad("mods/evaisa.arena/files/custom/perks/hamis/big_bite/chomp_entity.xml", player_x + attack_aim_x * 20, player_y + attack_aim_y * 20)
+                            GameShootProjectile(player_entity, player_x + attack_aim_x * 20, player_y + attack_aim_y * 20, player_x + attack_aim_x * 1000, player_y + attack_aim_y * 1000, last_chomp)
+                            last_chomp_aim = {attack_aim_x, attack_aim_y}
+                        end
+
+                        EntityApplyTransform(last_chomp, player_x + last_chomp_aim[1] * 20, player_y + last_chomp_aim[2] * 20)
+
+                        targets = MergeTables(targets, EntityGetInRadiusWithTag(player_x + last_chomp_aim[1] * 20, player_y + last_chomp_aim[2] * 20, 25, "mortal") or {})
+                    end
+
+                    for k, v in ipairs(targets)do
+                        -- if target is not us
+                        if(v ~= player_entity)then
+                            if(last_damaged_targets[v] == nil or GameGetFrameNum() > last_damaged_targets[v] + 50)then
+                                local damage_mult = tonumber(GlobalsGetValue("hamis_damage_mult", "1"))
+                                EntityInflictDamage(v, 0.8 * damage_mult, "DAMAGE_MELEE", "hämis", "BLOOD_EXPLOSION", 0, 0, player_entity, player_x, player_y, 200)
+
+                                if(not EntityHasTag(v, "client"))then
+                                    local count = tonumber( GlobalsGetValue( "hamis_leech_count", "0" ) )
+                                    if(count > 0 and data.client.alive)then
+                                        local players = GetPlayers()
+                                        if(#players > 0)then
+                                            for i = 1, count do
+                                                data.client.regen = data.client.regen or 0
+                                                data.client.regen = data.client.regen + 0.04
+                        
+                                            end
+                                        end
+                                    end
+                                end
+
+
+                                local explosion_count = tonumber( GlobalsGetValue( "hamis_explosive_dash_count", "0" ) )
+
+                                
+                                if(velocity > 100 and last_time_in_air >= 50 and explosion_count > 0 and Random(0, 100) >= 50)then
+                                    local x, y = EntityGetTransform(v)
+                                    networking.send.hamis_explosion(lobby, explosion_count, x, y)
+                                    HamisMode.explode(player_entity, x, y, explosion_count)
+                                end
+
+                                last_damaged_targets[v] = GameGetFrameNum()
+                            end
+                    
+                        end
+                    end
+                    was_attack = true
+                else
+                    was_attack = false
+                end
+
+
 
                 if(last_velocity > 100 and velocity < 80 and last_time_in_air >= 50 and Random(0, 100) >= 50)then
                     -- consider this an impact!
@@ -4620,8 +4648,7 @@ ArenaGameplay = {
 
                                         local venom_count = tonumber(v.venom)
 
-                                        local effect = nil
-                                        for i = 0, venom_count do
+                                        for i = 1, venom_count do
                                             if(Random(0, 100) > 60)then
                                                 EntityIngestMaterial( targ, CellFactory_GetType("poison"), 40 )
                                             end

@@ -4,7 +4,7 @@ HamisMode = {
     explode = function(entity_id, x, y, stacks)
         local pos_x, pos_y = EntityGetTransform( entity_id )
 
-        local eid = shoot_projectile( entity_id, "data/entities/misc/fast_movement_explosion.xml", pos_x, pos_y, 0, 0 )
+        local eid = shoot_projectile( entity_id, "mods/evaisa.arena/files/entities/misc/explosion.xml", pos_x, pos_y, 0, 0 )
         
         local herd_id = -1
         edit_component( entity_id, "GenomeDataComponent", function(comp,vars)

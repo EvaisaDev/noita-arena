@@ -1188,20 +1188,6 @@ networking = {
                         end
                     end
 
-                    if(attacker == tostring(steamutils.getSteamID()))then
-                        local count = tonumber( GlobalsGetValue( "hamis_leech_count", "0" ) )
-                        if(count > 0 and data.client.alive)then
-                            local players = GetPlayers()
-                            if(#players > 0)then
-                                local player_entity = players[1]
-                                EntityInflictDamage(player_entity, -(0.04 * 5), "DAMAGE_HEALING", "leech", "NONE", 0, 0, player_entity)
-                                local player_x, player_y = EntityGetTransform(player_entity)
-                                local heal = EntityLoad("data/entities/particles/heal_effect.xml", player_x, player_y)
-                                EntityAddChild(player_entity, heal)
-                                networking.send.hamis_heal(lobby)
-                            end
-                        end
-                    end
 
                     --print("Received health update!!")
 
@@ -1221,6 +1207,22 @@ networking = {
                             local effect = GetGameEffectLoadTo(client_entity, "PROTECTION_ALL", true)
     
                             ComponentSetValue2( effect, "frames", invincibility_frames )
+                        end
+
+                        if(damage > 0 and attacker == tostring(steamutils.getSteamID()))then
+                            local count = tonumber( GlobalsGetValue( "hamis_leech_count", "0" ) )
+                            if(count > 0 and data.client.alive)then
+                                local players = GetPlayers()
+                                if(#players > 0)then
+                                    for i = 1, count do
+
+                                        if(Random(0, 100) > 60)then
+                                            data.client.regen = data.client.regen or 0
+                                            data.client.regen = data.client.regen + math.abs(math.max(damage / 4, 0.04))
+                                        end
+                                    end
+                                end
+                            end
                         end
 
                         --[[
@@ -3862,6 +3864,9 @@ networking = {
             end
         end,
         hamis_attack = function(lobby, damage_mult)
+            if damage_mult == nil then
+                damage_mult = 1
+            end
             local big_chomper = GameHasFlagRun( "hamis_big_bite" )
             local venom = tonumber( GlobalsGetValue( "hamis_venom_count", "0" ) )
             steamutils.send("hamis_attack", {damage_mult, big_chomper, venom}, steamutils.messageTypes.OtherPlayers, lobby, true, true)

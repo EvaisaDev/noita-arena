@@ -116,10 +116,19 @@ perk_list_hamis = {
 		ui_description = "$perkdesc_movement_faster",
 		ui_icon = "data/ui_gfx/perk_icons/movement_faster.png",
 		perk_icon = "data/items_gfx/perks/movement_faster.png",
-		game_effect = "MOVEMENT_FASTER",
 		stackable = STACKABLE_YES,
-		max_in_perk_pool = 2,
+		stackable_maximum = 3,
 		usable_by_enemies = true,
+		func = function( entity_perk_item, entity_who_picked, item_name )
+			local comp = EntityGetFirstComponentIncludingDisabled(entity_who_picked, "CharacterPlatformingComponent")
+
+			if comp ~= nil then
+				ComponentSetValue2( comp, "run_velocity", math.max(ComponentGetValue2( comp, "run_velocity" ) + (20), 25 * 3))
+				-- velocity_min_x, velocity_max_x
+				ComponentSetValue2( comp, "velocity_min_x", math.max(ComponentGetValue2( comp, "velocity_min_x" ) - (100), -(150 * 2)))
+				ComponentSetValue2( comp, "velocity_max_x", math.max(ComponentGetValue2( comp, "velocity_max_x" ) + (100), 150 * 2))
+			end
+		end,
 	},
 	--[[{
 		id = "FIRE_LEAP",

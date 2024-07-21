@@ -12,4 +12,4 @@ end
 local vel_x, vel_y = GameGetVelocityCompVelocity(entity_id)
 vel_x = -vel_x * 4
 vel_y = -vel_y * 4
-shoot_projectile( entity_id, "data/entities/projectiles/levitation_trail.xml", pos_x, pos_y, vel_x, vel_y )
+shoot_projectile( entity_id, "mods/evaisa.arena/files/custom/perks/hamis/sparkly_leap/levitation_trail.xml", pos_x, pos_y, vel_x, vel_y )

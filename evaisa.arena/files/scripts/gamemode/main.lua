@@ -1,4 +1,6 @@
-REQUIRED_ONLINE_VERSION = 378
+ARENA_STEAM_ID = "0"
+ARENA_MOD_ID = "evaisa.arena"
+REQUIRED_ONLINE_VERSION = 379
 
 -- INVALID VERSION HANDLER
 if(MP_VERSION < REQUIRED_ONLINE_VERSION)then
@@ -713,7 +715,7 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 199,
+    version = 205,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
     end,
@@ -809,7 +811,7 @@ ArenaMode = {
     preset_registry = function()
         local presets = {}
 
-        local default_preset_folder = tostring(GetGamemodeFilePath()).."/content/default_presets"
+        local default_preset_folder = tostring(GetModFilePath(ARENA_MOD_ID, ARENA_STEAM_ID)).."/content/default_presets"
 
         print("Checking for presets in " .. default_preset_folder)
         
@@ -2570,6 +2572,7 @@ ArenaMode = {
             end
 
             GameAddFlagRun("super_secret_hamis_mode")
+            
             GameSetPostFxParameter("health_flash_mult", 0, 0, 0, 0)
             
         elseif(GameHasFlagRun("super_secret_hamis_mode"))then
@@ -2880,9 +2883,6 @@ ArenaMode = {
         end
 
         GameAddFlagRun("initial_player_load")
-
-
-
         GameAddFlagRun("player_unloaded")
 
         GlobalsSetValue("original_seed", tostring(applied_seed))

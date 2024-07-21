@@ -982,6 +982,8 @@ player_helper.Deserialize = function(data, skip_perk_count, lobby, lobby_data)
             return DoesWorldExistAt(x - 5, y - 5, x + 5, y + 5)
         end, function()
             player_helper.SetPerks(data.perks, skip_perk_count)
+            
+            GameRemoveFlagRun("initial_player_load")
         end)
     end
     if (data.gold ~= nil) then
@@ -999,7 +1001,6 @@ player_helper.Deserialize = function(data, skip_perk_count, lobby, lobby_data)
         skin_system.apply_skin_to_entity(lobby, player, nil, lobby_data)
     end
 
-    GameRemoveFlagRun("initial_player_load")
 end
 
 return player_helper

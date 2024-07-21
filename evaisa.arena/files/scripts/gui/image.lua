@@ -21,15 +21,15 @@ end
 
 
 function loadImage(file)
-    local gamemode_path = GetGamemodeFilePath()
-    print("Gamemode path: " .. gamemode_path)
+    local gamemode_path = GetModFilePath(ARENA_MOD_ID, ARENA_STEAM_ID)
+    debug_log:print("Gamemode path: " .. gamemode_path)
 
     if(gamemode_path)then
         -- replace mods/evaisa.arena from start of file path with gamemode path
         file = file:gsub("mods/evaisa.arena", gamemode_path)
     end
 
-    print("image path: " .. file)
+    debug_log:print("image path: " .. file)
 
     local f, err = fs.open(file)
 
