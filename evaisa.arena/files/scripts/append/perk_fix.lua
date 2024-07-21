@@ -488,7 +488,7 @@ local rewrites = {
 	},
     RESPAWN = {
 		id = "RESPAWN",
-		ui_name = "$perk_respawn",
+		ui_name = "$arena_perk_respawn_alt_name",
 		ui_description = "$perkdesc_respawn",
 		ui_icon = "data/ui_gfx/perk_icons/respawn.png",
 		perk_icon = "data/items_gfx/perks/respawn.png",
@@ -609,29 +609,55 @@ local rewrites = {
 	}
 }
 
--- loop backwards through perk_list so we can remove entries
-for i=#perk_list,1,-1 do
-    local perk = perk_list[i]
-    if remove_list[perk.id] then
-        table.remove(perk_list, i)
-    else
-        if rewrites[perk.id] then
-            perk_list[i] = rewrites[perk.id]
-        end
-        
-        if reapply_fix_list[perk.id] then
-            perk_list[i].do_not_reapply = true
-        end
-
-        if allow_on_clients[perk.id] then
-            perk_list[i].run_on_clients = true
-        elseif allow_on_clients[perk.id] ~= nil and allow_on_clients[perk.id] == false then
-            perk_list[i].run_on_clients = false
-            perk_list[i].usable_by_enemies = false
-        end
-
-        if skip_function_list[perk.id] then
-            perk_list[i].skip_functions_on_load = true
-        end
-    end
+function MergeTables(...)
+	local tables = {...}
+	local out = {}
+	for _,t in ipairs(tables) do
+		for k,v in pairs(t) do
+			out[k] = v
+		end
+	end
+	return out
 end
+
+dofile("mods/evaisa.arena/files/scripts/gamemode/misc/perks/hamis_perks.lua")
+
+old_perk_list = old_perk_list or perk_list
+
+complete_perk_list = MergeTables(old_perk_list, perk_list_hamis)
+
+function apply_perk_fixes()
+	if(GameHasFlagRun("super_secret_hamis_mode"))then
+		perk_list = perk_list_hamis
+	else
+		perk_list = old_perk_list
+	end
+	-- loop backwards through perk_list so we can remove entries
+	for i=#perk_list,1,-1 do
+		local perk = perk_list[i]
+		if remove_list[perk.id] then
+			table.remove(perk_list, i)
+		else
+			if rewrites[perk.id] then
+				perk_list[i] = rewrites[perk.id]
+			end
+			
+			if reapply_fix_list[perk.id] then
+				perk_list[i].do_not_reapply = true
+			end
+
+			if allow_on_clients[perk.id] then
+				perk_list[i].run_on_clients = true
+			elseif allow_on_clients[perk.id] ~= nil and allow_on_clients[perk.id] == false then
+				perk_list[i].run_on_clients = false
+				perk_list[i].usable_by_enemies = false
+			end
+
+			if skip_function_list[perk.id] then
+				perk_list[i].skip_functions_on_load = true
+			end
+		end
+	end
+end
+
+apply_perk_fixes()

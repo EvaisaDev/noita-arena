@@ -13,6 +13,8 @@ perk_get_spawn_order = function ( ignore_these_ )
     
 
     ignore_these_ = ignore_these_ or {}
+
+    apply_perk_fixes()
     
     for i, perk in ipairs(perk_list)do
         if GameHasFlagRun("perk_blacklist_"..perk.id) then
@@ -52,6 +54,8 @@ perk_pickup = function( entity_item, entity_who_picked, item_name, do_cosmetic_f
 		end)
 	end
 
+    apply_perk_fixes()
+
 	local perk_data = get_perk_with_id( perk_list, perk_id )
 	if perk_data == nil then
 		return
@@ -77,6 +81,7 @@ local old_perk_spawn_many = perk_spawn_many
 
 perk_spawn_many = function( x, y, dont_remove_others_, ignore_these_ )
     local perk_number = 0
+    apply_perk_fixes()
     for i, perk in ipairs(perk_list)do
         if not GameHasFlagRun("perk_blacklist_"..perk.id) then
             perk_number = perk_number + 1

@@ -63,7 +63,7 @@ function wake_up_waiting_threads()
         return
     end
 
-    if attack_ranged_entity_file == "" then
+    if attack_ranged_entity_file == "" or attack_ranged_entity_file == "data/entities/projectiles/spear.xml" then
         return
     end
 

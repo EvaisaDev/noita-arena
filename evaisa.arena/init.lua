@@ -28,6 +28,15 @@ ModLuaFileAppend("data/scripts/gun/gun_actions.lua", "mods/evaisa.arena/files/sc
 ModLuaFileAppend("data/scripts/magic/fungal_shift.lua", "mods/evaisa.arena/files/scripts/append/fungal_shift.lua")
 ModLuaFileAppend("data/scripts/perks/perk_reroll.lua", "mods/evaisa.arena/files/scripts/append/perk_reroll.lua")
 
+local shader_content = ModTextFileGetContent("data/shaders/post_final.frag")
+
+-- replace "uniform float low_health_indicator_alpha;" with "uniform float low_health_indicator_alpha;\nuniform vec4 health_flash_mult;"
+shader_content = string.gsub(shader_content, "uniform float low_health_indicator_alpha;", "uniform float low_health_indicator_alpha;\nuniform vec4 health_flash_mult;")
+-- replace "* low_health_indicator_alpha" with "* low_health_indicator_alpha * health_flash_mult.x"
+shader_content = string.gsub(shader_content, "* low_health_indicator_alpha", "* low_health_indicator_alpha * health_flash_mult.x")
+
+ModTextFileSetContent("data/shaders/post_final.frag", shader_content)
+
 --[[
 parse_overrides = function(overrides, path)
     path = path or ""
@@ -66,6 +75,7 @@ register_localizations("mods/evaisa.arena/translations.csv", 2)
 function OnModPostInit()
     if(ModIsEnabled("evaisa.mp"))then
         ModLuaFileAppend("mods/evaisa.mp/data/gamemodes.lua", "mods/evaisa.arena/files/scripts/gamemode/main.lua")
+        ModLuaFileAppend("mods/evaisa.mp/files/scripts/lobby_ui.lua", "mods/evaisa.arena/hamis.lua")
     end
 end
 
@@ -86,6 +96,7 @@ end
 local warning_shown_mp = false
 local warning_shown_save = false
 local ready = false
+
 
 function OnWorldPreUpdate()
     if(not ready)then
@@ -118,6 +129,8 @@ function OnWorldPreUpdate()
         }, {
         }, -6000)
     end
+
+
 end
 
 
@@ -147,7 +160,7 @@ function OnMagicNumbersAndWorldSeedInitialized()
 
     ModTextFileSetContent("data/biome/_biomes_all.xml", tostring(biome_list))
 
-
+    GameSetPostFxParameter("health_flash_mult", 1, 1, 1, 1)
     
 
 

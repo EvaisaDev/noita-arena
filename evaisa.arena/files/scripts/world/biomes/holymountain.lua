@@ -25,8 +25,10 @@ RegisterSpawnFunction( 0xffc5529d, "spawn_item_shop_item")
 RegisterSpawnFunction( 0xffd8b950, "spawn_wardrobe")
 
 function spawn_card_pick ( x, y )
-	if(GameHasFlagRun("pick_upgrade") and not GameHasFlagRun("card_picked"))then
-		EntityLoad( "mods/evaisa.arena/files/entities/misc/card_pick.xml", x, y - 6 )
+	if(not GameHasFlagRun("super_secret_hamis_mode"))then
+		if(GameHasFlagRun("pick_upgrade") and not GameHasFlagRun("card_picked"))then
+			EntityLoad( "mods/evaisa.arena/files/entities/misc/card_pick.xml", x, y - 6 )
+		end
 	end
 end
 
@@ -50,7 +52,8 @@ end
 function spawn_hp( x, y )
 
 	GameAddFlagRun("in_hm")
-    if(not GameHasFlagRun("DeserializedHolyMountain") and not GameHasFlagRun("instant_health"))then
+
+	if(not GameHasFlagRun("DeserializedHolyMountain") and not GameHasFlagRun("instant_health"))then
 		local hp = EntityLoad( "mods/evaisa.arena/files/entities/misc/heart_fullhp.xml", x, y )
 
 		if(not EntityHasTag(hp, "synced_once"))then
@@ -64,7 +67,8 @@ function spawn_hp( x, y )
 		end
 
 	end
-	
+
+		
 	EntityLoad( "data/entities/buildings/music_trigger_temple.xml", x-16, y )
 	
 	
@@ -79,13 +83,15 @@ function spawn_hp( x, y )
 end
 
 function spawn_refresh( x, y )
+	if(GameHasFlagRun("super_secret_hamis_mode"))then
+		return
+	end
 	EntityLoad( "mods/evaisa.arena/files/entities/misc/spell_refresh.xml", x, y )
 end
 
 
 function spawn_all_shopitems( x, y )
-
-	if(GameHasFlagRun("DeserializedHolyMountain"))then
+	if(GameHasFlagRun("DeserializedHolyMountain") or GameHasFlagRun("super_secret_hamis_mode"))then
 		return
 	end
 
@@ -273,7 +279,7 @@ function spawn_target_dummy( x, y )
 end
 
 function spawn_item_shop_item( x, y )
-	if(GameHasFlagRun("DeserializedHolyMountain"))then
+	if(GameHasFlagRun("DeserializedHolyMountain") or GameHasFlagRun("super_secret_hamis_mode"))then
 		return
 	end
 

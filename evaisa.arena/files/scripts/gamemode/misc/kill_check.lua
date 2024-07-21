@@ -101,6 +101,9 @@ function damage_about_to_be_received( damage, x, y, entity_thats_responsible, cr
    
 
     GlobalsSetValue("last_damage_details", tostring(serialize_damage_details(damage_details)))
+
+
+
     --critical_hit_chance = 50
 
     return damage, critical_hit_chance
@@ -182,7 +185,13 @@ function damage_received( damage, message, entity_thats_responsible, is_fatal, p
 
             --print("SMASH KNOCKBACK: " .. tostring(smash_knockback))
             --print("IMPULSE: " .. tostring(impulse_x) .. ", " .. tostring(impulse_y))
+            ComponentSetValue2(character_data_comp, "is_on_ground", true)
+ 
+            local controls_comp = EntityGetFirstComponentIncludingDisabled(entity_id, "ControlsComponent")
 
+            if(controls_comp ~= nil)then
+                ComponentSetValue2(controls_comp, "mJumpVelocity", impulse_x * smash_knockback, impulse_y * smash_knockback)
+            end
             ComponentSetValue2(character_data_comp, "mVelocity", impulse_x * smash_knockback, impulse_y * smash_knockback)
 
         end
@@ -195,13 +204,17 @@ function damage_received( damage, message, entity_thats_responsible, is_fatal, p
     GameAddFlagRun("finished_damage")
     GameRemoveFlagRun("prepared_damage")
     GlobalsSetValue("last_damage_details", tostring(serialize_damage_details(damage_details)))
+    
     local invincibility_frames = 0
 
     local damageModelComponent = EntityGetFirstComponentIncludingDisabled( entity_id, "DamageModelComponent" )
     if damageModelComponent ~= nil then
         if(GameHasFlagRun("Immortal"))then
-            local hp = ComponentGetValue2( damageModelComponent, "hp" )
-            ComponentSetValue2( damageModelComponent, "hp", hp + damage )
+            if(damage > 0)then
+                local hp = ComponentGetValue2( damageModelComponent, "hp" )
+                local max_hp = ComponentGetValue2( damageModelComponent, "max_hp" )
+                ComponentSetValue2( damageModelComponent, "hp", math.min(math.max(hp + damage, 0.04), max_hp) )
+            end
         else
             if(is_fatal)then
                 local died = true

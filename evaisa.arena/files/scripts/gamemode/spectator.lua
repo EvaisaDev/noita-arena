@@ -65,6 +65,11 @@ SpectatorMode = {
             return
         end
 
+
+        if(player.polymorph_entity)then
+            return
+        end
+
         if(GameGetFrameNum() % 30 == 0 and player.entity and EntityGetIsAlive(player.entity) and data.spectator_entity and EntityGetIsAlive(data.spectator_entity))then
             
             -- We will sync wand stats and stuff.
@@ -621,7 +626,14 @@ SpectatorMode = {
         end
     end,
     SpawnSpectatedPlayer = function(lobby, data)
+        -- kill all player entities
+        local p = MergeTables(EntityGetWithTag("player_unit") or {}, EntityGetWithTag("polymorphed_player") or {}, EntityGetWithTag("client") or {})
+        for k, v in ipairs(p) do
+            EntityKill(v)
+        end
         if(data.spectated_player ~= nil)then
+
+            
   
             if(data.players[tostring(data.spectated_player)] == nil)then
                 return

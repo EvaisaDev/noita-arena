@@ -6,6 +6,7 @@ local countdown = dofile_once("mods/evaisa.arena/files/scripts/utilities/countdo
 local EZWand = dofile("mods/evaisa.arena/files/scripts/utilities/EZWand.lua")
 world_sync = dofile("mods/evaisa.arena/files/scripts/gamemode/world_sync.lua")
 dofile("mods/evaisa.arena/files/scripts/gamemode/cosmetics/cosmetics.lua")
+dofile("mods/evaisa.arena/files/scripts/gamemode/misc/hamis_utils.lua")
 
 ArenaLoadCountdown = ArenaLoadCountdown or nil
 
@@ -505,6 +506,7 @@ ArenaGameplay = {
                 
 
         dofile_once("data/scripts/perks/perk_list.lua")
+        apply_perk_fixes()
         for i, perk_data in ipairs(perk_list) do
             local perk_id = perk_data.id
             local flag_name = get_perk_picked_flag_name(perk_id)
@@ -679,9 +681,32 @@ ArenaGameplay = {
     end,
     LoadPlayer = function(lobby, data, x, y)
 
+        if(data.is_spectating)then
+            return
+        end
+
+        data.is_polymorphed = false
         print("Loading player entity!!!")
 
-        local current_player = EntityLoad("data/entities/player.xml", x or 0, y or 0)
+        local player_xml = "data/entities/player.xml"
+
+        if(GameHasFlagRun("super_secret_hamis_mode"))then
+            player_xml = "mods/evaisa.arena/files/entities/hamis_player.xml"
+
+            if(not HasFlagPersistent("super_secret_hamis_mode"))then
+                AddFlagPersistent("super_secret_hamis_mode")
+            
+                GamePrint("Super Secret Hämis Mode Unlocked!")
+                GamePrintImportant("SUPER SECRET HÄMIS MODE UNLOCKED!")
+            end
+           
+            np.MagicNumbersSetValue("UI_QUICKBAR_OFFSET_Y", "-1000")
+        else
+            np.MagicNumbersSetValue("UI_QUICKBAR_OFFSET_Y", "0")
+        end
+        
+
+        local current_player = EntityLoad(player_xml, x or 0, y or 0)
 
         local aiming_reticle = EntityGetComponentIncludingDisabled(current_player, "SpriteComponent", "aiming_reticle") or {}
 
@@ -1983,7 +2008,8 @@ ArenaGameplay = {
         ArenaGameplay.ResetPlayerData(lobby, data)
         data.is_polymorphed = false
         data.picked_up_items = {}
-        
+
+
         GameAddFlagRun("sync_item_generation")
 
         GameRemoveFlagRun("card_picked")
@@ -3205,9 +3231,10 @@ ArenaGameplay = {
 
     end,
     TransformPlayer = function(lobby, user, data, target_entity)
-        local player_data = data.players[tostring(user)]
 
-        print("Transforming player "..tostring(user).." to "..tostring(target_entity))
+        print("Attempting to transform player "..tostring(user).." to "..tostring(target_entity))
+
+        local player_data = data.players[tostring(user)]
 
         local target_file = ""
         if(target_entity)then
@@ -3219,14 +3246,36 @@ ArenaGameplay = {
             target_file = poly_effect_file
         end
 
-        if(player_data.entity)then
+        if(player_data.entity == 0 or not EntityGetIsAlive(player_data.entity))then
+            player_data.entity = nil
+        end
+
+        player_data.polymorph_entity = target_entity
+
+        if(player_data.entity and player_data.entity ~= 0 and EntityGetIsAlive(player_data.entity))then
+            print("Player is alive, transforming!")
             if(target_entity)then
                 EntityRemoveTag(player_data.entity, "polymorphable_NOT")
 
                 GameDestroyInventoryItems(player_data.entity)
 
+                local original_entity = player_data.entity
+
                 local effect =  LoadGameEffectEntityTo(player_data.entity, target_file)
                 local new_entity = EntityGetRootEntity(effect)
+
+
+                -- if root entity is the same as original entity, return null
+                if(new_entity == effect)then
+                    return nil
+                end
+                
+                --[[delay.new(function()
+                    return EntityGetRootEntity(effect) ~= entity
+                end, function()
+
+                
+                end)]]
                 
                 -- update name
                 EntitySetName(new_entity, tostring(user))
@@ -3243,6 +3292,12 @@ ArenaGameplay = {
                 local genome_component = EntityGetFirstComponentIncludingDisabled(new_entity, "GenomeDataComponent")
                 if(genome_component)then
                     ComponentSetValue2(genome_component, "herd_id", StringToHerdId("pvp_client"))
+                end
+
+                local animal_ai_comp = EntityGetFirstComponentIncludingDisabled(new_entity, "AnimalAIComponent")
+
+                if(animal_ai_comp)then
+                    EntitySetComponentIsEnabled(new_entity, animal_ai_comp, false)
                 end
 
                 for k, v in ipairs(EntityGetComponentIncludingDisabled(new_entity, "LuaComponent", "remote_polymorph_remove") or {})do
@@ -3290,74 +3345,24 @@ ArenaGameplay = {
                 if(data.spectated_player == user)then
                     data.selected_player = new_entity
                 end
+
+                -- stacktrace
+        
+                print("Transformed player "..tostring(user) .. "from " .. original_entity .." to "..tostring(new_entity))
+
+
                 return new_entity
             else
                 local entity = ArenaGameplay.SpawnClientPlayer(lobby, user, data)
                 if(data.spectated_player == user)then
                     data.selected_player = entity
                 end
-                data.players[tostring(user)].polymorph_entity = nil
-                return entity
-            end
-        else
-            if(target_entity)then
-                EntityRemoveTag(player_data.entity, "polymorphable_NOT")
-
-                GameDestroyInventoryItems(player_data.entity)
-
-                local effect =  LoadGameEffectEntityTo(player_data.entity, target_file)
-                local new_entity = EntityGetRootEntity(effect)
-                
-                -- update name
-                EntitySetName(new_entity, tostring(user))
-                EntityRemoveTag(new_entity, "polymorphed_player")
-                EntityAddTag(new_entity, "client")
-
-                EntityAddComponent2(new_entity, "LuaComponent", {
-                    script_source_file = "mods/evaisa.arena/files/scripts/gamemode/misc/viewer_player_poly.lua",
-                    enable_coroutines = true,
-                    execute_on_added = true,
-                    execute_every_n_frame = -1,
-                })
-
-                local genome_component = EntityGetFirstComponentIncludingDisabled(new_entity, "GenomeDataComponent")
-                if(genome_component)then
-                    ComponentSetValue2(genome_component, "herd_id", StringToHerdId("pvp_client"))
-                end
-
-                for k, v in ipairs(EntityGetComponentIncludingDisabled(new_entity, "LuaComponent", "remote_polymorph_remove") or {})do
-                    EntityRemoveComponent(new_entity, v)
-                end
-
-
-                EntityAddComponent2(new_entity, "LuaComponent", {
-                    script_damage_about_to_be_received = "mods/evaisa.arena/files/scripts/gamemode/misc/immortal_client.lua",
-                    script_damage_received = "mods/evaisa.arena/files/scripts/gamemode/misc/immortal_client.lua",
-                })
-
-                EntityAddComponent2(new_entity, "LuaComponent", {
-                    script_wand_fired = "mods/evaisa.arena/files/scripts/gamemode/misc/on_wand_fire_client.lua",
-                })
-
-
-                EntityKill(effect)
-
-                player_data.entity = new_entity
-                if(data.spectated_player == user)then
-                    data.selected_player = new_entity
-                end
-                return new_entity
-            else
-                local entity = ArenaGameplay.SpawnClientPlayer(lobby, user, data)
-                if(data.spectated_player == user)then
-                    data.selected_player = entity
-                end
-                data.players[tostring(user)].polymorph_entity = nil
                 return entity
             end
         end
     end,
     SpawnClientPlayer = function(lobby, user, data, x, y)
+
 
         if((not data.state == "arena" and not data.spectator_mode) or (data.state == "lobby" and data.spectator_mode and (data.spectator_entity == nil or not EntityGetIsAlive(data.spectator_entity))))then
             print("skipped spawn!!")
@@ -3372,19 +3377,16 @@ ArenaGameplay = {
             data.client_spawn_y = nil
         end
 
+        local client_xml = "mods/evaisa.arena/files/entities/client.xml"
 
+        if(GameHasFlagRun("super_secret_hamis_mode"))then
+            client_xml = "mods/evaisa.arena/files/entities/hamis_client.xml"
+        end
 
-        local client = nil
+        local client = EntityLoad(client_xml, x or -1000, y or -1000)
 
         local was_poly = false
 
-        if(data.players[tostring(user)].polymorph_entity)then
-            print("Spawned polymorphed player!")
-            client = ArenaGameplay.TransformPlayer(lobby, user, data, data.players[tostring(user)].polymorph_entity)
-            was_poly = true
-        else
-            client = EntityLoad("mods/evaisa.arena/files/entities/client.xml", x or -1000, y or -1000)
-        end
 
         EntitySetName(client, tostring(user))
         --local usernameSprite = EntityGetFirstComponentIncludingDisabled(client, "SpriteComponent", "username")
@@ -3395,6 +3397,19 @@ ArenaGameplay = {
 
         data.players[tostring(user)].entity = client
         data.players[tostring(user)].alive = true
+
+        if(data.players[tostring(user)].polymorph_entity)then
+            print("Spawned polymorphed player!")
+            client = ArenaGameplay.TransformPlayer(lobby, user, data, data.players[tostring(user)].polymorph_entity)
+            EntitySetName(client, tostring(user))
+            was_poly = true
+            data.players[tostring(user)].entity = client
+
+            EntitySetName(client, tostring(user))
+            EntityRemoveTag(client, "polymorphed_player")
+            EntityAddTag(client, "client")
+        end
+
 
         arena_log:print("Spawned client player for " .. name)
 
@@ -3409,11 +3424,13 @@ ArenaGameplay = {
                     end
                 end
             end
-
-            if(skin_system and lobby)then
-                skin_system.apply_skin_to_entity(lobby, client, user, data)
-            end
         end
+
+        
+        if(skin_system and lobby)then
+            skin_system.apply_skin_to_entity(lobby, client, user, data)
+        end
+        
         networking.send.request_sync_hm(lobby, user)
         networking.send.request_item_update(lobby, user)
         --networking.send.request_spectate_data(lobby, user)
@@ -3434,16 +3451,15 @@ ArenaGameplay = {
 
         --cosmetics_handler.LoadClientCosmetics(lobby, data, client)
 
-        if(not was_poly)then
-            local cosmetics = {}
-            
-            for k, v in pairs(data.players[tostring(user)].cosmetics or {})do
-                print("Applying cosmetic: "..tostring(k))
-                table.insert(cosmetics, k)
-            end
-
-            cosmetics_handler.ApplyCosmeticsList(lobby, data, client, cosmetics, true, user)
+        local cosmetics = {}
+        
+        for k, v in pairs(data.players[tostring(user)].cosmetics or {})do
+            print("Applying cosmetic: "..tostring(k))
+            table.insert(cosmetics, k)
         end
+
+        cosmetics_handler.ApplyCosmeticsList(lobby, data, client, cosmetics, true, user)
+
         
         return client
     end,
@@ -3451,6 +3467,11 @@ ArenaGameplay = {
         if(not data.players[tostring(user)])then
             return false
         end
+
+        if (not (data.spectator_mode or (GameHasFlagRun("player_is_unlocked") and (not GameHasFlagRun("no_shooting"))))) then
+            return false
+        end
+        
 
         if(GlobalsGetValue("arena_gamemode", "ffa") == "continuous" and not data.spectator_mode and data.players[tostring(user)].state ~= "arena")then
             return false
@@ -3472,16 +3493,8 @@ ArenaGameplay = {
             else
                 ArenaGameplay.SpawnClientPlayer(lobby, user, data)
             end
-
-            --ArenaGameplay.SpawnClientPlayer(lobby, user, data)
             return false
         end
-
-        if(data.players[tostring(user)].alive and not EntityGetIsAlive(data.players[tostring(user)].entity))then
-            ArenaGameplay.SpawnClientPlayer(lobby, user, data)
-            return false
-        end
-
         return true
     end,
     DrawNametag = function(lobby, data, entity, name, offset_y)
@@ -4003,7 +4016,224 @@ ArenaGameplay = {
 
         local player_entity = player.Get()
 
-        if(player_entity)then
+        if(player_entity and not data.is_spectating)then
+
+            if(GameHasFlagRun("super_secret_hamis_mode"))then
+                local inventory_gui_comp = EntityGetFirstComponentIncludingDisabled(player_entity, "InventoryGuiComponent")
+                
+                if(inventory_gui_comp)then
+                    ComponentSetValue2(inventory_gui_comp, "mActive", false)
+                end
+
+                local regen = data.client.regen or 0
+                
+                if(GameGetFrameNum() % 40 == 0)then
+                    if(regen > 0)then
+                        local count = tonumber( GlobalsGetValue( "hamis_leech_count", "0" ) )
+
+                        local total_heal = 0.01 + (count * 0.005)
+                        
+
+                        data.client.regen = regen - total_heal
+
+
+                        EntityInflictDamage(player_entity, -math.abs(total_heal), "DAMAGE_HEALING", "leech", "NONE", 0, 0, player_entity)
+                        local player_x, player_y = EntityGetTransform(player_entity)
+                        local heal = EntityLoad("data/entities/particles/heal_effect.xml", player_x, player_y)
+                        EntityAddChild(player_entity, heal)
+                        networking.send.hamis_heal(lobby)
+                    end
+    
+                end
+               
+
+    
+                local controlsComp = EntityGetFirstComponentIncludingDisabled(player_entity, "ControlsComponent")
+                local fire = ComponentGetValue2(controlsComp, "mButtonDownFire")
+                local fire2 = ComponentGetValue2(controlsComp, "mButtonDownFire2")
+                local fire2_frame = ComponentGetValue2(controlsComp, "mButtonFrameFire2")
+                local aim_x, aim_y = ComponentGetValue2(controlsComp, "mAimingVectorNormalized")
+                local throw = ComponentGetValue2(controlsComp, "mButtonDownThrow")
+                local throw_frame = ComponentGetValue2(controlsComp, "mButtonFrameThrow")
+                local jump = ComponentGetValue2(controlsComp, "mButtonDownFly")
+                local jump_frame = ComponentGetValue2(controlsComp, "mButtonFrameFly")
+                
+                
+                local sprite_comp = EntityGetFirstComponentIncludingDisabled(player_entity, "SpriteComponent", "character")
+
+                local animation = ComponentGetValue2(sprite_comp, "rect_animation")
+                local player_x, player_y = EntityGetTransform(player_entity)
+    
+                local allowed_items = MergeTables(EntityGetInRadiusWithTag(player_x, player_y, 10, "heart") or {}, EntityGetInRadiusWithTag(player_x, player_y, 10, "perk") or {}, EntityGetInRadiusWithTag(player_x, player_y, 10, "perk_reroll_machine") or {})
+                local itemPickUpperComp = EntityGetFirstComponentIncludingDisabled(player_entity, "ItemPickUpperComponent")
+    
+                for k, v in ipairs(allowed_items)do
+                    ComponentSetValue2(itemPickUpperComp, "only_pick_this_entity", v) 
+                end
+    
+                local mouse2 = false
+                local mouse2_frame = 0
+                
+                if(fire2 and fire == false)then
+                  GlobalsSetValue("throw_scheme", "1")
+                elseif(throw and fire == false)then
+                  GlobalsSetValue("throw_scheme", "2")
+                end
+                
+                if(GlobalsGetValue("throw_scheme", "1") == "1")then
+                  mouse2 = fire2
+                  mouse2_frame = fire2_frame
+                else
+                  mouse2 = throw
+                  mouse2_frame = throw_frame
+                end
+    
+                
+                local target_x, target_y = aim_x * 200, aim_y * 200
+                
+                local characterDataComponent = EntityGetFirstComponentIncludingDisabled(player_entity, "CharacterDataComponent")
+    
+                local on_ground = ComponentGetValue2(characterDataComponent, "is_on_ground")
+
+                on_ground_last_frame = on_ground_last_frame or false
+
+                if(on_ground)then
+                    on_ground_last_frame = true
+                end
+
+                was_on_ground = was_on_ground or tonumber(GlobalsGetValue("hamis_dash_count", "1"))
+                time_in_air = time_in_air or 0
+                last_time_in_air = last_time_in_air or 0
+    
+                if(on_ground)then
+                    was_on_ground = tonumber(GlobalsGetValue("hamis_dash_count", "1"))
+                else
+                    time_in_air = time_in_air + 1
+                end
+                
+                
+                local vel_x, vel_y = ComponentGetValue2(characterDataComponent, "mVelocity")
+
+                local velocity = math.sqrt(vel_x * vel_x + vel_y * vel_y)
+
+                last_velocity = last_velocity or velocity
+
+
+                last_damaged_targets = last_damaged_targets or {}
+                if(animation == "attack")then
+
+                    last_chomp = last_chomp or nil
+                    last_chomp_aim = last_chomp_aim or {0, 0}
+
+                    local big_chomper = GameHasFlagRun( "hamis_big_bite" )
+
+                    local targets = EntityGetInRadiusWithTag(player_x, player_y, 5, "mortal") or {}
+
+                    if(big_chomper)then
+
+                        local attack_aim_x, attack_aim_y = aim_x, aim_y
+                        local aim_length = math.sqrt(attack_aim_x * attack_aim_x + attack_aim_y * attack_aim_y)
+                        if (aim_length > 0) then
+                            attack_aim_x = attack_aim_x / aim_length
+                            attack_aim_y = attack_aim_y / aim_length
+                        end
+
+                        if(not was_attack)then
+
+                            last_chomp = EntityLoad("mods/evaisa.arena/files/custom/perks/hamis/big_bite/chomp_entity.xml", player_x + attack_aim_x * 20, player_y + attack_aim_y * 20)
+                            GameShootProjectile(player_entity, player_x + attack_aim_x * 20, player_y + attack_aim_y * 20, player_x + attack_aim_x * 1000, player_y + attack_aim_y * 1000, last_chomp)
+                            last_chomp_aim = {attack_aim_x, attack_aim_y}
+                        end
+
+                        EntityApplyTransform(last_chomp, player_x + last_chomp_aim[1] * 20, player_y + last_chomp_aim[2] * 20)
+
+                        targets = MergeTables(targets, EntityGetInRadiusWithTag(player_x + last_chomp_aim[1] * 20, player_y + last_chomp_aim[2] * 20, 25, "mortal") or {})
+                    end
+
+                    for k, v in ipairs(targets)do
+                        -- if target is not us
+                        if(v ~= player_entity)then
+                            if(last_damaged_targets[v] == nil or GameGetFrameNum() > last_damaged_targets[v] + 50)then
+                                local damage_mult = tonumber(GlobalsGetValue("hamis_damage_mult", "1"))
+                                EntityInflictDamage(v, 0.8 * damage_mult, "DAMAGE_MELEE", "hämis", "BLOOD_EXPLOSION", 0, 0, player_entity, player_x, player_y, 200)
+
+                                if(not EntityHasTag(v, "client"))then
+                                    local count = tonumber( GlobalsGetValue( "hamis_leech_count", "0" ) )
+                                    if(count > 0 and data.client.alive)then
+                                        local players = GetPlayers()
+                                        if(#players > 0)then
+                                            for i = 1, count do
+                                                data.client.regen = data.client.regen or 0
+                                                data.client.regen = data.client.regen + 0.04
+                        
+                                            end
+                                        end
+                                    end
+                                end
+
+
+                                local explosion_count = tonumber( GlobalsGetValue( "hamis_explosive_dash_count", "0" ) )
+
+                                
+                                if(velocity > 100 and last_time_in_air >= 50 and explosion_count > 0 and Random(0, 100) >= 50)then
+                                    local x, y = EntityGetTransform(v)
+                                    networking.send.hamis_explosion(lobby, explosion_count, x, y)
+                                    HamisMode.explode(player_entity, x, y, explosion_count)
+                                end
+
+                                last_damaged_targets[v] = GameGetFrameNum()
+                            end
+                    
+                        end
+                    end
+                    was_attack = true
+                else
+                    was_attack = false
+                end
+
+
+
+                if(last_velocity > 100 and velocity < 80 and last_time_in_air >= 50 and Random(0, 100) >= 50)then
+                    -- consider this an impact!
+
+                    local explosion_count = tonumber( GlobalsGetValue( "hamis_explosive_dash_count", "0" ) )
+
+                    if(explosion_count > 0)then
+                        print("Velocity: " .. tostring(velocity))
+                        local x, y = EntityGetTransform(player_entity)
+                        networking.send.hamis_explosion(lobby, explosion_count, x, y)
+                        HamisMode.explode(player_entity, x, y, explosion_count)
+                    end
+
+                end
+
+                if(on_ground and time_in_air ~= 0)then
+                    last_time_in_air = time_in_air
+                    time_in_air = 0
+                end
+
+
+                last_velocity = velocity
+
+                if(fire)then
+                    GamePlayAnimation(player_entity, "attack", 100, "idle", 1)
+                    networking.send.hamis_attack(lobby, tonumber(GlobalsGetValue("hamis_damage_mult", "1")))
+                elseif(mouse2 and mouse2_frame == GameGetFrameNum() and was_on_ground > 0)then
+                    GamePlayAnimation(player_entity, "attack", 100, "idle", 1)
+                    
+                    ComponentSetValue2(characterDataComponent, "is_on_ground", true)
+                    ComponentSetValue2(controlsComp, "mJumpVelocity", target_x, target_y)
+                    ComponentSetValue2(characterDataComponent, "mVelocity", target_x, target_y)
+                    networking.send.hamis_attack(lobby, tonumber(GlobalsGetValue("hamis_damage_mult", "1")))
+                    was_on_ground = was_on_ground - 1
+                elseif(on_ground_last_frame and jump and jump_frame <= GameGetFrameNum() + 1)then
+                    ComponentSetValue2(controlsComp, "mJumpVelocity", target_x, target_y)
+                end
+
+                on_ground_last_frame = on_ground
+            end
+
+
             if(EntityHasTag(player_entity, "polymorphed_player") and not data.is_polymorphed and EntityGetFilename(player_entity) ~= "")then
 
                 data.is_polymorphed = true
@@ -4026,24 +4256,33 @@ ArenaGameplay = {
                 
                 networking.send.polymorphed(lobby, true)
 
+                print("Player polymorphed!! wawa!")
 
                 local genome_comp = EntityGetFirstComponentIncludingDisabled(player_entity, "GenomeDataComponent")
                 if(genome_comp)then
                     ComponentSetValue2(genome_comp, "herd_id", StringToHerdId("pvp"))
                 end
 
-                local add_comps = #(EntityGetComponentIncludingDisabled(player_entity, "LuaComponent", "remote_polymorph_remove") or {}) == 0
-                
-                if(add_comps)then
-                    EntityAddComponent2(player_entity, "LuaComponent", {
-                        script_wand_fired = "mods/evaisa.arena/files/scripts/gamemode/misc/on_wand_fire.lua"
-                    })
-
-                    EntityAddComponent2(player_entity, "LuaComponent", {
-                        script_damage_about_to_be_received = "mods/evaisa.arena/files/scripts/gamemode/misc/kill_check.lua",
-                        script_damage_received = "mods/evaisa.arena/files/scripts/gamemode/misc/kill_check.lua"
-                    })
+                local character_platforming_comp = EntityGetFirstComponentIncludingDisabled(player_entity, "CharacterPlatformingComponent")
+                if(character_platforming_comp)then
+                    ComponentSetValue2(character_platforming_comp, "fly_speed_mult", 0)
+                    ComponentSetValue2(character_platforming_comp, "fly_speed_change_spd", 0)
                 end
+
+                EntityAddTag(player_entity, "player_unit")
+
+                -- add InventoryGuiComponent
+                EntityAddComponent2(player_entity, "InventoryGuiComponent")
+
+                EntityAddComponent2(player_entity, "LuaComponent", {
+                    script_wand_fired = "mods/evaisa.arena/files/scripts/gamemode/misc/on_wand_fire.lua"
+                })
+
+                EntityAddComponent2(player_entity, "LuaComponent", {
+                    script_damage_about_to_be_received = "mods/evaisa.arena/files/scripts/gamemode/misc/kill_check.lua",
+                    script_damage_received = "mods/evaisa.arena/files/scripts/gamemode/misc/kill_check.lua"
+                })
+        
 
             elseif(not EntityHasTag(player_entity, "polymorphed_player") and data.is_polymorphed)then
                 data.is_polymorphed = false
@@ -4189,6 +4428,13 @@ ArenaGameplay = {
 
         np.SetInventoryCursorEnabled(not data.is_spectating)
         if(data.is_spectating)then
+
+            local polymorph_players = EntityGetWithTag("polymorphed_player") or {}
+            for k, v in ipairs(polymorph_players)do
+                if(not EntityHasTag(v, "client"))then
+                    --EntityKill(v)
+                end
+            end
             
             
             -- handle hover tooltips for world wands
@@ -4343,6 +4589,85 @@ ArenaGameplay = {
         ArenaGameplay.UpdateTweens(lobby, data)
     end,
     LateUpdate = function(lobby, data)
+
+        if(GameHasFlagRun("super_secret_hamis_mode"))then
+            if (data.state == "arena") then
+                -- loop through other players
+                for k, v in pairs(data.players) do
+                    if (v.entity ~= nil and EntityGetIsAlive(v.entity)) then
+                        local sprite_comp = EntityGetFirstComponentIncludingDisabled(v.entity, "SpriteComponent", "character")
+    
+                        local animation = ComponentGetValue2(sprite_comp, "rect_animation")
+    
+                        local x, y = EntityGetTransform(v.entity)
+    
+                        v.last_damaged_targets = v.last_damaged_targets or {}
+    
+                        --print(animation)
+    
+                        if (animation == "attack") then
+                            local targets = EntityGetInRadiusWithTag(x, y, 15, "mortal") or {}
+
+                            local big_chomper = v.big_chomper
+
+
+
+                            if(big_chomper)then
+                                local controls_component = EntityGetFirstComponentIncludingDisabled(v.entity, "ControlsComponent")
+                                local aim_x, aim_y = ComponentGetValue2(controls_component, "mAimingVectorNormalized")
+
+                                local aim_length = math.sqrt(aim_x * aim_x + aim_y * aim_y)
+                                if (aim_length > 0) then
+                                    aim_x = aim_x / aim_length
+                                    aim_y = aim_y / aim_length
+                                end
+
+                                if(not v.was_attack)then
+                                    v.last_chomp = EntityLoad("mods/evaisa.arena/files/custom/perks/hamis/big_bite/chomp_entity.xml", x + aim_x * 20, y + aim_y * 20)
+                                    GameShootProjectile(v.entity, x + aim_x * 20, y + aim_y * 20, x + aim_x * 1000, y + aim_y * 1000, v.last_chomp)
+                                    v.last_chomp_x = aim_x
+                                    v.last_chomp_y = aim_y
+                                end
+                                EntityApplyTransform(v.last_chomp, x + v.last_chomp_x * 20, y + v.last_chomp_y * 20)
+                                targets = MergeTables(targets, EntityGetInRadiusWithTag(x + v.last_chomp_x * 20, y + v.last_chomp_y * 20, 25, "mortal") or {})
+                            end
+
+                            for k, targ in ipairs(targets) do
+                                -- if target is not us
+                                if (targ ~= v.entity) then
+                                    --print("Attacking target!")
+                                    --print(tostring(v.last_damaged_targets[targ]))
+                                    --print(tostring(GameGetFrameNum()))
+
+                                    local damage_mult = v.hamis_damage or 1
+
+
+                                    if (v.last_damaged_targets[targ] == nil or GameGetFrameNum() > v.last_damaged_targets[targ] + 50) then
+                                        print("Dealing damage to target!")
+                                        EntityInflictDamage(targ, 0.8 * damage_mult, "DAMAGE_BITE", "hämis", "BLOOD_EXPLOSION", 0, 0, v.entity, x, y, 200)
+
+                                        local venom_count = tonumber(v.venom)
+
+                                        for i = 1, venom_count do
+                                            if(Random(0, 100) > 60)then
+                                                EntityIngestMaterial( targ, CellFactory_GetType("poison"), 40 )
+                                            end
+                                        end
+
+                                        v.last_damaged_targets[targ] = GameGetFrameNum()
+                                    end
+                                end
+                            end
+
+                            v.was_attack = true
+                        else
+                            v.was_attack = false
+                        end
+                        
+                    end
+                end
+            end
+        end
 
         if(data.force_open_inventory)then
             if(data.spectator_entity)then

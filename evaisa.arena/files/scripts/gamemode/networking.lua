@@ -111,6 +111,7 @@ typedef struct E {
     float vel_y;
     bool is_on_ground:1;
     bool is_on_slippery_ground:1;
+    bool is_precision_jumping:1;
 } CharacterPos;
 #pragma pack(pop)
 ]])
@@ -263,7 +264,7 @@ local ItemSwitch = ffi.typeof("ItemSwitch")
 local function deserialize_damage_details(str)
     local values = {}
     for value in str:gmatch("[^,]+") do
-        table.insert(values, tonumber(value))
+        table.insert(values, value)
     end
 
     local ragdoll_fx = values[1]
@@ -568,6 +569,12 @@ networking = {
 
                     ComponentSetValue2(characterData, "is_on_ground", message.is_on_ground or false)
                     ComponentSetValue2(characterData, "is_on_slippery_ground", message.is_on_slippery_ground or false)
+
+                    local platformingComp = EntityGetFirstComponentIncludingDisabled(entity, "CharacterPlatformingComponent")
+                    if (platformingComp ~= nil) then
+                        ComponentSetValue2(platformingComp, "mFramesInAir", message.frames_in_air)
+                        ComponentSetValue2(platformingComp, "mIsPrecisionJumping", message.is_precision_jumping)
+                    end
                     --data.players[tostring(user)].is_on_ground = message.is_on_ground or false
                     --data.players[tostring(user)].is_on_slippery_ground = message.is_on_slippery_ground or false
 
@@ -586,12 +593,6 @@ networking = {
         end,
         item_update = function(lobby, message, user, data)
             if(data.state ~= "arena" and not data.spectator_mode)then
-                return
-            end
-            print("Received item update")
-
-            if (not gameplay_handler.CheckPlayer(lobby, user, data)) then
-                print("Player was missing")
                 return
             end
 
@@ -1187,6 +1188,7 @@ networking = {
                         end
                     end
 
+
                     --print("Received health update!!")
 
                     local last_health = maxHealth
@@ -1205,6 +1207,22 @@ networking = {
                             local effect = GetGameEffectLoadTo(client_entity, "PROTECTION_ALL", true)
     
                             ComponentSetValue2( effect, "frames", invincibility_frames )
+                        end
+
+                        if(damage > 0 and attacker == tostring(steamutils.getSteamID()))then
+                            local count = tonumber( GlobalsGetValue( "hamis_leech_count", "0" ) )
+                            if(count > 0 and data.client.alive)then
+                                local players = GetPlayers()
+                                if(#players > 0)then
+                                    for i = 1, count do
+
+                                        if(Random(0, 100) > 60)then
+                                            data.client.regen = data.client.regen or 0
+                                            data.client.regen = data.client.regen + math.abs(math.max(damage / 4, 0.04))
+                                        end
+                                    end
+                                end
+                            end
                         end
 
                         --[[
@@ -1603,7 +1621,6 @@ networking = {
 
             ]]
             if (not gameplay_handler.CheckPlayer(lobby, user, data)) then
-                print("not a player")
                 return
             end
             local client_entity = data.players[tostring(user)].entity
@@ -1620,15 +1637,13 @@ networking = {
 
                     local cosmetics_string = table.concat(player_data.cosmetics, ",")
 
-                    --print("Received cosmetics: " .. cosmetics_string)
-                    --print("Last cosmetics: " .. tostring(client_data.last_cosmetics))
-                    
+      
                     if(client_data.last_cosmetics ~= cosmetics_string)then
                         print("Applying cosmetics!!")
                         cosmetics_handler.ApplyCosmeticsList(lobby, data, client_entity, player_data.cosmetics, true, user)
+                        client_data.last_cosmetics = cosmetics_string
                     end
 
-                    client_data.last_cosmetics = cosmetics_string
 
                     local valid_ids = {}
 
@@ -2727,7 +2742,7 @@ networking = {
             if(data.state == "lobby" and not data.spectator_mode) then
                 return
             end
-        
+
             local dat = zstd:decompress(message)
         
             local info2 = {}
@@ -2748,6 +2763,12 @@ networking = {
             if player_data == nil then
                 return
             end
+
+            
+            if(player_data.polymorph_entity)then
+                return
+            end
+        
         
             local entity = player_data.entity
         
@@ -2812,8 +2833,56 @@ networking = {
 
             player_data.polymorph_entity = message
 
+            if(not GameHasFlagRun("no_shooting"))then
+                return
+            end
 
             ArenaGameplay.TransformPlayer(lobby, user, data, player_data.polymorph_entity)
+        end,
+        hamis_attack = function(lobby, message, user, data)
+            if(not GameHasFlagRun("super_secret_hamis_mode"))then
+                return
+            end
+            
+            if (not gameplay_handler.CheckPlayer(lobby, user, data)) then
+                return
+            end
+
+            if (data.spectator_mode or (GameHasFlagRun("player_is_unlocked") and (not GameHasFlagRun("no_shooting"))) and data.players[tostring(user)].entity ~= nil and EntityGetIsAlive(data.players[tostring(user)].entity)) then
+                data.players[tostring(user)].hamis_damage = message[1]
+                data.players[tostring(user)].big_chomper = message[2]
+                data.players[tostring(user)].venom = message[3]
+                GamePlayAnimation(data.players[tostring(user)].entity, "attack", 100, "idle", 1)
+        
+            end
+        end,
+        hamis_explosion = function(lobby, message, user, data)
+            if(data.state == "lobby" and not data.spectator_mode) then
+                return
+            end
+
+            if(not GameHasFlagRun("super_secret_hamis_mode"))then
+                return
+            end
+
+            if(data.players[tostring(user)] and data.players[tostring(user)].entity and EntityGetIsAlive(data.players[tostring(user)].entity))then
+                HamisMode.explode(data.players[tostring(user)].entity, message[1], message[2], message[3])
+            end
+        end,
+        hamis_heal = function(lobby, message, user, data)
+            if(data.state == "lobby" and not data.spectator_mode) then
+                return
+            end
+
+            if(not GameHasFlagRun("super_secret_hamis_mode"))then
+                return
+            end
+
+            if(data.players[tostring(user)] and data.players[tostring(user)].entity and EntityGetIsAlive(data.players[tostring(user)].entity))then
+                local x, y = EntityGetTransform(data.players[tostring(user)].entity)
+                local heal = EntityLoad("data/entities/particles/heal_effect.xml", x, y)
+                EntityAddChild(data.players[tostring(user)].entity, heal)
+            end
         end,
     },
     send = {
@@ -2883,6 +2952,7 @@ networking = {
                     vy = vel_y,
                     is_on_ground = ComponentGetValue2(characterData, "is_on_ground"),
                     is_on_slippery_ground = ComponentGetValue2(characterData, "is_on_slippery_ground"),
+                    is_precision_jumping = ComponentGetValue2(characterPlatformingComp, "mIsPrecisionJumping"),
                 }
 
                 if(data.client.last_character_pos == nil)then
@@ -3792,6 +3862,20 @@ networking = {
                 steamutils.send("polymorphed", msg, steamutils.messageTypes.OtherPlayers, lobby, true, true, 4)
                
             end
+        end,
+        hamis_attack = function(lobby, damage_mult)
+            if damage_mult == nil then
+                damage_mult = 1
+            end
+            local big_chomper = GameHasFlagRun( "hamis_big_bite" )
+            local venom = tonumber( GlobalsGetValue( "hamis_venom_count", "0" ) )
+            steamutils.send("hamis_attack", {damage_mult, big_chomper, venom}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+        end,
+        hamis_explosion = function(lobby, count, x, y)
+            steamutils.send("hamis_explosion", {x, y, count}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+        end,
+        hamis_heal = function(lobby)
+            steamutils.send("hamis_heal", {}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
         end,
     },
 }
