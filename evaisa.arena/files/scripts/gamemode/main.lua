@@ -91,25 +91,6 @@ dofile_once("data/scripts/perks/perk_list.lua")
 
 local applied_seed = 0
 
-perks_sorted = {}
-perk_enum = {}
-all_perks = {}
-all_perks_by_name = {}
-perk_sprites = {}
-apply_perk_fixes()
-for k, perk in pairs(complete_perk_list) do
-    perk_sprites[perk.id] = perk.ui_icon
-    table.insert(perks_sorted, perk.id)
-    all_perks[perk.id] = perk
-    all_perks_by_name[perk.ui_name] = perk
-end
-
-table.sort(perks_sorted)
-
-for i, perk_id in ipairs(perks_sorted) do
-    perk_enum[perk_id] = i
-end
-
 
 local parallax_textures = {}
 
@@ -360,12 +341,8 @@ local function TryUpdateData(lobby)
         sorted_perk_list_ids = {}
         apply_perk_fixes()
 
-        local curr_perk_list = old_perk_list
-        if(GameHasFlagRun("super_secret_hamis_mode"))then
-            curr_perk_list = perk_list_hamis
-        end
-
-        for _, perk in pairs(curr_perk_list)do
+        for _, perk in pairs(perk_list)do
+            debug_log:print(perk.id)
             table.insert(sorted_perk_list, perk)
             table.insert(sorted_perk_list_ids, perk)
         end
@@ -715,7 +692,7 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 205,
+    version = 207,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
     end,
