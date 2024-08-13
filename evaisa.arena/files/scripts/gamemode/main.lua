@@ -341,7 +341,7 @@ local function TryUpdateData(lobby)
         sorted_perk_list_ids = {}
         apply_perk_fixes()
 
-        for _, perk in pairs(perk_list)do
+        for _, perk in pairs(get_active_perk_list())do
             debug_log:print(perk.id)
             table.insert(sorted_perk_list, perk)
             table.insert(sorted_perk_list_ids, perk)
@@ -692,7 +692,7 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 207,
+    version = 208,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
     end,
@@ -2628,7 +2628,7 @@ ArenaMode = {
         apply_perk_fixes()
         dofile("data/scripts/gun/gun_actions.lua")
 
-        for i, perk in ipairs(complete_perk_list)do
+        for i, perk in ipairs(get_active_perk_list())do
             local is_blacklisted = perk_blacklist_data[perk.id]--steam.matchmaking.getLobbyData(lobby, "perk_blacklist_"..perk.id) == "true"
             if(is_blacklisted)then
                 GameAddFlagRun("perk_blacklist_"..perk.id)

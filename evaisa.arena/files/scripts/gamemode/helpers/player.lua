@@ -599,7 +599,7 @@ player_helper.GetPerks = function()
         end
     else
         apply_perk_fixes()
-        for i, perk_data in ipairs(perk_list) do
+        for i, perk_data in ipairs(get_active_perk_list()) do
             local perk_id = perk_data.id
             local flag_name = get_perk_picked_flag_name(perk_id)
             local pickup_count = tonumber(GlobalsGetValue(flag_name .. "_PICKUP_COUNT", "0"))
@@ -629,12 +629,12 @@ player_helper.GivePerk = function(perk_id, amount, skip_count)
 
     pos_x, pos_y = EntityGetTransform(entity_who_picked)
     apply_perk_fixes()
-    local perk_data = get_perk_with_id(perk_list, perk_id)
+    local perk_data = get_perk_with_id(get_active_perk_list(), perk_id)
     if perk_data == nil then
         return
     end
 
-    local flag_name = get_perk_picked_flag_name(perk_id)
+    local flag_name = get_perk_picked_flag_name(get_active_perk_list())
 
     -- update how many times the perk has been picked up this run -----------------
     if not skip_count then

@@ -622,15 +622,15 @@ end
 
 dofile("mods/evaisa.arena/files/scripts/gamemode/misc/perks/hamis_perks.lua")
 
-arena_old_perk_list = perk_list
+--arena_old_perk_list = perk_list
 
 
 function apply_perk_fixes()
-	if(GameHasFlagRun("super_secret_hamis_mode"))then
+	--[[if(GameHasFlagRun("super_secret_hamis_mode"))then
 		perk_list = perk_list_hamis
 	else
 		perk_list = arena_old_perk_list
-	end
+	end]]
 	-- loop backwards through perk_list so we can remove entries
 	for i=#perk_list,1,-1 do
 		local perk = perk_list[i]
@@ -658,7 +658,7 @@ function apply_perk_fixes()
 		end
 	end
 
-	complete_perk_list = MergeTables(arena_old_perk_list, perk_list_hamis)
+	complete_perk_list = MergeTables(perk_list, perk_list_hamis)
 
 
 	perks_sorted = {}
@@ -678,6 +678,14 @@ function apply_perk_fixes()
 	for i, perk_id in ipairs(perks_sorted) do
 		perk_enum[perk_id] = i
 	end
+end
+
+function get_active_perk_list()
+	return GameHasFlagRun("super_secret_hamis_mode") and perk_list_hamis or perk_list
+end
+
+function get_perk_with_id( perk_list, perk_id )
+	return all_perks[perk_id]
 end
 
 apply_perk_fixes()

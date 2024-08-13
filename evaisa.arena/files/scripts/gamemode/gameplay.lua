@@ -509,7 +509,7 @@ ArenaGameplay = {
 
         dofile_once("data/scripts/perks/perk_list.lua")
         apply_perk_fixes()
-        for i, perk_data in ipairs(perk_list) do
+        for i, perk_data in ipairs(get_active_perk_list()) do
             local perk_id = perk_data.id
             local flag_name = get_perk_picked_flag_name(perk_id)
 

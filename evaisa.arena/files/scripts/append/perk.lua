@@ -15,7 +15,11 @@ perk_get_spawn_order = function ( ignore_these_ )
     ignore_these_ = ignore_these_ or {}
 
     apply_perk_fixes()
+
+    local old_spawn_list = perk_list
     
+    perk_list = get_active_perk_list()
+
     for i, perk in ipairs(perk_list)do
         if GameHasFlagRun("perk_blacklist_"..perk.id) then
             table.insert(ignore_these_, perk.id)
@@ -23,6 +27,8 @@ perk_get_spawn_order = function ( ignore_these_ )
     end
 
     local out =  old_perk_get_spawn_order(ignore_these_)
+
+    perk_list = old_spawn_list
 
     SetRandomSeed = oldSetRandomSeed
 
@@ -56,7 +62,7 @@ perk_pickup = function( entity_item, entity_who_picked, item_name, do_cosmetic_f
 
     apply_perk_fixes()
 
-	local perk_data = get_perk_with_id( perk_list, perk_id )
+	local perk_data = get_perk_with_id( get_active_perk_list(), perk_id )
 	if perk_data == nil then
 		return
 	end
@@ -82,7 +88,7 @@ local old_perk_spawn_many = perk_spawn_many
 perk_spawn_many = function( x, y, dont_remove_others_, ignore_these_ )
     local perk_number = 0
     apply_perk_fixes()
-    for i, perk in ipairs(perk_list)do
+    for i, perk in ipairs(get_active_perk_list())do
         if not GameHasFlagRun("perk_blacklist_"..perk.id) then
             perk_number = perk_number + 1
         end
@@ -90,5 +96,33 @@ perk_spawn_many = function( x, y, dont_remove_others_, ignore_these_ )
     if(perk_number == 0)then
         return
     end
+
+    local old_spawn_list = perk_list
+    
+    perk_list = get_active_perk_list()
+
     old_perk_spawn_many( x, y, dont_remove_others_, ignore_these_ )
+
+    perk_list = old_spawn_list
 end
+
+local function list_fixer( func )
+    return function( ... )
+        apply_perk_fixes()
+        local old_spawn_list = perk_list
+    
+        perk_list = get_active_perk_list()
+
+        -- output all results
+        local out = {func(...)}
+
+        perk_list = old_spawn_list
+
+        return unpack(out)
+    end
+end
+
+list_fixer(get_perk_stackable_status)
+list_fixer(perk_spawn_with_name)
+list_fixer(perk_spawn)
+
