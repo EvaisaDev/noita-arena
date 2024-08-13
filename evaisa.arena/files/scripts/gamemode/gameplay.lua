@@ -495,12 +495,14 @@ ArenaGameplay = {
             ComponentSetValue(world_comp, "changed_materials", "")
         end
 
-        ffi = require("ffi")
+        --[[ffi = require("ffi")
         arg = ffi.cast("int**", 0x012216cc)[0][6]
         remove_materials = ffi.cast("void(__fastcall*)(int)", 0x006fa100)
         remove_materials(arg)
         load_materials = ffi.cast("void(__thiscall*)(int, char)", 0x00706e30)
-        load_materials(arg, 1)
+        load_materials(arg, 1)]]
+
+        np.ReloadMaterials()
         -- END FUNGAL SHIFT RESET
                 
 
