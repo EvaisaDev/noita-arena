@@ -213,7 +213,13 @@ function damage_received( damage, message, entity_thats_responsible, is_fatal, p
             if(damage > 0)then
                 local hp = ComponentGetValue2( damageModelComponent, "hp" )
                 local max_hp = ComponentGetValue2( damageModelComponent, "max_hp" )
-                ComponentSetValue2( damageModelComponent, "hp", math.min(math.max(hp + damage, 0.04), max_hp) )
+
+                print("Immortal: " .. tostring(hp) .. " / " .. tostring(max_hp))
+                print("Updating hp to: " .. tostring(math.min(math.max(hp + damage, 0.04), max_hp + damage)))
+                print("Damage: " .. tostring(damage))
+
+
+                ComponentSetValue2( damageModelComponent, "hp", math.min(math.max(hp + damage, 0.04), max_hp + damage) )
             end
         else
             if(is_fatal)then

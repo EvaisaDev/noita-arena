@@ -634,7 +634,7 @@ player_helper.GivePerk = function(perk_id, amount, skip_count)
         return
     end
 
-    local flag_name = get_perk_picked_flag_name(get_active_perk_list())
+    local flag_name = get_perk_picked_flag_name(perk_id)
 
     -- update how many times the perk has been picked up this run -----------------
     if not skip_count then

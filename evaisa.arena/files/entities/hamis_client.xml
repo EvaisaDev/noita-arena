@@ -100,7 +100,7 @@
         </SpriteAnimatorComponent>
 
         <DamageModelComponent
-            hp="0.11"
+            hp="0.2"
             ragdoll_filenames_file="data/ragdolls/longleg/filenames.txt"
             ragdoll_offset_y="-6"
 			blood_sprite_directional="data/particles/bloodsplatters/bloodsplatter_directional_purple_$[1-3].xml"

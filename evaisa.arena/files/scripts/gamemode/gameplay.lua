@@ -4021,6 +4021,9 @@ ArenaGameplay = {
         if(player_entity and not data.is_spectating)then
 
             if(GameHasFlagRun("super_secret_hamis_mode"))then
+
+                SetRandomSeed( GameGetFrameNum(), GameGetFrameNum() * 5435 % 1000 )
+
                 local inventory_gui_comp = EntityGetFirstComponentIncludingDisabled(player_entity, "InventoryGuiComponent")
                 
                 if(inventory_gui_comp)then
@@ -4157,7 +4160,7 @@ ArenaGameplay = {
                         if(v ~= player_entity)then
                             if(last_damaged_targets[v] == nil or GameGetFrameNum() > last_damaged_targets[v] + 50)then
                                 local damage_mult = tonumber(GlobalsGetValue("hamis_damage_mult", "1"))
-                                EntityInflictDamage(v, 0.8 * damage_mult, "DAMAGE_MELEE", "hämis", "BLOOD_EXPLOSION", 0, 0, player_entity, player_x, player_y, 200)
+                                EntityInflictDamage(v, (Random(200, 400) / 1000) * damage_mult, "DAMAGE_MELEE", "hämis", "BLOOD_EXPLOSION", 0, 0, player_entity, player_x, player_y, 200)
 
                                 if(not EntityHasTag(v, "client"))then
                                     local count = tonumber( GlobalsGetValue( "hamis_leech_count", "0" ) )
@@ -4593,6 +4596,7 @@ ArenaGameplay = {
     LateUpdate = function(lobby, data)
 
         if(GameHasFlagRun("super_secret_hamis_mode"))then
+            SetRandomSeed( GameGetFrameNum(), GameGetFrameNum() * 5435 % 1000 )
             if (data.state == "arena") then
                 -- loop through other players
                 for k, v in pairs(data.players) do
@@ -4646,7 +4650,7 @@ ArenaGameplay = {
 
                                     if (v.last_damaged_targets[targ] == nil or GameGetFrameNum() > v.last_damaged_targets[targ] + 50) then
                                         print("Dealing damage to target!")
-                                        EntityInflictDamage(targ, 0.8 * damage_mult, "DAMAGE_BITE", "hämis", "BLOOD_EXPLOSION", 0, 0, v.entity, x, y, 200)
+                                        EntityInflictDamage(targ, (Random(200, 400) / 1000) * damage_mult, "DAMAGE_BITE", "hämis", "BLOOD_EXPLOSION", 0, 0, v.entity, x, y, 200)
 
                                         local venom_count = tonumber(v.venom)
 
