@@ -1,0 +1,48 @@
+<Entity tags="refresh">
+	
+	<VelocityComponent>
+	</VelocityComponent>
+
+	<SimplePhysicsComponent>
+	</SimplePhysicsComponent>
+	 
+	<HitboxComponent 
+		aabb_min_x="-6" 
+		aabb_max_x="6" 
+		aabb_min_y="-8" 
+		aabb_max_y="0"
+		is_item="1">
+	</HitboxComponent>
+
+    <StreamingKeepAliveComponent/>
+
+	<InteractableComponent
+		radius="14"
+		name="refresh"
+		ui_text="$arena_use_refresh"
+	/>
+
+	<LuaComponent 
+		script_interacting="mods/evaisa.arena/files/scripts/gamemode/misc/spell_refresh.lua" >
+	</LuaComponent>
+
+	<LightComponent 
+		_enabled="1" 
+		r="255"
+		g="255"
+		b="255"
+		radius="64"
+		fade_out_time="0.75" >
+	</LightComponent>
+
+	<SpriteComponent 
+		alpha="1" 
+		image_file="data/items_gfx/spell_refresh.xml" 
+		next_rect_animation="" 
+		rect_animation="" 
+		offset_x="9"
+		offset_y="18"
+		z_index="20" >
+	</SpriteComponent>
+
+</Entity>

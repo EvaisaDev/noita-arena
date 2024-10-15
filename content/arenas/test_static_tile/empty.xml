@@ -1,0 +1,23 @@
+<Biome>
+  <Topology 
+    name="_EMPTY_"
+    lua_script="mods/evaisa.arena/content/arenas/test_static_tile/arena.lua" 
+    mBiomeMaterialsFile="data/materials/biome_forest.xml" 
+    background_image=""
+    limit_background_image="0"
+    fat_biome_edges="0"
+    noise_biome_edges="0"
+    has_rain="0"
+     >
+
+  </Topology>
+
+
+  <Materials 
+    name="empty" 
+     >
+
+  </Materials>
+
+</Biome>
+

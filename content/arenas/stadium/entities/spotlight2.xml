@@ -1,0 +1,22 @@
+<Sprite 
+  default_animation="explosion" 
+  filename="mods/evaisa.arena/content/arenas/stadium/entities/spotlight2.png" 
+  offset_x="128" 
+  offset_y="24" >
+
+  <RectAnimation 
+    frame_count="1" 
+    frame_height="256" 
+    frame_wait="0.02" 
+    frame_width="256" 
+    frames_per_row="1" 
+    loop="0" 
+    name="explosion" 
+    pos_x="0" 
+    pos_y="0" 
+    shrink_by_one_pixel="0" >
+
+  </RectAnimation>
+
+</Sprite>
+

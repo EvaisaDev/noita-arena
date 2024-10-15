@@ -1,0 +1,5 @@
+<PixelScenes>
+    <mBufferedPixelScenes>
+        <PixelScene background_filename="mods/evaisa.arena/content/arenas/original/background_new.png" clean_area_before="1" colors_filename="mods/evaisa.arena/content/arenas/original/visuals_new.png" material_filename="mods/evaisa.arena/content/arenas/original/materials_new.png" pos_x="-450" pos_y="-350" skip_biome_checks="1" ></PixelScene>
+    </mBufferedPixelScenes>
+</PixelScenes>

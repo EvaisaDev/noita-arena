@@ -1,0 +1,33 @@
+<Entity  tags="does_physics_update" >
+	<PhysicsBody2Component 
+		angular_damping="0.1" 
+		init_offset_x="11"
+		init_offset_y="29"
+		root_offset_x="8"
+		root_offset_y="8"
+		>
+	</PhysicsBody2Component>
+
+	<PhysicsImageShapeComponent 
+		image_file="data/props_gfx/temple_statue_01.png" 
+		is_root="1"
+		centered="0"
+		material="rock_box2d_hard" 
+		offset_x="0"
+		offset_y="0"
+		>
+	</PhysicsImageShapeComponent>
+
+    <LuaComponent
+        _tags = "enabled_in_world,enabled_in_hand,enabled_in_inventory"
+        script_item_picked_up = "mods/evaisa.arena/files/scripts/gamemode/misc/item_pickup.lua"
+        script_kick = "mods/evaisa.arena/files/scripts/gamemode/misc/item_kick.lua"
+        script_throw_item = "mods/evaisa.arena/files/scripts/gamemode/misc/item_throw.lua"
+    >
+    </LuaComponent>
+    <VariableStorageComponent
+        name = "arena_entity_id"
+        value_float = "73"
+        value_int = "0"
+    />
+</Entity>
