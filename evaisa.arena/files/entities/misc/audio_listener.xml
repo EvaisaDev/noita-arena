@@ -1,5 +1,0 @@
-<Entity tags = "spectator_no_clear">
-    <AudioListenerComponent
-        z="-60"
-    ></AudioListenerComponent>
-</Entity>

@@ -1,9 +1,0 @@
-<Entity>
-  <SpriteComponent 
-    image_file="mods/evaisa.arena/content/cosmetics/entities/misc_tail/fox_silver_0.xml" 
-    offset_x="0"
-    offset_y="1.5"
-    update_transform="0"
-    update_transform_rotation="0" >
-  </SpriteComponent>
-</Entity>
