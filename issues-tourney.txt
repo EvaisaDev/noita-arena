@@ -1,0 +1,50 @@
+TO INVESTIGATE:
+- inventory flashes when players edit in spectator mode (cannot fix)
+
+- spectators load shop items into the arena sometimes
+
+- Tab button locks up sometimes for spectators occasionally(?
+ - Probably related to spectator entity dying bug
+
+- shops desync with extra item(?
+
+- swapping players sometimes causes clients to drop their spells?? (this may have been the spectator dropping the spells.)
+
+CHANGES:
+- Fixed card pick sometimes not showing up correctly.
+- Fixed winning players getting to pick a card if they die.
+- Added materials list to content hash.
+- Card pick is now a interactable object.
+- Extended the Holy Mountain.
+- Optimized wand deserialization slightly
+- Fixed lag when client spam item refresh when spectated.
+- Fixed items falling through platforms in holy mountain when spectating
+- Fixed spectator entity dying to electricity and environmental disasters and dropping a ragdoll / items
+- Client position should be updated when spectator switches user, preventing position desync.
+- Spell refresh no longer blocks projectiles.
+- Passive spell effects should not show on the spectator entity
+- Wand no longer appears on spectator entity.
+- inventory randomly goes invisible in spectator mode
+- Fixed issue that would prevent win conditions from triggering
+- Fixed selected item desync on spectators.
+- When players enter the arena, spectators will automatically follow their last selected player.
+- Fixed perks not showing up for spectators when no client was selected in arena before entering HM
+- Added ability to un-set keybindings by pressing backspace.
+- Fixed extra life perk not showing up in other player's perk lists.
+- Extra life is no longer one time use, it regenerates when entering the HM
+- Extra life now has invincibility frames.
+- Saving grace now has invincibility frames.
+- Extra life is now triggered after saving grace.
+- Synced blocked damage onto clients
+- Fixed bug where lobby type wouldn't update.
+- Fixed bug where chat could cause you to get stuck unable to control your player
+- Player health and other data is serialized before dying.
+- Fixed potion throw line appearing on spectators occasionally
+- Practice dummy changes now sync to spectators.
+- Fixed avatars not loading sometimes
+- Removed "click to blacklist" text for non lobby owners.
+- Card UI is now synced to spectators
+- Cards are serialized with the player, so when you re-join and didn't pick a card you get to pick one.
+- Fixed alt-tabbing making items disappear on Linux (and maybe Windows)
+- Fixed flasks turning white for spectators when player drinks from it.
+- Swapper now only teleports players if it hit on the target side.
