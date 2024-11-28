@@ -1,7 +1,7 @@
 local entity = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/entity.lua")
 local EZWand = dofile("mods/evaisa.arena/files/scripts/utilities/EZWand.lua")
 local inspect = dofile("mods/evaisa.arena/lib/inspect.lua")
-dofile_once("data/scripts/perks/perk_list.lua")
+
 
 local player_helper = {}
 
@@ -574,8 +574,9 @@ player_helper.SetSpells = function(spells)
         GamePickUpInventoryItem(player, action, false)
     end
 end
-
 player_helper.GetPerks = function()
+	dofile("data/scripts/perks/perk_list.lua")
+	regen_tables()
     local player = player_helper.Get()
     local perk_info = {}
     if(player)then
@@ -598,8 +599,7 @@ player_helper.GetPerks = function()
             end
         end
     else
-        apply_perk_fixes()
-        for i, perk_data in ipairs(get_active_perk_list()) do
+        for i, perk_data in ipairs(perk_list) do
             local perk_id = perk_data.id
             local flag_name = get_perk_picked_flag_name(perk_id)
             local pickup_count = tonumber(GlobalsGetValue(flag_name .. "_PICKUP_COUNT", "0"))
@@ -618,7 +618,7 @@ end
 
 player_helper.GivePerk = function(perk_id, amount, skip_count)
     -- fetch perk info ---------------------------------------------------
-
+	dofile("data/scripts/perks/perk_list.lua")
     local entity_who_picked = player_helper.Get()
 
     if(entity_who_picked == nil or entity_who_picked == 0 or not EntityGetIsAlive(entity_who_picked))then
@@ -628,8 +628,8 @@ player_helper.GivePerk = function(perk_id, amount, skip_count)
     local pos_x, pos_y
 
     pos_x, pos_y = EntityGetTransform(entity_who_picked)
-    apply_perk_fixes()
-    local perk_data = get_perk_with_id(get_active_perk_list(), perk_id)
+
+    local perk_data = get_perk_with_id( perk_list, perk_id)
     if perk_data == nil then
         return
     end
@@ -752,7 +752,7 @@ player_helper.GivePerk = function(perk_id, amount, skip_count)
 end
 
 player_helper.SetPerks = function(perks, skip_count)
-
+	dofile("data/scripts/perks/perk_list.lua")
     --perk_info_loaded:print(inspect(perks))
 
     local player = player_helper.Get()
@@ -772,8 +772,8 @@ player_helper.SetPerks = function(perks, skip_count)
         if(entity_who_picked == nil or entity_who_picked == 0 or not EntityGetIsAlive(entity_who_picked))then
             return
         end
-        apply_perk_fixes()
-        local perk_data = get_perk_with_id(perk_list, perk_id)
+
+        local perk_data = get_perk_with_id( perk_list, perk_id)
         if perk_data == nil then
             return
         end

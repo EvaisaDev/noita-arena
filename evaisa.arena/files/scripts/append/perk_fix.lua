@@ -625,67 +625,59 @@ dofile("mods/evaisa.arena/files/scripts/gamemode/misc/perks/hamis_perks.lua")
 --arena_old_perk_list = perk_list
 
 
-function apply_perk_fixes()
-	--[[if(GameHasFlagRun("super_secret_hamis_mode"))then
-		perk_list = perk_list_hamis
+
+
+for k, v in ipairs(perk_list_hamis)do
+	v.hamis_mode = true
+end
+
+perk_list = MergeTables(perk_list, perk_list_hamis)
+
+
+
+for i=#perk_list,1,-1 do
+	local perk = perk_list[i]
+	if remove_list[perk.id] then
+		table.remove(perk_list, i)
 	else
-		perk_list = arena_old_perk_list
-	end]]
-	-- loop backwards through perk_list so we can remove entries
-	for i=#perk_list,1,-1 do
-		local perk = perk_list[i]
-		if remove_list[perk.id] then
-			table.remove(perk_list, i)
-		else
-			if rewrites[perk.id] then
-				perk_list[i] = rewrites[perk.id]
-			end
-			
-			if reapply_fix_list[perk.id] then
-				perk_list[i].do_not_reapply = true
-			end
+		if rewrites[perk.id] then
+			perk_list[i] = rewrites[perk.id]
+		end
+		
+		if reapply_fix_list[perk.id] then
+			perk_list[i].do_not_reapply = true
+		end
 
-			if allow_on_clients[perk.id] then
-				perk_list[i].run_on_clients = true
-			elseif allow_on_clients[perk.id] ~= nil and allow_on_clients[perk.id] == false then
-				perk_list[i].run_on_clients = false
-				perk_list[i].usable_by_enemies = false
-			end
+		if allow_on_clients[perk.id] then
+			perk_list[i].run_on_clients = true
+		elseif allow_on_clients[perk.id] ~= nil and allow_on_clients[perk.id] == false then
+			perk_list[i].run_on_clients = false
+			perk_list[i].usable_by_enemies = false
+		end
 
-			if skip_function_list[perk.id] then
-				perk_list[i].skip_functions_on_load = true
-			end
+		if skip_function_list[perk.id] then
+			perk_list[i].skip_functions_on_load = true
 		end
 	end
+end
 
-	complete_perk_list = MergeTables(perk_list, perk_list_hamis)
-
-
+function regen_tables()
 	perks_sorted = {}
 	perk_enum = {}
 	all_perks = {}
 	all_perks_by_name = {}
 	perk_sprites = {}
-	for k, perk in pairs(complete_perk_list) do
+	for k, perk in pairs(perk_list) do
 		perk_sprites[perk.id] = perk.ui_icon
 		table.insert(perks_sorted, perk.id)
 		all_perks[perk.id] = perk
 		all_perks_by_name[perk.ui_name] = perk
 	end
-
 	table.sort(perks_sorted)
-
 	for i, perk_id in ipairs(perks_sorted) do
 		perk_enum[perk_id] = i
 	end
 end
 
-function get_active_perk_list()
-	return GameHasFlagRun("super_secret_hamis_mode") and perk_list_hamis or perk_list
-end
+regen_tables()
 
-function get_perk_with_id( perk_list, perk_id )
-	return all_perks[perk_id]
-end
-
-apply_perk_fixes()
