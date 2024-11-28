@@ -53,7 +53,7 @@ game_funcs = dofile("mods/evaisa.mp/files/scripts/game_functions.lua")
 EZWand = dofile("mods/evaisa.arena/files/scripts/utilities/EZWand.lua")
 smallfolk = dofile("mods/evaisa.arena/lib/smallfolk.lua")
 
-wait = dofile("mods/evaisa.arena/files/scripts/utilities/wait.lua")
+--wait = dofile("mods/evaisa.arena/files/scripts/utilities/wait.lua")
 local inspect = dofile("mods/evaisa.arena/lib/inspect.lua")
 
 local data_holder = dofile("mods/evaisa.arena/files/scripts/gamemode/data.lua")
@@ -2775,7 +2775,7 @@ ArenaMode = {
     stop = function(lobby)
         arena_log:print("Stop called!!!")
         delay.reset()
-        wait.reset()
+        --wait.reset()
         if (data ~= nil) then
             ArenaGameplay.GracefulReset(lobby, data) 
         end
@@ -2813,7 +2813,6 @@ ArenaMode = {
         end
 
         delay.reset()
-        wait.reset()
         if (data ~= nil) then
             ArenaGameplay.GracefulReset(lobby, data)
         end
@@ -2993,7 +2992,7 @@ ArenaMode = {
         end
 
         --delay.update()
-        wait.update()
+        --wait.update()
 
         if(steam_utils.IsOwner() and data.last_state ~= data.state)then
             data.last_state = data.state
