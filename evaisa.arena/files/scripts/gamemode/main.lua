@@ -467,8 +467,9 @@ local function TryUpdateData(lobby)
         
     end
 
-
     GlobalsSetValue("content_string", tostring(content_string))
+
+	--ModSettingSet("evaisa.arena.content_string", content_string)
 
     if(tostring(content_hash) ~= steam.matchmaking.getLobbyData(lobby, "content_hash") and not steam_utils.IsOwner())then
         print("content mismatch!")
@@ -691,7 +692,7 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 213,
+    version = 214,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
     end,
@@ -2573,10 +2574,17 @@ ArenaMode = {
             })
         end
 
-        print("Dumb fuck mode, hamis mode is: "..tostring(GameHasFlagRun("super_secret_hamis_mode")))
+
+		__loaded["data/scripts/perks/perk_list.lua"] = nil
+		__loaded["data/scripts/gun/gun_actions.lua"] = nil
+
+        dofile("data/scripts/perks/perk_list.lua")
+
+        dofile("data/scripts/gun/gun_actions.lua")
 
         reset_lists()
 
+		
         TryUpdateData(lobby)
 
         --print(content_string)
@@ -2623,9 +2631,6 @@ ArenaMode = {
         end
   
 
-        dofile("data/scripts/perks/perk_list.lua")
-
-        dofile("data/scripts/gun/gun_actions.lua")
 
         for i, perk in ipairs(perk_list)do
             local is_blacklisted = perk_blacklist_data[perk.id]--steam.matchmaking.getLobbyData(lobby, "perk_blacklist_"..perk.id) == "true"
