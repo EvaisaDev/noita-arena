@@ -868,7 +868,7 @@ cosmetics = {
         sprite = "mods/evaisa.arena/content/cosmetics/sprites/shrek/shrek_mask.png",
         sprite_z = 0.41,
         price = 10,
-        try_unlock = function(lobby, data) -- runs every frame, if true, unlock flag is added
+        try_unlock = function(self, lobby, data) -- runs every frame, if true, unlock flag is added
             local steam_id = steam_utils.getSteamID()
             
             local id = tostring(steam_id)
@@ -899,7 +899,7 @@ cosmetics = {
         can_be_purchased = false,
         unlocked_default = false,
         price = 0,
-        try_unlock = function(lobby, data) -- runs every frame, if true, unlock flag is added
+        try_unlock = function(self, lobby, data) -- runs every frame, if true, unlock flag is added
             local steam_id = steam_utils.getSteamID()
             
             local id = tostring(steam_id)

@@ -387,249 +387,229 @@ skins.init = function()
                 end
             end
         },
-        {
-            id = "cosmetics",
-            icon = "mods/evaisa.arena/files/gfx/skins/tool_icons/cosmetics.png",
-            name = "$arena_cosmetics_inventory",
-            description = "$arena_cosmetics_inventory_button_desc",
-            hide_skin_window = true,
-            button = function()
-                print("Open cosmetics inventory")
-            end,
-            draw = function(lobby, data)
-                local screen_width, screen_height = GuiGetScreenDimensions(self.gui)
-
-                local main_container_width = 200
-                local main_container_height = 200
-        
-                local x = screen_width / 2 - main_container_width / 2
-                local y = screen_height / 2 - main_container_height / 2
-        
-                x = x + ((main_container_width - 200) / 2)
-
-                local z_index = -3900
-                local bar_y = y - 14
-
-                GuiBeginAutoBox( self.gui )
-
-           
-                GuiZSet( self.gui, z_index - 1 )
-                GuiColorSetForNextWidget( self.gui, 0, 0, 0, 0.3 )
-    
-    
-                local title = GameTextGetTranslatedOrNot("$arena_cosmetics_inventory")
-    
-                GuiText(self.gui, x, bar_y, " "..title)
-    
-                GuiLayoutBeginLayer( self.gui )
-                GuiLayoutBeginHorizontal( self.gui, 0, 0, true, 0, 0)
-                if(CustomButton(self.gui, "sagsadshds", x + (main_container_width - 10), bar_y + 1, z_index - 600, 1, "mods/evaisa.mp/files/gfx/ui/minimize.png", 0, 0, 0, 0.5))then
-                    self.editor_open = false
-                    GameRemoveFlagRun("wardrobe_open")
-                end
-                GuiLayoutEnd( self.gui )
-                GuiLayoutEndLayer( self.gui )
-    
-    
-                GuiZSetForNextWidget( self.gui, z_index )
-                GuiOptionsAddForNextWidget(self.gui, GUI_OPTION.IsExtraDraggable)
-                GuiEndAutoBoxNinePiece( self.gui, 0, main_container_width + 2, 8, false, 0, "mods/evaisa.mp/files/gfx/ui/9piece_window_bar.png", "mods/evaisa.mp/files/gfx/ui/9piece_window_bar.png")
-    
-                GuiBeginScrollContainer(self.gui, new_id(), x, y, main_container_width - 8, main_container_height, false, 1, 1)
-                local slot_w, slot_h = GuiGetImageDimensions(self.gui, "mods/evaisa.arena/files/sprites/ui/cosmetics/slot.png")
-                local slot_spacing = 2
-                local slots_per_row = math.floor(main_container_width / (slot_w + slot_spacing))
-
-
-                local listeable_items = {}
-
-                for i, item in ipairs(cosmetics)do
-                    local unlocked = cosmetics_handler.IsUnlocked(item)
-                    local can_be_purchased = item.can_be_purchased
-
-                    if(unlocked or can_be_purchased)then
-                        table.insert(listeable_items, item)
-                    end
-                end
-                local item_count = #listeable_items
-
-                -- sort listeable_items by unlock status and then by price
-                table.sort(listeable_items, function(a, b)
-                    -- use cosmetics_handler.IsUnlocked(item) to check if item is unlocked, unlocked items are always at the front
-                    -- if both items are not unlocked, sort by price
-                    if(cosmetics_handler.IsUnlocked(a) and not cosmetics_handler.IsUnlocked(b))then
-                        return true
-                    elseif(not cosmetics_handler.IsUnlocked(a) and cosmetics_handler.IsUnlocked(b))then
-                        return false
-                    else
-                        return a.price < b.price
-                    end
-                end)
-
-                local currency = ModSettingGet("arena_cosmetics_currency") or 0
-
-                local rows = math.max(math.ceil(item_count / slots_per_row), 5)
-
-                -- draw slots
-                local item_index = 1
-                for row = 1, rows do
-                    for slot = 1, slots_per_row do
-                        local slot_x = (slot - 1) * (slot_w + slot_spacing)
-                        local slot_y = (row - 1) * (slot_h + slot_spacing)
-                        GuiZSetForNextWidget(self.gui, z_index - 1)
-
-
-                        if(item_index <= item_count)then
-                            local item = listeable_items[item_index]
-                            
-                            local item_w, item_h = GuiGetImageDimensions(self.gui, item.icon)
-
-
-                            local scale = 1
-
-                            if (last_hovered_item_index == item_index)then
-                                scale = 1.05
-                                GuiZSetForNextWidget(self.gui, z_index - 3)
-                            end
-                            
-                            -- offset slot position based on scale
-                            slot_x = slot_x - (slot_w * scale - slot_w) / 2
-                            slot_y = slot_y - (slot_h * scale - slot_h) / 2
-
-                            local item_x = slot_x + (slot_w - item_w) / 2
-                            local item_y = slot_y + (slot_h - item_h) / 2
-
-
-
-                            
-                            
-                            local unlocked = cosmetics_handler.IsUnlocked(item)
-                            
-                            local alpha = 1
-                            if(not unlocked)then
-                                alpha = 0.5
-                            end
-
-
-                            GuiImage(self.gui, new_id(), slot_x, slot_y, "mods/evaisa.arena/files/sprites/ui/cosmetics/slot.png", alpha, scale, scale)
-                            local clicked, _, hovered = GuiGetPreviousWidgetInfo(self.gui)
-
-                            local mouse_x, mouse_y = input:GetUIMousePos(self.gui)
-
-                            -- make sure mouse is within bounds of the window
-                            if(not self.inputs_locked and mouse_x >= x and mouse_x <= x + main_container_width and mouse_y >= y and mouse_y <= y + main_container_height)then
-                            
-                                if(hovered and last_hovered_item_index ~= item_index)then
-                                    GamePlaySound("data/audio/Desktop/ui.bank", "ui/button_select", 0, 0)
-                                    
-                                    last_hovered_item_index = item_index
-                                elseif(not hovered and last_hovered_item_index == item_index)then
-                                    last_hovered_item_index = nil
-                                end
-
-
-                                if(not unlocked)then
-                                    if(currency >= item.price)then
-                                        GuiTooltip(self.gui, item.name, string.format(GameTextGetTranslatedOrNot("$arena_cosmetics_buy"), item.price))
-                                    else
-                                        GuiTooltip(self.gui, item.name, GameTextGetTranslatedOrNot("$arena_cosmetics_buy_not_enough"))
-                                    end
-                                else
-                                    GuiTooltip(self.gui, item.name, item.description)
-                                end
-
-                            end
-                            local cosmetic_enabled = function(item_id)
-                                for i, id in ipairs(self.selected_cosmetics)do
-                                    if(id == item_id)then
-                                        return true
-                                    end
-                                end
-                                return false
-                            end
-
-                            if(not self.inputs_locked and mouse_x >= x and mouse_x <= x + main_container_width and mouse_y >= y and mouse_y <= y + main_container_height)then
-                                
-                                if(clicked)then
-                                    GamePlaySound("data/audio/Desktop/ui.bank", "ui/button_click", 0, 0)
-                                    
-                                    -- check if item is unlocked
-                                    if(unlocked)then
-                                        if(cosmetic_enabled(item.id))then
-                                            -- remove from selected cosmetics
-                                            for i, id in ipairs(self.selected_cosmetics)do
-                                                if(id == item.id)then
-                                                    table.remove(self.selected_cosmetics, i)
-                                                    break
-                                                end
-                                            end
-                                        else
-                                            table.insert(self.selected_cosmetics, item.id)
-                                            cosmetics_handler.CosmeticsGetValidList(self.selected_cosmetics, item.id)
-                                        end
-                                    else
-                                        if(currency >= item.price)then
-                                            currency = currency - item.price
-                                            ModSettingSet("arena_cosmetics_currency", currency)
-                                            cosmetics_handler.Unlock(item.id)
-                                        end
-                                    end
-                                end
-                            end
-
-                            GuiZSetForNextWidget(self.gui, z_index - 5)
-
-                            GuiImage(self.gui, new_id(), item_x, item_y, item.icon, alpha, scale, scale)
-
-                
-                            if(cosmetic_enabled(item.id))then
-                                -- draw check in top left
-                                GuiZSetForNextWidget(self.gui, z_index - 6)
-                                GuiImage(self.gui, new_id(), item_x - 4, item_y - 4, "mods/evaisa.arena/files/sprites/ui/cosmetics/check.png", 1, 1, 1)
-                            end
-
-                            if(not unlocked)then
-                                GuiZSetForNextWidget(self.gui, z_index - 7)
-                                -- draw price in bottom right corner
-                                local price = item.price
-                                local price_string = " $"..tostring(price)
-                                local price_w, price_h = GuiGetTextDimensions(self.gui, price_string)
-                                local price_x = slot_x + (slot_w * scale) - price_w - 3
-                                local price_y = slot_y + (slot_h * scale) - price_h - 2
-                                GuiText(self.gui, price_x, price_y, price_string)
-
-                            end
-                        else
-                            GuiImage(self.gui, new_id(), slot_x, slot_y, "mods/evaisa.arena/files/sprites/ui/cosmetics/slot.png", 0.5, 1, 1)
-                        end
-
-                        item_index = item_index + 1
-                    end
-                end
-
-
-                GuiEndScrollContainer(self.gui)
-
-                -- draw wallet window
-                GuiZSetForNextWidget(self.gui, z_index)
-                GuiBeginAutoBox(self.gui)
-                GuiColorSetForNextWidget( self.gui, 0, 0, 0, 0.3 )
-                GuiZSetForNextWidget( self.gui, z_index - 1 )
-                local title = GameTextGetTranslatedOrNot("$arena_cosmetics_wallet")
-                GuiText(self.gui, x + main_container_width + 8, bar_y, " "..title)
-                GuiZSetForNextWidget( self.gui, z_index)
-                GuiEndAutoBoxNinePiece(self.gui, 0, 100, 8, false, 0, "mods/evaisa.mp/files/gfx/ui/9piece_window_bar.png", "mods/evaisa.mp/files/gfx/ui/9piece_window_bar.png")
-
-                GuiZSetForNextWidget(self.gui, z_index)
-                GuiBeginScrollContainer(self.gui, 64326246 + GameGetFrameNum() % 2, x + main_container_width + 8, y, 98, 10, false, 1, 1)
-                GuiTooltip(self.gui, "$arena_cosmetics_credits", "$arena_cosmetics_credits_desc")
-                GuiZSetForNextWidget(self.gui, z_index - 3)
-                GuiText(self.gui, 0, 0, " $"..tostring(currency))
-                GuiEndScrollContainer(self.gui)
-
-
-            end,
-        }
+		{
+			id = "cosmetics",
+			icon = "mods/evaisa.arena/files/gfx/skins/tool_icons/cosmetics.png",
+			name = "$arena_cosmetics_inventory",
+			description = "$arena_cosmetics_inventory_button_desc",
+			hide_skin_window = true,
+			button = function()
+				print("Open cosmetics inventory")
+			end,
+			draw = function(lobby, data)
+				local screen_width, screen_height = GuiGetScreenDimensions(self.gui)
+				local main_container_width = 200
+				local main_container_height = 200
+		
+				local x = screen_width / 2 - main_container_width / 2
+				local y = screen_height / 2 - main_container_height / 2
+		
+				x = x + ((main_container_width - 200) / 2)
+		
+				local z_index = -3900
+				local bar_y = y - 14
+		
+				GuiBeginAutoBox(self.gui)
+		
+				GuiZSet(self.gui, z_index - 1)
+				GuiColorSetForNextWidget(self.gui, 0, 0, 0, 0.3)
+		
+				local title = GameTextGetTranslatedOrNot("$arena_cosmetics_inventory")
+		
+				GuiText(self.gui, x, bar_y, " " .. title)
+		
+				GuiLayoutBeginLayer(self.gui)
+				GuiLayoutBeginHorizontal(self.gui, 0, 0, true, 0, 0)
+				if CustomButton(self.gui, "sagsadshds", x + (main_container_width - 10), bar_y + 1, z_index - 600, 1, "mods/evaisa.mp/files/gfx/ui/minimize.png", 0, 0, 0, 0.5) then
+					self.editor_open = false
+					GameRemoveFlagRun("wardrobe_open")
+				end
+				GuiLayoutEnd(self.gui)
+				GuiLayoutEndLayer(self.gui)
+		
+				GuiZSetForNextWidget(self.gui, z_index)
+				GuiOptionsAddForNextWidget(self.gui, GUI_OPTION.IsExtraDraggable)
+				GuiEndAutoBoxNinePiece(self.gui, 0, main_container_width + 2, 8, false, 0, "mods/evaisa.mp/files/gfx/ui/9piece_window_bar.png", "mods/evaisa.mp/files/gfx/ui/9piece_window_bar.png")
+		
+				-- Cache calculations
+				local mouse_x, mouse_y = input:GetUIMousePos(self.gui)
+				local mouse_within_window = not self.inputs_locked and mouse_x >= x and mouse_x <= x + main_container_width and mouse_y >= y and mouse_y <= y + main_container_height
+		
+				local slot_w, slot_h = GuiGetImageDimensions(self.gui, "mods/evaisa.arena/files/sprites/ui/cosmetics/slot.png")
+				local slot_spacing = 2
+				local slots_per_row = math.floor(main_container_width / (slot_w + slot_spacing))
+		
+				local unlock_status_cache = {}
+				local item_dimensions = {}
+				for i, item in ipairs(cosmetics) do
+					unlock_status_cache[item] = cosmetics_handler.IsUnlocked(item)
+					local w, h = GuiGetImageDimensions(self.gui, item.icon)
+					item_dimensions[item] = {w = w, h = h}
+				end
+		
+				-- Build listeable_items only when needed
+				if self.listeable_items == nil or self.items_need_update then
+					self.listeable_items = {}
+					for i, item in ipairs(cosmetics) do
+						local unlocked = unlock_status_cache[item]
+						if unlocked or item.can_be_purchased then
+							table.insert(self.listeable_items, item)
+						end
+					end
+		
+					table.sort(self.listeable_items, function(a, b)
+						local a_unlocked = unlock_status_cache[a]
+						local b_unlocked = unlock_status_cache[b]
+						if a_unlocked ~= b_unlocked then
+							return a_unlocked
+						else
+							return a.price < b.price
+						end
+					end)
+					self.items_need_update = false
+				end
+		
+				local listeable_items = self.listeable_items
+				local item_count = #listeable_items
+				local currency = ModSettingGet("arena_cosmetics_currency") or 0
+				local rows = math.max(math.ceil(item_count / slots_per_row), 5)
+		
+				-- Move function definition outside loops
+				local function cosmetic_enabled(item_id)
+					for i, id in ipairs(self.selected_cosmetics) do
+						if id == item_id then
+							return true
+						end
+					end
+					return false
+				end
+		
+				GuiBeginScrollContainer(self.gui, new_id(), x, y, main_container_width - 8, main_container_height, false, 1, 1)
+		
+				local item_index = 1
+				for row = 1, rows do
+					for slot = 1, slots_per_row do
+						local slot_x = (slot - 1) * (slot_w + slot_spacing)
+						local slot_y = (row - 1) * (slot_h + slot_spacing)
+						local z = z_index - 1
+		
+						if item_index <= item_count then
+							local item = listeable_items[item_index]
+							local item_dim = item_dimensions[item]
+							local item_w = item_dim.w
+							local item_h = item_dim.h
+							local unlocked = unlock_status_cache[item]
+							local alpha = unlocked and 1 or 0.5
+		
+							local scale = 1
+							if last_hovered_item_index == item_index then
+								scale = 1.05
+								z = z_index - 3
+							end
+		
+							local scaled_slot_w = slot_w * scale
+							local scaled_slot_h = slot_h * scale
+							local slot_offset_x = (scaled_slot_w - slot_w) / 2
+							local slot_offset_y = (scaled_slot_h - slot_h) / 2
+		
+							local slot_pos_x = slot_x - slot_offset_x
+							local slot_pos_y = slot_y - slot_offset_y
+		
+							local item_x = slot_pos_x + (scaled_slot_w - item_w) / 2
+							local item_y = slot_pos_y + (scaled_slot_h - item_h) / 2
+		
+							GuiZSetForNextWidget(self.gui, z)
+							GuiImage(self.gui, new_id(), slot_pos_x, slot_pos_y, "mods/evaisa.arena/files/sprites/ui/cosmetics/slot.png", alpha, scale, scale)
+							local clicked, _, hovered = GuiGetPreviousWidgetInfo(self.gui)
+		
+							if mouse_within_window then
+								if hovered and last_hovered_item_index ~= item_index then
+									GamePlaySound("data/audio/Desktop/ui.bank", "ui/button_select", 0, 0)
+									last_hovered_item_index = item_index
+								elseif not hovered and last_hovered_item_index == item_index then
+									last_hovered_item_index = nil
+								end
+		
+								if not unlocked then
+									if currency >= item.price then
+										GuiTooltip(self.gui, item.name, string.format(GameTextGetTranslatedOrNot("$arena_cosmetics_buy"), item.price))
+									else
+										GuiTooltip(self.gui, item.name, GameTextGetTranslatedOrNot("$arena_cosmetics_buy_not_enough"))
+									end
+								else
+									GuiTooltip(self.gui, item.name, item.description)
+								end
+		
+								if clicked then
+									GamePlaySound("data/audio/Desktop/ui.bank", "ui/button_click", 0, 0)
+									if unlocked then
+										if cosmetic_enabled(item.id) then
+											for i, id in ipairs(self.selected_cosmetics) do
+												if id == item.id then
+													table.remove(self.selected_cosmetics, i)
+													break
+												end
+											end
+										else
+											table.insert(self.selected_cosmetics, item.id)
+											cosmetics_handler.CosmeticsGetValidList(self.selected_cosmetics, item.id)
+										end
+									else
+										if currency >= item.price then
+											currency = currency - item.price
+											ModSettingSet("arena_cosmetics_currency", currency)
+											cosmetics_handler.Unlock(item.id)
+											self.items_need_update = true -- Flag to update the list
+										end
+									end
+								end
+							end
+		
+							GuiZSetForNextWidget(self.gui, z_index - 5)
+							GuiImage(self.gui, new_id(), item_x, item_y, item.icon, alpha, scale, scale)
+		
+							if cosmetic_enabled(item.id) then
+								GuiZSetForNextWidget(self.gui, z_index - 6)
+								GuiImage(self.gui, new_id(), item_x - 4, item_y - 4, "mods/evaisa.arena/files/sprites/ui/cosmetics/check.png", 1, 1, 1)
+							end
+		
+							if not unlocked then
+								GuiZSetForNextWidget(self.gui, z_index - 7)
+								local price_string = " $" .. tostring(item.price)
+								local price_w, price_h = GuiGetTextDimensions(self.gui, price_string)
+								local price_x = slot_pos_x + scaled_slot_w - price_w - 3
+								local price_y = slot_pos_y + scaled_slot_h - price_h - 2
+								GuiText(self.gui, price_x, price_y, price_string)
+							end
+						else
+							GuiZSetForNextWidget(self.gui, z)
+							GuiImage(self.gui, new_id(), slot_x, slot_y, "mods/evaisa.arena/files/sprites/ui/cosmetics/slot.png", 0.5, 1, 1)
+						end
+		
+						item_index = item_index + 1
+					end
+				end
+		
+				GuiEndScrollContainer(self.gui)
+		
+				-- Draw wallet window
+				GuiZSetForNextWidget(self.gui, z_index)
+				GuiBeginAutoBox(self.gui)
+				GuiColorSetForNextWidget(self.gui, 0, 0, 0, 0.3)
+				GuiZSetForNextWidget(self.gui, z_index - 1)
+				local wallet_title = GameTextGetTranslatedOrNot("$arena_cosmetics_wallet")
+				GuiText(self.gui, x + main_container_width + 8, bar_y, " " .. wallet_title)
+				GuiZSetForNextWidget(self.gui, z_index)
+				GuiEndAutoBoxNinePiece(self.gui, 0, 100, 8, false, 0, "mods/evaisa.mp/files/gfx/ui/9piece_window_bar.png", "mods/evaisa.mp/files/gfx/ui/9piece_window_bar.png")
+		
+				GuiZSetForNextWidget(self.gui, z_index)
+				GuiBeginScrollContainer(self.gui, new_id(), x + main_container_width + 8, y, 98, 10, false, 1, 1)
+				GuiTooltip(self.gui, "$arena_cosmetics_credits", "$arena_cosmetics_credits_desc")
+				GuiZSetForNextWidget(self.gui, z_index - 3)
+				GuiText(self.gui, 0, 0, " $" .. tostring(currency))
+				GuiEndScrollContainer(self.gui)
+			end,
+		}
         --[[
         {
             id = "apply",
