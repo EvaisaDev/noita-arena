@@ -87,34 +87,14 @@ for i=#actions,1,-1 do
     else
         local func = action.action
         action.action = function(...)
-            --[[local oldSetRandomSeed = SetRandomSeed
-            SetRandomSeed = function() 
-        
-                local shooter = EntityGetRootEntity(GetUpdatedEntityID())
-        
-                --GamePrint(EntityGetName(shooter))
-        
-                --oldSetRandomSeed(GameGetFrameNum(), GameGetFrameNum())
-        
-                local seed = 0
-                if(EntityHasTag(shooter, "client"))then
-                    --GamePrint("2: shooter_rng_"..EntityGetName(shooter))
-                    seed = tonumber(GlobalsGetValue("shooter_rng_"..EntityGetName(shooter), "0")) or 0
-                elseif(EntityHasTag(shooter, "player_unit"))then
-                    seed = tonumber(GlobalsGetValue("player_rng", "0"))
-                end
-        
-                GamePrint("Seed forced to: "..tostring(seed))
-        
-                oldSetRandomSeed(seed, seed)
-            end]]
-
+			local oldSetRandomSeed = SetRandomSeed
+			
             if(reflecting)then
-                func(...)
-                return
+                
+                return func(...)
             end
 
-            local oldSetRandomSeed = SetRandomSeed
+       
 
             local shooter = EntityGetRootEntity(GetUpdatedEntityID())
             local x, y = EntityGetTransform(GetUpdatedEntityID())
@@ -136,18 +116,12 @@ for i=#actions,1,-1 do
                 oldSetRandomSeed(seed, seed)
             end
 
-            func(...)
+            local foo = func(...)
 
 
 
             SetRandomSeed = oldSetRandomSeed
+			return foo
         end
-
-        --[[if hook_list[action.id] then
-            local func = action.action
-            action.action = function(...)
-                hook_list[action.id](func, ...)
-            end
-        end]]
     end
 end
