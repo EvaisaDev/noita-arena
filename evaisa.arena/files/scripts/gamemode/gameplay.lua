@@ -2812,6 +2812,17 @@ ArenaGameplay = {
         end
 
 
+		
+        local player_entity = player.Get()
+
+        if(player_entity and not data.is_spectating)then
+			local comp = EntityGetFirstComponentIncludingDisabled(player_entity, "IngestionComponent")
+
+			if comp then
+				ComponentSetValue2(comp, "ingestion_size", 0)
+			end
+		end
+
 
         --[[
         if (not IsPaused()) then
