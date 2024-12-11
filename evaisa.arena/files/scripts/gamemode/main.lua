@@ -1,6 +1,6 @@
 ARENA_STEAM_ID = "0"
 ARENA_MOD_ID = "evaisa.arena"
-REQUIRED_ONLINE_VERSION = 380
+REQUIRED_ONLINE_VERSION = 383
 
 -- INVALID VERSION HANDLER
 if(MP_VERSION < REQUIRED_ONLINE_VERSION)then
@@ -692,7 +692,7 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 215,
+    version = 216,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
     end,
@@ -1372,6 +1372,8 @@ ArenaMode = {
             name = "$arena_settings_perk_blacklist_name",
             button_text = "$arena_settings_perk_blacklist_name",
             draw = function(lobby, gui, new_id)
+
+				
                 GuiLayoutBeginVertical(gui, 0, 0, true, 0, 0)
                 
                 TryUpdateData(lobby)
@@ -1421,6 +1423,10 @@ ArenaMode = {
 
                 local iteration = 0
                 for i, perk in ipairs(sorted_perk_list)do
+
+					if((GameHasFlagRun("super_secret_hamis_mode") and not perk.hamis_mode) or (not GameHasFlagRun("super_secret_hamis_mode") and perk.hamis_mode))then
+						goto continue
+					end
 
                     local valid = true
                     if(perk_filter_type == "blacklist")then
@@ -1475,8 +1481,12 @@ ArenaMode = {
                         end
                         GuiLayoutEnd(gui)
                     end
+
+					::continue::
                 end
                 GuiLayoutEnd(gui)
+
+				
             end,
             close = function()
 
