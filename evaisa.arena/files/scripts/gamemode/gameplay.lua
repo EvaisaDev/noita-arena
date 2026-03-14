@@ -10,6 +10,10 @@ dofile("mods/evaisa.arena/files/scripts/gamemode/misc/hamis_utils.lua")
 
 ArenaLoadCountdown = ArenaLoadCountdown or nil
 
+local function should_hide_combat_ui(data)
+    return data ~= nil and data.client ~= nil and ModSettingGet("evaisa.arena.hide_ui_in_combat") and data.state == "arena" and not data.spectator_mode and data.client.alive and not data.is_spectating
+end
+
 ArenaGameplay = {
     SaveShiftData = function(lobby, from_materials, to_mat)
         if(steamutils.IsOwner())then
@@ -174,6 +178,89 @@ ArenaGameplay = {
             rounds = tonumber(rounds) or 0
             rounds = rounds + 1
             GlobalsSetValue("holyMountainCount", tostring(rounds))
+        end
+    end,
+    IsMapVoteMode = function(map_picker)
+        return map_picker == "vote" or map_picker == "winner_picks" or map_picker == "loser_picks"
+    end,
+    SetMapPickerRoles = function(lobby, data, winner)
+        if(not steam_utils.IsOwner())then
+            return
+        end
+
+        local members = steamutils.getLobbyMembers(lobby)
+        for _, member in pairs(members) do
+            local role = "none"
+            if(not steamutils.IsSpectator(lobby, member.id) and winner ~= nil)then
+                if(tostring(member.id) == tostring(winner))then
+                    role = "winner"
+                else
+                    role = "loser"
+                end
+            end
+            steam_utils.TrySetLobbyData(lobby, tostring(member.id) .. "_map_picker_role", role)
+        end
+    end,
+    GetMapPickerRole = function(lobby, user)
+        local role = steamutils.GetLobbyData(tostring(user) .. "_map_picker_role")
+        if(role ~= nil and role ~= "")then
+            return role
+        end
+
+        if(tostring(user) == tostring(steam_utils.getSteamID()))then
+            if(GameHasFlagRun("arena_winner"))then
+                return "winner"
+            end
+            if(GameHasFlagRun("arena_loser"))then
+                return "loser"
+            end
+        end
+
+        return "none"
+    end,
+    CanPlayerPickMap = function(lobby, user, map_picker)
+        if(steamutils.IsSpectator(lobby, user))then
+            return false
+        end
+
+        if(map_picker == "vote")then
+            return true
+        end
+
+        local role = ArenaGameplay.GetMapPickerRole(lobby, user)
+        if(map_picker == "winner_picks")then
+            return role == "winner"
+        end
+        if(map_picker == "loser_picks")then
+            return role == "loser"
+        end
+        return false
+    end,
+    GetMapVoteEligiblePlayerCount = function(lobby, data, map_picker)
+        if(map_picker == "vote")then
+            return ArenaGameplay.TotalPlayers(lobby)
+        end
+
+        local total_players = 0
+        local members = steamutils.getLobbyMembers(lobby)
+        for _, member in pairs(members) do
+            if(ArenaGameplay.CanPlayerPickMap(lobby, member.id, map_picker))then
+                total_players = total_players + 1
+            end
+        end
+        return total_players
+    end,
+    SetHmTimerPaused = function(lobby, data, paused)
+        paused = paused == true
+        if(data.hm_timer_paused == paused)then
+            return
+        end
+        data.hm_timer_paused = paused
+        if(data.hm_timer ~= nil)then
+            data.time_remaining = math.floor(data.hm_timer.frames)
+        end
+        if(steam_utils.IsOwner())then
+            networking.send.hm_timer_pause_update(lobby, paused)
         end
     end,
     GetSpawnPoints = function()
@@ -672,6 +759,16 @@ ArenaGameplay = {
     TotalPlayers = function(lobby)
         return steamutils.getPlayerCount(lobby, false)
     end,
+    MinimumPlayers = function()
+        local min_players = tonumber(GlobalsGetValue("min_players", "1")) or 1
+        if(min_players < 1)then
+            min_players = 1
+        end
+        return math.floor(min_players)
+    end,
+    HasMinimumPlayers = function(lobby)
+        return ArenaGameplay.TotalPlayers(lobby) >= ArenaGameplay.MinimumPlayers()
+    end,
     ReadyCounter = function(lobby, data)
         data.ready_counter = counter.create("$arena_players_ready", function()
             local playersReady = ArenaGameplay.ReadyAmount(data, lobby)
@@ -881,6 +978,14 @@ ArenaGameplay = {
         data.zone_spawned = false
     end,
     DamageZoneHandler = function(lobby, data, can_shrink)
+        if(should_hide_combat_ui(data))then
+            if(data.zone_gui ~= nil)then
+                GuiDestroy(data.zone_gui)
+                data.zone_gui = nil
+            end
+            return
+        end
+
         if (data.current_arena) then
             local default_size = data.current_arena.zone_size
             local zone_floor = data.current_arena.zone_floor
@@ -1193,6 +1298,7 @@ ArenaGameplay = {
 
         if (alive == 1) then
             ArenaGameplay.AddRound(lobby)
+            ArenaGameplay.SetMapPickerRoles(lobby, data, winner)
 
             local winner_key = tostring(winner) .. "_wins"
             local winstreak_key = tostring(winner) .. "_winstreak"
@@ -1315,6 +1421,7 @@ ArenaGameplay = {
             
         elseif (alive == 0) then
             ArenaGameplay.AddRound(lobby)
+            ArenaGameplay.SetMapPickerRoles(lobby, data, nil)
 
             GameAddFlagRun("round_finished")
 
@@ -1582,6 +1689,7 @@ ArenaGameplay = {
         ArenaGameplay.ResetPlayerData(lobby, data)
         data.is_polymorphed = false
         data.picked_up_items = {}
+        data.hm_timer_paused = false
 
         data.time_remaining = nil
 
@@ -2009,6 +2117,7 @@ ArenaGameplay = {
         ArenaGameplay.ResetPlayerData(lobby, data)
         data.is_polymorphed = false
         data.picked_up_items = {}
+        data.hm_timer_paused = false
 
 
         GameAddFlagRun("sync_item_generation")
@@ -2195,6 +2304,7 @@ ArenaGameplay = {
         if(steam_utils.IsOwner())then
             print("Setting current map to "..tostring(arena.id))
             steam_utils.TrySetLobbyData(lobby, "current_map", arena.id)
+            ArenaGameplay.SetMapPickerRoles(lobby, data, nil)
         else
             networking.send.set_map(lobby, arena.id)
         end
@@ -2257,7 +2367,8 @@ ArenaGameplay = {
     end,
     ReadyCheck = function(lobby, data)
         --print("Players ready: "..tostring(ArenaGameplay.ReadyAmount(data, lobby)))
-        return ArenaGameplay.TotalPlayers(lobby) > 0 and (ArenaGameplay.ReadyAmount(data, lobby) >= ArenaGameplay.TotalPlayers(lobby))
+        local total_players = ArenaGameplay.TotalPlayers(lobby)
+        return total_players >= ArenaGameplay.MinimumPlayers() and (ArenaGameplay.ReadyAmount(data, lobby) >= total_players)
     end,
     SetReady = function(lobby, data, ready, silent)
         if (ready == nil) then
@@ -2266,6 +2377,16 @@ ArenaGameplay = {
 
         
         if(ready and GlobalsGetValue("arena_gamemode", "ffa") == "continuous")then
+            if(not ArenaGameplay.HasMinimumPlayers(lobby))then
+                networking.send.ready(lobby, ready, silent or false)
+                data.client.ready = ready
+
+                if (steam_utils.IsOwner()) then
+                    steam_utils.TrySetLobbyData(lobby, tostring(steam_utils.getSteamID()) .. "_ready", tostring(ready))
+                end
+                return
+            end
+
             -- we go directly into arena!!
             local current_map = steamutils.GetLobbyData("current_map")
 
@@ -2281,7 +2402,7 @@ ArenaGameplay = {
             if(current_map == nil)then
                 local map_picker = GlobalsGetValue("map_picker", "random")
 
-                if(map_picker == "vote")then
+                if(ArenaGameplay.IsMapVoteMode(map_picker))then
                     map_picker = "random"
                 end
 
@@ -2418,7 +2539,7 @@ ArenaGameplay = {
 
                     local map_picker = GlobalsGetValue("map_picker", "random")
 
-                    if(map_picker == "vote")then
+                    if(ArenaGameplay.IsMapVoteMode(map_picker))then
                         -- pick 3 random map ids from arena_list
                         -- no duplicate maps
                         -- it should be {id, id2, id3}
@@ -2470,6 +2591,8 @@ ArenaGameplay = {
         data.state = "map_vote"
         data.map_vote = {}
         data.voters = {}
+        local map_picker = GlobalsGetValue("map_picker", "random")
+        local can_vote = not data.spectator_mode and ArenaGameplay.CanPlayerPickMap(lobby, steam_utils.getSteamID(), map_picker)
         for k, v in ipairs(maps)do
             data.map_vote[v] = 0
         end
@@ -2547,9 +2670,8 @@ ArenaGameplay = {
                     for k, v in pairs(data.map_vote)do
                         total_votes = total_votes + v
                     end
-                    -- check if everyone voted
-                    local total_players = ArenaGameplay.TotalPlayers(lobby)
-                    if(total_votes >= total_players)then
+                    local total_players = ArenaGameplay.GetMapVoteEligiblePlayerCount(lobby, data, map_picker)
+                    if(total_players > 0 and total_votes >= total_players)then
 
                         if(not data.vote_loop.vote_finished)then
                             local highest_vote = 0
@@ -2607,6 +2729,9 @@ ArenaGameplay = {
             end
 
             local add_vote = function(map)
+                if(not can_vote)then
+                    return
+                end
             
                 networking.send.add_vote(lobby, map.id)
                 if data.map_vote == nil then
@@ -2618,7 +2743,12 @@ ArenaGameplay = {
                 end
                 
                 data.map_vote[map.id] = data.map_vote[map.id] + 1
-    
+                                local map_header = GameTextGetTranslatedOrNot("$arena_map_vote_header")
+                                if(map_picker == "winner_picks")then
+                                    map_header = GameTextGetTranslatedOrNot("$arena_map_vote_header_winner")
+                                elseif(map_picker == "loser_picks")then
+                                    map_header = GameTextGetTranslatedOrNot("$arena_map_vote_header_loser")
+                                end
                 if(data.voters ~= nil)then
                     if(data.voters["self"])then
                         local vote = data.voters["self"]
@@ -2723,11 +2853,26 @@ ArenaGameplay = {
 
                 local timer_text = string.format(GameTextGetTranslatedOrNot("$arena_map_vote_timer"), tostring(math.floor(frames_left / 60)))
                 local timer_text_width, timer_text_height = GuiGetTextDimensions(vote_gui, timer_text, 1)
+                local restriction_text = nil
+                if(not data.vote_loop.vote_finished and map_picker == "winner_picks")then
+                    restriction_text = GameTextGetTranslatedOrNot("$arena_map_vote_winner_only")
+                elseif(not data.vote_loop.vote_finished and map_picker == "loser_picks")then
+                    restriction_text = GameTextGetTranslatedOrNot("$arena_map_vote_loser_only")
+                end
+                local restriction_text_width, restriction_text_height = 0, 0
+                if(restriction_text ~= nil)then
+                    restriction_text_width, restriction_text_height = GuiGetTextDimensions(vote_gui, restriction_text, 1)
+                end
                 if(not data.vote_loop.vote_finished)then
                     GuiZSetForNextWidget(vote_gui, -11)
                     GuiColorSetForNextWidget(vote_gui, 0.6, 0.6, 0.6, 1)
                     
                     GuiText(vote_gui, (screen_w / 2) - (timer_text_width / 2), (screen_h / 2) + (max_height / 2) + 7 + (last_hovered ~= nil and (timer_text_height + 1) or 0), timer_text)
+                    if(restriction_text ~= nil)then
+                        GuiZSetForNextWidget(vote_gui, -11)
+                        GuiColorSetForNextWidget(vote_gui, 0.6, 0.6, 0.6, 1)
+                        GuiText(vote_gui, (screen_w / 2) - (restriction_text_width / 2), (screen_h / 2) + (max_height / 2) + 7 + (last_hovered ~= nil and (timer_text_height + 1) or 0) + timer_text_height + 1, restriction_text)
+                    end
                 end
                 local x = (screen_w / 2) - (total_card_width / 2)
                 
@@ -2780,7 +2925,7 @@ ArenaGameplay = {
                                 last_hovered = nil
                             end
                         end
-                        if(clicked)then
+                        if(clicked and can_vote)then
                             add_vote(v)
                             GamePlaySound( "data/audio/Desktop/ui.bank", "ui/button_click", GameGetCameraPos() )
                         end
@@ -3001,10 +3146,16 @@ ArenaGameplay = {
             data.last_frame_time = nil
         end
 
-        -- get ready percentage
-        local ready_percentage = math.floor((ArenaGameplay.ReadyAmount(data, lobby) / ArenaGameplay.TotalPlayers(lobby)) * 100)
+        local total_players = ArenaGameplay.TotalPlayers(lobby)
+        local has_minimum_players = total_players >= ArenaGameplay.MinimumPlayers()
 
-        if(ArenaGameplay.TotalPlayers(lobby) <= 1)then
+        -- get ready percentage
+        local ready_percentage = 0
+        if(total_players > 0 and has_minimum_players)then
+            ready_percentage = math.floor((ArenaGameplay.ReadyAmount(data, lobby) / total_players) * 100)
+        end
+
+        if(total_players <= 1)then
             ready_percentage = 0
 
         end
@@ -3013,7 +3164,7 @@ ArenaGameplay = {
         local hm_timer_percentage = tonumber(GlobalsGetValue("hm_timer_count", "80"))
         local hm_timer_time = tonumber(GlobalsGetValue("hm_timer_time", "60"))
         local hm_timer_passive = tonumber(GlobalsGetValue("hm_timer_passive", "0"))
-        if(hm_timer_passive > 0 or (hm_timer_percentage < 100 and not ArenaGameplay.ReadyCheck(lobby, data) and ready_percentage >= tonumber(hm_timer_percentage)))then
+        if(has_minimum_players and (hm_timer_passive > 0 or (hm_timer_percentage < 100 and not ArenaGameplay.ReadyCheck(lobby, data) and ready_percentage >= tonumber(hm_timer_percentage))))then
             if(data.hm_timer == nil)then
                 local second_valid = (hm_timer_percentage < 100 and not ArenaGameplay.ReadyCheck(lobby, data) and ready_percentage >= tonumber(hm_timer_percentage))
                 local timer_frames = tonumber(hm_timer_passive) * 60
@@ -3025,6 +3176,7 @@ ArenaGameplay = {
                 local time_remaining = math.min(data.time_remaining or timer_frames, timer_frames)
 
                 data.hm_timer = delay.new(time_remaining, function()
+                    data.hm_timer_paused = false
                     if(steam_utils.IsOwner())then
                         ArenaGameplay.ForceReady(lobby, data)
                     end
@@ -3033,6 +3185,11 @@ ArenaGameplay = {
                         data.hm_timer_gui = nil
                     end
                 end, function(frame)
+
+                    if(data.hm_timer_paused)then
+                        data.hm_timer.frames = frame + 1
+                        frame = data.hm_timer.frames
+                    end
 
                     -- update time remaining
                     data.time_remaining = math.floor(frame)
@@ -3089,6 +3246,9 @@ ArenaGameplay = {
             end
         else
             if(data.hm_timer ~= nil)then
+                if(data.hm_timer_paused)then
+                    ArenaGameplay.SetHmTimerPaused(lobby, data, false)
+                end
                 if(steam_utils.IsOwner())then
                     networking.send.hm_timer_clear(lobby)
                 end

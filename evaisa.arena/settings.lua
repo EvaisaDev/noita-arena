@@ -32,6 +32,13 @@ mod_settings =
                 value_default = false,
                 scope = MOD_SETTING_SCOPE_RUNTIME,
             },
+			{
+                id = "hide_ui_in_combat",
+                ui_name = "Hide UI in Combat",
+                ui_description = "Hide the UI elements when in combat.",
+                value_default = false,
+                scope = MOD_SETTING_SCOPE_RUNTIME,
+            },
             {
                 id = "lag_detection",
                 ui_name = "Lag Detection",

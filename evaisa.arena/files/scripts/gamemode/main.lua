@@ -59,6 +59,18 @@ local inspect = dofile("mods/evaisa.arena/lib/inspect.lua")
 local data_holder = dofile("mods/evaisa.arena/files/scripts/gamemode/data.lua")
 local data = nil
 
+local function should_hide_arena_ui_in_combat()
+    return data ~= nil and data.client ~= nil and ModSettingGet("evaisa.arena.hide_ui_in_combat") and data.state == "arena" and not data.spectator_mode and data.client.alive and not data.is_spectating
+end
+
+local function sync_arena_ui_hidden_flag()
+    if(should_hide_arena_ui_in_combat())then
+        GameAddFlagRun("evaisa_arena_hide_ui")
+    else
+        GameRemoveFlagRun("evaisa_arena_hide_ui")
+    end
+end
+
 last_player_entity = nil
 
 local player = dofile("mods/evaisa.arena/files/scripts/gamemode/helpers/player.lua")
@@ -692,7 +704,7 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 216,
+    version = 217,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
     end,
@@ -858,13 +870,14 @@ ArenaMode = {
             name = "$arena_settings_map_picker_name",
             description = "$arena_settings_map_picker_description",
             type = "enum",
-            options = { { "ordered", "$arena_settings_map_picker_enum_order" }, { "random", "$arena_settings_map_picker_enum_random" }, { "ordered_random", "$arena_settings_map_picker_enum_ordered_random" }, { "vote", "$arena_settings_map_picker_enum_vote" } },
+            options = { { "ordered", "$arena_settings_map_picker_enum_order" }, { "random", "$arena_settings_map_picker_enum_random" }, { "ordered_random", "$arena_settings_map_picker_enum_ordered_random" }, { "vote", "$arena_settings_map_picker_enum_vote" }, { "winner_picks", "$arena_settings_map_picker_enum_winner_picks" }, { "loser_picks", "$arena_settings_map_picker_enum_loser_picks" } },
             default = "random"
         },
         {
 			id = "map_vote_timer",
             require = function(setting_self)
-                return GlobalsGetValue("map_picker", "random") == "vote"
+                local map_picker = GlobalsGetValue("map_picker", "random")
+                return map_picker == "vote" or map_picker == "winner_picks" or map_picker == "loser_picks"
             end,
 			name = "$arena_settings_map_vote_timer_name",
 			description = "$arena_settings_map_vote_timer_description",
@@ -1209,6 +1222,18 @@ ArenaMode = {
             default = false
         }, 
         {
+            id = "min_players",
+            name = "$arena_settings_min_players_name",
+            description = "$arena_settings_min_players_description",
+            type = "slider",
+            min = 1,
+            max = 32,
+            default = 1;
+            display_multiplier = 1,
+            formatting_string = " $0",
+            width = 100
+        },
+        {
             id = "hm_timer_count",
 			name = "$arena_settings_hm_timer_count_name",
 			description = "$arena_settings_hm_timer_count_description",
@@ -1268,6 +1293,16 @@ ArenaMode = {
                 end
             end,
 			width = 100
+		},
+        {
+			id = "hm_timer_pause_button",
+			require = function(setting_self)
+                return tonumber(GlobalsGetValue("setting_next_hm_timer_count", "80")) < 100
+            end,
+			name = "$arena_settings_hm_timer_pause_button_name",
+			description = "$arena_settings_hm_timer_pause_button_description",
+			type = "bool",
+			default = false
 		},
         {
             id = "homing_mult",
@@ -2470,6 +2505,12 @@ ArenaMode = {
         end
         GlobalsSetValue("hm_timer_count", tostring(math.floor(hm_timer_count)))
 
+        local min_players = tonumber(steam.matchmaking.getLobbyData(lobby, "setting_min_players"))
+        if (min_players == nil) then
+            min_players = 1
+        end
+        GlobalsSetValue("min_players", tostring(math.floor(min_players)))
+
         local hm_timer_time = tonumber(steam.matchmaking.getLobbyData(lobby, "setting_hm_timer_time"))
         if (hm_timer_time == nil) then
             hm_timer_time = 60
@@ -2481,6 +2522,12 @@ ArenaMode = {
             hm_timer_passive = 0
         end
         GlobalsSetValue("hm_timer_passive", tostring(math.floor(hm_timer_passive)))
+
+        local hm_timer_pause_button = steam.matchmaking.getLobbyData(lobby, "setting_hm_timer_pause_button")
+        if (hm_timer_pause_button == nil) then
+            hm_timer_pause_button = "false"
+        end
+        GlobalsSetValue("hm_timer_pause_button", tostring(hm_timer_pause_button))
 
         local homing_mult = tonumber(steam.matchmaking.getLobbyData(lobby, "setting_homing_mult"))
         if (homing_mult == nil) then
@@ -3002,6 +3049,7 @@ ArenaMode = {
         end
 
         if (data == nil) then
+            GameRemoveFlagRun("evaisa_arena_hide_ui")
             return
         end
 
@@ -3033,6 +3081,7 @@ ArenaMode = {
         ]]
 
         data.spectator_mode = steamutils.IsSpectator(lobby)
+    sync_arena_ui_hidden_flag()
 
         data.using_controller = GameGetIsGamepadConnected()
 
@@ -3079,9 +3128,10 @@ ArenaMode = {
         if (data ~= nil) then
 
             gameplay_handler.Update(lobby, data)
+            sync_arena_ui_hidden_flag()
    
 
-            if (not IsPaused() and not GameHasFlagRun("arena_trailer_mode")) then
+            if (not IsPaused() and not GameHasFlagRun("arena_trailer_mode") and not should_hide_arena_ui_in_combat()) then
                 if (playermenu ~= nil) then
                     playermenu:Update(data, lobby)
                 end
@@ -3238,6 +3288,11 @@ ArenaMode = {
 
     end,
     lobby_update = function(lobby)
+        local hide_match_ui = should_hide_arena_ui_in_combat()
+
+        if(hide_match_ui)then
+            scoreboard.open = false
+        end
         
         if(scoreboard_button_ui == nil)then
             scoreboard_button_ui = GuiCreate()
@@ -3245,10 +3300,11 @@ ArenaMode = {
 
         GuiStartFrame(scoreboard_button_ui)
 
-        if (not IsPaused() and (data ~= nil or (#scoreboard.data > 0))) then
+        if (not hide_match_ui and not IsPaused() and (data ~= nil or (#scoreboard.data > 0))) then
 
 
             local screen_width, screen_height = GuiGetScreenDimensions(scoreboard_button_ui)
+            local pause_button_x = nil
 
             GuiOptionsAdd(scoreboard_button_ui, 6)
 
@@ -3256,6 +3312,19 @@ ArenaMode = {
                 GuiOptionsAdd(scoreboard_button_ui, 2)
             else
                 GuiOptionsRemove(scoreboard_button_ui, 2)
+            end
+
+            if(data ~= nil and data.state == "lobby" and not data.spectator_mode and (data.hm_timer ~= nil or data.time_remaining ~= nil) and GlobalsGetValue("hm_timer_pause_button", "false") == "true" and tonumber(GlobalsGetValue("hm_timer_count", "100")) < 100)then
+                local pause_button_icon = data.hm_timer_paused and "mods/evaisa.arena/files/sprites/ui/play.png" or "mods/evaisa.arena/files/sprites/ui/pause.png"
+                pause_button_x = (screen_width - 60) - 20
+                if (GuiImageButton(scoreboard_button_ui, 21313, pause_button_x, screen_height - 20, "", pause_button_icon)) then
+                    GamePlaySound("data/audio/Desktop/ui.bank", "ui/button_click", 0, 0)
+                    if(steam_utils.IsOwner())then
+                        gameplay_handler.SetHmTimerPaused(lobby, data, not data.hm_timer_paused)
+                    else
+                        networking.send.toggle_hm_timer_pause(lobby)
+                    end
+                end
             end
 
             if (GuiImageButton(scoreboard_button_ui, 21312, screen_width - 60, screen_height - 20, "", "mods/evaisa.arena/files/sprites/ui/scoreboard.png")) then
@@ -3277,7 +3346,9 @@ ArenaMode = {
         end
 
 
-        scoreboard.update(lobby)
+        if(not hide_match_ui)then
+            scoreboard.update(lobby)
+        end
 
     end,
     player_enter = function(lobby, user)
@@ -3296,6 +3367,7 @@ ArenaMode = {
     end,
     leave = function(lobby)
         GameAddFlagRun("player_unloaded")
+        GameRemoveFlagRun("evaisa_arena_hide_ui")
         if(gameplay_handler == nil)then
             return
         end

@@ -2145,6 +2145,11 @@ networking = {
                 return
             end
 
+            local map_picker = GlobalsGetValue("map_picker", "random")
+            if(not ArenaGameplay.CanPlayerPickMap(lobby, user, map_picker))then
+                return
+            end
+
             GamePlaySound( "data/audio/Desktop/ui.bank", "ui/streaming_integration/new_vote", GameGetCameraPos() )
             local map = message[1]
             if data.map_vote == nil then
@@ -2429,6 +2434,7 @@ networking = {
                     data.hm_timer.clear()
                     data.hm_timer = nil
                 end
+                data.hm_timer_paused = false
                 return
             end
             if(not steam_utils.IsOwner( user))then
@@ -2440,6 +2446,7 @@ networking = {
             if(data.hm_timer == nil)then
                 
                 data.hm_timer = delay.new(frames, function()
+                    data.hm_timer_paused = false
                     if(steam_utils.IsOwner())then
                         ArenaGameplay.ForceReady(lobby, data)
                     end
@@ -2448,6 +2455,11 @@ networking = {
                         data.hm_timer_gui = nil
                     end
                 end, function(frame)
+                    if(data.hm_timer_paused)then
+                        data.hm_timer.frames = frame + 1
+                        frame = data.hm_timer.frames
+                    end
+
                     data.time_remaining = math.floor(frame)
 
                     --print("HM Tick: "..tostring(frame))
@@ -2489,10 +2501,32 @@ networking = {
             if(not steam_utils.IsOwner( user))then
                 return
             end
+            data.hm_timer_paused = false
             if(data.hm_timer)then
                 data.hm_timer.clear()
                 data.hm_timer = nil
             end
+        end,
+        toggle_hm_timer_pause = function(lobby, message, user, data)
+            if(not steam_utils.IsOwner())then
+                return
+            end
+            if(data.state ~= "lobby" or data.hm_timer == nil or steamutils.IsSpectator(lobby, user))then
+                return
+            end
+            if(GlobalsGetValue("hm_timer_pause_button", "false") ~= "true")then
+                return
+            end
+            if(tonumber(GlobalsGetValue("hm_timer_count", "100")) >= 100)then
+                return
+            end
+            gameplay_handler.SetHmTimerPaused(lobby, data, not data.hm_timer_paused)
+        end,
+        hm_timer_pause_update = function(lobby, message, user, data)
+            if(not steam_utils.IsOwner( user))then
+                return
+            end
+            data.hm_timer_paused = message == true
         end,
         update_state = function(lobby, message, user, data)
             local state = message
@@ -3676,6 +3710,12 @@ networking = {
         end,
         hm_timer_clear = function(lobby)
             steamutils.send("hm_timer_clear", {}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+        end,
+        toggle_hm_timer_pause = function(lobby)
+            steamutils.send("toggle_hm_timer_pause", {}, steamutils.messageTypes.Host, lobby, true, true)
+        end,
+        hm_timer_pause_update = function(lobby, paused)
+            steamutils.send("hm_timer_pause_update", paused, steamutils.messageTypes.OtherPlayers, lobby, true, true)
         end,
         update_state = function(lobby, state)
             steam.matchmaking.setLobbyMemberData(lobby, "state", state)
