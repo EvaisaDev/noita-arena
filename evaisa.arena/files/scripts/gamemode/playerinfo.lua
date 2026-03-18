@@ -149,8 +149,9 @@ function playerinfo:New(lobby, user)
         end]]
     end
     obj.Destroy = function(self)
-        print("Destroying player inventory")
-        GameDestroyInventoryItems( self.entity )
+        if(self.entity ~= nil and EntityGetIsAlive(self.entity))then
+            GameDestroyInventoryItems( self.entity )
+        end
 
         if(self.entity ~= nil and EntityGetIsAlive(self.entity))then
             EntityKill(self.entity)

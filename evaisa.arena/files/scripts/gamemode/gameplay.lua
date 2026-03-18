@@ -2104,7 +2104,30 @@ ArenaGameplay = {
         -- set ready counter
         ArenaGameplay.ReadyCounter(lobby, data)
 
-        
+        RunWhenPlayerExists(function()
+			local player_entity = player.Get()
+			if(player_entity)then
+
+				delay.new(20, function()
+				
+					-- loop through player wands and reset recharge time  and stuff
+					local items = GameGetAllInventoryItems(player_entity) or {}
+
+					for k, v in pairs(items) do
+						local ability_component = EntityGetFirstComponentIncludingDisabled(v, "AbilityComponent")
+						if ability_component then
+							ComponentSetValue2(ability_component, "mCastDelayStartFrame", 0)
+							ComponentSetValue2(ability_component, "mReloadFramesLeft", 0)
+							ComponentSetValue2(ability_component, "mReloadNextFrameUsable", 0)
+							ComponentSetValue2(ability_component, "mNextChargeFrame", 0)
+							ComponentSetValue2(ability_component, "cooldown_frames", 0)
+							ComponentSetValue2(ability_component, "charge_wait_frames", 0)
+						end
+					end
+				end)
+
+			end
+		end)
 
         -- print member data
         --print(json.stringify(data))
@@ -3225,7 +3248,6 @@ ArenaGameplay = {
                     GuiText(data.hm_timer_gui, (screen_w / 2) - (text_width / 2), screen_h - text_height - 10, message)
                 end)
             else
-                print("Timer already exists, should be reduced??")
                 local second_valid = (hm_timer_percentage < 100 and not ArenaGameplay.ReadyCheck(lobby, data) and ready_percentage >= tonumber(hm_timer_percentage))
                
 
@@ -3233,8 +3255,6 @@ ArenaGameplay = {
                     local timer_frames = tonumber(hm_timer_time) * 60
 
                     local time_remaining = math.min(data.time_remaining or timer_frames, timer_frames)
-
-                    print("Time remaining: "..tostring(time_remaining))
     
                     -- if time is below timer frame
                     if(time_remaining < data.hm_timer.frames)then
@@ -4020,12 +4040,18 @@ ArenaGameplay = {
                     --GamePrint("Game attempted to spawn you out of bounds, retrying...")
                 end
 
+                if(not spawn_loaded)then
+                    local zone_size = data.current_arena.zone_size
+                    if(GameGetFrameNum() % 10 == 0)then
+                        GameSetCameraPos(Random(-zone_size, zone_size), Random(-zone_size, zone_size))
+                    else
+                        GameSetCameraPos(x, y)
+                    end
+                end
+
                 if (spawn_loaded and in_bounds) then
                     data.preparing = false
                     data.chunkloaders_initialized = false
-                    if(EntityGetIsAlive(data.spawn_loader))then
-                        EntityKill(data.spawn_loader)
-                    end
 
                     data.load_frames = 0
                     --GamePrint("Spawned!!")
@@ -4055,6 +4081,11 @@ ArenaGameplay = {
                                     
             for k, v in ipairs(EntityGetWithTag("spawn_point") or {})do
                 EntityKill(v)
+            end
+
+            if(data.spawn_loader ~= nil and EntityGetIsAlive(data.spawn_loader) and GameHasFlagRun("player_is_unlocked"))then
+                EntityKill(data.spawn_loader)
+                data.spawn_loader = nil
             end
         end
         
@@ -4410,7 +4441,7 @@ ArenaGameplay = {
 
 
             if(EntityHasTag(player_entity, "polymorphed_player") and not data.is_polymorphed and EntityGetFilename(player_entity) ~= "")then
-
+				print("Player polymorphed!! wawa!")
                 data.is_polymorphed = true
 
                 -- SEVERAL FIXES
@@ -4431,23 +4462,23 @@ ArenaGameplay = {
                 
                 networking.send.polymorphed(lobby, true)
 
-                print("Player polymorphed!! wawa!")
+                
 
                 local genome_comp = EntityGetFirstComponentIncludingDisabled(player_entity, "GenomeDataComponent")
                 if(genome_comp)then
                     ComponentSetValue2(genome_comp, "herd_id", StringToHerdId("pvp"))
                 end
 
-                local character_platforming_comp = EntityGetFirstComponentIncludingDisabled(player_entity, "CharacterPlatformingComponent")
+                --[[local character_platforming_comp = EntityGetFirstComponentIncludingDisabled(player_entity, "CharacterPlatformingComponent")
                 if(character_platforming_comp)then
                     ComponentSetValue2(character_platforming_comp, "fly_speed_mult", 0)
                     ComponentSetValue2(character_platforming_comp, "fly_speed_change_spd", 0)
-                end
+                end]]
 
                 EntityAddTag(player_entity, "player_unit")
 
                 -- add InventoryGuiComponent
-                EntityAddComponent2(player_entity, "InventoryGuiComponent")
+                --EntityAddComponent2(player_entity, "InventoryGuiComponent")
 
                 EntityAddComponent2(player_entity, "LuaComponent", {
                     script_wand_fired = "mods/evaisa.arena/files/scripts/gamemode/misc/on_wand_fire.lua"

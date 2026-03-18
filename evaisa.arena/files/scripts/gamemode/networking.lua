@@ -2806,7 +2806,7 @@ networking = {
         
             local entity = player_data.entity
         
-            if entity == nil then
+            if entity == nil or not EntityGetIsAlive(entity) then
                 return
             end
 
@@ -2851,6 +2851,7 @@ networking = {
         end,
         polymorphed = function(lobby, message, user, data)
             if(data.state == "lobby" and not data.spectator_mode) then
+				print("polymorph 1")
                 return
             end
 
@@ -2858,16 +2859,18 @@ networking = {
             local player_data = data.players[tostring(user)]
         
             if player_data == nil then
+				print("polymorph 2")
                 return
             end
         
             if(not player_data.alive)then
+				print("polymorph 3")
                 return
             end
 
             player_data.polymorph_entity = message
 
-            if(not GameHasFlagRun("no_shooting"))then
+            if(GameHasFlagRun("no_shooting"))then
                 return
             end
 

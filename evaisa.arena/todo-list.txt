@@ -1,0 +1,6 @@
+Zone doesn't close in for some players
+Polymorph is broken.
+If you polymorph yourself with circle of transmog it polymorphs you before you fire your wand.
+wands lock up when rejoining for some reason.
+Money when rejoining during a match doesn't give
+When disconnecting it doesn't let you vote during loser/winner vote, need to remember last winner/loser

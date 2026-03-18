@@ -778,7 +778,7 @@ SpectatorMode = {
         end
 
         for k, v in pairs(data.players)do
-            if(k ~= tostring(data.spectated_player))then
+            if(k ~= tostring(data.spectated_player) and v.entity ~= nil)then
                 v:Destroy()
             end
         end
@@ -819,15 +819,15 @@ SpectatorMode = {
                     data.selected_player = new_ent
                 else
                     data.selected_player = nil
-                    if(data.spectated_player)then
-                        networking.send.is_spectating(data.spectated_player, false)
-                    end
-                    data.spectated_player = nil
-                    data.selected_player_name = nil
-                    data.spectator_active_player = nil
-
-                    print("Deselected player!!")
+                    data.spectator_lobby_loaded = false
                 end
+            end
+        elseif(data.spectated_player ~= nil)then
+            local new_ent = EntityGetWithName(tostring(data.spectated_player))
+            if(new_ent)then
+                data.selected_player = new_ent
+            else
+                data.spectator_lobby_loaded = false
             end
         end
 
