@@ -3469,6 +3469,9 @@ ArenaMode = {
                     end
                     if(alive == 0)then
                         ArenaGameplay.WinnerCheck(lobby, data)
+                    else
+                        networking.send.cancel_round(lobby)
+                        ArenaGameplay.CancelRound(lobby, data)
                     end
                 end
             end

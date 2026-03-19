@@ -2201,6 +2201,12 @@ networking = {
             end
             ArenaGameplay.LoadLobby(lobby, data, false)
         end,
+        cancel_round = function(lobby, message, user, data)
+            if (not steam_utils.IsOwner( user))then
+                return
+            end
+            ArenaGameplay.CancelRound(lobby, data)
+        end,
         update_round = function(lobby, message, user, data)
             if (not steam_utils.IsOwner( user))then
                 return
@@ -3579,6 +3585,9 @@ networking = {
         end,
         load_lobby = function(lobby)
             steamutils.send("load_lobby", {}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+        end,
+        cancel_round = function(lobby)
+            steamutils.send("cancel_round", {}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
         end,
         update_round = function(lobby, round)
             steamutils.send("update_round", round, steamutils.messageTypes.OtherPlayers, lobby, true, true)

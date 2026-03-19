@@ -1841,7 +1841,9 @@ ArenaGameplay = {
         
         if(not data.spectator_mode)then
             if (not first_entry) then
-                ArenaGameplay.SavePlayerData(lobby, data, true)
+                if(not data.rolling_back)then
+                    ArenaGameplay.SavePlayerData(lobby, data, true)
+                end
                 ArenaGameplay.ClearWorld()
             end
 
@@ -1930,6 +1932,9 @@ ArenaGameplay = {
         end
 
 
+        local rolling_back = data.rolling_back
+        data.rolling_back = nil
+
         -- Give gold
         local extra_gold = gameplay_handler.GetRoundGold(lobby, data)
 
@@ -1950,7 +1955,7 @@ ArenaGameplay = {
             arena_log:print("Loaded from data: " .. tostring(data.client.player_loaded_from_data))
 
             RunWhenPlayerExists(function()
-                if (not data.client.player_loaded_from_data and not GameHasFlagRun("DeserializedHolyMountain")) then
+                if (not rolling_back and not data.client.player_loaded_from_data and not GameHasFlagRun("DeserializedHolyMountain")) then
                     arena_log:print("Giving gold: " .. tostring(extra_gold))
                     player.GiveGold(extra_gold)
                     GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_round_gold"), tostring(extra_gold), tostring(rounds)))
@@ -1960,7 +1965,7 @@ ArenaGameplay = {
 
             RunWhenPlayerExists(function()
                 -- if we are the owner of the lobby
-                if (steam_utils.IsOwner()) then
+                if (not rolling_back and steam_utils.IsOwner()) then
                     -- get the gold count from the lobby
                     local gold = tonumber(steamutils.GetLobbyData( "total_gold")) or 0
                     -- add the new gold
@@ -1970,7 +1975,7 @@ ArenaGameplay = {
                 end
             end)
         else
-            if (steam_utils.IsOwner()) then
+            if (not rolling_back and steam_utils.IsOwner()) then
                 -- get the gold count from the lobby
                 local gold = tonumber(steamutils.GetLobbyData( "total_gold")) or 0
                 -- add the new gold
@@ -2155,6 +2160,27 @@ ArenaGameplay = {
         local mult = 10^(numDecimalPlaces or 0)
         return math.floor(num * mult + 0.5) / mult
     end,
+    CancelRound = function(lobby, data)
+        local pre_player = steamutils.GetLocalLobbyData(lobby, "pre_arena_player_data") or ""
+        local pre_match = steamutils.GetLocalLobbyData(lobby, "pre_arena_match_data") or ""
+
+        if(pre_player ~= "")then
+            steamutils.SetLocalLobbyData(lobby, "player_data", pre_player)
+            data.client.serialized_player = pre_player
+            data.client.player_loaded_from_data = true
+        end
+
+        if(pre_match ~= "")then
+            steamutils.SetLocalLobbyData(lobby, "match_data", pre_match)
+            local match_data = bitser.loads(pre_match)
+            if(match_data)then
+                data.client.match_data_unpacked = match_data
+            end
+        end
+
+        data.rolling_back = true
+        ArenaGameplay.LoadLobby(lobby, data, false)
+    end,
     LoadArena = function(lobby, data, show_message, map)
         ArenaGameplay.ResetPlayerData(lobby, data)
         data.is_polymorphed = false
@@ -2196,6 +2222,11 @@ ArenaGameplay = {
             steamutils.RemoveLobbyFlag(lobby, tostring(steam_utils.getSteamID()).."picked_heart")
         end
         if(not data.spectator_mode)then
+            local pre_player = steamutils.GetLocalLobbyData(lobby, "player_data") or ""
+            local pre_match = steamutils.GetLocalLobbyData(lobby, "match_data") or ""
+            steamutils.SetLocalLobbyData(lobby, "pre_arena_player_data", pre_player)
+            steamutils.SetLocalLobbyData(lobby, "pre_arena_match_data", pre_match)
+
             ArenaGameplay.SavePlayerData(lobby, data, true)
 
             GameRemoveFlagRun("can_save_player")
