@@ -189,6 +189,7 @@ ArenaGameplay = {
         end
 
         local members = steamutils.getLobbyMembers(lobby)
+        local loser_ids = {}
         for _, member in pairs(members) do
             local role = "none"
             if(not steamutils.IsSpectator(lobby, member.id) and winner ~= nil)then
@@ -196,10 +197,13 @@ ArenaGameplay = {
                     role = "winner"
                 else
                     role = "loser"
+                    table.insert(loser_ids, tostring(member.id))
                 end
             end
             steam_utils.TrySetLobbyData(lobby, tostring(member.id) .. "_map_picker_role", role)
         end
+        steam_utils.TrySetLobbyData(lobby, "last_round_winner_id", winner and tostring(winner) or "")
+        steam_utils.TrySetLobbyData(lobby, "last_round_loser_ids", bitser.dumps(loser_ids))
     end,
     GetMapPickerRole = function(lobby, user)
         local role = steamutils.GetLobbyData(tostring(user) .. "_map_picker_role")
@@ -227,11 +231,21 @@ ArenaGameplay = {
             return true
         end
 
-        local role = ArenaGameplay.GetMapPickerRole(lobby, user)
+        local user_str = tostring(user)
         if(map_picker == "winner_picks")then
-            return role == "winner"
+            local winner_id = steamutils.GetLobbyData("last_round_winner_id") or ""
+            return user_str == winner_id
         end
         if(map_picker == "loser_picks")then
+            local loser_ids_raw = steamutils.GetLobbyData("last_round_loser_ids")
+            if(loser_ids_raw and loser_ids_raw ~= "")then
+                local loser_ids = bitser.loads(loser_ids_raw)
+                for _, id in ipairs(loser_ids) do
+                    if(id == user_str)then return true end
+                end
+                return false
+            end
+            local role = ArenaGameplay.GetMapPickerRole(lobby, user)
             return role == "loser"
         end
         return false
@@ -239,6 +253,19 @@ ArenaGameplay = {
     GetMapVoteEligiblePlayerCount = function(lobby, data, map_picker)
         if(map_picker == "vote")then
             return ArenaGameplay.TotalPlayers(lobby)
+        end
+
+        if(map_picker == "winner_picks")then
+            local winner_id = steamutils.GetLobbyData("last_round_winner_id") or ""
+            return (winner_id ~= "") and 1 or 0
+        end
+
+        if(map_picker == "loser_picks")then
+            local loser_ids_raw = steamutils.GetLobbyData("last_round_loser_ids")
+            if(loser_ids_raw and loser_ids_raw ~= "")then
+                local loser_ids = bitser.loads(loser_ids_raw)
+                return #loser_ids
+            end
         end
 
         local total_players = 0
@@ -978,14 +1005,6 @@ ArenaGameplay = {
         data.zone_spawned = false
     end,
     DamageZoneHandler = function(lobby, data, can_shrink)
-        if(should_hide_combat_ui(data))then
-            if(data.zone_gui ~= nil)then
-                GuiDestroy(data.zone_gui)
-                data.zone_gui = nil
-            end
-            return
-        end
-
         if (data.current_arena) then
             local default_size = data.current_arena.zone_size
             local zone_floor = data.current_arena.zone_floor
@@ -2439,7 +2458,7 @@ ArenaGameplay = {
 
                 ArenaGameplay.LoadArena(lobby, data, true)
             else
-
+                data.rejoined_during_arena = true
                 ArenaGameplay.LoadArena(lobby, data, true, current_map)
             end
             
@@ -2600,8 +2619,15 @@ ArenaGameplay = {
                         end
 
 
-                        networking.send.start_map_vote(lobby, map_ids)
-                        gameplay_handler.StartMapVote(lobby, data, map_ids)
+                        local eligible = ArenaGameplay.GetMapVoteEligiblePlayerCount(lobby, data, map_picker)
+                        if(eligible == 0)then
+                            local random_map = map_ids[data.random.range(1, #map_ids)]
+                            ArenaGameplay.LoadArena(lobby, data, true, random_map)
+                            networking.send.enter_arena(lobby, data.current_arena.id)
+                        else
+                            networking.send.start_map_vote(lobby, map_ids)
+                            gameplay_handler.StartMapVote(lobby, data, map_ids)
+                        end
                     else
                         ArenaGameplay.LoadArena(lobby, data, true)
                         networking.send.enter_arena(lobby, data.current_arena.id)
@@ -2614,6 +2640,7 @@ ArenaGameplay = {
         data.state = "map_vote"
         data.map_vote = {}
         data.voters = {}
+        data.current_vote_maps = maps
         local map_picker = GlobalsGetValue("map_picker", "random")
         local can_vote = not data.spectator_mode and ArenaGameplay.CanPlayerPickMap(lobby, steam_utils.getSteamID(), map_picker)
         for k, v in ipairs(maps)do
@@ -4058,6 +4085,15 @@ ArenaGameplay = {
 
                     if(not data.spectator_mode)then
                         ArenaGameplay.LoadPlayer(lobby, data, x, y)
+
+                        if(data.rejoined_during_arena)then
+                            data.rejoined_during_arena = false
+                            RunWhenPlayerExists(function()
+                                local extra_gold = gameplay_handler.GetRoundGold(lobby, data)
+                                player.GiveGold(extra_gold)
+                                GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_round_gold"), tostring(extra_gold), tostring(ArenaGameplay.GetNumRounds(lobby))))
+                            end)
+                        end
 
                         if (not steam_utils.IsOwner()) then
                             RunWhenPlayerExists(function()

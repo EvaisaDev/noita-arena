@@ -1172,6 +1172,14 @@ ArenaMode = {
             formatting_string = " $0",
         },
         {
+            id = "disconnect_gives_win",
+            name = "$arena_settings_disconnect_gives_win_name",
+            description = "$arena_settings_disconnect_gives_win_description",
+            type = "enum",
+            options = { { "disabled", "$arena_settings_disabled" }, { "enabled", "$arena_settings_enabled" } },
+            default = "disabled"
+        },
+        {
             id = "upgrades_system",
             name = "$arena_settings_upgrades_system_name",
             description = "$arena_settings_upgrades_system_description",
@@ -2449,6 +2457,12 @@ ArenaMode = {
         end
         GlobalsSetValue("zone_steps", tostring(zone_steps))
 
+        local disconnect_gives_win = steam.matchmaking.getLobbyData(lobby, "setting_disconnect_gives_win")
+        if (disconnect_gives_win == nil) then
+            disconnect_gives_win = "disabled"
+        end
+        GlobalsSetValue("disconnect_gives_win", tostring(disconnect_gives_win))
+
         local upgrades_system = steam.matchmaking.getLobbyData(lobby, "setting_upgrades_system")
         if (upgrades_system == nil) then
             upgrades_system = "false"
@@ -3398,6 +3412,9 @@ ArenaMode = {
 
         if (not data.players[tostring(user)]) then
             data:DefinePlayer(lobby, user)
+            if(steam_utils.IsOwner() and data.state == "map_vote" and data.current_vote_maps ~= nil)then
+                steamutils.sendToPlayer("start_map_vote", {data.current_vote_maps}, user, true)
+            end
         end
 
         if (data ~= nil) then
@@ -3442,7 +3459,18 @@ ArenaMode = {
         lobby_member_names[k] = nil
         if (data.state == "arena" and GlobalsGetValue("arena_gamemode", "ffa") ~= "continuous") then
             if(steam_utils.IsOwner())then
-                ArenaGameplay.WinnerCheck(lobby, data)
+                local disconnect_gives_win = GlobalsGetValue("disconnect_gives_win", "disabled")
+                if(disconnect_gives_win == "enabled")then
+                    ArenaGameplay.WinnerCheck(lobby, data)
+                else
+                    local alive = (not data.spectator_mode and data.client.alive) and 1 or 0
+                    for k, v in pairs(data.players) do
+                        if(v.alive)then alive = alive + 1 end
+                    end
+                    if(alive == 0)then
+                        ArenaGameplay.WinnerCheck(lobby, data)
+                    end
+                end
             end
         end
     end,
