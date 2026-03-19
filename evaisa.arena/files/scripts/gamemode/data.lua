@@ -12,6 +12,7 @@ function data:New()
         ready_counter = nil,
         countdown = nil,
         upgrade_system = nil,
+        hm_timer_paused = false,
         ----- spectator mode -----
         target_dummy_player = nil,
         spectator_gui_entity = nil,
