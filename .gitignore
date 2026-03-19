@@ -4,3 +4,6 @@
 evaisa.arena-dev-0.7.zip
 *.zip
 /evaisa.arena/versions
+/evaisa.arena/.codegpt
+/evaisa.arena/node_modules
+evaisa.arena/package-lock.json
