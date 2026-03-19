@@ -139,6 +139,14 @@ playerRunQueue = {}
 
 local player_mods = "";
 
+do
+	local fileContents = get_content("data/scripts/projectiles/spells_to_power.lua")
+	local pattern = "count %+ expcount"
+	fileContents = string.gsub(fileContents, pattern, "math%.max%(0%.001, count %+ expcount%)")
+	set_content("data/scripts/projectiles/spells_to_power.lua", fileContents)
+end
+
+
 function RunWhenPlayerExists(func)
     table.insert(playerRunQueue, func)
 end
@@ -704,7 +712,7 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 218,
+    version = 220,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
     end,
