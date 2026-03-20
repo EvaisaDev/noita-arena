@@ -723,6 +723,50 @@ ArenaMode = {
     spectator_unfinished_warning = false,
     enable_spectator = true,--not ModSettingGet("evaisa.arena.spectator_unstable"),
     enable_presets = true,
+
+    enable_proximity_vc = true,
+
+    user_can_speak = function(user_id)
+		if(lobby_code == nil)then return false end
+		local lobby_in_progress = steam.matchmaking.getLobbyData(lobby_code, "in_progress") == "true"
+		if(not lobby_in_progress)then return true end
+        if data == nil then return true end
+        if data.state ~= "arena" then return false end
+        local id_str = tostring(user_id)
+        local my_id_str = tostring(steam_utils.getSteamID())
+        if id_str == my_id_str then
+            return data.client.alive and not data.spectator_mode
+        end
+        local p = data.players[id_str]
+        if p == nil then return false end
+        return p.alive == true and p.entity ~= nil
+    end,
+
+    get_voice_position = function(user_id)
+        if data == nil then return nil, nil end
+        local id_str = tostring(user_id)
+        local my_id_str = tostring(steam_utils.getSteamID())
+        if id_str == my_id_str then
+            local players = EntityGetWithTag("player_unit")
+            if players ~= nil and players[1] ~= nil then
+                return EntityGetTransform(players[1])
+            end
+            return nil, nil
+        end
+        local p = data.players[id_str]
+        if p == nil or p.entity == nil then return nil, nil end
+        return EntityGetTransform(p.entity)
+    end,
+
+    get_listener_position = function()
+        if data == nil or data.state ~= "arena" then return nil, nil end
+        local players = EntityGetWithTag("player_unit")
+        if players ~= nil and players[1] ~= nil then
+            return EntityGetTransform(players[1])
+        end
+        return nil, nil
+    end,
+
     custom_enter_check = function(lobby)
         local lobby_state = steam.matchmaking.getLobbyData(lobby, "arena_state") or "lobby"
 
@@ -3506,46 +3550,6 @@ ArenaMode = {
             gameplay_handler.OnProjectileFiredPost(lobby, data, shooter_id, projectile_id, rng, position_x, position_y,
                 target_x, target_y, send_message, unknown1, multicast_index, unknown3)
         end
-    end,
-
-    enable_proximity_vc = true,
-
-    user_can_speak = function(user_id)
-        if data == nil then return true end
-        if data.state ~= "arena" then return false end
-        local id_str = tostring(user_id)
-        local my_id_str = tostring(steam_utils.getSteamID())
-        if id_str == my_id_str then
-            return data.client.alive and not data.spectator_mode
-        end
-        local p = data.players[id_str]
-        if p == nil then return false end
-        return p.alive == true and p.entity ~= nil
-    end,
-
-    get_voice_position = function(user_id)
-        if data == nil then return nil, nil end
-        local id_str = tostring(user_id)
-        local my_id_str = tostring(steam_utils.getSteamID())
-        if id_str == my_id_str then
-            local players = EntityGetWithTag("player_unit")
-            if players ~= nil and players[1] ~= nil then
-                return EntityGetTransform(players[1])
-            end
-            return nil, nil
-        end
-        local p = data.players[id_str]
-        if p == nil or p.entity == nil then return nil, nil end
-        return EntityGetTransform(p.entity)
-    end,
-
-    get_listener_position = function()
-        if data == nil or data.state ~= "arena" then return nil, nil end
-        local players = EntityGetWithTag("player_unit")
-        if players ~= nil and players[1] ~= nil then
-            return EntityGetTransform(players[1])
-        end
-        return nil, nil
     end,
 }
 
