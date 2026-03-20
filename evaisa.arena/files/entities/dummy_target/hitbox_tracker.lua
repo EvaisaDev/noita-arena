@@ -3,18 +3,25 @@ dofile_once( "mods/evaisa.arena/files/lib/variables.lua" );
 
 local entity = GetUpdatedEntityID();
 
-local spriteComp = EntityGetFirstComponentIncludingDisabled( entity, "SpriteComponent" );
-
 local x, y = EntityGetTransform( entity );
 
-init_pos = init_pos or {x,y};
+local seed = EntityGetFirstComponentIncludingDisabled( entity, "PositionSeedComponent" )
+local cdc = EntityGetFirstComponentIncludingDisabled( entity, "CharacterDataComponent" )
 
-local offset_x, offset_y = ComponentGetValue2( spriteComp, "offset_animator_offset" );
+if not (seed and cdc) then return end
 
+if ComponentGetValue2( seed, "pos_x" ) == 0 and ComponentGetValue2( seed, "pos_y" ) == 0 then
+    ComponentSetValue2( seed, "pos_x", x )
+    ComponentSetValue2( seed, "pos_y", y )
+end
 
-local hitbox_comp = EntityGetFirstComponentIncludingDisabled( entity, "HitboxComponent" );
+local tx = ComponentGetValue2( seed, "pos_x" )
+local ty = ComponentGetValue2( seed, "pos_y" )
 
-EntityApplyTransform( entity, init_pos[1] + offset_x, init_pos[2] + offset_y );
+local vx, vy = ComponentGetValue2( cdc, "mVelocity" )
+vx = (vx + (tx - x) / 5) * 0.95
+vy = (vy + (ty - y) / 5) * 0.95
+ComponentSetValue2( cdc, "mVelocity", vx, vy )
 
 --[[
 local default_hitbox = {

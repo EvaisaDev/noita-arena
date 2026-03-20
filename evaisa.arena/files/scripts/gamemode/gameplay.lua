@@ -2178,6 +2178,8 @@ ArenaGameplay = {
             end
         end
 
+        ArenaGameplay.GetGameData(lobby, data)
+
         data.rolling_back = true
         ArenaGameplay.LoadLobby(lobby, data, false)
     end,

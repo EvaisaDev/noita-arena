@@ -872,6 +872,245 @@ upgrades = {
                 end
             end
 
-        end,
-    }
+        end
+    },
+	{
+		id = "COPY_WAND",
+		ui_name = "$arena_upgrades_copy_wand_name",
+		ui_description = "$arena_upgrades_copy_wand_description",
+		card_symbol = "mods/evaisa.arena/files/sprites/ui/upgrades/symbols/dupe_wand.png",
+		weight = 0.5,
+		func = function(entity_who_picked)
+			local wand = get_active_or_random_wand()
+			if wand == nil then return end
+
+			local px, py = EntityGetTransform(entity_who_picked)
+
+			local serialized = np.SerializeEntity(wand)
+			local new_wand = EntityCreateNew()
+			np.DeserializeEntity(new_wand, serialized, px, py)
+
+			local children = EntityGetAllChildren(new_wand) or {}
+			for _, child in ipairs(children) do
+				EntityKill(child)
+			end
+
+			local ability_component = EntityGetFirstComponentIncludingDisabled(new_wand, "AbilityComponent")
+			if ability_component ~= nil then
+				EntitySetComponentIsEnabled(new_wand, ability_component, true)
+			end
+
+			local hotspot_comp = EntityGetFirstComponentIncludingDisabled(new_wand, "HotspotComponent")
+			if hotspot_comp ~= nil then
+				EntitySetComponentIsEnabled(new_wand, hotspot_comp, true)
+			end
+
+			local item_component = EntityGetFirstComponentIncludingDisabled(new_wand, "ItemComponent")
+			if item_component ~= nil then
+				EntitySetComponentIsEnabled(new_wand, item_component, true)
+				ComponentSetValue(item_component, "has_been_picked_by_player", "0")
+				ComponentSetValue(item_component, "play_hover_animation", "1")
+				ComponentSetValueVector2(item_component, "spawn_pos", px, py)
+			end
+
+			local sprite_component = EntityGetFirstComponentIncludingDisabled(new_wand, "SpriteComponent")
+			if sprite_component ~= nil then
+				EntitySetComponentIsEnabled(new_wand, sprite_component, true)
+			end
+
+			local light_component = EntityGetFirstComponentIncludingDisabled(new_wand, "LightComponent")
+			if light_component ~= nil then
+				EntitySetComponentIsEnabled(new_wand, light_component, true)
+			end
+
+			local lua_comp = EntityGetFirstComponentIncludingDisabled(new_wand, "LuaComponent")
+			if lua_comp ~= nil then
+				EntitySetComponentIsEnabled(new_wand, lua_comp, true)
+			end
+
+			local simple_physics_component = EntityGetFirstComponentIncludingDisabled(new_wand, "SimplePhysicsComponent")
+			if simple_physics_component ~= nil then
+				EntitySetComponentIsEnabled(new_wand, simple_physics_component, false)
+			end
+
+			local sprite_particle_emitter_comp = EntityGetFirstComponentIncludingDisabled(new_wand, "SpriteParticleEmitterComponent")
+			if sprite_particle_emitter_comp ~= nil then
+				EntitySetComponentIsEnabled(new_wand, sprite_particle_emitter_comp, true)
+			end
+
+		end,
+	},
+	{
+		id = "DISCOUNT_SHOP",
+		ui_name = "$arena_upgrades_discount_shop_name",
+		ui_description = "$arena_upgrades_discount_shop_description",
+		card_symbol = "mods/evaisa.arena/files/sprites/ui/upgrades/symbols/discount.png",
+		weight = 0.5,
+		func = function(entity_who_picked)
+			local shop_x = tonumber(GlobalsGetValue("SHOP_SPAWN_X", "0")) or 0
+			local shop_y = tonumber(GlobalsGetValue("SHOP_SPAWN_Y", "0")) or 0
+
+			local smallfolk = dofile("mods/evaisa.arena/lib/smallfolk.lua")
+			local item_shop_spots = smallfolk.loads(GlobalsGetValue("ITEM_SHOP_SPAWN_SPOTS", "{}"))
+
+			local all_centers = {{shop_x, shop_y}}
+			for _, spot in ipairs(item_shop_spots) do
+				table.insert(all_centers, spot)
+			end
+
+			local discounted = {}
+			for _, center in ipairs(all_centers) do
+				local entities = EntityGetInRadius(center[1], center[2], 200)
+				for _, eid in ipairs(entities) do
+					if EntityGetRootEntity(eid) == eid and not discounted[eid] then
+						local cost_comp = EntityGetFirstComponentIncludingDisabled(eid, "ItemCostComponent")
+						if cost_comp ~= nil and not EntityHasTag(eid, "shop_item_on_sale") then
+							local cost = ComponentGetValue2(cost_comp, "cost")
+							local new_cost = math.max(math.floor(cost * 0.5), 0)
+							ComponentSetValue2(cost_comp, "cost", new_cost)
+
+							local sprite_comps = EntityGetComponentIncludingDisabled(eid, "SpriteComponent") or {}
+							for _, sprite_comp in ipairs(sprite_comps) do
+								if ComponentGetValue2(sprite_comp, "is_text_sprite") then
+									local text = tostring(new_cost)
+									local textwidth = 0
+									for i = 1, #text do
+										local l = string.sub(text, i, i)
+										textwidth = textwidth + (l ~= "1" and 6 or 3)
+									end
+									ComponentSetValue2(sprite_comp, "text", text)
+									ComponentSetValue2(sprite_comp, "offset_x", textwidth * 0.5 - 0.5)
+								end
+							end
+
+							local item_comp = EntityGetFirstComponentIncludingDisabled(eid, "ItemComponent")
+							local ix, iy = EntityGetTransform(eid)
+							if item_comp ~= nil then
+								local sx, sy = ComponentGetValueVector2(item_comp, "spawn_pos")
+								if sx ~= 0 or sy ~= 0 then
+									ix, iy = sx, sy
+								end
+							end
+							EntityLoad("data/entities/misc/sale_indicator.xml", ix, iy)
+							EntityAddTag(eid, "shop_item_on_sale")
+							discounted[eid] = true
+						end
+					end
+				end
+			end
+		end,
+	},
+	{
+		id = "REROLL_SHOP",
+		ui_name = "$arena_upgrades_reroll_shop_name",
+		ui_description = "$arena_upgrades_reroll_shop_description",
+		card_symbol = "mods/evaisa.arena/files/sprites/ui/upgrades/symbols/restock.png",
+		weight = 0.5,
+		func = function(entity_who_picked)
+			local old_perk_list = perk_list
+			local old_actions = actions
+
+			actions = {}
+			perk_list = {}
+
+
+			local shop_x = tonumber(GlobalsGetValue("SHOP_SPAWN_X", "0")) or 0
+			local shop_y = tonumber(GlobalsGetValue("SHOP_SPAWN_Y", "0")) or 0
+
+			local reroll_count = (tonumber(GlobalsGetValue("SHOP_REROLL_COUNT", "0")) or 0) + 1
+			GlobalsSetValue("SHOP_REROLL_COUNT", tostring(reroll_count))
+
+			local smallfolk = dofile("mods/evaisa.arena/lib/smallfolk.lua")
+
+			local item_shop_spots_raw = GlobalsGetValue("ITEM_SHOP_SPAWN_SPOTS", "{}")
+			local item_shop_spots = smallfolk.loads(item_shop_spots_raw)
+
+			local all_centers = {{shop_x, shop_y}}
+			for _, spot in ipairs(item_shop_spots) do
+				table.insert(all_centers, spot)
+			end
+
+			local killed = {}
+			for _, center in ipairs(all_centers) do
+				local entities = EntityGetInRadius(center[1], center[2], 200)
+				for _, eid in ipairs(entities) do
+					if EntityGetRootEntity(eid) == eid and not killed[eid] then
+						local cost_comp = EntityGetFirstComponentIncludingDisabled(eid, "ItemCostComponent")
+						if cost_comp ~= nil then
+							EntityKill(eid)
+							killed[eid] = true
+						end
+					end
+				end
+			end
+
+			local was_deserialized = GameHasFlagRun("DeserializedHolyMountain")
+			GameRemoveFlagRun("DeserializedHolyMountain")
+			GlobalsSetValue("ITEM_SHOP_SPAWN_SPOTS", "{}")
+			GameAddFlagRun("rerolling_shop")
+
+			RegisterSpawnFunction = function() 
+
+			end
+
+			dofile("mods/evaisa.arena/files/scripts/world/biomes/holymountain.lua")
+			spawn_all_shopitems(shop_x, shop_y)
+			for _, spot in ipairs(item_shop_spots) do
+				spawn_item_shop_item(spot[1], spot[2])
+			end
+
+			GameRemoveFlagRun("rerolling_shop")
+			if was_deserialized then
+				GameAddFlagRun("DeserializedHolyMountain")
+			end
+
+			actions = old_actions
+			perk_list = old_perk_list
+		end,
+	},
+	{
+		id = "FUNGAL_SHIFT",
+		ui_name = "$arena_upgrades_fungal_shift_name",
+		ui_description = "$arena_upgrades_fungal_shift_description",
+		card_symbol = "mods/evaisa.arena/files/sprites/ui/upgrades/symbols/fungal_shift.png",
+		weight = 0.5,
+		func = function(entity_who_picked)
+			dofile_once("data/scripts/magic/fungal_shift.lua")
+			local x, y = EntityGetTransform(entity_who_picked)
+			SetRandomSeed( entity_who_picked + x + GameGetFrameNum(), y + GameGetFrameNum() )
+			local old_rand = rand
+			rand = function(a, b)
+				return Random(a, b)
+			end
+			fungal_shift(entity_who_picked, x, y, true)
+			rand = old_rand
+		end,
+	},
+	{
+		id = "FLASKS",
+		ui_name = "$arena_upgrades_flasks_name",
+		ui_description = "$arena_upgrades_flasks_description",
+		card_symbol = "mods/evaisa.arena/files/sprites/ui/upgrades/symbols/flask.png",
+		weight = 0.5,
+		func = function(entity_who_picked)
+			local x, y = EntityGetTransform(entity_who_picked)
+			
+			local flask_count = 3
+
+			local start_pos_x = x - ((3 * 16) / 2)
+
+			for i = 1, flask_count do
+				local hit, x, y = RaytracePlatforms(start_pos_x + (i - 1) * 16, y, start_pos_x + (i - 1) * 16, y + 200)
+				local items = {
+					"data/entities/items/pickup/potion.xml",
+					"data/entities/items/pickup/powder_stash.xml",
+				}
+
+				local item = items[Random(1, #items)]
+				
+				EntityLoad(item, x, y)
+
+			end
+		end,
+	}
 }

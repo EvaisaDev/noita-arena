@@ -712,7 +712,6 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 221,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
     end,
@@ -3435,6 +3434,7 @@ ArenaMode = {
 
         local v = data.players[k]
 
+        local was_alive = v ~= nil and v.alive
 
         if(v ~= nil)then
             v:Clean(lobby)
@@ -3469,7 +3469,7 @@ ArenaMode = {
                     end
                     if(alive == 0)then
                         ArenaGameplay.WinnerCheck(lobby, data)
-                    else
+                    elseif(was_alive)then
                         networking.send.cancel_round(lobby)
                         ArenaGameplay.CancelRound(lobby, data)
                     end
