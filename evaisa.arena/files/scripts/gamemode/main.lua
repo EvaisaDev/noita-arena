@@ -1,4 +1,4 @@
-ARENA_STEAM_ID = "0"
+ARENA_STEAM_ID = "3278236683"
 ARENA_MOD_ID = "evaisa.arena"
 REQUIRED_ONLINE_VERSION = 383
 
@@ -712,7 +712,7 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 225,
+    version = 226,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
     end,
