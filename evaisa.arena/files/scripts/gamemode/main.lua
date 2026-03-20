@@ -712,7 +712,7 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 226,
+    version = 227,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
     end,
@@ -3506,7 +3506,47 @@ ArenaMode = {
             gameplay_handler.OnProjectileFiredPost(lobby, data, shooter_id, projectile_id, rng, position_x, position_y,
                 target_x, target_y, send_message, unknown1, multicast_index, unknown3)
         end
-    end
+    end,
+
+    enable_proximity_vc = true,
+
+    user_can_speak = function(user_id)
+        if data == nil then return true end
+        if data.state ~= "arena" then return false end
+        local id_str = tostring(user_id)
+        local my_id_str = tostring(steam_utils.getSteamID())
+        if id_str == my_id_str then
+            return data.client.alive and not data.spectator_mode
+        end
+        local p = data.players[id_str]
+        if p == nil then return false end
+        return p.alive == true and p.entity ~= nil
+    end,
+
+    get_voice_position = function(user_id)
+        if data == nil then return nil, nil end
+        local id_str = tostring(user_id)
+        local my_id_str = tostring(steam_utils.getSteamID())
+        if id_str == my_id_str then
+            local players = EntityGetWithTag("player_unit")
+            if players ~= nil and players[1] ~= nil then
+                return EntityGetTransform(players[1])
+            end
+            return nil, nil
+        end
+        local p = data.players[id_str]
+        if p == nil or p.entity == nil then return nil, nil end
+        return EntityGetTransform(p.entity)
+    end,
+
+    get_listener_position = function()
+        if data == nil or data.state ~= "arena" then return nil, nil end
+        local players = EntityGetWithTag("player_unit")
+        if players ~= nil and players[1] ~= nil then
+            return EntityGetTransform(players[1])
+        end
+        return nil, nil
+    end,
 }
 
 
