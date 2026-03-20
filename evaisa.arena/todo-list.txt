@@ -7,3 +7,9 @@ When disconnecting it doesn't let you vote during loser/winner vote, need to rem
 Failing to spawn in some maps --> Attempted fix, needs testing
 If you crash during a match it should not increment round count, and should not give a win (make a setting)
 Spells of power from letaali QOL mod.
+
+
+Add teams mode
+Add setting that makes it so every round your inventory and wands are filled with completely randomized spells
+Fix fungal shift icon
+Fix reroll shop card breaking lobby joining
