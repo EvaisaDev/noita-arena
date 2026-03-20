@@ -712,7 +712,7 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 227,
+    version = 229,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
     end,
@@ -759,7 +759,6 @@ ArenaMode = {
     end,
 
     get_listener_position = function()
-        if data == nil or data.state ~= "arena" then return nil, nil end
         local players = EntityGetWithTag("player_unit")
         if players ~= nil and players[1] ~= nil then
             return EntityGetTransform(players[1])
