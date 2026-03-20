@@ -95,6 +95,11 @@ function spawn_all_shopitems( x, y )
 		return
 	end
 
+	if not GameHasFlagRun("rerolling_shop") then
+		GlobalsSetValue("SHOP_SPAWN_X", tostring(x))
+		GlobalsSetValue("SHOP_SPAWN_Y", tostring(y))
+	end
+
 	--local rng = dofile_once("mods/evaisa.arena/lib/rng.lua")
 
 	local random_seed_x, random_seed_y = get_new_seed(x, y, GameHasFlagRun("shop_sync"))
@@ -281,6 +286,14 @@ end
 function spawn_item_shop_item( x, y )
 	if(GameHasFlagRun("DeserializedHolyMountain") or GameHasFlagRun("super_secret_hamis_mode"))then
 		return
+	end
+
+	if not GameHasFlagRun("rerolling_shop") then
+		local _sf = dofile("mods/evaisa.arena/lib/smallfolk.lua")
+		local _spots_raw = GlobalsGetValue("ITEM_SHOP_SPAWN_SPOTS", "{}")
+		local _spots = _sf.loads(_spots_raw)
+		table.insert(_spots, {x, y})
+		GlobalsSetValue("ITEM_SHOP_SPAWN_SPOTS", _sf.dumps(_spots))
 	end
 
 	local rounds = tonumber(GlobalsGetValue("holyMountainCount", "0")) or 0

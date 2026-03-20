@@ -947,54 +947,41 @@ upgrades = {
 		card_symbol = "mods/evaisa.arena/files/sprites/ui/upgrades/symbols/discount.png",
 		weight = 0.5,
 		func = function(entity_who_picked)
-			local shop_x = tonumber(GlobalsGetValue("SHOP_SPAWN_X", "0")) or 0
-			local shop_y = tonumber(GlobalsGetValue("SHOP_SPAWN_Y", "0")) or 0
+			
+			local entities = EntityGetInRadius(0, 0, 2000000)
+			for _, eid in ipairs(entities) do
+				if EntityGetRootEntity(eid) == eid then
+					local cost_comp = EntityGetFirstComponentIncludingDisabled(eid, "ItemCostComponent")
+					if cost_comp ~= nil and not EntityHasTag(eid, "shop_item_on_sale") then
+						local cost = ComponentGetValue2(cost_comp, "cost")
+						local new_cost = math.max(math.floor(cost * 0.5), 0)
+						ComponentSetValue2(cost_comp, "cost", new_cost)
 
-			local smallfolk = dofile("mods/evaisa.arena/lib/smallfolk.lua")
-			local item_shop_spots = smallfolk.loads(GlobalsGetValue("ITEM_SHOP_SPAWN_SPOTS", "{}"))
-
-			local all_centers = {{shop_x, shop_y}}
-			for _, spot in ipairs(item_shop_spots) do
-				table.insert(all_centers, spot)
-			end
-
-			local discounted = {}
-			for _, center in ipairs(all_centers) do
-				local entities = EntityGetInRadius(center[1], center[2], 200)
-				for _, eid in ipairs(entities) do
-					if EntityGetRootEntity(eid) == eid and not discounted[eid] then
-						local cost_comp = EntityGetFirstComponentIncludingDisabled(eid, "ItemCostComponent")
-						if cost_comp ~= nil and not EntityHasTag(eid, "shop_item_on_sale") then
-							local cost = ComponentGetValue2(cost_comp, "cost")
-							local new_cost = math.max(math.floor(cost * 0.5), 0)
-							ComponentSetValue2(cost_comp, "cost", new_cost)
-
-							local sprite_comps = EntityGetComponentIncludingDisabled(eid, "SpriteComponent") or {}
-							for _, sprite_comp in ipairs(sprite_comps) do
-								if ComponentGetValue2(sprite_comp, "is_text_sprite") then
-									local text = tostring(new_cost)
-									local textwidth = 0
-									for i = 1, #text do
-										local l = string.sub(text, i, i)
-										textwidth = textwidth + (l ~= "1" and 6 or 3)
-									end
-									ComponentSetValue2(sprite_comp, "text", text)
-									ComponentSetValue2(sprite_comp, "offset_x", textwidth * 0.5 - 0.5)
+						local sprite_comps = EntityGetComponentIncludingDisabled(eid, "SpriteComponent") or {}
+						for _, sprite_comp in ipairs(sprite_comps) do
+							if ComponentGetValue2(sprite_comp, "is_text_sprite") then
+								local text = tostring(new_cost)
+								local textwidth = 0
+								for i = 1, #text do
+									local l = string.sub(text, i, i)
+									textwidth = textwidth + (l ~= "1" and 6 or 3)
 								end
+								ComponentSetValue2(sprite_comp, "text", text)
+								ComponentSetValue2(sprite_comp, "offset_x", textwidth * 0.5 - 0.5)
 							end
-
-							local item_comp = EntityGetFirstComponentIncludingDisabled(eid, "ItemComponent")
-							local ix, iy = EntityGetTransform(eid)
-							if item_comp ~= nil then
-								local sx, sy = ComponentGetValueVector2(item_comp, "spawn_pos")
-								if sx ~= 0 or sy ~= 0 then
-									ix, iy = sx, sy
-								end
-							end
-							EntityLoad("data/entities/misc/sale_indicator.xml", ix, iy)
-							EntityAddTag(eid, "shop_item_on_sale")
-							discounted[eid] = true
 						end
+
+						local item_comp = EntityGetFirstComponentIncludingDisabled(eid, "ItemComponent")
+						local ix, iy = EntityGetTransform(eid)
+						if item_comp ~= nil then
+							local sx, sy = ComponentGetValueVector2(item_comp, "spawn_pos")
+							if sx ~= 0 or sy ~= 0 then
+								ix, iy = sx, sy
+							end
+						end
+						EntityLoad("data/entities/misc/sale_indicator.xml", ix, iy)
+						EntityAddTag(eid, "shop_item_on_sale")
+	
 					end
 				end
 			end
