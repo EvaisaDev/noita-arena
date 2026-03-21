@@ -462,6 +462,11 @@ SpectatorMode = {
                                 networking.send.is_spectating(data.spectated_player, false)
                             end
 
+                            if(data.upgrade_system ~= nil)then
+                                data.upgrade_system:clean()
+                                data.upgrade_system = nil
+                            end
+
                             data.spectated_player = player
 
                             if(data.spectated_player)then
@@ -507,6 +512,11 @@ SpectatorMode = {
                             
                             if(data.spectated_player)then
                                 networking.send.is_spectating(data.spectated_player, false)
+                            end
+
+                            if(data.upgrade_system ~= nil)then
+                                data.upgrade_system:clean()
+                                data.upgrade_system = nil
                             end
                             
                             data.spectated_player = player

@@ -2923,6 +2923,10 @@ ArenaGameplay = {
                 local map_header = GameTextGetTranslatedOrNot("$arena_map_vote_header")
                 if(data.vote_loop.vote_finished)then
                     map_header = GameTextGetTranslatedOrNot("$arena_map_vote_completed")
+                elseif(map_picker == "winner_picks")then
+                    map_header = GameTextGetTranslatedOrNot("$arena_map_vote_header_winner")
+                elseif(map_picker == "loser_picks")then
+                    map_header = GameTextGetTranslatedOrNot("$arena_map_vote_header_loser")
                 end
                 local map_header_width, map_header_height = GuiGetTextDimensions(vote_gui, map_header, 1)
                 GuiZSetForNextWidget(vote_gui, -11)
