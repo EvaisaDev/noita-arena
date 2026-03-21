@@ -23,6 +23,8 @@ RegisterSpawnFunction( 0xff7345DF, "spawn_perk_reroll" )
 RegisterSpawnFunction( 0xffd14158, "spawn_target_dummy")
 RegisterSpawnFunction( 0xffc5529d, "spawn_item_shop_item")
 RegisterSpawnFunction( 0xffd8b950, "spawn_wardrobe")
+RegisterSpawnFunction( 0xff37ff00, "spawn_intercom" )
+RegisterSpawnFunction( 0xff00ff95, "spawn_speaker" )
 
 function spawn_card_pick ( x, y )
 	if(not GameHasFlagRun("super_secret_hamis_mode"))then
@@ -335,3 +337,11 @@ function spawn_wardrobe(x, y)
 end
 
 -- GameHasFlagRun("first_death")
+
+function spawn_intercom(x, y)
+	EntityLoad( "mods/evaisa.arena/files/entities/misc/intercom.xml", x, y )
+end
+
+function spawn_speaker(x, y)
+	EntityLoad( "mods/evaisa.arena/files/entities/misc/speaker.xml", x, y )
+end

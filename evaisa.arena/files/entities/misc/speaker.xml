@@ -1,0 +1,14 @@
+<Entity tags = "spectator_no_clear,workshop,speaker">
+
+
+    <SpriteComponent 
+        alpha="1" 
+        image_file="mods/evaisa.arena/files/sprites/entities/speaker.png" 
+        next_rect_animation="" 
+        offset_x="8" 
+        offset_y="0" 
+        rect_animation="" 
+        z_index="1"
+    ></SpriteComponent>
+
+</Entity>

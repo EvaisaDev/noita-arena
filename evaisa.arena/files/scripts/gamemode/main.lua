@@ -731,6 +731,22 @@ ArenaMode = {
 		local lobby_in_progress = steam.matchmaking.getLobbyData(lobby_code, "in_progress") == "true"
 		if(not lobby_in_progress)then return true end
         if data == nil then return true end
+        if data.state == "lobby" then
+            local my_id_str = tostring(steam_utils.getSteamID())
+            if tostring(user_id) == my_id_str then
+                local players = EntityGetWithTag("player_unit")
+                if players == nil or players[1] == nil then return false end
+                local px, py = EntityGetTransform(players[1])
+                local intercoms = EntityGetWithTag("intercom") or {}
+                for _, ic in ipairs(intercoms) do
+                    local ix, iy = EntityGetTransform(ic)
+                    local d = math.sqrt((px - ix)^2 + (py - iy)^2)
+                    if d <= 40 then return true end
+                end
+                return false
+            end
+            return true
+        end
         if data.state ~= "arena" then return false end
         local id_str = tostring(user_id)
         local my_id_str = tostring(steam_utils.getSteamID())
@@ -744,6 +760,28 @@ ArenaMode = {
 
     get_voice_position = function(user_id)
         if data == nil then return nil, nil end
+        if data.state == "lobby" then
+            local players = EntityGetWithTag("player_unit")
+            local ref_x, ref_y = 0, 0
+            if players ~= nil and players[1] ~= nil then
+                ref_x, ref_y = EntityGetTransform(players[1])
+            end
+            local speakers = EntityGetWithTag("speaker") or {}
+            local best = nil
+            local best_dist = math.huge
+            for _, s in ipairs(speakers) do
+                local sx, sy = EntityGetTransform(s)
+                local d = (sx - ref_x)^2 + (sy - ref_y)^2
+                if d < best_dist then
+                    best_dist = d
+                    best = s
+                end
+            end
+            if best ~= nil then
+                return EntityGetTransform(best)
+            end
+            return nil, nil
+        end
         local id_str = tostring(user_id)
         local my_id_str = tostring(steam_utils.getSteamID())
         if id_str == my_id_str then

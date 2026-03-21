@@ -1,0 +1,14 @@
+<Entity tags = "spectator_no_clear,workshop,intercom">
+
+
+    <SpriteComponent 
+        alpha="1" 
+        image_file="mods/evaisa.arena/files/sprites/entities/intercom.png" 
+        next_rect_animation="" 
+        offset_x="7" 
+        offset_y="4" 
+        rect_animation="" 
+        z_index="1"
+    ></SpriteComponent>
+
+</Entity>
