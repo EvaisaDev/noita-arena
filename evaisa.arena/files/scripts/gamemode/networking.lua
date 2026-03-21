@@ -672,6 +672,7 @@ networking = {
 
                         if(unlimited_spells)then
                             local wand_children = EntityGetAllChildren(item) or {}
+                            local patched_count = 0
                             for _, card in ipairs(wand_children)do
                                 if(EntityHasTag(card, "card_action") and not EntityHasTag(card, "patched_unlimited"))then
                                     local item_action_comp = EntityGetFirstComponentIncludingDisabled(card, "ItemActionComponent")
@@ -684,9 +685,13 @@ networking = {
                                         if(item_comp ~= nil)then
                                             ComponentSetValue2(item_comp, "uses_remaining", -2)
                                         end
+                                        patched_count = patched_count + 1
                                     end
                                     EntityAddTag(card, "patched_unlimited")
                                 end
+                            end
+                            if(patched_count > 0)then
+                                arena_log:print("Patched " .. tostring(patched_count) .. " unlimited spells on item_update for player " .. tostring(user))
                             end
                         end
 

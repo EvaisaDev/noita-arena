@@ -712,7 +712,7 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 230,
+    version = 231,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
     end,
@@ -3429,6 +3429,23 @@ ArenaMode = {
                         gameplay_handler.SetHmTimerPaused(lobby, data, not data.hm_timer_paused)
                     else
                         networking.send.toggle_hm_timer_pause(lobby)
+                    end
+                end
+            end
+
+            if(data ~= nil and data.state == "lobby" and not data.spectator_mode)then
+                local respawn_button_x = pause_button_x ~= nil and (pause_button_x - 20) or ((screen_width - 60) - 20)
+                if (GuiImageButton(scoreboard_button_ui, 21314, respawn_button_x, screen_height - 20, "", "mods/evaisa.arena/files/sprites/ui/respawn.png")) then
+                    GamePlaySound("data/audio/Desktop/ui.bank", "ui/button_click", 0, 0)
+                    local player_entity = player.Get()
+                    if(player_entity)then
+                        EntityApplyTransform(player_entity, 0, 0)
+                        local children = EntityGetAllChildren(player_entity) or {}
+                        for _, child in ipairs(children) do
+                            if EntityGetFirstComponentIncludingDisabled(child, "GameEffectComponent") ~= nil then
+                                EntityKill(child)
+                            end
+                        end
                     end
                 end
             end

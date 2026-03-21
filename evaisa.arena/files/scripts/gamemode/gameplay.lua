@@ -878,17 +878,21 @@ ArenaGameplay = {
 
         if(data.state == "lobby")then
             local items = GameGetAllInventoryItems(current_player) or {}
+            local reset_count = 0
             for k, v in pairs(items) do
                 local ability_component = EntityGetFirstComponentIncludingDisabled(v, "AbilityComponent")
                 if ability_component then
                     ComponentSetValue2(ability_component, "mCastDelayStartFrame", 0)
+                    ComponentSetValue2(ability_component, "mNextFrameUsable", 0)
                     ComponentSetValue2(ability_component, "mReloadFramesLeft", 0)
                     ComponentSetValue2(ability_component, "mReloadNextFrameUsable", 0)
                     ComponentSetValue2(ability_component, "mNextChargeFrame", 0)
                     ComponentSetValue2(ability_component, "cooldown_frames", 0)
                     ComponentSetValue2(ability_component, "charge_wait_frames", 0)
+                    reset_count = reset_count + 1
                 end
             end
+            arena_log:print("Reset wand cooldowns on " .. tostring(reset_count) .. " items after deserialization")
         end
 
         --gameplay_handler.UpdateCosmetics(lobby, data, "load", current_player, false)
