@@ -712,7 +712,7 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 229,
+    version = 230,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
     end,
@@ -748,6 +748,7 @@ ArenaMode = {
             return true
         end
         if data.state ~= "arena" then return false end
+        if data.countdown ~= nil then return false end
         local id_str = tostring(user_id)
         local my_id_str = tostring(steam_utils.getSteamID())
         if id_str == my_id_str then
@@ -758,42 +759,44 @@ ArenaMode = {
         return p.alive == true and p.entity ~= nil
     end,
 
-    get_voice_position = function(user_id)
-        if data == nil then return nil, nil end
+    get_voice_positions = function(user_id)
+        if data == nil then return nil end
         if data.state == "lobby" then
-            local players = EntityGetWithTag("player_unit")
-            local ref_x, ref_y = 0, 0
-            if players ~= nil and players[1] ~= nil then
-                ref_x, ref_y = EntityGetTransform(players[1])
-            end
             local speakers = EntityGetWithTag("speaker") or {}
-            local best = nil
-            local best_dist = math.huge
+            if #speakers == 0 then return nil end
+            local positions = {}
             for _, s in ipairs(speakers) do
                 local sx, sy = EntityGetTransform(s)
-                local d = (sx - ref_x)^2 + (sy - ref_y)^2
-                if d < best_dist then
-                    best_dist = d
-                    best = s
-                end
+                table.insert(positions, { sx, sy })
             end
-            if best ~= nil then
-                return EntityGetTransform(best)
-            end
-            return nil, nil
+            return positions
         end
         local id_str = tostring(user_id)
         local my_id_str = tostring(steam_utils.getSteamID())
         if id_str == my_id_str then
             local players = EntityGetWithTag("player_unit")
             if players ~= nil and players[1] ~= nil then
-                return EntityGetTransform(players[1])
+                local px, py = EntityGetTransform(players[1])
+                return { { px, py } }
             end
-            return nil, nil
+            return nil
         end
         local p = data.players[id_str]
-        if p == nil or p.entity == nil then return nil, nil end
-        return EntityGetTransform(p.entity)
+        if p == nil or p.entity == nil then return nil end
+        local px, py = EntityGetTransform(p.entity)
+        return { { px, py } }
+    end,
+
+    get_voice_opts = function(index)
+        if data == nil then return nil end
+        if data.state == "lobby" then
+            return {
+                delay_frames = (index - 1) * 2,
+                sample_rate = 48000,
+                reverb = true,
+            }
+        end
+        return nil
     end,
 
     get_listener_position = function()

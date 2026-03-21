@@ -5,7 +5,7 @@
         alpha="1" 
         image_file="mods/evaisa.arena/files/sprites/entities/speaker.png" 
         next_rect_animation="" 
-        offset_x="8" 
+        offset_x="7" 
         offset_y="0" 
         rect_animation="" 
         z_index="1"
