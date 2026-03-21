@@ -670,6 +670,26 @@ networking = {
                         EntityHelper.PickItem(data.players[tostring(user)].entity, item, "QUICK")
                         local item_entity = item
 
+                        if(unlimited_spells)then
+                            local wand_children = EntityGetAllChildren(item) or {}
+                            for _, card in ipairs(wand_children)do
+                                if(EntityHasTag(card, "card_action") and not EntityHasTag(card, "patched_unlimited"))then
+                                    local item_action_comp = EntityGetFirstComponentIncludingDisabled(card, "ItemActionComponent")
+                                    if(item_action_comp ~= nil)then
+                                        local ability_comp = EntityGetFirstComponentIncludingDisabled(card, "AbilityComponent")
+                                        if(ability_comp ~= nil)then
+                                            ComponentObjectSetValue2(ability_comp, "gunaction_config", "action_max_uses", -1)
+                                        end
+                                        local item_comp = EntityGetFirstComponentIncludingDisabled(card, "ItemComponent")
+                                        if(item_comp ~= nil)then
+                                            ComponentSetValue2(item_comp, "uses_remaining", -2)
+                                        end
+                                    end
+                                    EntityAddTag(card, "patched_unlimited")
+                                end
+                            end
+                        end
+
                         if(has_spectator)then
 
                             ComponentSetValue2(spectator_pickupper, "only_pick_this_entity", spectator_item)

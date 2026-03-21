@@ -876,6 +876,21 @@ ArenaGameplay = {
 
         player.Deserialize(data.client.serialized_player, (not data.client.player_loaded_from_data), lobby, data)
 
+        if(data.state == "lobby")then
+            local items = GameGetAllInventoryItems(current_player) or {}
+            for k, v in pairs(items) do
+                local ability_component = EntityGetFirstComponentIncludingDisabled(v, "AbilityComponent")
+                if ability_component then
+                    ComponentSetValue2(ability_component, "mCastDelayStartFrame", 0)
+                    ComponentSetValue2(ability_component, "mReloadFramesLeft", 0)
+                    ComponentSetValue2(ability_component, "mReloadNextFrameUsable", 0)
+                    ComponentSetValue2(ability_component, "mNextChargeFrame", 0)
+                    ComponentSetValue2(ability_component, "cooldown_frames", 0)
+                    ComponentSetValue2(ability_component, "charge_wait_frames", 0)
+                end
+            end
+        end
+
         --gameplay_handler.UpdateCosmetics(lobby, data, "load", current_player, false)
 
         cosmetics_handler.LoadPlayerCosmetics(lobby, data, current_player)
@@ -2127,31 +2142,6 @@ ArenaGameplay = {
 
         -- set ready counter
         ArenaGameplay.ReadyCounter(lobby, data)
-
-        RunWhenPlayerExists(function()
-			local player_entity = player.Get()
-			if(player_entity)then
-
-				delay.new(20, function()
-				
-					-- loop through player wands and reset recharge time  and stuff
-					local items = GameGetAllInventoryItems(player_entity) or {}
-
-					for k, v in pairs(items) do
-						local ability_component = EntityGetFirstComponentIncludingDisabled(v, "AbilityComponent")
-						if ability_component then
-							ComponentSetValue2(ability_component, "mCastDelayStartFrame", 0)
-							ComponentSetValue2(ability_component, "mReloadFramesLeft", 0)
-							ComponentSetValue2(ability_component, "mReloadNextFrameUsable", 0)
-							ComponentSetValue2(ability_component, "mNextChargeFrame", 0)
-							ComponentSetValue2(ability_component, "cooldown_frames", 0)
-							ComponentSetValue2(ability_component, "charge_wait_frames", 0)
-						end
-					end
-				end)
-
-			end
-		end)
 
         -- print member data
         --print(json.stringify(data))
