@@ -1,6 +1,6 @@
 ARENA_STEAM_ID = "0"
 ARENA_MOD_ID = "evaisa.arena"
-REQUIRED_ONLINE_VERSION = 383
+REQUIRED_ONLINE_VERSION = 388
 
 -- INVALID VERSION HANDLER
 if(MP_VERSION < REQUIRED_ONLINE_VERSION)then
@@ -791,8 +791,8 @@ ArenaMode = {
         if data == nil then return nil end
         if data.state == "lobby" then
             return {
-                delay_frames = (index - 1) * 2,
-                sample_rate = 48000,
+                delay_frames = 0,
+                sample_rate = 16000,
                 reverb = true,
             }
         end
