@@ -142,7 +142,7 @@ world_sync.update = function(lobby, data)
         for k, v in pairs(data.spectators)do
             local user = gameplay_handler.FindUser(lobby, k)
             if(user)then
-                networking.send.sync_world(user, chunk_str)
+                networking.send.sync_world(user, chunk_str, data.state)
             else
                 data.spectators[k] = false
             end

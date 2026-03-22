@@ -3440,12 +3440,6 @@ ArenaMode = {
                     local player_entity = player.Get()
                     if(player_entity)then
                         EntityApplyTransform(player_entity, 0, 0)
-                        local children = EntityGetAllChildren(player_entity) or {}
-                        for _, child in ipairs(children) do
-                            if EntityGetFirstComponentIncludingDisabled(child, "GameEffectComponent") ~= nil then
-                                EntityKill(child)
-                            end
-                        end
                     end
                 end
             end

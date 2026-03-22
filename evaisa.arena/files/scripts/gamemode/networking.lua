@@ -2788,7 +2788,7 @@ networking = {
                     world_sync.apply(v)
                 end
             end]]
-            world_sync.apply(message)
+            world_sync.apply(message[1])
         end,
         did_spectate = function(lobby, message, user, data)
             if(not data.spectator_mode)then
@@ -3829,8 +3829,8 @@ networking = {
             print("is_spectating: "..tostring(value))
             steamutils.sendToPlayer("is_spectating", value, user, true)
         end,
-        sync_world = function(user, msg)
-            steamutils.sendToPlayer("sync_world", msg, user, false, 1, true)
+        sync_world = function(user, msg, state)
+            steamutils.sendToPlayer("sync_world", {msg, state}, user, false, 1, true)
         end,
         did_spectate = function(lobby)
             steamutils.send("did_spectate", {}, steamutils.messageTypes.Spectators, lobby, true, true)

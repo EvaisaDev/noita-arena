@@ -2691,6 +2691,9 @@ ArenaGameplay = {
             GuiDestroy(vote_gui)
         end, function(frames)
             --print("Current game frame: "..tostring(GameGetFrameNum()))
+            if(data.state ~= "map_vote")then
+                return
+            end
             if(steam_utils.IsOwner())then
                 --print("Sending map vote timer update")
                 networking.send.map_vote_timer_update(lobby, frames)
@@ -3838,6 +3841,12 @@ ArenaGameplay = {
         EntityRefreshSprite(dummy, faceSprite)
 
         if (target_data and target_data.perks) then
+            local existing_perk_entities = EntityGetChildrenWithTag(dummy, "perk_entity") or {}
+            for _, perk_ent in ipairs(existing_perk_entities) do
+                EntityRemoveFromParent(perk_ent)
+                EntityKill(perk_ent)
+            end
+
             for k, v in ipairs(target_data.perks) do
                 local perk = v[1]
                 local count = v[2]
@@ -4563,8 +4572,10 @@ ArenaGameplay = {
             end
         end
 
-        world_sync.update(lobby, data)
 
+		if(data.state == "lobby")then
+        	world_sync.update(lobby, data)
+		end
 
         data.picked_up_items = data.picked_up_items or {}
         local network_entities = EntityGetWithTag("does_physics_update") or {}
