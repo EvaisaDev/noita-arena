@@ -23,7 +23,7 @@ arena_settings_damage_cap_description,"One shot protection, how much damage can 
 arena_settings_damage_cap_25,25% of max,25% максимума,,,25% vom Maximum,,,25% obrażeń,0.25倍最大生命,,,,,
 arena_settings_damage_cap_50,50% of max,50% максимума,,,50% vom Maximum,,,50% obrażeń,0.50倍最大生命,,,,,
 arena_settings_damage_cap_75,75% of max,75% максимума,,,75% vom Maximum,,,75% obrażeń,0.75倍最大生命,,,,,
-arena_settings_disabled,Disabled,Выключено,,,deaktiviert,,,Wyłączone,禁用保护,,,,,
+arena_settings_disabled,Disabled,Выключено,,,deaktiviert,,,Wyłączone,禁用,,,,,
 arena_settings_enabled,Enabled,Включено,,,aktiviert,,,Włączone,启用,,,,,
 arena_settings_disconnect_gives_win_name,Disconnect Gives Win,,,,,,,,断线处理,,,,,
 arena_settings_disconnect_gives_win_description,"When a player disconnects during a round the remaining player is treated as the winner, round progresses.",,,,,,,,当一名玩家在回合中断开连接时，剩下的玩家继续进行回合,,,,,
