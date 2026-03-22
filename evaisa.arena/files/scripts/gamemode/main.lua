@@ -712,7 +712,7 @@ np.SetGameModeDeterministic(true)
 ArenaMode = {
     id = "arena",
     name = "$arena_gamemode_name",
-    version = 231,
+    version = 232,
     version_display = function(version_string)
         return version_string .. " - " .. tostring(content_hash)
     end,
@@ -741,7 +741,7 @@ ArenaMode = {
                 for _, ic in ipairs(intercoms) do
                     local ix, iy = EntityGetTransform(ic)
                     local d = math.sqrt((px - ix)^2 + (py - iy)^2)
-                    if d <= 40 then return true end
+                    if d <= 80 then return true end
                 end
                 return false
             end
