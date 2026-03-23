@@ -203,7 +203,152 @@
       gfx_glow="1" >
     </CellData>
 
-    
+
+  <CellDataChild
+  	_parent="templerock_static"
+  	_inherit_reactions="0"
+  	name="sorcerer_stone" 
+	ui_name="$mat_wizardstone"
+	wang_color="ff494252"
+	wang_noise_percent="0.33"
+	hp="120000"
+	wang_curvature="0.5"
+	wang_noise_type="2"
+	durability="10"
+	audio_physics_material_wall="rock"
+	audio_physics_material_solid="rock"
+	>
+  	<Graphics
+		texture_file="data/materials_gfx/wizardstone.png"
+		color="ff786C42" 
+		>
+		<Edge>
+			  <EdgeGraphics 
+				color="ff233112" 
+				overwrite="0" 
+				percent="1" 
+				require_same_material="0" 
+				require_same_material_type="1" 
+				type="NORMAL_BASED" 
+				z="1" >
+				<Images>
+				<Image 
+					do_only_horizontal_stripe="1" 
+					do_only_vertical_stripe="0" 
+					filename="data/materials_gfx/edge_files/edge_wizardstone_hor.png" 
+					min_angle="45" 
+					max_angle="135" />
+				  <Image 
+					do_only_horizontal_stripe="0" 
+					do_only_vertical_stripe="1" 
+					filename="data/materials_gfx/edge_files/edge_wizardstone_ver.png" 
+					min_angle="135" 
+					max_angle="235" />
+				  <Image 
+					do_only_horizontal_stripe="1" 
+					do_only_vertical_stripe="0" 
+					filename="data/materials_gfx/edge_files/edge_wizardstone_hor.png" 
+					min_angle="235" 
+					max_angle="315" />
+				  <Image 
+					do_only_horizontal_stripe="0" 
+					do_only_vertical_stripe="1" 
+					filename="data/materials_gfx/edge_files/edge_wizardstone_ver.png" 
+					min_angle="315" 
+					max_angle="360" />
+				  <Image 
+					do_only_horizontal_stripe="0" 
+					do_only_vertical_stripe="1" 
+					filename="data/materials_gfx/edge_files/edge_wizardstone_ver.png" 
+					min_angle="0" 
+					max_angle="45" />
+				</Images>
+			  </EdgeGraphics>
+		</Edge>
+    </Graphics>
+  </CellDataChild>    
+
+
+  <CellData
+	name="wood_hard_to_burn"
+	ui_name="$mat_wood_static"
+  	tags="[corrodible],[burnable],[alchemy],[solid],[earth]"
+	burnable="1"
+	density="11"
+	cell_type="liquid"
+	wang_color="ff564a25 "
+	generates_smoke="0"
+	liquid_gravity="0.5"
+	liquid_sand="1"
+	liquid_static="1"
+	on_fire="0"
+	fire_hp="100"
+	requires_oxygen="1"
+	temperature_of_fire="50"
+	autoignition_temperature="90"
+	solid_friction="0.9"
+	hp="2000"
+	durability="10"
+	wang_noise_percent="0.01"
+	wang_curvature="0.25"
+	supports_collapsible_structures="1"
+	platform_type="1"
+	audio_physics_material_wall="woodwall"
+	audio_physics_material_solid="wood"
+	audio_materialbreakaudio_type="WOOD"
+	show_in_creative_mode="1"
+	>
+    <Graphics
+	texture_file="data/materials_gfx/wood.png"
+	color="ff413F24"
+	pixel_all_around="ff5d5a33"
+	>
+	<Edge>
+		  <EdgeGraphics 
+			color="ff233112" 
+			overwrite="0" 
+			percent="1" 
+			require_same_material="1" 
+			require_same_material_type="1" 
+			type="CARDINAL_DIRECTIONS" 
+			z="1" >
+			<Images>
+			  <Image 
+				do_only_horizontal_stripe="1" 
+				do_only_vertical_stripe="0" 
+				filename="data/materials_gfx/edge_files/edge_wood_planks_hor.png" 
+				min_angle="80" 
+				max_angle="100" />
+			  <Image 
+				do_only_horizontal_stripe="0" 
+				do_only_vertical_stripe="1" 
+				filename="data/materials_gfx/edge_files/edge_wood_ver.png" 
+				min_angle="100" 
+				max_angle="260" />
+			  <Image 
+				do_only_horizontal_stripe="1" 
+				do_only_vertical_stripe="0" 
+				filename="data/materials_gfx/edge_files/edge_wood_planks_hor.png" 
+				min_angle="260" 
+				max_angle="280" />
+			  <Image 
+				do_only_horizontal_stripe="0" 
+				do_only_vertical_stripe="1" 
+				filename="data/materials_gfx/edge_files/edge_wood_ver.png" 
+				min_angle="280" 
+				max_angle="360" />
+			  <Image 
+				do_only_horizontal_stripe="0" 
+				do_only_vertical_stripe="1" 
+				filename="data/materials_gfx/edge_files/edge_wood_ver.png" 
+				min_angle="0" 
+				max_angle="80" />
+			</Images>
+		  </EdgeGraphics>
+	</Edge>
+    </Graphics>
+  </CellData>
+
     <CellData
       name="fake_air"
       ui_name="air"
@@ -225,6 +370,37 @@
       </Graphics>
       
     </CellData>	
+
+	<CellDataChild
+		_parent="oil"
+		name="solid_fire"
+		tags="[liquid],[burnable],[impure],[hot],[fire_strong],[liquid_common]"
+		ui_name="$mat_fire"
+		wang_color="ffeb26an"
+		requires_oxygen="0"
+		liquid_viscosity="9"
+		liquid_sticks_to_ceiling="90"
+		liquid_flow_speed="0.3"
+		liquid_sand="1"
+		temperature_of_fire="1"
+		liquid_gravity="0.2"
+		on_fire="1"
+		liquid_stains="0"
+		fire_hp="10000000000"
+		status_effects="OILED" 
+		gfx_glow="200"
+		show_in_creative_mode="1"
+		>
+		<Graphics
+			color="aff08400"
+		>
+		</Graphics>
+		<StatusEffects>
+			<Ingestion>
+				<StatusEffect type="INGESTION_ON_FIRE" amount="0.1" />
+			</Ingestion>
+		</StatusEffects>
+	</CellDataChild>
 
     <Reaction probability="100"
         input_cell1="rock_static_mountain_drain" 			input_cell2="[liquid]"

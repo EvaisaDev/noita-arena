@@ -1,0 +1,81 @@
+<Biome>
+  <Topology 
+    name="_EMPTY_"
+    background_image=""
+    background_use_neighbor="0"
+    lua_script="mods/evaisa.arena/content/arenas/remnant/arena.lua"
+    mBiomeMaterialsFile="data/materials/biome_forest.xml" 
+    limit_background_image="1"
+    fat_biome_edges="0"
+    noise_biome_edges="0"
+    has_rain="0"
+     >
+
+  </Topology>
+
+<!--
+  <Materials 
+    name="golf_wall" 
+     >
+    <MaterialComponent 
+      _enabled="1" 
+      is_rare="0" 
+      limit_y="0" 
+      material_index="9" 
+      material_max="100" 
+      material_min="-100" 
+      material_name="rock_static_golf" 
+      rare_polka_is_boxed="0" 
+      rare_polka_probability="0.160871" 
+      rare_polka_radius_high="0.771429" 
+      rare_polka_radius_low="0.357143" 
+      rare_required_max="10" 
+      rare_required_min="0" 
+      rare_scale_x="0.0100004" 
+      rare_scale_y="0.00357165" 
+      rare_use_perlin="0" 
+      rare_use_polka="0">
+    </MaterialComponent>
+  </Materials>
+-->
+  <Materials
+    name="skylands">
+		<VegetationComponent 
+		_enabled="1" 
+		is_visual="0" 
+		rand_seed="8576.86" 
+		tree_extra_y="25" 
+		tree_image_file="data/vegetation/cactus_0$[2-7].png" 
+		tree_image_visual="" 
+		tree_material="cactus" 
+		tree_probability="0.228571"  
+		tree_radius_high="0.614286" 
+		tree_radius_low="0.228571" 
+		tree_width="66.1143" 
+		visual_color="0x00d9ff" 
+		visual_offset_x="0" 
+		visual_offset_y="7"
+		max_y="256" >
+	</VegetationComponent>
+
+	<VegetationComponent 
+		_enabled="1" 
+		is_visual="0" 
+		rand_seed="34676.86" 
+		tree_extra_y="25" 
+		tree_image_file="data/vegetation/drygrass_$[1-4].png" 
+		tree_image_visual="" 
+		tree_material="wood_loose" 
+		tree_probability="0.428571" 
+		tree_radius_high="0.514286" 
+		tree_radius_low="0.128571" 
+		tree_width="50.1143" 
+		visual_color="0x006aff" 
+		visual_offset_x="0" 
+		visual_offset_y="3"
+		max_y="256"
+		>
+	</VegetationComponent>
+  </Materials>
+</Biome>
+

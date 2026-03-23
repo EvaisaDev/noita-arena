@@ -16,6 +16,53 @@ local function moveClouds(bank)
     end
 end
 
+-- registers vegetation for later use, see "remnant" for example
+vegetation_list = {
+	{
+		path = "data/vegetation/cactus_0$[2-7].png", 
+		offset_x = 32, 
+		offset_y = 121, 
+		material = "cactus"
+	},
+	{
+		path = "data/vegetation/drygrass_$[1-4].png", 
+		offset_x = 16, 
+		offset_y = 60, 
+		material = "wood_loose"
+	},
+	{
+		path = "data/vegetation/tree_spruce_1.png",
+		offset_x = 35,
+		offset_y = 133,
+		material = "wood_loose"
+	},
+	{
+		path = "data/vegetation/tree_spruce_2.png",
+		offset_x = 48,
+		offset_y = 127,
+		material = "wood_loose"
+	},
+	{
+		path = "data/vegetation/tree_spruce_3.png",
+		offset_x = 40,
+		offset_y = 118,
+		material = "wood_loose"
+	},	
+	{
+		path = "data/vegetation/tree_spruce_4.png",
+		offset_x = 48,
+		offset_y = 130,
+		material = "wood_loose"
+	},	
+	{
+		path = "data/vegetation/bush_0$[1-9].png",
+		offset_x = 16,
+		offset_y = 31,
+		material = "wood_loose"
+	}
+
+}
+
 arena_list = {
     {
         id = "original",
@@ -649,6 +696,102 @@ arena_list = {
             ComponentSetValue2(world_state_component, "time_dt", 0)
         end,
     },]]
+	{
+        id = "remnant",
+        name = "Remnant",
+        description = "Remnants of a broken world.",
+        credits = "Evaisa",
+        thumbnail = "mods/evaisa.arena/content/arenas/remnant/thumbnail.png",
+        frame = "mods/evaisa.arena/content/arenas/frame.png",
+        biome_map = "mods/evaisa.arena/content/arenas/remnant/map.lua",
+        custom_biomes = {
+            {
+                biome_filename="mods/evaisa.arena/content/arenas/remnant/biome.xml",
+                height_index="1",
+                color="FF8040B1"
+            }
+        },      
+		custom_materials = {
+			--[[{
+				_parent = "plant_material",
+				name = "cactus_material",
+				ui_name = "$mat_plant_material",
+				tags = "[plant],[requires_air],[corrodible],[burnable]",
+				vegetation_full_lifetime_growth = 0,
+				vegetation_sprite = "data/vegetation/cactus_0$[2-7].png",
+				wang_color="ff00d9ff",
+				Graphics = {
+					texture_file = "data/materials_gfx/sand.png",
+					color = "ffb89e57"
+				}
+			}]]
+		},
+		spawn_points = { -- optional, can also use spawn pixels, 0,0 is there as a backup in case spawn pixels fail somehow.
+            {x = 0, y = 0}
+        },
+		pixel_scenes = "mods/evaisa.arena/content/arenas/remnant/arena_scenes.xml",
+        zone_size = 850, -- size of damage zone, should be max distance from 0, 0 players can travel
+        zone_floor = 500, -- damage floor, if player falls below this they die.
+        update = function(self, lobby, data) -- Ran every frame while in the arena.
+            local world_state = GameGetWorldStateEntity()
+            local world_state_component = EntityGetFirstComponentIncludingDisabled(world_state, "WorldStateComponent")
+            
+            ComponentSetValue2(world_state_component, "time", 0)
+            ComponentSetValue2(world_state_component, "time_dt", 0)
+        end
+    },
+	{
+		
+        id = "tower",
+        name = "Arcana",
+        description = "The sanctum of an old wizard.",
+        credits = "Evaisa",
+        thumbnail = "mods/evaisa.arena/content/arenas/tower/thumbnail.png",
+        frame = "mods/evaisa.arena/content/arenas/frame.png",
+        biome_map = "mods/evaisa.arena/content/arenas/tower/map.lua",
+        custom_biomes = {
+            {
+                biome_filename="mods/evaisa.arena/content/arenas/tower/biome.xml",
+                height_index="1",
+                color="FFeba362"
+            }
+        },      
+		spawn_points = { -- optional, can also use spawn pixels, 0,0 is there as a backup in case spawn pixels fail somehow.
+            {x = 0, y = 0}
+        },
+		pixel_scenes = "mods/evaisa.arena/content/arenas/tower/arena_scenes.xml",
+        zone_size = 1800, -- size of damage zone, should be max distance from 0, 0 players can travel
+        zone_floor = 700, -- damage floor, if player falls below this they die.
+        update = function(self, lobby, data) -- Ran every frame while in the arena.
+            local world_state = GameGetWorldStateEntity()
+            local world_state_component = EntityGetFirstComponentIncludingDisabled(world_state, "WorldStateComponent")
+            
+            ComponentSetValue2(world_state_component, "time", 0)
+            ComponentSetValue2(world_state_component, "time_dt", 0)
+        end		
+	},
+	{
+        id = "kasuron",
+        name = "Kasuron",
+		credits = "burr/weturtle",
+        description = "Don't stare for too long",
+        thumbnail = "mods/evaisa.arena/content/arenas/kasuron/thumbnail.png",
+        frame = "mods/evaisa.arena/content/arenas/frame.png",
+        biome_map = "mods/evaisa.arena/content/arenas/kasuron/map.lua",
+        custom_biomes = {
+            {
+                biome_filename="mods/evaisa.arena/content/arenas/kasuron/biome.xml",
+                height_index="1",
+                color="FFD89228"
+            }
+        },
+        pixel_scenes = "mods/evaisa.arena/content/arenas/kasuron/kasuron.xml",
+        spawn_points = { -- optional, can also use spawn pixels, 0,0 is there as a backup in case spawn pixels fail somehow.
+            {x = 0, y = 0}
+        },
+        zone_size = 1000, -- size of damage zone, should be max distance from 0, 0 players can travel
+        zone_floor = 400 -- damage floor, if player falls below this they die.
+    }
 }
 
 cosmetics = {

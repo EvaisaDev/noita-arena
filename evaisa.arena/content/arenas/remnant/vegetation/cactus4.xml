@@ -1,0 +1,23 @@
+<Entity 
+  name="cactus" 
+  tags="vegetation,pixelsprite" >
+  
+  <PixelSpriteComponent 
+    _enabled="1" 
+    image_file="data/vegetation/cactus_04.png" 
+    anchor_x="32" 
+    anchor_y="-128"
+    clean_overlapping_pixels="0"
+	material="cactus"
+  >
+  </PixelSpriteComponent>
+
+  <SimplePhysicsComponent 
+    can_go_up="0"
+    >
+  </SimplePhysicsComponent >
+  
+  <VelocityComponent />
+  
+</Entity>
+

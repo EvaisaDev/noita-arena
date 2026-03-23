@@ -1,0 +1,64 @@
+<Entity tags="mortal" >
+
+  <!-- mortal is required so it can explode -->
+
+  <Base file="data/entities/base_item_physics.xml" >
+
+    <PhysicsImageShapeComponent
+      image_file="mods/evaisa.arena/content/arenas/kasuron/entities/wheel.png"
+      material="metal_prop" >
+    </PhysicsImageShapeComponent>
+
+    <PhysicsBodyComponent 
+      angular_damping="0.01" 
+      gridworld_box2d="0" 
+      linear_damping="0.1"
+      force_add_update_areas="1"
+      randomize_init_velocity="1"
+    >
+    </PhysicsBodyComponent>
+  </Base>
+
+  <PhysicsJointComponent 
+    nail_to_wall="1" 
+    pos_x="200"
+    pos_y="200"
+    grid_joint="1"
+    mMotorEnabled="1"
+    mMotorSpeed="2"
+    mMaxMotorTorque="50000" >
+  </PhysicsJointComponent>
+
+  <ParticleEmitterComponent 
+		emitted_material_name="spark_yellow"
+		gravity.y="0.0"
+		lifetime_min="3"
+		lifetime_max="4"
+		x_vel_min="0"
+		x_vel_max="0"
+		y_vel_min="0"
+		y_vel_max="50"
+		count_min="100"
+		count_max="100"
+		render_on_grid="1"
+		fade_based_on_lifetime="0"
+		area_circle_radius.min="15"
+		area_circle_radius.max="15"
+		cosmetic_force_create="1"
+		collide_with_grid="0"
+		airflow_force="0.2"
+		airflow_time="1.01"
+		airflow_scale="0.03"
+		emission_interval_min_frames="12"
+		emission_interval_max_frames="12"
+		emit_cosmetic_particles="1"
+		velocity_always_away_from_center="35"
+		render_back="1"
+		is_emitting="1" >
+	</ParticleEmitterComponent>
+  
+  <CameraBoundComponent
+	  max_count="100"
+	  distance="1000">
+	</CameraBoundComponent>
+</Entity>
