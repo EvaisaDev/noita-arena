@@ -95,72 +95,100 @@ scoreboard.update = function(lobby)
         local y = pin_y + i_h + 6
         for i, v in ipairs(scoreboard.data)do
 
-  
+            if v.is_team_header then
+                local team_r = v.r or 1
+                local team_g = v.g or 1
+                local team_b = v.b or 1
 
-            local name = v.name
-            local wins = v.wins
-            local streak = v.streak
-            local kills = v.kills or 0
-            local deaths = v.deaths or 0
+                local text_name = v.name or ""
+                local text_wins = tostring(v.wins or 0)
+                local text_kills = tostring(v.kills or 0)
+                local text_deaths = tostring(v.deaths or 0)
 
-            local text_name = GameTextGetTranslatedOrNot(name)
-            local text_wins = tostring(wins)
-            local text_streak = tostring(streak)
-            local text_kills = tostring(kills)
-            local text_deaths = tostring(deaths)
-            local text_ping = string.format(GameTextGetTranslatedOrNot("$arena_scores_ping_format"), tostring(v.ping))
-            local text_delay = string.format(GameTextGetTranslatedOrNot("$arena_scores_delay_format"), tostring(v.delay_frames))
+                local name_w, name_h = GuiGetTextDimensions(scoreboard.gui, text_name)
+                local wins_w, wins_h = GuiGetTextDimensions(scoreboard.gui, text_wins)
+                local kills_w, kills_h = GuiGetTextDimensions(scoreboard.gui, text_kills)
+                local deaths_w, deaths_h = GuiGetTextDimensions(scoreboard.gui, text_deaths)
 
-            local name_w, name_h = GuiGetTextDimensions(scoreboard.gui, text_name)
-            local wins_w, wins_h = GuiGetTextDimensions(scoreboard.gui, text_wins)
-            local streak_w, streak_h = GuiGetTextDimensions(scoreboard.gui, text_streak)
-            local kills_w, kills_h = GuiGetTextDimensions(scoreboard.gui, text_kills)
-            local deaths_w, deaths_h = GuiGetTextDimensions(scoreboard.gui, text_deaths)
-            local ping_w, ping_h = GuiGetTextDimensions(scoreboard.gui, text_ping)
-            local delay_w, delay_h = GuiGetTextDimensions(scoreboard.gui, text_delay)
+                GuiZSet(scoreboard.gui, -9100)
+                GuiColorSetForNextWidget(scoreboard.gui, team_r * 0.6, team_g * 0.6, team_b * 0.6, 1)
+                GuiImage(scoreboard.gui, new_id(), 0, y, "mods/evaisa.arena/files/sprites/ui/bar_scoreboard_2.png", 1, 1, 1)
 
-            GuiZSet(scoreboard.gui, -9100)
+                GuiZSet(scoreboard.gui, -9110)
+                local name_y = y + (i_h / 2) - (name_h / 2)
+                GuiColorSetForNextWidget(scoreboard.gui, team_r, team_g, team_b, 1)
+                GuiText(scoreboard.gui, name_x_orig, name_y, text_name)
+                GuiColorSetForNextWidget(scoreboard.gui, team_r, team_g, team_b, 0.9)
+                GuiText(scoreboard.gui, wins_x, y + (i_h / 2) - (wins_h / 2), text_wins)
+                GuiColorSetForNextWidget(scoreboard.gui, team_r, team_g, team_b, 0.9)
+                GuiText(scoreboard.gui, kills_x, y + (i_h / 2) - (kills_h / 2), text_kills)
+                GuiColorSetForNextWidget(scoreboard.gui, team_r, team_g, team_b, 0.9)
+                GuiText(scoreboard.gui, deaths_x, y + (i_h / 2) - (deaths_h / 2), text_deaths)
 
-            GuiImage(scoreboard.gui, new_id(), 0, y, "mods/evaisa.arena/files/sprites/ui/bar_scoreboard_2.png", 1, 1, 1)
+                y = y + i_h + 3
+            else
+                local name = v.name
+                local wins = v.wins
+                local streak = v.streak
+                local kills = v.kills or 0
+                local deaths = v.deaths or 0
 
-            GuiZSet(scoreboard.gui, -9110)
+                local name_indent = v.is_team_member and 8 or 0
 
-            
-            local name_y = y + (i_h / 2) - (name_h / 2)
+                local text_name = GameTextGetTranslatedOrNot(name)
+                local text_wins = tostring(wins)
+                local text_streak = tostring(streak)
+                local text_kills = tostring(kills)
+                local text_deaths = tostring(deaths)
+                local text_ping = string.format(GameTextGetTranslatedOrNot("$arena_scores_ping_format"), tostring(v.ping))
+                local text_delay = string.format(GameTextGetTranslatedOrNot("$arena_scores_delay_format"), tostring(v.delay_frames))
 
-            local medal = "mods/evaisa.arena/files/sprites/ui/medals/"..tostring(i)..".png"
+                local name_w, name_h = GuiGetTextDimensions(scoreboard.gui, text_name)
+                local wins_w, wins_h = GuiGetTextDimensions(scoreboard.gui, text_wins)
+                local streak_w, streak_h = GuiGetTextDimensions(scoreboard.gui, text_streak)
+                local kills_w, kills_h = GuiGetTextDimensions(scoreboard.gui, text_kills)
+                local deaths_w, deaths_h = GuiGetTextDimensions(scoreboard.gui, text_deaths)
+                local ping_w, ping_h = GuiGetTextDimensions(scoreboard.gui, text_ping)
+                local delay_w, delay_h = GuiGetTextDimensions(scoreboard.gui, text_delay)
 
-            local name_x = name_x_orig
+                GuiZSet(scoreboard.gui, -9100)
 
-            if(ModImageDoesExist(medal))then
-                local medal_y = y + (i_h / 2) - (medal_height / 2)
-                GuiImage(scoreboard.gui, new_id(), name_x, medal_y, medal, 1, 1, 1)
-                name_x = name_x + medal_width + 2
+                GuiImage(scoreboard.gui, new_id(), 0, y, "mods/evaisa.arena/files/sprites/ui/bar_scoreboard_2.png", 1, 1, 1)
+
+                GuiZSet(scoreboard.gui, -9110)
+
+                local name_y = y + (i_h / 2) - (name_h / 2)
+
+                local medal = "mods/evaisa.arena/files/sprites/ui/medals/"..tostring(i)..".png"
+
+                local name_x = name_x_orig + name_indent
+
+                if not v.is_team_member and ModImageDoesExist(medal) then
+                    local medal_y = y + (i_h / 2) - (medal_height / 2)
+                    GuiImage(scoreboard.gui, new_id(), name_x, medal_y, medal, 1, 1, 1)
+                    name_x = name_x + medal_width + 2
+                end
+
+                GuiText(scoreboard.gui, name_x,     name_y, text_name)
+                local wins_y = y + (i_h / 2) - (wins_h / 2)
+                GuiText(scoreboard.gui, wins_x,     wins_y, text_wins)
+                local streak_y = y + (i_h / 2) - (streak_h / 2)
+                GuiText(scoreboard.gui, streak_x,   streak_y, text_streak)
+                local kills_y = y + (i_h / 2) - (kills_h / 2)
+                GuiText(scoreboard.gui, kills_x,    kills_y, text_kills)
+                local deaths_y = y + (i_h / 2) - (deaths_h / 2)
+                GuiText(scoreboard.gui, deaths_x,   deaths_y, text_deaths)
+                if(v.ping > 0)then
+                    local ping_y = y + (i_h / 2) - (ping_h / 2)
+                    GuiText(scoreboard.gui, ping_x,     ping_y, text_ping)
+                end
+                if(v.delay_frames > 0)then
+                    local delay_y = y + (i_h / 2) - (delay_h / 2)
+                    GuiText(scoreboard.gui, delay_x,    delay_y, text_delay)
+                end
+
+                y = y + i_h + 6
             end
-            
-
-
-            GuiText(scoreboard.gui, name_x,     name_y, text_name)
-            local wins_y = y + (i_h / 2) - (wins_h / 2)
-            GuiText(scoreboard.gui, wins_x,     wins_y, text_wins)
-            local streak_y = y + (i_h / 2) - (streak_h / 2)
-            GuiText(scoreboard.gui, streak_x,   streak_y, text_streak)
-            local kills_y = y + (i_h / 2) - (kills_h / 2)
-            GuiText(scoreboard.gui, kills_x,    kills_y, text_kills)
-            local deaths_y = y + (i_h / 2) - (deaths_h / 2)
-            GuiText(scoreboard.gui, deaths_x,   deaths_y, text_deaths)
-            if(v.ping > 0)then
-                local ping_y = y + (i_h / 2) - (ping_h / 2)
-                GuiText(scoreboard.gui, ping_x,     ping_y, text_ping)
-            end
-            if(v.delay_frames > 0)then
-                local delay_y = y + (i_h / 2) - (delay_h / 2)
-                GuiText(scoreboard.gui, delay_x,    delay_y, text_delay)
-            end
-
-
-            y = y + i_h + 6
-
         end
       
 
@@ -179,6 +207,110 @@ scoreboard.apply_data = function(lobby, data)
 
     scoreboard.win_condition = win_condition
     scoreboard.win_condition_value = value
+
+    local teams_mode = GlobalsGetValue("teams_mode", "false") == "true"
+
+    if teams_mode then
+        local teams = teams_manager.GetTeams(lobby)
+        local all_player_ids = {}
+
+        if not data.spectator_mode then
+            local pid = steamutils.getSteamID()
+            all_player_ids[tostring(pid)] = {
+                id = pid,
+                ping = 0,
+                delay_frames = 0,
+            }
+        end
+        for k, v in pairs(data.players) do
+            local playerid = gameplay_handler.FindUser(lobby, k)
+            if playerid ~= nil then
+                all_player_ids[tostring(playerid)] = {
+                    id = playerid,
+                    ping = v.ping or 0,
+                    delay_frames = v.delay_frames or 0,
+                }
+            end
+        end
+
+        for _, team in ipairs(teams) do
+            local team_wins = teams_manager.GetTeamWins(lobby, team.id, data)
+            local team_streak = teams_manager.GetTeamWinstreak(lobby, team.id, data)
+            local team_kills = teams_manager.GetTeamKills(lobby, team.id, data)
+            local team_deaths = teams_manager.GetTeamDeaths(lobby, team.id, data)
+
+            table.insert(scoreboard.data, {
+                is_team_header = true,
+                team_id = team.id,
+                name = team.name,
+                wins = team_wins,
+                streak = team_streak,
+                kills = team_kills,
+                deaths = team_deaths,
+                r = team.r,
+                g = team.g,
+                b = team.b,
+                ping = 0,
+                delay_frames = 0,
+            })
+
+            local member_ids = teams_manager.GetTeamMembers(lobby, team.id)
+            for _, mid in ipairs(member_ids) do
+                local mid_str = tostring(mid)
+                local entry = all_player_ids[mid_str]
+                if entry then
+                    table.insert(scoreboard.data, {
+                        is_team_member = true,
+                        id = mid,
+                        id_string = mid_str,
+                        name = steamutils.getTranslatedPersonaName(mid),
+                        wins = ArenaGameplay.GetWins(lobby, mid, data),
+                        streak = ArenaGameplay.GetWinstreak(lobby, mid, data),
+                        kills = ArenaGameplay.GetKills(lobby, mid, data),
+                        deaths = ArenaGameplay.GetDeaths(lobby, mid, data),
+                        ping = entry.ping,
+                        delay_frames = entry.delay_frames,
+                    })
+                    all_player_ids[mid_str] = nil
+                end
+            end
+        end
+
+        local has_unassigned = false
+        for _, entry in pairs(all_player_ids) do
+            if not has_unassigned then
+                table.insert(scoreboard.data, {
+                    is_team_header = true,
+                    team_id = nil,
+                    name = GameTextGetTranslatedOrNot("$arena_teams_unassigned"),
+                    wins = 0,
+                    streak = 0,
+                    kills = 0,
+                    deaths = 0,
+                    r = 0.5, g = 0.5, b = 0.5,
+                    ping = 0,
+                    delay_frames = 0,
+                })
+                has_unassigned = true
+            end
+            local mid = entry.id
+            local mid_str = tostring(mid)
+            table.insert(scoreboard.data, {
+                is_team_member = true,
+                id = mid,
+                id_string = mid_str,
+                name = steamutils.getTranslatedPersonaName(mid),
+                wins = ArenaGameplay.GetWins(lobby, mid, data),
+                streak = ArenaGameplay.GetWinstreak(lobby, mid, data),
+                kills = ArenaGameplay.GetKills(lobby, mid, data),
+                deaths = ArenaGameplay.GetDeaths(lobby, mid, data),
+                ping = entry.ping,
+                delay_frames = entry.delay_frames,
+            })
+        end
+
+        return
+    end
 
     -- Add our own entry
     if(not data.spectator_mode)then
@@ -205,9 +337,6 @@ scoreboard.apply_data = function(lobby, data)
     -- Add other players
     for k, v in pairs(data.players)do
      
-        --[[if(v.name == nil)then
-            v.name = steamutils.getTranslatedPersonaName(gameplay_handler.FindUser(lobby, playerid))
-        end]]
         local playerid = gameplay_handler.FindUser(lobby, k)
         
         if(playerid ~= nil)then
@@ -235,20 +364,6 @@ scoreboard.apply_data = function(lobby, data)
     end
 
     -- Sort the data
-    -- wincondition "first_to" is sorted by wins
-    -- wincondition "best_of" is sorted by wins
-    -- wincondition "winstreak" is sorted by winstreak
-    -- anything else is sorted by wins
-    --[[
-    table.sort(scoreboard.data, function(a, b)
-        if(scoreboard.win_condition == "winstreak")then
-            return a.streak > b.streak
-        else
-            return a.wins > b.wins
-        end
-    end)
-    ]]
-    -- fall back on steamid sorting if we have a tie
     table.sort(scoreboard.data, function(a, b)
         if(scoreboard.win_condition == "winstreak")then
             if(a.streak == b.streak)then

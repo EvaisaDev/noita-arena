@@ -23,7 +23,18 @@ last_teleportitis_trigger = last_teleportitis_trigger or 0
 function damage_about_to_be_received( damage, x, y, entity_thats_responsible, critical_hit_chance )
     local entity_id = GetUpdatedEntityID()
 
-    
+    if GlobalsGetValue("teams_mode", "false") == "true" and entity_thats_responsible ~= nil then
+        local my_id = GlobalsGetValue("my_steam_id", "")
+        local attacker_id = EntityGetName(entity_thats_responsible) or ""
+        if my_id ~= "" and attacker_id ~= "" and attacker_id ~= my_id then
+            local my_team = GlobalsGetValue("player_team_" .. my_id, "")
+            local attacker_team = GlobalsGetValue("player_team_" .. attacker_id, "")
+            if my_team ~= "" and my_team == attacker_team then
+                return 0, 0
+            end
+        end
+    end
+
     local damage_details = GetDamageDetails()
 
     damage_details.attacker = EntityGetName(entity_thats_responsible) or ""

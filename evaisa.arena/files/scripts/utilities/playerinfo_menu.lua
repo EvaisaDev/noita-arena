@@ -162,95 +162,50 @@ function playerinfo_menu:New()
                 return elem_h
             end
 
-            ------------- DRAW OUR OWN CARD (if not spectator) ---------------
+            local teams_mode = GlobalsGetValue("teams_mode", "false") == "true"
+            local is_owner = steam_utils.IsOwner()
 
-            if(not spectator)then
+            local draw_player_card = function(playerid, hp, max_hp, perks, ready, is_self)
+                if hp == nil then hp = 0 end
+                if max_hp == nil then max_hp = 100 end
+                if hp < 0 then hp = 0 end
+                if max_hp < 0 then max_hp = 100 end
+                if hp > max_hp then hp = max_hp end
 
-                local hp = data.client.hp or 100
-                local max_hp = data.client.max_hp or 100
-
-
-                if(hp < 0)then
-                    hp = 0
+                local username
+                if is_self then
+                    username = self_name .. " (" .. GameTextGetTranslatedOrNot("$arena_playerinfo_you") .. ")"
+                else
+                    username = steamutils.getTranslatedPersonaName(gameplay_handler.FindUser(lobby, playerid))
                 end
-                if(max_hp < 0)then
-                    max_hp = 100
-                end
-                if(hp > max_hp)then
-                    hp = max_hp
-                end
 
-                local wins = ArenaGameplay.GetWins(lobby, player_id, data)
-                local winstreak = ArenaGameplay.GetWinstreak(lobby, player_id, data)
-                local kills = ArenaGameplay.GetKills(lobby, player_id, data)
-                local deaths = ArenaGameplay.GetDeaths(lobby, player_id, data)
-                            
-
-
-                local self_ready = GameHasFlagRun("ready_check")
-                if(self_ready)then
+                if ready then
                     GuiZSetForNextWidget(self.gui, 900)
                     GuiLayoutBeginHorizontal(self.gui, 0, 0, true)
-
                     GuiImage(self.gui, new_id(), 0, 2, "mods/evaisa.arena/files/sprites/ui/check.png", 1, 1, 1, 0)
                 end
+
                 GuiZSetForNextWidget(self.gui, 900)
-                local color = game_funcs.ID2Color(player_id)
-                if(color == nil)then
-                    color = {r = 255, g = 255, b = 255}
-                end
-                local r, g, b = color.r, color.g, color.b
-                local a = 1
-                GuiColorSetForNextWidget(self.gui, r / 255, g / 255, b / 255, a)
-
-                GuiText(self.gui, 0, 0, self_name.." ("..GameTextGetTranslatedOrNot("$arena_playerinfo_you")..")")
-
-                local _, _, _, _, scroll_y, _, name_height = GuiGetPreviousWidgetInfo(self.gui)
+                local color = game_funcs.ID2Color(playerid)
+                if color == nil then color = {r = 255, g = 255, b = 255} end
+                GuiColorSetForNextWidget(self.gui, color.r / 255, color.g / 255, color.b / 255, 1)
+                GuiText(self.gui, 0, 0, username)
+                local _, _, _, _, scroll_y_val, _, name_height = GuiGetPreviousWidgetInfo(self.gui)
                 text_height_self = text_height_self + name_height
-                scroll_offset = scroll_y - self.offset_y - 2
+                if is_self then
+                    scroll_offset = scroll_y_val - self.offset_y - 2
+                end
 
-                if(self_ready)then
+                if ready then
                     GuiLayoutEnd(self.gui)
                 end
-
-                --[[
-                GuiZSetForNextWidget(self.gui, 900)
-                GuiColorSetForNextWidget(self.gui, 1, 1, 1, 0.8)
-                GuiText(self.gui, 0, self_ready and -2 or 0, string.format(GameTextGetTranslatedOrNot("$arena_playerinfo_wins"), tostring(wins)))
-
-                GuiZSetForNextWidget(self.gui, 900)
-                GuiColorSetForNextWidget(self.gui, 1, 1, 1, 0.8)
-                GuiText(self.gui, 0, 0, string.format(GameTextGetTranslatedOrNot("$arena_playerinfo_winstreak"), tostring(winstreak)))
-                ]]
-                --[[
-                local wins_text = tostring(wins)
-                local winstreak_text = tostring(winstreak)
-                local kills_text = tostring(kills)
-                local deaths_text = tostring(deaths)
-
-                local win_condition = GlobalsGetValue("win_condition", "unlimited")
-                local value = tonumber(GlobalsGetValue("win_condition_value", "5"))
-
-                if(win_condition == "first_to")then
-                    wins_text = wins_text.."/"..value
-                elseif(win_condition == "winstreak")then
-                    winstreak_text = winstreak_text.."/"..value
-                end
-
-                text_height_self = text_height_self + DrawTextElement("$arena_playerinfo_wins", wins_text)
-                text_height_self = text_height_self + DrawTextElement("$arena_playerinfo_winstreak", winstreak_text)
-                text_height_self = text_height_self + DrawTextElement("$arena_playerinfo_kills", kills_text)
-                text_height_self = text_height_self + DrawTextElement("$arena_playerinfo_deaths", deaths_text)
-                ]]
 
                 local health_ratio = hp / max_hp
                 local health_bar_width = 90
                 local health_width = health_bar_width * health_ratio
                 local rest_width = health_bar_width - health_width
-
                 local health_percentage = health_width / health_bar_width
                 local rest_percentage = rest_width / health_bar_width
-
                 local health_bar_color = get_health_bar_color(hp, max_hp)
 
                 GuiLayoutBeginHorizontal(self.gui, 0, 0, true, 0, 0)
@@ -258,21 +213,18 @@ function playerinfo_menu:New()
                 GuiColorSetForNextWidget(self.gui, health_bar_color.r / 255, health_bar_color.g / 255, health_bar_color.b / 255, 1)
                 GuiImage(self.gui, new_id(), 0, 0, "mods/evaisa.arena/files/sprites/ui/bar90px.png", 1, health_percentage, 1, 0)
                 local _, _, hp_hovered1, _, _, _, _ = GuiGetPreviousWidgetInfo(self.gui)
-
-                if(hp_hovered1)then
+                if hp_hovered1 then
                     self.player_index = index
                     hovered_max_hp = max_hp
                     hovered_hp = hp
                     draw_hp_info = true
                 end
 
-
                 GuiZSetForNextWidget(self.gui, 900)
                 GuiColorSetForNextWidget(self.gui, 0.2, 0.2, 0.2, 1)
                 GuiImage(self.gui, new_id(), 0, 0, "mods/evaisa.arena/files/sprites/ui/bar90px.png", 1, rest_percentage, 1, 0)
                 local _, _, hp_hovered2, _, _, _, _ = GuiGetPreviousWidgetInfo(self.gui)
-
-                if(hp_hovered2)then
+                if hp_hovered2 then
                     self.player_index = index
                     hovered_max_hp = max_hp
                     hovered_hp = hp
@@ -282,213 +234,188 @@ function playerinfo_menu:New()
                 GuiZSetForNextWidget(self.gui, 900)
                 GuiImageButton(self.gui, new_id(), 0, -7, "", "data/ui_gfx/perk_icons/perks_hover_for_more.png")
                 local clicked, right_clicked, hovered, draw_x, draw_y, _, _ = GuiGetPreviousWidgetInfo(self.gui)
-                if(hovered)then
+                if hovered then
                     self.player_index = index
-                    if(data.client.perks)then
-                        for k, v in ipairs(data.client.perks)do
-                            local perk = v[1]
-                            local count = v[2]
-                    
+                    if perks then
+                        for _, p in ipairs(perks) do
+                            local perk = p[1]
+                            local count = p[2]
                             local perk_sprite = perk_sprites[perk]
-                            
-                            if(perk_sprite)then
+                            if perk_sprite then
                                 for i = 1, count do
-                                    
                                     table.insert(player_perk_sprites, perk_sprite)
                                 end
                             end
                         end
                     end
                     draw_perks = true
+                    perk_draw_y = draw_y
                 end
                 perk_draw_x = draw_x
-                perk_draw_y = draw_y
                 GuiLayoutEnd(self.gui)
             end
-            -----------------------------------------------
 
+            if teams_mode then
+                local teams = teams_manager.GetTeams(lobby)
+                local my_id = steam_utils.getSteamID()
+                local my_id_str = tostring(my_id)
 
-            --for k, v in pairs(player_test_list)do
-            for k, v in pairs(data.players)do
-                local draw_player_data = function()
+                local all_player_data = {}
+                if not spectator then
+                    all_player_data[my_id_str] = {
+                        id = my_id,
+                        id_str = my_id_str,
+                        hp = data.client.hp or 100,
+                        max_hp = data.client.max_hp or 100,
+                        perks = data.client.perks,
+                        ready = GameHasFlagRun("ready_check"),
+                        is_self = true,
+                    }
+                end
+                for k, v in pairs(data.players) do
+                    local uid = gameplay_handler.FindUser(lobby, k)
+                    if uid ~= nil then
+                        all_player_data[tostring(uid)] = {
+                            id = uid,
+                            id_str = tostring(uid),
+                            hp = v.health or 0,
+                            max_hp = v.max_health or 100,
+                            perks = v.perks,
+                            ready = v.ready,
+                            is_self = false,
+                        }
+                    end
+                end
 
-                    index = index + 1
-                    local playerid = k
-                    if(playerid ~= nil)then
-                        if(v.health == nil)then
-                            v.health = 0
-                        end
-                        if(v.health < 0)then
-                            v.health = 0
-                        end
-                        if(v.max_health == nil)then
-                            v.max_health = 100
-                        end
-                        if(v.max_health < 0)then
-                            v.max_health = 100
-                        end
-                        if(v.health > v.max_health)then
-                            v.health = v.max_health
-                        end
-                        if(v.ready)then
-                            GuiLayoutBeginHorizontal(self.gui, 0, 0, true)
-                        
-                            GuiImage(self.gui, new_id(), 0, 2, "mods/evaisa.arena/files/sprites/ui/check.png", 1, 1, 1, 0)
-                        end
+                local drawn_players = {}
 
+                local draw_team_section = function(team)
+                    local team_r = team.r or 1
+                    local team_g = team.g or 1
+                    local team_b = team.b or 1
+                    local team_id_str = tostring(team.id)
 
-                        local username = steamutils.getTranslatedPersonaName(gameplay_handler.FindUser(lobby, playerid))
+                    GuiZSetForNextWidget(self.gui, 900)
+                    GuiLayoutBeginHorizontal(self.gui, 0, 0, true, 0, 2)
+                    GuiColorSetForNextWidget(self.gui, team_r, team_g, team_b, 1)
+                    GuiText(self.gui, 0, 0, team.name)
+
+                    local my_team = teams_manager.GetPlayerTeam(lobby, my_id)
+                    local i_am_in_this_team = tostring(my_team) == team_id_str
+
+                    if not i_am_in_this_team then
                         GuiZSetForNextWidget(self.gui, 900)
-                        local color = game_funcs.ID2Color(playerid)
-                        if(color == nil)then
-                            color = {r = 255, g = 255, b = 255}
+                        local join_clicked = GuiButton(self.gui, new_id(), 4, 0, GameTextGetTranslatedOrNot("$arena_teams_join"))
+                        if join_clicked then
+                            if is_owner then
+                                teams_manager.AssignPlayer(lobby, my_id, team.id)
+                            else
+                                networking.send.request_join_team(lobby, team.id)
+                            end
                         end
-                        local r, g, b = color.r, color.g, color.b
-                        local a = 1
-                        GuiColorSetForNextWidget(self.gui, r / 255, g / 255, b / 255, a)
-                        GuiText(self.gui, 0, 0, username)
-                        local _, _, _, _, _, _, text_height = GuiGetPreviousWidgetInfo(self.gui)
-
-                        if(v.ready)then
-                            GuiLayoutEnd(self.gui)
+                    else
+                        GuiZSetForNextWidget(self.gui, 900)
+                        local leave_clicked = GuiButton(self.gui, new_id(), 4, 0, GameTextGetTranslatedOrNot("$arena_teams_leave"))
+                        if leave_clicked then
+                            if is_owner then
+                                teams_manager.UnassignPlayer(lobby, my_id)
+                            else
+                                networking.send.request_join_team(lobby, "")
+                            end
                         end
+                    end
 
-                        --[[
+                    if is_owner then
                         GuiZSetForNextWidget(self.gui, 900)
-                        GuiColorSetForNextWidget(self.gui, 1, 1, 1, 0.8)
-                        GuiText(self.gui, 0, v.ready and -2 or 0, string.format(GameTextGetTranslatedOrNot("$arena_playerinfo_ping"), tostring(v.ping)))
-                        
-                        GuiZSetForNextWidget(self.gui, 900)
-                        GuiColorSetForNextWidget(self.gui, 1, 1, 1, 0.8)
-                        GuiText(self.gui, 0, 0, string.format(GameTextGetTranslatedOrNot("$arena_playerinfo_delay"), tostring(v.delay_frames)))
-
-                        local wins = ArenaGameplay.GetWins(lobby, playerid)
-                        
-                        GuiZSetForNextWidget(self.gui, 900)
-                        GuiColorSetForNextWidget(self.gui, 1, 1, 1, 0.8)
-                        GuiText(self.gui, 0, 0, string.format(GameTextGetTranslatedOrNot("$arena_playerinfo_wins"), tostring(wins)))
-                        
-                        local winstreak = ArenaGameplay.GetWinstreak(lobby, playerid)
-
-                        GuiZSetForNextWidget(self.gui, 900)
-                        GuiColorSetForNextWidget(self.gui, 1, 1, 1, 0.8)
-                        GuiText(self.gui, 0, 0, string.format(GameTextGetTranslatedOrNot("$arena_playerinfo_winstreak"), tostring(winstreak)))
-
-                        ]]
-                        --[[local ping_height = DrawTextElement("$arena_playerinfo_ping", v.ping)
-                        local delay_height = DrawTextElement("$arena_playerinfo_delay", v.delay_frames)
-
-                        local wins_text = tostring(ArenaGameplay.GetWins(lobby, playerid, data))
-                        local winstreak_text = tostring(ArenaGameplay.GetWinstreak(lobby, playerid, data))
-                        local kills_text = tostring(ArenaGameplay.GetKills(lobby, playerid, data))
-                        local deaths_text = tostring(ArenaGameplay.GetDeaths(lobby, playerid, data))
-
-                        local win_condition = GlobalsGetValue("win_condition", "unlimited")
-                        local value = tonumber(GlobalsGetValue("win_condition_value", "5"))
-        
-                        if(win_condition == "first_to")then
-                            wins_text = wins_text.."/"..value
-                        elseif(win_condition == "winstreak")then
-                            winstreak_text = winstreak_text.."/"..value
+                        local remove_clicked = GuiButton(self.gui, new_id(), 4, 0, "X")
+                        if remove_clicked then
+                            teams_manager.RemoveTeam(lobby, team.id)
                         end
+                    end
+                    GuiLayoutEnd(self.gui)
 
-                        local wins_height = DrawTextElement("$arena_playerinfo_wins", wins_text)
-                        local winstreak_height = DrawTextElement("$arena_playerinfo_winstreak", winstreak_text)
-                        local kills_height = DrawTextElement("$arena_playerinfo_kills", kills_text)
-                        local deaths_height = DrawTextElement("$arena_playerinfo_deaths", deaths_text)
-                        
-                        --print("index is "..tostring(index) .. " player_index is "..tostring(self.player_index))
-
-                        if(index == self.player_index)then
-                            --print("index is stuff")
-                            text_height_other = text_height_other + text_height
-                            text_height_other = text_height_other + ping_height
-                            text_height_other = text_height_other + delay_height
-                            text_height_other = text_height_other + wins_height
-                            text_height_other = text_height_other + winstreak_height
-                            text_height_other = text_height_other + kills_height
-                            text_height_other = text_height_other + deaths_height
-                            text_height_other = text_height_other + 4
-                        end]]
-
-                        local health_ratio = v.health / v.max_health
-                        local health_bar_width = 90
-                        local health_width = health_bar_width * health_ratio
-                        local rest_width = health_bar_width - health_width
-        
-                        --local hp_text = tostring(v.health).."/"..tostring(v.max_health)
-        
-                        -- generate a percentage out of health_width and rest_width
-                        local health_percentage = health_width / health_bar_width
-                        local rest_percentage = rest_width / health_bar_width
-                        
-                        local health_bar_color = get_health_bar_color(v.health, v.max_health)
-        
-                        GuiLayoutBeginHorizontal(self.gui, 0, 0, true, 0, 0)
-                        GuiZSetForNextWidget(self.gui, 900)
-                        GuiColorSetForNextWidget(self.gui, health_bar_color.r / 255, health_bar_color.g / 255, health_bar_color.b / 255, 1)
-                        GuiImage(self.gui, new_id(), 0, 0, "mods/evaisa.arena/files/sprites/ui/bar90px.png", 1, health_percentage, 1, 0)
-                        local _, _, hp_hovered1, _, _, _, _ = GuiGetPreviousWidgetInfo(self.gui)
-        
-                        if(hp_hovered1)then
-                            self.player_index = index
-                            hovered_max_hp = v.max_health
-                            hovered_hp = v.health
-                            draw_hp_info = true
-                        end
-        
-                        
-                        GuiZSetForNextWidget(self.gui, 900)
-                        GuiColorSetForNextWidget(self.gui, 0.2, 0.2, 0.2, 1)
-                        GuiImage(self.gui, new_id(), 0, 0, "mods/evaisa.arena/files/sprites/ui/bar90px.png", 1, rest_percentage, 1, 0)
-                        local _, _, hp_hovered2, _, _, _, _ = GuiGetPreviousWidgetInfo(self.gui)
-        
-                        if(hp_hovered2)then
-                            self.player_index = index
-                            hovered_max_hp = v.max_health
-                            hovered_hp = v.health
-                            draw_hp_info = true
-                        end
-        
-                        GuiZSetForNextWidget(self.gui, 900)
-                        GuiImageButton(self.gui, new_id(), 0, -7, "", "data/ui_gfx/perk_icons/perks_hover_for_more.png")
-                        local clicked, right_clicked, hovered, draw_x, draw_y, _, _ = GuiGetPreviousWidgetInfo(self.gui)
-                        if(hovered)then
-                            self.player_index = index
-                            if(v.perks)then
-                                for k, v in ipairs(v.perks)do
-                                    local perk = v[1]
-                                    local count = v[2]
-                            
-                                    local perk_sprite = perk_sprites[perk]
-                                    
-                                    if(perk_sprite)then
-                                        for i = 1, count do
-                                            
-                                            table.insert(player_perk_sprites, perk_sprite)
-                                        end
-                                    end
+                    local members = teams_manager.GetTeamMembers(lobby, team.id)
+                    for _, mid in ipairs(members) do
+                        local mid_str = tostring(mid)
+                        local pdata = all_player_data[mid_str]
+                        if pdata then
+                            drawn_players[mid_str] = true
+                            index = index + 1
+                            GuiLayoutBeginHorizontal(self.gui, 4, 0, true, 0, 0)
+                            draw_player_card(tostring(mid), pdata.hp, pdata.max_hp, pdata.perks, pdata.ready, pdata.is_self)
+                            if is_owner and not pdata.is_self then
+                                GuiZSetForNextWidget(self.gui, 900)
+                                local kick_clicked = GuiButton(self.gui, new_id(), 2, 0, "X")
+                                if kick_clicked then
+                                    teams_manager.UnassignPlayer(lobby, mid)
                                 end
                             end
-                            draw_perks = true
-                            perk_draw_y = draw_y
-                        end
-                        perk_draw_x = draw_x
-                        
-                        GuiLayoutEnd(self.gui)
-        
-                        if(index ~= player_count)then
-                            GuiText(self.gui, 0, -15, " ")
+                            GuiLayoutEnd(self.gui)
                         end
                     end
                 end
 
-                if(debug_repeat > 0)then
-                    for i = 1, debug_repeat do
+                for _, team in ipairs(teams) do
+                    draw_team_section(team)
+                end
+
+                local has_unassigned_header = false
+                for id_str, pdata in pairs(all_player_data) do
+                    if not drawn_players[id_str] then
+                        if not has_unassigned_header then
+                            GuiZSetForNextWidget(self.gui, 900)
+                            GuiLayoutBeginHorizontal(self.gui, 0, 0, true, 0, 2)
+                            GuiColorSetForNextWidget(self.gui, 0.6, 0.6, 0.6, 1)
+                            GuiText(self.gui, 0, 0, GameTextGetTranslatedOrNot("$arena_teams_unassigned"))
+                            GuiLayoutEnd(self.gui)
+                            has_unassigned_header = true
+                        end
+                        index = index + 1
+                        draw_player_card(tostring(pdata.id), pdata.hp, pdata.max_hp, pdata.perks, pdata.ready, pdata.is_self)
+                    end
+                end
+
+                if is_owner then
+                    GuiZSetForNextWidget(self.gui, 900)
+                    local add_clicked = GuiButton(self.gui, new_id(), 0, 4, GameTextGetTranslatedOrNot("$arena_teams_add_team"))
+                    if add_clicked then
+                        teams_manager.AddTeam(lobby)
+                    end
+                end
+
+            else
+                ------------- DRAW OUR OWN CARD (if not spectator) ---------------
+
+                if(not spectator)then
+
+                    local hp = data.client.hp or 100
+                    local max_hp = data.client.max_hp or 100
+
+                    index = index + 1
+                    local self_ready = GameHasFlagRun("ready_check")
+                    draw_player_card(tostring(player_id), hp, max_hp, data.client.perks, self_ready, true)
+                end
+                -----------------------------------------------
+
+                for k, v in pairs(data.players)do
+                    local draw_player_data = function()
+                        index = index + 1
+                        local playerid = k
+                        if(playerid ~= nil)then
+                            draw_player_card(playerid, v.health, v.max_health, v.perks, v.ready, false)
+                            if(index ~= player_count)then
+                                GuiText(self.gui, 0, -15, " ")
+                            end
+                        end
+                    end
+
+                    if(debug_repeat > 0)then
+                        for i = 1, debug_repeat do
+                            draw_player_data()
+                        end
+                    else
                         draw_player_data()
                     end
-                else
-                    draw_player_data()
                 end
             end
 

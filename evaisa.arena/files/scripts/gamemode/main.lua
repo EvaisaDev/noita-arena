@@ -84,6 +84,7 @@ networking = dofile("mods/evaisa.arena/files/scripts/gamemode/networking.lua")
 upgrade_system = dofile("mods/evaisa.arena/files/scripts/gamemode/misc/upgrade_system.lua")
 
 gameplay_handler = dofile("mods/evaisa.arena/files/scripts/gamemode/gameplay.lua")
+teams_manager = dofile("mods/evaisa.arena/files/scripts/gamemode/teams_manager.lua")
 spectator_handler = dofile("mods/evaisa.arena/files/scripts/gamemode/spectator.lua")
 
 
@@ -956,6 +957,13 @@ ArenaMode = {
             type = "enum",
             options = { { "ffa", "$arena_settings_gamemode_ffa" }, { "continuous", "$arena_settings_gamemode_continuous", {"$arena_settings_experimental", "$arena_settings_experimental_desc"} }, },
             default = "ffa"
+        },
+        {
+            id = "teams_mode",
+            name = "$arena_settings_teams_mode_name",
+            description = "$arena_settings_teams_mode_description",
+            type = "bool",
+            default = false
         },
         {
             id = "map_picker",
@@ -2363,6 +2371,14 @@ ArenaMode = {
             gamemode = "ffa"
         end
         GlobalsSetValue("arena_gamemode", tostring(gamemode))
+
+        local teams_mode_val = steam.matchmaking.getLobbyData(lobby, "setting_teams_mode")
+        if (teams_mode_val == nil) then
+            teams_mode_val = "false"
+        end
+        GlobalsSetValue("teams_mode", tostring(teams_mode_val))
+        GlobalsSetValue("my_steam_id", tostring(steam_utils.getSteamID()))
+        teams_manager.UpdateTeamGlobals(lobby)
 
         local map_picker = steam.matchmaking.getLobbyData(lobby, "setting_map_picker")
         if (map_picker == nil) then

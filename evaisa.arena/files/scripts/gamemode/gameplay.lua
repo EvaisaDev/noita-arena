@@ -378,6 +378,49 @@ ArenaGameplay = {
             return conditions[type](value)
         end
     end,
+    CheckWinConditionTeams = function(lobby, data)
+        local conditions = {
+            ["first_to"] = function(value)
+                local teams = teams_manager.GetTeams(lobby)
+                for _, team in ipairs(teams) do
+                    local wins = teams_manager.GetTeamWins(lobby, team.id, data)
+                    if wins >= value then
+                        return team.id
+                    end
+                end
+            end,
+            ["best_of"] = function(value)
+                local current_round = ArenaGameplay.GetNumRounds(lobby)
+                if current_round >= value then
+                    local teams = teams_manager.GetTeams(lobby)
+                    local best_team = nil
+                    local best_wins = 0
+                    for _, team in ipairs(teams) do
+                        local wins = teams_manager.GetTeamWins(lobby, team.id, data)
+                        if wins > best_wins then
+                            best_team = team.id
+                            best_wins = wins
+                        end
+                    end
+                    return best_team
+                end
+            end,
+            ["winstreak"] = function(value)
+                local teams = teams_manager.GetTeams(lobby)
+                for _, team in ipairs(teams) do
+                    local streak = teams_manager.GetTeamWinstreak(lobby, team.id, data)
+                    if streak >= value then
+                        return team.id
+                    end
+                end
+            end,
+        }
+        local t = GlobalsGetValue("win_condition", "unlimited")
+        local value = tonumber(GlobalsGetValue("win_condition_value", "5"))
+        if conditions[t] ~= nil then
+            return conditions[t](value)
+        end
+    end,
     SendGameData = function(lobby, data)
         local ready_players = {}
         local members = steamutils.getLobbyMembers(lobby)
@@ -845,6 +888,7 @@ ArenaGameplay = {
 
         game_funcs.SetPlayerEntity(current_player)
         np.RegisterPlayerEntityId(current_player)
+        EntitySetName(current_player, tostring(steam_utils.getSteamID()))
 
 
         if(current_player and EntityGetIsAlive(current_player))then
@@ -1308,6 +1352,163 @@ ArenaGameplay = {
         end
         return deaths
     end,
+    WinnerCheckTeams = function(lobby, data)
+        local alive_teams = teams_manager.GetAliveTeams(lobby, data)
+        local team_count = 0
+        local winning_team_id = nil
+        for t, _ in pairs(alive_teams) do
+            team_count = team_count + 1
+            winning_team_id = t
+        end
+
+        print("Teams alive: " .. tostring(team_count) .. ", winning team: " .. tostring(winning_team_id))
+
+        if team_count > 1 then
+            return
+        end
+
+        ArenaGameplay.AddRound(lobby)
+        GameAddFlagRun("round_finished")
+
+        if team_count == 0 or winning_team_id == nil or winning_team_id:match("^solo_") then
+            ArenaGameplay.SetMapPickerRoles(lobby, data, nil)
+            networking.send.round_end(lobby, nil)
+            GamePrintImportant(GameTextGetTranslatedOrNot("$arena_tie_text"), GameTextGetTranslatedOrNot("$arena_round_end_text"))
+            local new_seed = tonumber(GlobalsGetValue("original_seed", "1"))
+            networking.send.update_world_seed(lobby, new_seed)
+            SetWorldSeed(new_seed)
+            delay.new(300, function()
+                ArenaGameplay.LoadLobby(lobby, data, false)
+            end, function(frames)
+                if frames % 60 == 0 then
+                    GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_returning_to_lobby_text"), tostring(math.floor(frames / 60))))
+                end
+            end)
+            return
+        end
+
+        local team = teams_manager.GetTeamById(lobby, winning_team_id)
+        local team_name = team and team.name or GameTextGetTranslatedOrNot("$arena_teams_unknown")
+        local team_members = teams_manager.GetTeamMembers(lobby, winning_team_id)
+
+        local representative_winner = nil
+        if not data.spectator_mode and data.client.alive then
+            local my_t = teams_manager.GetPlayerTeam(lobby, steam_utils.getSteamID())
+            if tostring(my_t) == tostring(winning_team_id) then
+                representative_winner = steam_utils.getSteamID()
+            end
+        end
+        if representative_winner == nil then
+            for id_str, v in pairs(data.players) do
+                if v.alive then
+                    local u = gameplay_handler.FindUser(lobby, id_str) or id_str
+                    local t = teams_manager.GetPlayerTeam(lobby, u)
+                    if tostring(t) == tostring(winning_team_id) then
+                        representative_winner = u
+                        break
+                    end
+                end
+            end
+        end
+
+        ArenaGameplay.SetMapPickerRoles(lobby, data, representative_winner)
+        teams_manager.AddTeamWin(lobby, winning_team_id)
+        teams_manager.ResetOtherTeamStreaks(lobby, winning_team_id)
+
+        local winner_keys = steamutils.GetLobbyData("winner_keys")
+        if winner_keys == nil then winner_keys = {} else winner_keys = bitser.loads(winner_keys) end
+
+        for _, member_id in ipairs(team_members) do
+            local member_str = tostring(member_id)
+            local winner_key = member_str .. "_wins"
+            local winstreak_key = member_str .. "_winstreak"
+
+            for _, k in pairs(winner_keys) do
+                if tostring(k) ~= winner_key then
+                    steam_utils.TrySetLobbyData(lobby, k .. "treak", "0")
+                end
+            end
+
+            if not table.contains(winner_keys, winner_key) then
+                table.insert(winner_keys, winner_key)
+                steam_utils.TrySetLobbyData(lobby, "winner_keys", bitser.dumps(winner_keys))
+            end
+
+            local current_wins = tonumber(steamutils.GetLobbyData(winner_key)) or 0
+            local current_streak = tonumber(steamutils.GetLobbyData(winstreak_key)) or 0
+            steam_utils.TrySetLobbyData(lobby, winner_key, tostring(current_wins + 1))
+            steam_utils.TrySetLobbyData(lobby, winstreak_key, tostring(current_streak + 1))
+
+            if member_id ~= steam_utils.getSteamID() then
+                if data.players[member_str] then
+                    data.players[member_str].wins = current_wins + 1
+                    data.players[member_str].winstreak = current_streak + 1
+                end
+            else
+                data.client.wins = current_wins + 1
+                data.client.winstreak = current_streak + 1
+                local currency = ModSettingGet("arena_cosmetics_currency") or 0
+                currency = currency + 100
+                ModSettingSet("arena_cosmetics_currency", currency)
+                local player_entity = player.Get()
+                if player_entity then
+                    cosmetics_handler.OnWin(lobby, data, player_entity, data.client.wins, data.client.winstreak)
+                end
+            end
+        end
+
+        local my_team = not data.spectator_mode and teams_manager.GetPlayerTeam(lobby, steam_utils.getSteamID())
+        local i_won = tostring(my_team) == tostring(winning_team_id)
+
+        if not data.spectator_mode and i_won then
+            GameAddFlagRun("arena_winner")
+            local catchup_mechanic = GlobalsGetValue("perk_catchup", "losers")
+            if catchup_mechanic == "winner" then
+                GameAddFlagRun("first_death")
+                GamePrint(GameTextGetTranslatedOrNot("$arena_compensation_winner"))
+            end
+            if GameHasFlagRun("upgrades_system") then
+                local catchup_mechanic_upgrades = GlobalsGetValue("upgrades_catchup", "losers")
+                if catchup_mechanic_upgrades == "winner" then
+                    GameAddFlagRun("pick_upgrade")
+                end
+            end
+        end
+
+        local win_condition_team = ArenaGameplay.CheckWinConditionTeams(lobby, data)
+
+        if win_condition_team ~= nil then
+            GamePrintImportant(string.format(GameTextGetTranslatedOrNot("$arena_teams_win_condition_text"), team_name), GameTextGetTranslatedOrNot("$arena_win_condition_description"))
+            networking.send.team_round_end(lobby, team_name, winning_team_id, team_members, true)
+        else
+            GamePrintImportant(string.format(GameTextGetTranslatedOrNot("$arena_teams_winner_text"), team_name), GameTextGetTranslatedOrNot("$arena_round_end_text"))
+            networking.send.team_round_end(lobby, team_name, winning_team_id, team_members, false)
+        end
+
+        if win_condition_team == nil or not GameHasFlagRun("win_condition_end_match") then
+            local new_seed = tonumber(GlobalsGetValue("original_seed", "1"))
+            networking.send.update_world_seed(lobby, new_seed)
+            SetWorldSeed(new_seed)
+            delay.new(300, function()
+                ArenaGameplay.LoadLobby(lobby, data, false)
+            end, function(frames)
+                if frames % 60 == 0 then
+                    GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_returning_to_lobby_text"), tostring(math.floor(frames / 60))))
+                end
+            end)
+        else
+            scoreboard.apply_data(lobby, data)
+            scoreboard.show()
+            delay.new(600, function()
+                scoreboard.open = false
+                StopGame()
+            end, function(frames)
+                if frames % 60 == 0 then
+                    GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_win_condition_ending_game_text"), tostring(math.floor(frames / 60))))
+                end
+            end)
+        end
+    end,
     WinnerCheck = function(lobby, data, manual)
 
         --[[if not manual then
@@ -1320,6 +1521,11 @@ ArenaGameplay = {
 
         print("winner check?")
         if(GameHasFlagRun("round_finished"))then
+            return
+        end
+
+        if teams_manager.IsTeamsMode() then
+            ArenaGameplay.WinnerCheckTeams(lobby, data)
             return
         end
 
@@ -1727,6 +1933,8 @@ ArenaGameplay = {
         ArenaGameplay.ResetPlayerData(lobby, data)
         data.is_polymorphed = false
         data.picked_up_items = {}
+        data.lobby_dropped_items = {}
+        data.lobby_received_items = {}
         data.hm_timer_paused = false
 
         data.time_remaining = nil
@@ -3362,7 +3570,28 @@ ArenaGameplay = {
             end
         else
 
+            networking.send.character_position(lobby, data)
             networking.send.character_position(lobby, data, true)
+
+            if GlobalsGetValue("teams_mode", "false") == "true" then
+                local lobby_share_pickup_uid = GlobalsGetValue("arena_lobby_share_pickup", "")
+                if lobby_share_pickup_uid ~= "" then
+                    GlobalsSetValue("arena_lobby_share_pickup", "")
+                    data.lobby_received_items = data.lobby_received_items or {}
+                    data.lobby_received_items[lobby_share_pickup_uid] = nil
+                    networking.send.lobby_share_item_pickup(lobby, lobby_share_pickup_uid)
+                end
+
+                if GameGetFrameNum() % 15 == 0 then
+                    data.lobby_dropped_items = data.lobby_dropped_items or {}
+                    for uid, entity_id in pairs(data.lobby_dropped_items) do
+                        if not EntityGetIsAlive(entity_id) then
+                            networking.send.lobby_share_item_pickup(lobby, uid)
+                            data.lobby_dropped_items[uid] = nil
+                        end
+                    end
+                end
+            end
 
         -- networking.send.wand_update(lobby, data, nil, nil, true)
             networking.send.keyboard(lobby, data, true)
@@ -3750,7 +3979,7 @@ ArenaGameplay = {
         end
         return true
     end,
-    DrawNametag = function(lobby, data, entity, name, offset_y)
+    DrawNametag = function(lobby, data, entity, name, offset_y, r, g, b)
 
         name = name or "unknown"
 
@@ -3769,6 +3998,7 @@ ArenaGameplay = {
         local offset_x = width / 2
 
         GuiZSetForNextWidget(username_gui, -11)
+        if r then GuiColorSetForNextWidget(username_gui, r, g, b, 1) end
         GuiText(username_gui, screen_x - offset_x, screen_y - (offset_y or 0), name)
 
 
@@ -4972,7 +5202,16 @@ ArenaGameplay = {
                     ArenaGameplay.UpdateDummy(lobby, data)
                     for k, v in pairs(data.players) do
                         if (v.entity ~= nil and EntityGetIsAlive(v.entity)) then
-                            ArenaGameplay.DrawNametag(lobby, data, v.entity, lobby_member_names[k], 44)
+                            local nr, ng, nb
+                            if GlobalsGetValue("teams_mode", "false") == "true" then
+                                local uid = gameplay_handler.FindUser(lobby, k)
+                                if uid ~= nil then
+                                    local team_id = teams_manager.GetPlayerTeam(lobby, uid)
+                                    local team = team_id and teams_manager.GetTeamById(lobby, team_id)
+                                    if team then nr, ng, nb = team.r or 1, team.g or 1, team.b or 1 end
+                                end
+                            end
+                            ArenaGameplay.DrawNametag(lobby, data, v.entity, lobby_member_names[k], 44, nr, ng, nb)
                         end
                     end
                 end
@@ -5171,6 +5410,26 @@ ArenaGameplay = {
 
             if(data.client.last_inventory == nil or player.DidInventoryChange(data.client.last_inventory, current_inventory_info))then
             -- GamePrint("Inventory has changed!")
+                if data.state == "lobby" and GlobalsGetValue("teams_mode", "false") == "true" and data.client.last_inventory ~= nil then
+                    local old_inv = data.client.last_inventory
+                    data.lobby_dropped_items = data.lobby_dropped_items or {}
+                    for _, old_item in ipairs(old_inv) do
+                        local still_in_inv = false
+                        for _, new_item in ipairs(current_inventory_info) do
+                            if new_item.id == old_item.id then
+                                still_in_inv = true
+                                break
+                            end
+                        end
+                        if not still_in_inv and EntityGetIsAlive(old_item.id) and EntityGetRootEntity(old_item.id) == old_item.id then
+                            local uid = tostring(steam_utils.getSteamID()) .. "_" .. tostring(GameGetFrameNum()) .. "_" .. tostring(old_item.id)
+                            local ex, ey = EntityGetTransform(old_item.id)
+                            local entity_data = np.SerializeEntity(old_item.id)
+                            data.lobby_dropped_items[uid] = old_item.id
+                            networking.send.lobby_share_item(lobby, uid, ex, ey, entity_data)
+                        end
+                    end
+                end
                 GameAddFlagRun("ForceUpdateInventory")
                 no_switching = 3
                 data.client.last_inventory = current_inventory_info

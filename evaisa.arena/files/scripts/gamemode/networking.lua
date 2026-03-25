@@ -533,7 +533,7 @@ networking = {
                 dev_log:print("Received character position update.")
             end]]
 
-            if(data.state ~= "arena" and not data.spectator_mode)then
+            if(data.state ~= "arena" and data.state ~= "lobby" and not data.spectator_mode)then
                 return
             end
 
@@ -551,7 +551,7 @@ networking = {
                 dev_log:print("no shooting: " .. tostring(GameHasFlagRun("no_shooting")))
             end]]
 
-            if (data.spectator_mode or (GameHasFlagRun("player_is_unlocked") and (not GameHasFlagRun("no_shooting")))) then
+            if (data.spectator_mode or data.state == "lobby" or (GameHasFlagRun("player_is_unlocked") and (not GameHasFlagRun("no_shooting")))) then
                 
 
                 local x, y = message.x, message.y
@@ -1865,6 +1865,46 @@ networking = {
                 EntityAddTag(heart, "spectator_simulated")
             end
         end,]]
+        lobby_share_item = function(lobby, message, user, data)
+            if data.state ~= "lobby" then return end
+            if GlobalsGetValue("teams_mode", "false") ~= "true" then return end
+            local my_team = teams_manager.GetPlayerTeam(lobby, steam_utils.getSteamID())
+            local sender_team = teams_manager.GetPlayerTeam(lobby, user)
+            if my_team == nil or my_team == "" or tostring(my_team) ~= tostring(sender_team) then return end
+            local uid = message[1]
+            local x = message[2]
+            local y = message[3]
+            local entity_data = message[4]
+            data.lobby_received_items = data.lobby_received_items or {}
+            if data.lobby_received_items[uid] then
+                if EntityGetIsAlive(data.lobby_received_items[uid]) then
+                    EntityKill(data.lobby_received_items[uid])
+                end
+                data.lobby_received_items[uid] = nil
+            end
+            local ent = EntityCreateNew()
+            np.DeserializeEntity(ent, entity_data, x, y)
+            EntitySetName(ent, uid)
+            EntityAddComponent2(ent, "LuaComponent", {
+                _tags = "enabled_in_world,enabled_in_hand,enabled_in_inventory",
+                script_item_picked_up = "mods/evaisa.arena/files/scripts/gamemode/misc/lobby_share_pickup.lua",
+            })
+            data.lobby_received_items[uid] = ent
+        end,
+        lobby_share_item_pickup = function(lobby, message, user, data)
+            if data.state ~= "lobby" then return end
+            if GlobalsGetValue("teams_mode", "false") ~= "true" then return end
+            local uid = message[1]
+            data.lobby_received_items = data.lobby_received_items or {}
+            data.lobby_dropped_items = data.lobby_dropped_items or {}
+            if data.lobby_received_items[uid] then
+                if EntityGetIsAlive(data.lobby_received_items[uid]) then
+                    EntityKill(data.lobby_received_items[uid])
+                end
+                data.lobby_received_items[uid] = nil
+            end
+            data.lobby_dropped_items[uid] = nil
+        end,
         item_picked_up = function(lobby, message, user, data)
             if(data.state ~= "arena" and not data.spectator_mode)then
                 return
@@ -2952,6 +2992,75 @@ networking = {
                 EntityAddChild(data.players[tostring(user)].entity, heal)
             end
         end,
+        request_join_team = function(lobby, message, user, data)
+            if not steam_utils.IsOwner() then return end
+            local team_id = message[1]
+            if team_id == "" then
+                teams_manager.UnassignPlayer(lobby, user)
+            else
+                teams_manager.AssignPlayer(lobby, user, team_id)
+            end
+        end,
+        team_round_end = function(lobby, message, user, data)
+            if not steam_utils.IsOwner(user) then return end
+            local team_name = message[1]
+            local winning_team_id = message[2]
+            local winner_ids = message[3] or {}
+            local win_condition_met = message[4]
+
+            local my_id = steam_utils.getSteamID()
+            local i_won = false
+            for _, winner_id_str in ipairs(winner_ids) do
+                local winner_id = ArenaGameplay.FindUser(lobby, tostring(winner_id_str))
+                if winner_id ~= nil and not data.spectator_mode and winner_id == my_id then
+                    i_won = true
+                end
+            end
+
+            if not data.spectator_mode and i_won then
+                GameAddFlagRun("arena_winner")
+                local catchup_mechanic = GlobalsGetValue("perk_catchup", "losers")
+                if catchup_mechanic == "winner" then
+                    GameAddFlagRun("first_death")
+                    GamePrint(GameTextGetTranslatedOrNot("$arena_compensation_winner"))
+                end
+                if GameHasFlagRun("upgrades_system") then
+                    local catchup_mechanic_upgrades = GlobalsGetValue("upgrades_catchup", "losers")
+                    if catchup_mechanic_upgrades == "winner" then
+                        GameAddFlagRun("pick_upgrade")
+                    end
+                end
+            end
+
+            GameAddFlagRun("round_finished")
+
+            if win_condition_met then
+                GamePrintImportant(string.format(GameTextGetTranslatedOrNot("$arena_teams_win_condition_text"), team_name), GameTextGetTranslatedOrNot("$arena_win_condition_description"))
+            else
+                GamePrintImportant(string.format(GameTextGetTranslatedOrNot("$arena_teams_winner_text"), team_name), GameTextGetTranslatedOrNot("$arena_round_end_text"))
+            end
+
+            if win_condition_met == nil or not win_condition_met or not GameHasFlagRun("win_condition_end_match") then
+                delay.new(300, function()
+                    ArenaGameplay.LoadLobby(lobby, data, false)
+                end, function(frames)
+                    if frames % 60 == 0 then
+                        GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_returning_to_lobby_text"), tostring(math.floor(frames / 60))))
+                    end
+                end)
+            else
+                scoreboard.apply_data(lobby, data)
+                scoreboard.show()
+                delay.new(600, function()
+                    scoreboard.open = false
+                    StopGame()
+                end, function(frames)
+                    if frames % 60 == 0 then
+                        GamePrint(string.format(GameTextGetTranslatedOrNot("$arena_win_condition_ending_game_text"), tostring(math.floor(frames / 60))))
+                    end
+                end)
+            end
+        end,
     },
     send = {
         handshake = function(lobby)
@@ -3550,8 +3659,24 @@ networking = {
         --[[allow_round_end = function(lobby)
             steamutils.send("allow_round_end", {}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
         end,]]
+        lobby_share_item = function(lobby, uid, x, y, entity_data)
+            steamutils.send("lobby_share_item", {uid, x, y, entity_data}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+        end,
+        lobby_share_item_pickup = function(lobby, uid)
+            steamutils.send("lobby_share_item_pickup", {uid}, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+        end,
         round_end = function(lobby, winner, win_condition)
             steamutils.send("round_end", { tostring(winner), win_condition }, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+        end,
+        team_round_end = function(lobby, team_name, team_id, winner_ids, win_condition)
+            local ids_str = {}
+            for _, id in ipairs(winner_ids) do
+                table.insert(ids_str, tostring(id))
+            end
+            steamutils.send("team_round_end", { team_name, tostring(team_id), ids_str, win_condition }, steamutils.messageTypes.OtherPlayers, lobby, true, true)
+        end,
+        request_join_team = function(lobby, team_id)
+            steamutils.send("request_join_team", { tostring(team_id or "") }, steamutils.messageTypes.Host, lobby, true, true)
         end,
         item_picked_up = function(lobby, item_id, to_spectators)
             if(to_spectators)then
