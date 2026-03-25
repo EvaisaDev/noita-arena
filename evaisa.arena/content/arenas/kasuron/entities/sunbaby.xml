@@ -1,0 +1,4 @@
+<Entity>
+<Base file="data/entities/items/pickup/sun/sunbaby.xml">
+</Base> <LuaComponent script_source_file="mods/evaisa.arena/content/arenas/kasuron/entities/go_slow.lua">
+</LuaComponent></Entity>

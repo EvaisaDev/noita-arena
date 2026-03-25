@@ -59,7 +59,7 @@ local inject = {
         float texel_height = textureSize(tex, 0).y;
         float sample_height = 1.5 + (index - 1.0) * 3.0;
         vec2 uv = vec2(parallax_world_state.x, sample_height / texel_height);
-        return texture2D(tex, uv).rgb;
+        return texture2D(tex, uv).bgr;
       }
 
       vec4 get_layer_color(vec2 uv, sampler2D tex, sampler2D tex_sky, vec4 values_1, vec4 values_2, vec4 values_3, vec4 values_4, vec4 dynamic_sky_color, vec4 dynamic_alpha_color){
@@ -104,6 +104,7 @@ local inject = {
         uv = clamp(uv, (1/texture_size_texels)*0.5, 1.0 - (1/texture_size_texels)*0.5); // Remove seams on repeating textures
       
         vec4 color = texture2D(tex, uv);
+        color.rgb = color.bgr;
       
         color.a *= values_1.y; 	// Apply alpha
         vec3 sky_color = get_sky_color(tex_sky, values_3.x); 	// Get sky texture color

@@ -1,0 +1,32 @@
+<PixelScenes>
+
+  <mBufferedPixelScenes>
+
+    <PixelScene DEBUG_RELOAD_ME="1" background_filename="mods/evaisa.arena/content/arenas/lava_bowl/spliced/0_background.png" clean_area_before="1" colors_filename="mods/evaisa.arena/content/arenas/lava_bowl/spliced/0_visual.plz" material_filename="mods/evaisa.arena/content/arenas/lava_bowl/spliced/0.plz" pos_x="-763" pos_y="-243" skip_biome_checks="1" >
+
+    </PixelScene>
+
+    <PixelScene DEBUG_RELOAD_ME="1" background_filename="mods/evaisa.arena/content/arenas/lava_bowl/spliced/1_background.png" clean_area_before="1" colors_filename="" material_filename="mods/evaisa.arena/content/arenas/lava_bowl/spliced/1.plz" pos_x="-763" pos_y="219" skip_biome_checks="1" >
+
+    </PixelScene>
+
+    <PixelScene DEBUG_RELOAD_ME="1" background_filename="mods/evaisa.arena/content/arenas/lava_bowl/spliced/2_background.png" clean_area_before="1" colors_filename="mods/evaisa.arena/content/arenas/lava_bowl/spliced/2_visual.plz" material_filename="mods/evaisa.arena/content/arenas/lava_bowl/spliced/2.plz" pos_x="-251" pos_y="-267" skip_biome_checks="1" >
+
+    </PixelScene>
+
+    <PixelScene DEBUG_RELOAD_ME="1" background_filename="mods/evaisa.arena/content/arenas/lava_bowl/spliced/3_background.png" clean_area_before="1" colors_filename="" material_filename="mods/evaisa.arena/content/arenas/lava_bowl/spliced/3.plz" pos_x="-251" pos_y="219" skip_biome_checks="1" >
+
+    </PixelScene>
+
+    <PixelScene DEBUG_RELOAD_ME="1" background_filename="mods/evaisa.arena/content/arenas/lava_bowl/spliced/4_background.png" clean_area_before="1" colors_filename="" material_filename="mods/evaisa.arena/content/arenas/lava_bowl/spliced/4.plz" pos_x="261" pos_y="-232" skip_biome_checks="1" >
+
+    </PixelScene>
+
+    <PixelScene DEBUG_RELOAD_ME="1" background_filename="mods/evaisa.arena/content/arenas/lava_bowl/spliced/5_background.png" clean_area_before="1" colors_filename="" material_filename="mods/evaisa.arena/content/arenas/lava_bowl/spliced/5.plz" pos_x="261" pos_y="219" skip_biome_checks="1" >
+
+    </PixelScene>
+
+  </mBufferedPixelScenes>
+
+</PixelScenes>
+

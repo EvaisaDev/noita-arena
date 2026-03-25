@@ -16,6 +16,53 @@ local function moveClouds(bank)
     end
 end
 
+-- registers vegetation for later use, see "remnant" for example
+vegetation_list = {
+	{
+		path = "data/vegetation/cactus_0$[2-7].png", 
+		offset_x = 32, 
+		offset_y = 121, 
+		material = "cactus"
+	},
+	{
+		path = "data/vegetation/drygrass_$[1-4].png", 
+		offset_x = 16, 
+		offset_y = 60, 
+		material = "wood_loose"
+	},
+	{
+		path = "data/vegetation/tree_spruce_1.png",
+		offset_x = 35,
+		offset_y = 133,
+		material = "wood_loose"
+	},
+	{
+		path = "data/vegetation/tree_spruce_2.png",
+		offset_x = 48,
+		offset_y = 127,
+		material = "wood_loose"
+	},
+	{
+		path = "data/vegetation/tree_spruce_3.png",
+		offset_x = 40,
+		offset_y = 118,
+		material = "wood_loose"
+	},	
+	{
+		path = "data/vegetation/tree_spruce_4.png",
+		offset_x = 48,
+		offset_y = 130,
+		material = "wood_loose"
+	},	
+	{
+		path = "data/vegetation/bush_0$[1-9].png",
+		offset_x = 16,
+		offset_y = 31,
+		material = "wood_loose"
+	}
+
+}
+
 arena_list = {
     {
         id = "original",
@@ -46,7 +93,7 @@ arena_list = {
             "mods/evaisa.arena/files/scripts/parallax/tex/demo/parallax_mountains_layer_02.png",
             "mods/evaisa.arena/files/scripts/parallax/tex/sky_colors_day.png",
         }, -- insert parallax textures into here, you will not be able to use custom parallax textures without this, note parallax works across all arenas so no need to reregister.
-        parallax_layers = 7, -- total parallax layers, used to figure out the max layers needed. Note: going past 8 will cause the shaders to fail o intel Xe graphics cards.
+        parallax_layers = 5, -- total parallax layers, used to figure out the max layers needed. Note: going past 8 will cause the shaders to fail o intel Xe graphics cards.
         init = function(self) -- called when the gamemode is loaded, this is before even entering a lobby, can be used for doing pre-init stuff.
 
         end,
@@ -398,8 +445,8 @@ arena_list = {
 --[[
 {
     id = "static_tile_test",
-    name = "Static Tile Test",
-    description = "!!!",
+        name = "$arena_maps_static_tile_test_name",
+        description = "$arena_maps_static_tile_test_description",
     credits = "Evaisa",
     thumbnail = "mods/evaisa.arena/content/arenas/spoop/thumbnail.png",
     frame = "mods/evaisa.arena/content/arenas/frame.png",
@@ -599,8 +646,8 @@ arena_list = {
     },
     --[[{
         id = "skylands",
-        name = "Skylands",
-        description = "Islands in the sky",
+        name = "$arena_maps_skylands_name",
+        description = "$arena_maps_skylands_description",
         credits = "Evaisa",
         thumbnail = "mods/evaisa.arena/content/arenas/skylands/thumbnail.png",
         frame = "mods/evaisa.arena/content/arenas/frame.png",
@@ -649,6 +696,188 @@ arena_list = {
             ComponentSetValue2(world_state_component, "time_dt", 0)
         end,
     },]]
+	{
+        id = "remnant",
+    name = "$arena_maps_remnant_name",
+    description = "$arena_maps_remnant_description",
+        credits = "Evaisa",
+        thumbnail = "mods/evaisa.arena/content/arenas/remnant/thumbnail.png",
+        frame = "mods/evaisa.arena/content/arenas/frame.png",
+        biome_map = "mods/evaisa.arena/content/arenas/remnant/map.lua",
+        custom_biomes = {
+            {
+                biome_filename="mods/evaisa.arena/content/arenas/remnant/biome.xml",
+                height_index="1",
+                color="FF8040B1"
+            }
+        },      
+		custom_materials = {
+			--[[{
+				_parent = "plant_material",
+				name = "cactus_material",
+				ui_name = "$mat_plant_material",
+				tags = "[plant],[requires_air],[corrodible],[burnable]",
+				vegetation_full_lifetime_growth = 0,
+				vegetation_sprite = "data/vegetation/cactus_0$[2-7].png",
+				wang_color="ff00d9ff",
+				Graphics = {
+					texture_file = "data/materials_gfx/sand.png",
+					color = "ffb89e57"
+				}
+			}]]
+		},
+		spawn_points = { -- optional, can also use spawn pixels, 0,0 is there as a backup in case spawn pixels fail somehow.
+            {x = 0, y = 0}
+        },
+		pixel_scenes = "mods/evaisa.arena/content/arenas/remnant/arena_scenes.xml",
+        zone_size = 850, -- size of damage zone, should be max distance from 0, 0 players can travel
+        zone_floor = 500, -- damage floor, if player falls below this they die.
+        update = function(self, lobby, data) -- Ran every frame while in the arena.
+            local world_state = GameGetWorldStateEntity()
+            local world_state_component = EntityGetFirstComponentIncludingDisabled(world_state, "WorldStateComponent")
+            
+            ComponentSetValue2(world_state_component, "time", 0)
+            ComponentSetValue2(world_state_component, "time_dt", 0)
+        end
+    },
+	{
+		
+        id = "tower",
+    name = "$arena_maps_tower_name",
+    description = "$arena_maps_tower_description",
+        credits = "Evaisa",
+        thumbnail = "mods/evaisa.arena/content/arenas/tower/thumbnail.png",
+        frame = "mods/evaisa.arena/content/arenas/frame.png",
+        biome_map = "mods/evaisa.arena/content/arenas/tower/map.lua",
+        custom_biomes = {
+            {
+                biome_filename="mods/evaisa.arena/content/arenas/tower/biome.xml",
+                height_index="1",
+                color="FFeba362"
+            }
+        },      
+		spawn_points = { -- optional, can also use spawn pixels, 0,0 is there as a backup in case spawn pixels fail somehow.
+            {x = 0, y = 0}
+        },
+		pixel_scenes = "mods/evaisa.arena/content/arenas/tower/arena_scenes.xml",
+        zone_size = 1800, -- size of damage zone, should be max distance from 0, 0 players can travel
+        zone_floor = 700, -- damage floor, if player falls below this they die.
+        update = function(self, lobby, data) -- Ran every frame while in the arena.
+            local world_state = GameGetWorldStateEntity()
+            local world_state_component = EntityGetFirstComponentIncludingDisabled(world_state, "WorldStateComponent")
+            
+            ComponentSetValue2(world_state_component, "time", 0)
+            ComponentSetValue2(world_state_component, "time_dt", 0)
+        end		
+	},
+	{
+        id = "kasuron",
+		name = "$arena_maps_kasuron_name",
+		credits = "burr/weturtle",
+        description = "$arena_maps_kasuron_description",
+        thumbnail = "mods/evaisa.arena/content/arenas/kasuron/thumbnail.png",
+        frame = "mods/evaisa.arena/content/arenas/frame.png",
+        biome_map = "mods/evaisa.arena/content/arenas/kasuron/map.lua",
+        custom_biomes = {
+            {
+                biome_filename="mods/evaisa.arena/content/arenas/kasuron/biome.xml",
+                height_index="1",
+                color="FFD89228"
+            }
+        },
+        pixel_scenes = "mods/evaisa.arena/content/arenas/kasuron/kasuron.xml",
+        spawn_points = { -- optional, can also use spawn pixels, 0,0 is there as a backup in case spawn pixels fail somehow.
+            {x = 0, y = 0}
+        },
+        zone_size = 1000, -- size of damage zone, should be max distance from 0, 0 players can travel
+        zone_floor = 400 -- damage floor, if player falls below this they die.
+    },
+    {
+        id = "lava_bowl",
+        name = "$arena_maps_lava_bowl_name",
+        description = "$arena_maps_lava_bowl_description",
+        credits = "Evaisa",
+        thumbnail = "mods/evaisa.arena/content/arenas/lava_bowl/thumbnail.png",
+        frame = "mods/evaisa.arena/content/arenas/frame.png",
+        biome_map = "mods/evaisa.arena/content/arenas/lava_bowl/map.lua",
+        custom_biomes = {
+            {
+                biome_filename="mods/evaisa.arena/content/arenas/lava_bowl/lava.xml",
+                height_index="1",
+                color="ffe8c52b"
+            }
+        },
+        pixel_scenes = "mods/evaisa.arena/content/arenas/lava_bowl/lava_bowl.xml",
+        spawn_points = { -- optional, can also use spawn pixels, 0,0 is there as a backup in case spawn pixels fail somehow.
+            {x = 0, y = 0}
+        },
+        zone_size = 1500, -- size of damage zone, should be max distance from 0, 0 players can travel
+        zone_floor = 700, -- damage floor, if player falls below this they die.
+        parallax_textures = {
+            "mods/evaisa.arena/content/arenas/lava_bowl/parallax/PARALLAX 1.png",
+            "mods/evaisa.arena/content/arenas/lava_bowl/parallax/PARALLAX 2.png",
+            "mods/evaisa.arena/content/arenas/lava_bowl/parallax/PARALLAX 3.png",
+            "mods/evaisa.arena/content/arenas/lava_bowl/parallax/PARALLAX 4.png",
+            "mods/evaisa.arena/content/arenas/lava_bowl/parallax/sky_colors_volcano.png",
+        }, -- insert parallax textures into here, you will not be able to use custom parallax textures without this, note parallax works across all arenas so no need to reregister.
+        parallax_layers = 5, -- total parallax layers, used to figure out the max layers needed. Note: going past 8 will cause the shaders to fail o intel Xe graphics cards.
+        init = function(self) -- called when the gamemode is loaded, this is before even entering a lobby, can be used for doing pre-init stuff.
+
+        end,
+        load = function(self, lobby, data) -- called when the arena is loaded, can be used for setting up the arena.
+            --LoadBackgroundSprite(steam_utils.getUserAvatar(steam_utils.getSteamID()), 0, 0)
+
+            -- custom parallax stuff!!
+            if(Parallax)then
+                local mountains = Parallax.getBankTemplate() -- initializing a custom parallax background.
+                mountains.id = "lava_bowl"
+                mountains.layers = {
+                    {
+                        id = "parallax1",
+                        path = "mods/evaisa.arena/content/arenas/lava_bowl/parallax/PARALLAX 1.png",
+                        offset_y = 0,
+                        depth = 0.99,
+                        sky_blend = 0.4,
+						sky_index = 1,
+                    },
+                    {
+                        id = "parallax2",
+                        path = "mods/evaisa.arena/content/arenas/lava_bowl/parallax/PARALLAX 2.png",
+                        offset_y = 0,
+                        depth = 0.97,
+                        sky_blend = 0.2,
+						sky_index = 1,
+                    },
+                    {
+                        id = "parallax3",
+                        path = "mods/evaisa.arena/content/arenas/lava_bowl/parallax/PARALLAX 3.png",
+                        offset_y = 0,
+                        depth = 0.93,
+                        sky_blend = 0.1,
+						sky_index = 1,
+                    },
+                    {
+                        id = "parallax4",
+                        path = "mods/evaisa.arena/content/arenas/lava_bowl/parallax/PARALLAX 4.png",
+                        offset_y = 0.01,
+                        depth = 0.92,
+                        sky_blend = 0.01,
+						sky_index = 1,
+                    },
+                }
+                mountains.sky.path = "mods/evaisa.arena/content/arenas/lava_bowl/parallax/sky_colors.png"
+
+                Parallax.push(mountains, 30)
+            end
+        end,
+        update = function(self, lobby, data) -- Ran every frame while in the arena.
+            local world_state = GameGetWorldStateEntity()
+            local world_state_component = EntityGetFirstComponentIncludingDisabled(world_state, "WorldStateComponent")
+            
+            ComponentSetValue2(world_state_component, "time", 0.5)
+            ComponentSetValue2(world_state_component, "time_dt", 0.5)
+        end,
+    },
 }
 
 cosmetics = {

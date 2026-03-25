@@ -1,0 +1,24 @@
+<PixelScenes>
+
+  <mBufferedPixelScenes>
+
+    <PixelScene DEBUG_RELOAD_ME="1" background_filename="mods/evaisa.arena/content/arenas/kasuron/spliced/0_background.png" clean_area_before="1" colors_filename="mods/evaisa.arena/content/arenas/kasuron/spliced/0_visual.plz" material_filename="mods/evaisa.arena/content/arenas/kasuron/spliced/0.plz" pos_x="-448" pos_y="-344" skip_biome_checks="1" >
+
+    </PixelScene>
+
+    <PixelScene DEBUG_RELOAD_ME="1" background_filename="mods/evaisa.arena/content/arenas/kasuron/spliced/1_background.png" clean_area_before="1" colors_filename="mods/evaisa.arena/content/arenas/kasuron/spliced/1_visual.plz" material_filename="mods/evaisa.arena/content/arenas/kasuron/spliced/1.plz" pos_x="-448" pos_y="168" skip_biome_checks="1" >
+
+    </PixelScene>
+
+    <PixelScene DEBUG_RELOAD_ME="1" background_filename="mods/evaisa.arena/content/arenas/kasuron/spliced/2_background.png" clean_area_before="1" colors_filename="mods/evaisa.arena/content/arenas/kasuron/spliced/2_visual.plz" material_filename="mods/evaisa.arena/content/arenas/kasuron/spliced/2.plz" pos_x="64" pos_y="-344" skip_biome_checks="1" >
+
+    </PixelScene>
+
+    <PixelScene DEBUG_RELOAD_ME="1" background_filename="mods/evaisa.arena/content/arenas/kasuron/spliced/3_background.png" clean_area_before="1" colors_filename="mods/evaisa.arena/content/arenas/kasuron/spliced/3_visual.plz" material_filename="mods/evaisa.arena/content/arenas/kasuron/spliced/3.plz" pos_x="64" pos_y="168" skip_biome_checks="1" >
+
+    </PixelScene>
+
+  </mBufferedPixelScenes>
+
+</PixelScenes>
+

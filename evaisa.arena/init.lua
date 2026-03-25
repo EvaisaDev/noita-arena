@@ -1,4 +1,86 @@
 local genomes = dofile("mods/evaisa.arena/files/scripts/utilities/genomes.lua")
+local nxml = dofile("mods/evaisa.arena/lib/nxml.lua")
+
+local arena_data_loaded = false
+
+local function ensure_arena_data_loaded()
+    if(not arena_data_loaded)then
+        dofile("mods/evaisa.arena/content/data.lua")
+        arena_data_loaded = true
+    end
+end
+
+local function is_array_table(t)
+    local max_index = 0
+    for k, _ in pairs(t)do
+        if(type(k) ~= "number")then
+            return false
+        end
+        if(k > max_index)then
+            max_index = k
+        end
+    end
+
+    for i = 1, max_index do
+        if(t[i] == nil)then
+            return false
+        end
+    end
+
+    return true
+    end
+
+local function build_material_element(name, data)
+    local tag_name = data._tag or data.xml_tag or data.element_name or name
+    if(tag_name == nil)then
+        tag_name = data._parent ~= nil and "CellDataChild" or "CellData"
+    end
+
+    local element = nxml.new_element(tag_name)
+
+    for k, v in pairs(data)do
+        if(k ~= "_tag" and k ~= "xml_tag" and k ~= "element_name")then
+            if(type(v) == "table")then
+                if(is_array_table(v))then
+                    for _, child in ipairs(v)do
+                        element:add_child(build_material_element(child._tag or child.xml_tag or child.element_name or k, child))
+                    end
+                else
+                    element:add_child(build_material_element(k, v))
+                end
+            else
+                element.attr[k] = v
+            end
+        end
+    end
+
+    return element
+    end
+
+local function generate_custom_materials_file()
+    ensure_arena_data_loaded()
+
+    local materials = nxml.new_element("Materials")
+    local has_custom_materials = false
+
+    for _, arena in pairs(arena_list or {})do
+        if(arena.custom_materials ~= nil)then
+            for _, material in ipairs(arena.custom_materials)do
+                materials:add_child(build_material_element(nil, material))
+                has_custom_materials = true
+            end
+        end
+    end
+
+    local filename = "mods/evaisa.arena/files/materials.generated.xml"
+    if(has_custom_materials)then
+        ModTextFileSetContent(filename, tostring(materials))
+    else
+        ModTextFileSetContent(filename, "<Materials />")
+    end
+
+    return filename
+    end
 
 genomes:start()
 genomes:add("pvp", 0, 0, 0, {})
@@ -17,7 +99,10 @@ post_final = string.gsub(post_final, "const bool ENABLE_LIGHTING	    		= 1>0;", 
 ModTextFileSetContent("data/shaders/post_final.frag", post_final)
 ]]
 
+local custom_materials_file = generate_custom_materials_file()
+
 ModMaterialsFileAdd("mods/evaisa.arena/files/materials.xml")
+ModMaterialsFileAdd(custom_materials_file)
 ModMagicNumbersFileAdd("mods/evaisa.arena/files/magic.xml")
 ModLuaFileAppend("data/scripts/gun/procedural/gun_procedural.lua", "mods/evaisa.arena/files/scripts/append/gun_procedural.lua")
 ModLuaFileAppend("data/scripts/gun/procedural/gun_procedural_better.lua", "mods/evaisa.arena/files/scripts/append/gun_procedural.lua")
@@ -157,8 +242,7 @@ function OnMagicNumbersAndWorldSeedInitialized()
     GameAddFlagRun("no_progress_flags_action")
     GameAddFlagRun("no_progress_flags_animal")
 
-    dofile("mods/evaisa.arena/content/data.lua")
-    local nxml = dofile("mods/evaisa.arena/lib/nxml.lua")
+    ensure_arena_data_loaded()
     
     --print("wharrrrr???")
 
@@ -178,6 +262,11 @@ function OnMagicNumbersAndWorldSeedInitialized()
 
     GameSetPostFxParameter("health_flash_mult", 1, 1, 1, 1)
     
+	dofile_once("mods/evaisa.arena/files/scripts/utilities/vegetation_loader.lua")
+
+	for k, v in ipairs(vegetation_list)do
+		RegisterVegetation(v.path, v.offset_x, v.offset_y, v.material)
+	end
 
 
     --print("Init content: \n"..ModTextFileGetContent("data/scripts/init.lua"))

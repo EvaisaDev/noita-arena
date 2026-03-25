@@ -1,15 +1,3 @@
-Zone doesn't close in for some players
-Polymorph is broken. --> Attempted fix, needs testing
-If you polymorph yourself with circle of transmog it polymorphs you before you fire your wand.
-wands lock up when rejoining for some reason. --> Attempted fix, needs testing
-Money when rejoining during a match doesn't give
-When disconnecting it doesn't let you vote during loser/winner vote, need to remember last winner/loser
-Failing to spawn in some maps --> Attempted fix, needs testing
-If you crash during a match it should not increment round count, and should not give a win (make a setting)
-Spells of power from letaali QOL mod.
-
-
 Add teams mode
 Add setting that makes it so every round your inventory and wands are filled with completely randomized spells
-Fix fungal shift icon
-Fix reroll shop card breaking lobby joining
+Make the zone bypass invincibility frames, because fuck the player. :)

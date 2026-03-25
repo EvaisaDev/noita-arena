@@ -1,0 +1,12 @@
+<Entity>
+	<CellEaterComponent
+		radius = "225"
+		limited_materials = "1"
+		eat_probability = "1000"
+		materials = "lava"
+	/>
+
+	<LifetimeComponent
+		lifetime="5"
+	></LifetimeComponent>
+</Entity> 
