@@ -315,22 +315,22 @@ local pushTextures = function(bank, char)
   local setTexture = Parallax.SetTexture
 
   if bank == nil then
-    setTexture( "tex_parallax_sky_" .. char, "data/parallax_fallback_sky.png", Parallax.FILTER.BILINEAR, Parallax.WRAP.REPEAT, true )
+    setTexture( "tex_parallax_sky_" .. char, "data/parallax_fallback_sky.png", Parallax.FILTER.BILINEAR, Parallax.WRAP.REPEAT, false )
     return
   end
 
   for i, layer in ipairs(bank.layers) do
-    setTexture( "tex_parallax_" .. char .. "_" .. i, layer.path, Parallax.FILTER.BILINEAR, Parallax.WRAP.CLAMP, true )
+    setTexture( "tex_parallax_" .. char .. "_" .. i, layer.path, Parallax.FILTER.NEAREST, Parallax.WRAP.CLAMP, false )
     debugPrint("Pushed texture: " .. layer.path .. " as tex_parallax_" .. char .. "_" .. i, 1)
   end
 
   local missing_sky = false
 
   if bank.sky.path == nil or bank.sky.path == "" then
-    setTexture( "tex_parallax_sky_" .. char, "data/parallax_fallback_sky.png", Parallax.FILTER.BILINEAR, Parallax.WRAP.REPEAT, true )
+    setTexture( "tex_parallax_sky_" .. char, "data/parallax_fallback_sky.png", Parallax.FILTER.BILINEAR, Parallax.WRAP.REPEAT, false )
     missing_sky = true
   else
-    setTexture( "tex_parallax_sky_" .. char, bank.sky.path, Parallax.FILTER.BILINEAR, Parallax.WRAP.REPEAT, true )
+    setTexture( "tex_parallax_sky_" .. char, bank.sky.path, Parallax.FILTER.BILINEAR, Parallax.WRAP.REPEAT, false )
   end
   
   if missing_sky then

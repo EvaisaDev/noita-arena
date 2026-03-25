@@ -4,11 +4,11 @@ dofile_once("data/scripts/biome_scripts.lua")
 dofile_once("mods/evaisa.arena/files/scripts/utilities/vegetation_loader.lua")
 
 RegisterSpawnFunction( 0xffff54e3, "spawn_point" )
+RegisterSpawnFunction( 0xffff9900, "spawn_tree" )
+RegisterSpawnFunction( 0xffd9ff00, "spawn_bush")
 RegisterSpawnFunction( 0xffdd00ff, "spawn_scene" )
 RegisterSpawnFunction( 0xff00d9ff, "spawn_cactus" )
 RegisterSpawnFunction( 0xff006aff, "spawn_dry_grass" )
-RegisterSpawnFunction( 0xffff9900, "spawn_tree" )
-RegisterSpawnFunction( 0xffd9ff00, "spawn_bush")
 RegisterSpawnFunction( 0xffa1a2f3, "physics_lantern_small" )
 RegisterSpawnFunction( 0xffa1a2a4, "physics_lantern" )
 RegisterSpawnFunction( 0xffa1a2b4, "physics_chain_torch" )
@@ -87,7 +87,7 @@ function physics_lantern_small( x, y )
 end
 
 function physics_chain_torch( x, y )
-	EntityHelper.NetworkRegister(EntityLoad( "mods/evaisa.arena/content/arenas/remnant/entities/chain_torch.xml", x, y ), x, y)
+	EntityHelper.NetworkRegister(EntityLoad( "data/entities/props/physics/chain_torch.xml", x, y ), x, y)
 end
 
 function torch_stand( x, y )
