@@ -3593,6 +3593,11 @@ ArenaMode = {
 
     end,
     player_join = function(lobby, user)
+        if steam_utils.IsOwner() and GlobalsGetValue("teams_mode", "false") == "true" then
+            teams_manager.AutoAssignToSmallestTeam(lobby, user)
+        end
+    end,
+    player_enter = function(lobby, user)
 
         if(data and data.players[tostring(user)] ~= nil)then
             
@@ -3602,7 +3607,6 @@ ArenaMode = {
 
         if(steamutils.IsOwner())then
             SendLobbyData(lobby)
-            teams_manager.AutoAssignToSmallestTeam(lobby, user)
             print("Player joined - Sending lobby data!")
         end
     end,
