@@ -205,6 +205,26 @@ ArenaGameplay = {
         steam_utils.TrySetLobbyData(lobby, "last_round_winner_id", winner and tostring(winner) or "")
         steam_utils.TrySetLobbyData(lobby, "last_round_loser_ids", bitser.dumps(loser_ids))
     end,
+    SetMapPickerRolesTeams = function(lobby, data, winning_team_id)
+        if not steam_utils.IsOwner() then return end
+        local members = steamutils.getLobbyMembers(lobby)
+        local loser_ids = {}
+        for _, member in pairs(members) do
+            local role = "none"
+            if not steamutils.IsSpectator(lobby, member.id) and winning_team_id ~= nil then
+                local t = teams_manager.GetPlayerTeam(lobby, member.id)
+                if tostring(t) == tostring(winning_team_id) then
+                    role = "winner"
+                else
+                    role = "loser"
+                    table.insert(loser_ids, tostring(member.id))
+                end
+            end
+            steam_utils.TrySetLobbyData(lobby, tostring(member.id) .. "_map_picker_role", role)
+        end
+        steam_utils.TrySetLobbyData(lobby, "last_round_winner_id", "")
+        steam_utils.TrySetLobbyData(lobby, "last_round_loser_ids", bitser.dumps(loser_ids))
+    end,
     GetMapPickerRole = function(lobby, user)
         local role = steamutils.GetLobbyData(tostring(user) .. "_map_picker_role")
         if(role ~= nil and role ~= "")then
@@ -234,7 +254,11 @@ ArenaGameplay = {
         local user_str = tostring(user)
         if(map_picker == "winner_picks")then
             local winner_id = steamutils.GetLobbyData("last_round_winner_id") or ""
-            return user_str == winner_id
+            if winner_id ~= "" then
+                return user_str == winner_id
+            end
+            local role = ArenaGameplay.GetMapPickerRole(lobby, user)
+            return role == "winner"
         end
         if(map_picker == "loser_picks")then
             local loser_ids_raw = steamutils.GetLobbyData("last_round_loser_ids")
@@ -257,7 +281,17 @@ ArenaGameplay = {
 
         if(map_picker == "winner_picks")then
             local winner_id = steamutils.GetLobbyData("last_round_winner_id") or ""
-            return (winner_id ~= "") and 1 or 0
+            if winner_id ~= "" then
+                return 1
+            end
+            local total_winners = 0
+            local members = steamutils.getLobbyMembers(lobby)
+            for _, member in pairs(members) do
+                if ArenaGameplay.GetMapPickerRole(lobby, member.id) == "winner" then
+                    total_winners = total_winners + 1
+                end
+            end
+            return total_winners
         end
 
         if(map_picker == "loser_picks")then
@@ -1411,7 +1445,7 @@ ArenaGameplay = {
             end
         end
 
-        ArenaGameplay.SetMapPickerRoles(lobby, data, representative_winner)
+        ArenaGameplay.SetMapPickerRolesTeams(lobby, data, winning_team_id)
         teams_manager.AddTeamWin(lobby, winning_team_id)
         teams_manager.ResetOtherTeamStreaks(lobby, winning_team_id)
 
@@ -1470,6 +1504,24 @@ ArenaGameplay = {
             if GameHasFlagRun("upgrades_system") then
                 local catchup_mechanic_upgrades = GlobalsGetValue("upgrades_catchup", "losers")
                 if catchup_mechanic_upgrades == "winner" then
+                    GameAddFlagRun("pick_upgrade")
+                end
+            end
+        elseif not data.spectator_mode and not i_won then
+            GameAddFlagRun("arena_loser")
+            local catchup_mechanic = GlobalsGetValue("perk_catchup", "losers")
+            if catchup_mechanic == "losers" or (data.deaths == 0 and catchup_mechanic == "first_death") then
+                if catchup_mechanic == "losers" then
+                    GameAddFlagRun("first_death")
+                    GamePrint(GameTextGetTranslatedOrNot("$arena_compensation"))
+                elseif catchup_mechanic == "first_death" then
+                    GameAddFlagRun("first_death")
+                    GamePrint(GameTextGetTranslatedOrNot("$arena_compensation"))
+                end
+            end
+            if GameHasFlagRun("upgrades_system") then
+                local catchup_mechanic_upgrades = GlobalsGetValue("upgrades_catchup", "losers")
+                if catchup_mechanic_upgrades == "losers" then
                     GameAddFlagRun("pick_upgrade")
                 end
             end
@@ -1747,31 +1799,32 @@ ArenaGameplay = {
             GameAddFlagRun("arena_loser")
 
             local catchup_mechanic = GlobalsGetValue("perk_catchup", "losers")
-            if(catchup_mechanic == "losers" or (data.deaths == 0 and catchup_mechanic == "first_death"))then
-                if(catchup_mechanic == "losers" and not GameHasFlagRun("arena_winner"))then
-                    GameAddFlagRun("first_death")
-                elseif(catchup_mechanic == "first_death")then
-                    GameAddFlagRun("first_death")
-                end
-                
-                
-                GamePrint(GameTextGetTranslatedOrNot("$arena_compensation"))
-            end
-            if(GameHasFlagRun("upgrades_system"))then
-                local catchup_mechanic_upgrades = GlobalsGetValue("upgrades_catchup", "losers")
-
-                -- check if we were the last to die
-                local alive = (not data.spectator_mode and data.client.alive) and 1 or 0
-                for k, v in pairs(data.players) do
-                    if (v.alive) then
-                        alive = alive + 1
+            if not teams_manager.IsTeamsMode() then
+                if(catchup_mechanic == "losers" or (data.deaths == 0 and catchup_mechanic == "first_death"))then
+                    if(catchup_mechanic == "losers" and not GameHasFlagRun("arena_winner"))then
+                        GameAddFlagRun("first_death")
+                    elseif(catchup_mechanic == "first_death")then
+                        GameAddFlagRun("first_death")
                     end
+                    
+                    
+                    GamePrint(GameTextGetTranslatedOrNot("$arena_compensation"))
                 end
+                if(GameHasFlagRun("upgrades_system"))then
+                    local catchup_mechanic_upgrades = GlobalsGetValue("upgrades_catchup", "losers")
 
-                local last = alive == 1
+                    local alive = (not data.spectator_mode and data.client.alive) and 1 or 0
+                    for k, v in pairs(data.players) do
+                        if (v.alive) then
+                            alive = alive + 1
+                        end
+                    end
 
-                if((catchup_mechanic_upgrades == "losers" and not last) or (data.deaths == 0 and catchup_mechanic_upgrades == "first_death"))then
-                    GameAddFlagRun("pick_upgrade")
+                    local last = alive == 1
+
+                    if((catchup_mechanic_upgrades == "losers" and not last) or (data.deaths == 0 and catchup_mechanic_upgrades == "first_death"))then
+                        GameAddFlagRun("pick_upgrade")
+                    end
                 end
             end
 

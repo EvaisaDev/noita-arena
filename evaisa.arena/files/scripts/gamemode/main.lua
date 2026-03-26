@@ -721,6 +721,99 @@ ArenaMode = {
     custom_lobby_string = function(lobby)
         return string.format(GameTextGetTranslatedOrNot("$arena_lobby_string"), tostring(tonumber(steam.matchmaking.getLobbyData(lobby, "holyMountainCount")) or "0") + 1)
     end,
+    lobby_panel_header = function(lobby, gui, new_id)
+    end,
+    lobby_panel_footer = function(lobby, gui, new_id)
+        if steam.matchmaking.getLobbyData(lobby, "setting_teams_mode") ~= "true" then return end
+        if not steam_utils.IsOwner() then return end
+        if GuiButton(gui, new_id("teams_panel"), 2, 0, GameTextGetTranslatedOrNot("$arena_teams_add_team")) then
+            local teams = teams_manager.AddTeam(lobby)
+            teams_manager.AutoAssignAllUnassigned(lobby, teams)
+        end
+    end,
+    get_player_list_items = function(lobby_code, players)
+        if steam.matchmaking.getLobbyData(lobby_code, "setting_teams_mode") ~= "true" then
+            return players
+        end
+        local teams = teams_manager.GetTeams(lobby_code)
+        local is_owner = steam_utils.IsOwner()
+        local my_id = steam_utils.getSteamID()
+
+        local member_team = {}
+        for _, p in ipairs(players) do
+            if not p.is_spectator then
+                member_team[tostring(p.id)] = teams_manager.GetPlayerTeam(lobby_code, p.id) or ""
+            end
+        end
+
+        local items = {}
+        for _, team in ipairs(teams) do
+            local i_am_in = tostring(member_team[tostring(my_id)] or "") == tostring(team.id)
+            local btns = {}
+            btns[#btns+1] = {
+                label = i_am_in and "$arena_teams_leave" or "$arena_teams_join",
+                on_click = function()
+                    if i_am_in then
+                        if is_owner then teams_manager.UnassignPlayer(lobby_code, my_id)
+                        else networking.send.request_join_team(lobby_code, "") end
+                    else
+                        if is_owner then teams_manager.AssignPlayer(lobby_code, my_id, team.id)
+                        else networking.send.request_join_team(lobby_code, team.id) end
+                    end
+                end,
+            }
+            if is_owner and #teams > 2 then
+                btns[#btns+1] = {
+                    label = "$arena_teams_remove",
+                    on_click = function()
+                        teams_manager.RemoveTeam(lobby_code, team.id)
+                    end,
+                }
+            end
+            table.insert(items, {
+                type = "section_header",
+                label = team.name,
+                r = team.r, g = team.g, b = team.b,
+                buttons = btns,
+            })
+            for _, p in ipairs(players) do
+                if not p.is_spectator and tostring(member_team[tostring(p.id)]) == tostring(team.id) then
+                    local entry = {}
+                    for k, val in pairs(p) do entry[k] = val end
+                    entry.indent = 8
+                    table.insert(items, entry)
+                end
+            end
+        end
+
+        local has_unassigned = false
+        for _, p in ipairs(players) do
+            if not p.is_spectator and (member_team[tostring(p.id)] or "") == "" then
+                has_unassigned = true
+                break
+            end
+        end
+        if has_unassigned then
+            table.insert(items, {
+                type = "section_header",
+                label = "$arena_teams_unassigned",
+                r = 0.6, g = 0.6, b = 0.6,
+            })
+            for _, p in ipairs(players) do
+                if not p.is_spectator and (member_team[tostring(p.id)] or "") == "" then
+                    table.insert(items, p)
+                end
+            end
+        end
+
+        for _, p in ipairs(players) do
+            if p.is_spectator then
+                table.insert(items, p)
+            end
+        end
+
+        return items
+    end,
     spectator_unfinished_warning = false,
     enable_spectator = true,--not ModSettingGet("evaisa.arena.spectator_unstable"),
     enable_presets = true,
@@ -2377,6 +2470,15 @@ ArenaMode = {
             teams_mode_val = "false"
         end
         GlobalsSetValue("teams_mode", tostring(teams_mode_val))
+        if steam_utils.IsOwner() and teams_mode_val == "true" then
+            local existing = teams_manager.GetTeams(lobby)
+            local live_teams = existing
+            if #existing == 0 then
+                live_teams = teams_manager.AddTeam(lobby)
+                live_teams = teams_manager.AddTeam(lobby) or live_teams
+            end
+            teams_manager.AutoAssignAllUnassigned(lobby, live_teams)
+        end
         GlobalsSetValue("my_steam_id", tostring(steam_utils.getSteamID()))
         teams_manager.UpdateTeamGlobals(lobby)
 
@@ -3223,6 +3325,9 @@ ArenaMode = {
                 end
             end
 
+            if steam_utils.IsOwner() and GlobalsGetValue("teams_mode", "false") == "true" then
+                teams_manager.AutoAssignAllUnassigned(lobby)
+            end
 
             networking.send.handshake(lobby)
 
@@ -3494,7 +3599,7 @@ ArenaMode = {
 
         if(steamutils.IsOwner())then
             SendLobbyData(lobby)
-            
+            teams_manager.AutoAssignToSmallestTeam(lobby, user)
             print("Player joined - Sending lobby data!")
         end
     end,

@@ -85,7 +85,7 @@ teams_manager = {
     end,
 
     AddTeam = function(lobby)
-        if not steam_utils.IsOwner() then return end
+        if not steam_utils.IsOwner() then return nil end
         local teams = teams_manager.GetTeams(lobby)
         local next_id = teams_manager.GetNextTeamId(lobby)
         local color_idx = ((#teams) % #DEFAULT_TEAM_COLORS) + 1
@@ -100,6 +100,7 @@ teams_manager = {
         table.insert(teams, new_team)
         steam_utils.TrySetLobbyData(lobby, TEAMS_LIST_KEY, bitser.dumps(teams))
         steam_utils.TrySetLobbyData(lobby, TEAM_NEXT_ID_KEY, tostring(next_id + 1))
+        return teams
     end,
 
     RemoveTeam = function(lobby, team_id)
@@ -130,6 +131,49 @@ teams_manager = {
     UnassignPlayer = function(lobby, user)
         if not steam_utils.IsOwner() then return end
         steam_utils.TrySetLobbyData(lobby, tostring(user) .. "_team", "")
+    end,
+
+    AutoAssignToSmallestTeam = function(lobby, user, teams_override)
+        if not steam_utils.IsOwner() then return end
+        local teams = teams_override or teams_manager.GetTeams(lobby)
+        if #teams == 0 then return end
+        local current = teams_manager.GetPlayerTeam(lobby, user)
+        if current ~= nil and current ~= "" then return end
+        local members = steamutils.getLobbyMembers(lobby)
+        local counts = {}
+        for _, team in ipairs(teams) do
+            counts[tostring(team.id)] = 0
+        end
+        for _, member in ipairs(members) do
+            if not steamutils.IsSpectator(lobby, member.id) then
+                local t = teams_manager.GetPlayerTeam(lobby, member.id)
+                if t ~= nil and t ~= "" and counts[tostring(t)] ~= nil then
+                    counts[tostring(t)] = counts[tostring(t)] + 1
+                end
+            end
+        end
+        local best_team = teams[1]
+        local best_count = counts[tostring(teams[1].id)] or 0
+        for _, team in ipairs(teams) do
+            local c = counts[tostring(team.id)] or 0
+            if c < best_count then
+                best_count = c
+                best_team = team
+            end
+        end
+        steam_utils.TrySetLobbyData(lobby, tostring(user) .. "_team", tostring(best_team.id))
+    end,
+
+    AutoAssignAllUnassigned = function(lobby, teams_override)
+        if not steam_utils.IsOwner() then return end
+        local teams = teams_override or teams_manager.GetTeams(lobby)
+        if #teams == 0 then return end
+        local members = steamutils.getLobbyMembers(lobby)
+        for _, member in ipairs(members) do
+            if not steamutils.IsSpectator(lobby, member.id) then
+                teams_manager.AutoAssignToSmallestTeam(lobby, member.id, teams)
+            end
+        end
     end,
 
     ClearAllTeams = function(lobby)
