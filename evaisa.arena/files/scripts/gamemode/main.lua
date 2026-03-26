@@ -3592,7 +3592,7 @@ ArenaMode = {
         end
 
     end,
-    player_enter = function(lobby, user)
+    player_join = function(lobby, user)
 
         if(data and data.players[tostring(user)] ~= nil)then
             
