@@ -32,6 +32,10 @@ teams_manager = {
 
     GetPlayerTeam = function(lobby, user)
         local raw = steamutils.GetLobbyData(tostring(user) .. "_team")
+        local raw_direct = steam.matchmaking.getLobbyData(lobby, tostring(user) .. "_team")
+        if raw ~= raw_direct then
+            print("[teams] CACHE MISMATCH for " .. tostring(user) .. ": cached='" .. tostring(raw) .. "' steam='" .. tostring(raw_direct) .. "'")
+        end
         if raw == nil or raw == "" then
             return nil
         end
@@ -143,9 +147,11 @@ teams_manager = {
     AutoAssignToSmallestTeam = function(lobby, user, teams_override)
         if not steam_utils.IsOwner() then return end
         local teams = teams_override or teams_manager.GetTeams(lobby)
-        if #teams == 0 then return end
+        print("[teams] AutoAssign: user=" .. tostring(user) .. " teams_count=" .. tostring(#teams))
+        if #teams == 0 then print("[teams] AutoAssign: no teams, abort") return end
         local current = teams_manager.GetPlayerTeam(lobby, user)
-        if current ~= nil and current ~= "" then return end
+        print("[teams] AutoAssign: current team=" .. tostring(current))
+        if current ~= nil and current ~= "" then print("[teams] AutoAssign: already assigned, skip") return end
         local members = steamutils.getLobbyMembers(lobby, true, true)
         local counts = {}
         for _, team in ipairs(teams) do
@@ -168,7 +174,11 @@ teams_manager = {
                 best_team = team
             end
         end
+        print("[teams] AutoAssign: best_team=" .. tostring(best_team.id) .. " count=" .. tostring(best_count))
         steam_utils.TrySetLobbyData(lobby, tostring(user) .. "_team", tostring(best_team.id))
+        local verify_cached = steamutils.GetLobbyData(tostring(user) .. "_team")
+        local verify_direct = steam.matchmaking.getLobbyData(lobby, tostring(user) .. "_team")
+        print("[teams] AutoAssign write result: cached='" .. tostring(verify_cached) .. "' steam='" .. tostring(verify_direct) .. "'")
     end,
 
     AutoAssignAllUnassigned = function(lobby, teams_override)
