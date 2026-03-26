@@ -49,7 +49,7 @@ teams_manager = {
     end,
 
     GetTeamMembers = function(lobby, team_id)
-        local members = steamutils.getLobbyMembers(lobby)
+        local members = steamutils.getLobbyMembers(lobby, true, true)
         local result = {}
         for _, member in ipairs(members) do
             if not steamutils.IsSpectator(lobby, member.id) then
@@ -63,7 +63,7 @@ teams_manager = {
     end,
 
     GetUnassignedPlayers = function(lobby)
-        local members = steamutils.getLobbyMembers(lobby)
+        local members = steamutils.getLobbyMembers(lobby, true, true)
         local result = {}
         for _, member in ipairs(members) do
             if not steamutils.IsSpectator(lobby, member.id) then
@@ -84,10 +84,17 @@ teams_manager = {
         return t1 == t2
     end,
 
-    AddTeam = function(lobby)
+    AddTeam = function(lobby, existing_teams)
         if not steam_utils.IsOwner() then return nil end
-        local teams = teams_manager.GetTeams(lobby)
+        local teams = existing_teams or teams_manager.GetTeams(lobby)
         local next_id = teams_manager.GetNextTeamId(lobby)
+        if existing_teams ~= nil then
+            next_id = 1
+            for _, t in ipairs(existing_teams) do
+                local n = tonumber(t.id)
+                if n and n >= next_id then next_id = n + 1 end
+            end
+        end
         local color_idx = ((#teams) % #DEFAULT_TEAM_COLORS) + 1
         local color = DEFAULT_TEAM_COLORS[color_idx]
         local new_team = {
@@ -139,7 +146,7 @@ teams_manager = {
         if #teams == 0 then return end
         local current = teams_manager.GetPlayerTeam(lobby, user)
         if current ~= nil and current ~= "" then return end
-        local members = steamutils.getLobbyMembers(lobby)
+        local members = steamutils.getLobbyMembers(lobby, true, true)
         local counts = {}
         for _, team in ipairs(teams) do
             counts[tostring(team.id)] = 0
@@ -168,7 +175,7 @@ teams_manager = {
         if not steam_utils.IsOwner() then return end
         local teams = teams_override or teams_manager.GetTeams(lobby)
         if #teams == 0 then return end
-        local members = steamutils.getLobbyMembers(lobby)
+        local members = steamutils.getLobbyMembers(lobby, true, true)
         for _, member in ipairs(members) do
             if not steamutils.IsSpectator(lobby, member.id) then
                 teams_manager.AutoAssignToSmallestTeam(lobby, member.id, teams)
@@ -180,7 +187,7 @@ teams_manager = {
         if not steam_utils.IsOwner() then return end
         steam_utils.TrySetLobbyData(lobby, TEAMS_LIST_KEY, "")
         steam_utils.TrySetLobbyData(lobby, TEAM_NEXT_ID_KEY, "1")
-        local members = steamutils.getLobbyMembers(lobby)
+        local members = steamutils.getLobbyMembers(lobby, true, true)
         for _, member in ipairs(members) do
             steam_utils.TrySetLobbyData(lobby, tostring(member.id) .. "_team", "")
         end

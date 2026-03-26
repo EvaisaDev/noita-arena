@@ -727,7 +727,8 @@ ArenaMode = {
         if steam.matchmaking.getLobbyData(lobby, "setting_teams_mode") ~= "true" then return end
         if not steam_utils.IsOwner() then return end
         if GuiButton(gui, new_id("teams_panel"), 2, 0, GameTextGetTranslatedOrNot("$arena_teams_add_team")) then
-            local teams = teams_manager.AddTeam(lobby)
+            local current = teams_manager.GetTeams(lobby)
+            local teams = teams_manager.AddTeam(lobby, current)
             teams_manager.AutoAssignAllUnassigned(lobby, teams)
         end
     end,
@@ -2474,8 +2475,8 @@ ArenaMode = {
             local existing = teams_manager.GetTeams(lobby)
             local live_teams = existing
             if #existing == 0 then
-                live_teams = teams_manager.AddTeam(lobby)
-                live_teams = teams_manager.AddTeam(lobby) or live_teams
+                live_teams = teams_manager.AddTeam(lobby, nil)
+                live_teams = teams_manager.AddTeam(lobby, live_teams)
             end
             teams_manager.AutoAssignAllUnassigned(lobby, live_teams)
         end
