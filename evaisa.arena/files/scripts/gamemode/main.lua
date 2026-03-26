@@ -490,7 +490,7 @@ local function TryUpdateData(lobby)
 
     GlobalsSetValue("content_string", tostring(content_string))
 
-	print(tostring(content_string))
+	arena_log:print(tostring(content_string))
 
 	--ModSettingSet("evaisa.arena.content_string", content_string)
 
