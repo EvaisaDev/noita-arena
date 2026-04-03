@@ -1,3 +1,5 @@
 Add teams mode
 Add setting that makes it so every round your inventory and wands are filled with completely randomized spells
-Make the zone bypass invincibility frames, because fuck the player. :)
+Make the zone bypass invincibility frames, and disable healing, because fuck the player. :)
+Ban creepy liquid and other destructive materials from random map material spawns.
+Figure out why random liquids are desynced.

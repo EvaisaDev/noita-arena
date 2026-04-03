@@ -328,6 +328,12 @@ local function UpdateMaterials()
     for i, v in ipairs(flask_materials) do
         tryAddMaterial(v)
     end
+	dofile("mods/evaisa.arena/content/arenas/remnant/random_liquids.lua")
+
+	for i, v in ipairs(	get_valid_liquids()) do
+		tryAddMaterial({material = v})
+	end
+
 end
 
 
@@ -2188,7 +2194,7 @@ ArenaMode = {
                         if(is_blacklisted)then
                             GuiColorSetForNextWidget(gui, 0.5, 0.5, 0.5, 1)
                         end
-                        if(GuiButton(gui, new_id(), offset, ((icon_height / 2) - (text_height / 2)), material.ui_name))then
+                        if(GuiButton(gui, new_id(), offset, ((icon_height / 2) - (text_height / 2)), GameTextGetTranslatedOrNot(material.ui_name) .. "("..material.id..")"))then
                             if(steam_utils.IsOwner())then
                                 material_blacklist_data[material.id] = not is_blacklisted
                                 SendLobbyData(lobby)
