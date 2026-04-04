@@ -51,6 +51,20 @@ function damage_about_to_be_received( damage, x, y, entity_thats_responsible, cr
         end
     }
 
+	-- fuck yo healing and invincibilty frames :)
+	if(	GameHasFlagRun("is_out_of_zone") or GameHasFlagRun("is_under_damage_floor"))then
+		-- remove invincibility_frames
+		local damageModelComponent = EntityGetFirstComponentIncludingDisabled( entity_id, "DamageModelComponent" )
+		if damageModelComponent ~= nil then
+			ComponentSetValue2( damageModelComponent, "invincibility_frames", 0 )
+		end
+
+		if(damage < 0)then
+			damage = 0
+		end
+	end
+
+
     if(projectile ~= nil)then
         for i, v in ipairs(EntityGetComponent(projectile, "VariableStorageComponent") or {})do
             local name = ComponentGetValue2(v, "name")

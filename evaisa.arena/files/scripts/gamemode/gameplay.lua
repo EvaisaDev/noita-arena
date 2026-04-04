@@ -1061,6 +1061,7 @@ ArenaGameplay = {
             local x2, y2 = EntityGetTransform(v)
             local distance = math.sqrt((x2 - x) ^ 2 + (y2 - y) ^ 2)
             if (distance > max_distance) then
+				GameAddFlagRun("is_out_of_zone")
                 local healthComp = EntityGetFirstComponentIncludingDisabled(v, "DamageModelComponent")
                 if (healthComp ~= nil) then
                     print("inflicted zone damage!")
@@ -1071,6 +1072,8 @@ ArenaGameplay = {
                     local damage = (max_health * damage_percentage) + 0.04
                     EntityInflictDamage(v, damage, "DAMAGE_HEALING", "Out of bounds", "BLOOD_EXPLOSION", 0, 0, GameGetWorldStateEntity())
                 end
+			else
+				GameRemoveFlagRun("is_out_of_zone")
             end
         end
     end,
@@ -1090,6 +1093,9 @@ ArenaGameplay = {
                     local damage = (max_health * damage_percentage)  + 0.04
                     EntityInflictDamage(v, damage, "DAMAGE_FALL", "Out of bounds", "BLOOD_EXPLOSION", 0, 0, GameGetWorldStateEntity())
                 end
+				GameAddFlagRun("is_under_damage_floor")
+			else
+				GameRemoveFlagRun("is_under_damage_floor")
             end
         end
     end,
@@ -2090,6 +2096,8 @@ ArenaGameplay = {
         GameRemoveFlagRun("was_last_ready")
         GameRemoveFlagRun("Immortal")
         GameRemoveFlagRun("no_shooting")
+		GameRemoveFlagRun("is_out_of_zone")
+		GameRemoveFlagRun("is_under_damage_floor")
         GlobalsSetValue("smash_knockback", "1" )
         GlobalsSetValue("smash_knockback_dummy", "1")
         data.last_selected_perk_string = nil
@@ -2523,7 +2531,9 @@ ArenaGameplay = {
         GameRemoveFlagRun("arena_winner")
         GameRemoveFlagRun("arena_loser")
         GameRemoveFlagRun("arena_first_death")
-        
+        GameRemoveFlagRun("is_out_of_zone")
+		GameRemoveFlagRun("is_under_damage_floor")
+
         data.state = "arena"
         data.preparing = true
         data.players_loaded = false
@@ -4505,6 +4515,25 @@ ArenaGameplay = {
                 GameRemoveFlagRun("took_damage")
                 networking.send.health_update(lobby, data, true)
             end
+
+			-- prevent healing outside of zone
+			if(	GameHasFlagRun("is_out_of_zone") or GameHasFlagRun("is_under_damage_floor"))then
+				local damage_model = EntityGetFirstComponentIncludingDisabled(player_entity, "DamageModelComponent")
+				if(damage_model)then
+					
+					local current_health = ComponentGetValue2(damage_model, "hp")
+					data.lowest_health = data.lowest_health or ComponentGetValue2(damage_model, "hp")
+
+					if(current_health > data.lowest_health)then
+						ComponentSetValue2(damage_model, "hp", data.lowest_health)
+					else
+						data.lowest_health = current_health
+					end
+				end
+			else
+				data.lowest_health = nil
+			end
+			
             if (data.players_loaded) then
 
                 if(GameGetFrameNum() % 15 == 0)then
