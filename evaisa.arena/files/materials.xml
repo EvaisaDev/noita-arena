@@ -349,6 +349,23 @@
     </Graphics>
   </CellData>
 
+  <CellDataChild
+  	_parent="wood_static"
+  	_inherit_reactions="0"
+  	name="fuckedupwall"
+	ui_name="$mat_creepy_liquid_emitter"
+	solid_friction="0.5"
+	burnable="0"
+	fire_hp="10000"
+	hp="2000"
+	wang_color="ffe8a32c" >
+	<Graphics
+		texture_file="data/materials_gfx/templebrick_alt.png"
+		>
+	</Graphics>
+  </CellDataChild>
+
+
     <CellData
       name="fake_air"
       ui_name="air"
