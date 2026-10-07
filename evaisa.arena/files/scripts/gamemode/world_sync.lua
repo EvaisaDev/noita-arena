@@ -14,6 +14,31 @@ local area_header_size = ffi.sizeof(world.EncodedAreaHeader)
 
 local chunk_size = 64
 
+local MAX_AREAS_PER_MESSAGE = 32
+local max_material_id = nil
+
+local function get_max_material_id()
+    if max_material_id == nil then
+        max_material_id = 0
+        local lists = {
+            CellFactory_GetAllLiquids(true, true),
+            CellFactory_GetAllSands(true, true),
+            CellFactory_GetAllGases(true, true),
+            CellFactory_GetAllFires(true, true),
+            CellFactory_GetAllSolids(true, true),
+        }
+        for _, list in ipairs(lists) do
+            for _, name in ipairs(list or {}) do
+                local id = CellFactory_GetType(name)
+                if id > max_material_id then
+                    max_material_id = id
+                end
+            end
+        end
+    end
+    return max_material_id
+end
+
 -- doesn't seem to work?
 world_sync.add_chunks = function(x, y, w, h)
 
@@ -152,23 +177,51 @@ world_sync.update = function(lobby, data)
 end
 
 world_sync.apply = function(msg)
-    -- decompress
+    if type(msg) ~= "string" then
+        return
+    end
 
-    local chunks_str = zstd:decompress(msg)
+    local chunks_str = zstd:decompress(msg, 4 * 1024 * 1024)
+    if chunks_str == nil then
+        return
+    end
 
     local grid_world = world_ffi.get_grid_world()
     local world_data = chunks_str
     local data_ptr = ffi.cast('char const*', world_data)
+    local run_size = ffi.sizeof(world.PixelRun)
+    local max_material = get_max_material_id()
     local index = 0
+    local areas = 0
     while #world_data - index > area_header_size do
+        areas = areas + 1
+        if areas > MAX_AREAS_PER_MESSAGE then
+            return
+        end
+
         local header = ffi.cast("struct EncodedAreaHeader const*", data_ptr + index)
-        local run_length = header.pixel_run_count * ffi.sizeof(world.PixelRun)
-        local runs = ffi.cast(ffi.typeof("struct PixelRun const*"), data_ptr + index + area_header_size)
+        local run_count = header.pixel_run_count
+        local run_length = run_count * run_size
+        if run_count == 0 or index + area_header_size + run_length > #world_data then
+            return
+        end
+
+        local runs = ffi.cast(PixelRun_const_ptr, data_ptr + index + area_header_size)
+        local cells = 0
+        for i = 0, run_count - 1 do
+            local material = runs[i].material
+            if material ~= -1 and (material < 0 or material > max_material) then
+                return
+            end
+            cells = cells + runs[i].length + 1
+        end
+        if cells ~= (header.width + 1) * (header.height + 1) then
+            return
+        end
+
         index = index + run_length + area_header_size
-    
         world.decode(grid_world, header, runs)
     end
-
 end
 
 return world_sync
